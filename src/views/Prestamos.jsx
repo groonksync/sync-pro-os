@@ -3,19 +3,76 @@ import {
   Plus, ChevronRight, ArrowLeft, Save, FileSignature, Smartphone, DollarSign, 
   Briefcase, FolderOpen, FileText, ImageIcon, ExternalLink 
 } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 
 const Prestamos = ({ data, setData }) => {
   const [prestamoView, setPrestamoView] = useState('list'); 
   const [activePrestamo, setActivePrestamo] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const openPrestamo = (prestamo) => { setActivePrestamo(prestamo); setPrestamoView('detail'); };
-  const closePrestamo = () => {
-    setData({...data, prestamos: data.prestamos.map(p => p.id === activePrestamo.id ? activePrestamo : p)});
-    setPrestamoView('list'); setActivePrestamo(null);
+  
+  const closePrestamo = async () => {
+    if (activePrestamo) {
+      await handleSave();
+    }
+    setPrestamoView('list'); 
+    setActivePrestamo(null);
   };
+
   const createPrestamo = () => {
-    const newPrestamo = { id: Date.now(), nombre: 'Nuevo Cliente', ci: '', telefono: '', capital: 0, interes: 0, inicio: new Date().toLocaleDateString(), fin: '', estado: 'Pendiente', garantia: '', driveContrato: '', driveFotos: '' };
-    setActivePrestamo(newPrestamo); setPrestamoView('detail');
+    const newPrestamo = { 
+      id: crypto.randomUUID(), 
+      nombre: 'Nuevo Cliente', 
+      ci: '', 
+      telefono: '', 
+      capital: 0, 
+      interes: 0, 
+      inicio: new Date().toISOString().split('T')[0], 
+      fin: '', 
+      estado: 'Pendiente', 
+      garantia: '', 
+      drive_contrato: '', 
+      drive_fotos: '' 
+    };
+    setActivePrestamo(newPrestamo); 
+    setPrestamoView('detail');
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('prestamos')
+        .upsert({
+          id: activePrestamo.id,
+          nombre: activePrestamo.nombre,
+          ci: activePrestamo.ci,
+          telefono: activePrestamo.telefono,
+          capital: parseFloat(activePrestamo.capital),
+          interes: parseFloat(activePrestamo.interes),
+          inicio: activePrestamo.inicio,
+          fin: activePrestamo.fin,
+          estado: activePrestamo.estado,
+          garantia: activePrestamo.garantia,
+          drive_contrato: activePrestamo.drive_contrato,
+          drive_fotos: activePrestamo.drive_fotos
+        });
+
+      if (error) throw error;
+      
+      // Actualizar estado local
+      const updatedPrestamos = data.prestamos.some(p => p.id === activePrestamo.id)
+        ? data.prestamos.map(p => p.id === activePrestamo.id ? activePrestamo : p)
+        : [...data.prestamos, activePrestamo];
+        
+      setData({...data, prestamos: updatedPrestamos});
+    } catch (error) {
+      console.error('Error guardando en Supabase:', error.message);
+      alert('Error al guardar: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -126,16 +183,16 @@ const Prestamos = ({ data, setData }) => {
                 <div className="space-y-4">
                   <div className="bg-black/40 border border-white/5 rounded-lg p-3 relative group">
                     <label className="text-[10px] text-neutral-500 flex items-center gap-1.5 mb-2"><FileText size={12} className="text-neutral-400"/> Carpeta de Contratos (PDF)</label>
-                    <input type="text" value={activePrestamo.driveContrato} onChange={e=>setActivePrestamo({...activePrestamo, driveContrato: e.target.value})} className="w-full bg-transparent text-xs text-white outline-none border-b border-white/10 pb-1 focus:border-blue-500/50" placeholder="https://drive.google.com/..." />
-                    {activePrestamo.driveContrato && (
-                      <a href={activePrestamo.driveContrato} target="_blank" rel="noreferrer" className="absolute top-3 right-3 text-[9px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded font-bold uppercase flex items-center gap-1 hover:bg-blue-500/20 transition-colors">Abrir <ExternalLink size={10}/></a>
+                    <input type="text" value={activePrestamo.drive_contrato} onChange={e=>setActivePrestamo({...activePrestamo, drive_contrato: e.target.value})} className="w-full bg-transparent text-xs text-white outline-none border-b border-white/10 pb-1 focus:border-blue-500/50" placeholder="https://drive.google.com/..." />
+                    {activePrestamo.drive_contrato && (
+                      <a href={activePrestamo.drive_contrato} target="_blank" rel="noreferrer" className="absolute top-3 right-3 text-[9px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded font-bold uppercase flex items-center gap-1 hover:bg-blue-500/20 transition-colors">Abrir <ExternalLink size={10}/></a>
                     )}
                   </div>
                   <div className="bg-black/40 border border-white/5 rounded-lg p-3 relative group">
                     <label className="text-[10px] text-neutral-500 flex items-center gap-1.5 mb-2"><ImageIcon size={12} className="text-amber-500"/> Fotos CI y Garantía (Imágenes)</label>
-                    <input type="text" value={activePrestamo.driveFotos} onChange={e=>setActivePrestamo({...activePrestamo, driveFotos: e.target.value})} className="w-full bg-transparent text-xs text-white outline-none border-b border-white/10 pb-1 focus:border-amber-500/50" placeholder="https://drive.google.com/..." />
-                    {activePrestamo.driveFotos && (
-                      <a href={activePrestamo.driveFotos} target="_blank" rel="noreferrer" className="absolute top-3 right-3 text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded font-bold uppercase flex items-center gap-1 hover:bg-amber-500/20 transition-colors">Ver Fotos <ExternalLink size={10}/></a>
+                    <input type="text" value={activePrestamo.drive_fotos} onChange={e=>setActivePrestamo({...activePrestamo, drive_fotos: e.target.value})} className="w-full bg-transparent text-xs text-white outline-none border-b border-white/10 pb-1 focus:border-amber-500/50" placeholder="https://drive.google.com/..." />
+                    {activePrestamo.drive_fotos && (
+                      <a href={activePrestamo.drive_fotos} target="_blank" rel="noreferrer" className="absolute top-3 right-3 text-[9px] bg-amber-500/10 text-amber-500 px-2 py-1 rounded font-bold uppercase flex items-center gap-1 hover:bg-amber-500/20 transition-colors">Ver Fotos <ExternalLink size={10}/></a>
                     )}
                   </div>
                 </div>

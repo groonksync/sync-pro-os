@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import CommandCenter from './views/CommandCenter';
 import MeetingStudio from './views/MeetingStudio';
 import Prestamos from './views/Prestamos';
+import { supabase } from './lib/supabaseClient';
 
 // Vistas Temporales (Placeholders para modularización futura)
 const ProyectosView = () => <div className="text-white">Vista Proyectos</div>;
@@ -13,24 +14,29 @@ const RecibosView = () => <div className="text-white">Vista Recibos</div>;
 const App = () => {
   const [activeTab, setActiveTab] = useState('resumen');
   
-  const [meetingsList, setMeetingsList] = useState([
-    { id: 1, cliente: 'Agencia Mvment', fecha: '2024-10-26', estado: 'En Progreso', link: 'https://meet.google.com/abc', drive: '', presupuesto: 400, contenido: '<p>El cliente solicita un estilo dinámico con tipografía cinética.</p>', insights: [{ id: 1, text: 'Estilo dinámico', note: 'Usar ref de Apple' }] },
-  ]);
+  const [meetingsList, setMeetingsList] = useState([]);
 
   const [data, setData] = useState({
-    prestamos: [
-      { 
-        id: 1, nombre: 'Raúl Méndez', ci: '8432122', telefono: '+591 70012345', 
-        capital: 5000, interes: 10, inicio: '01 Nov, 2024', fin: '01 Dic, 2024', 
-        estado: 'Activo', garantia: 'Vehículo Toyota Hilux 2018 (Placa 456-XYZ)',
-        driveContrato: 'https://drive.google.com/drive/folders/1aBcD',
-        driveFotos: 'https://drive.google.com/drive/folders/9zYxW'
-      },
-    ],
+    prestamos: [],
     proyectos: [],
     ventas: [],
     pagos: []
   });
+
+  // Cargar datos de Supabase al iniciar
+  useEffect(() => {
+    const fetchData = async () => {
+      // Cargar Préstamos
+      const { data: prestamosData } = await supabase.from('prestamos').select('*');
+      if (prestamosData) setData(prev => ({ ...prev, prestamos: prestamosData }));
+
+      // Cargar Reuniones
+      const { data: meetingsData } = await supabase.from('reuniones').select('*');
+      if (meetingsData) setMeetingsList(meetingsData);
+    };
+
+    fetchData();
+  }, []);
 
   const renderContent = () => {
     switch (activeTab) {
