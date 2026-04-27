@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Plus, ChevronRight, ArrowLeft, Save, FileSignature, Smartphone, DollarSign, 
-  Briefcase, FolderOpen, FileText, ImageIcon, ExternalLink 
+  Briefcase, FolderOpen, FileText, ImageIcon, ExternalLink, Trash2 
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -39,6 +39,21 @@ const Prestamos = ({ data, setData }) => {
     setPrestamoView('detail');
   };
 
+  const handleDelete = async (id, e) => {
+    e.stopPropagation(); // Evitar que se abra el detalle al hacer clic en borrar
+    if (!confirm('¿Estás seguro de eliminar este préstamo? Esta acción no se puede deshacer.')) return;
+
+    try {
+      const { error } = await supabase.from('prestamos').delete().eq('id', id);
+      if (error) throw error;
+      
+      const updatedPrestamos = data.prestamos.filter(p => p.id !== id);
+      setData({...data, prestamos: updatedPrestamos});
+    } catch (error) {
+      alert('Error al borrar: ' + error.message);
+    }
+  };
+
   const handleSave = async () => {
     setLoading(true);
     try {
@@ -61,7 +76,6 @@ const Prestamos = ({ data, setData }) => {
 
       if (error) throw error;
       
-      // Actualizar estado local
       const updatedPrestamos = data.prestamos.some(p => p.id === activePrestamo.id)
         ? data.prestamos.map(p => p.id === activePrestamo.id ? activePrestamo : p)
         : [...data.prestamos, activePrestamo];
@@ -115,7 +129,10 @@ const Prestamos = ({ data, setData }) => {
                         {p.fin || 'Sin fecha'}
                       </span>
                     </td>
-                    <td className="px-4 py-4 text-right">
+                    <td className="px-4 py-4 text-right flex items-center justify-end gap-2">
+                       <button onClick={(e) => handleDelete(p.id, e)} className="p-2 text-neutral-600 hover:text-rose-500 transition-colors">
+                         <Trash2 size={14} />
+                       </button>
                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[9px] font-bold uppercase bg-white/5 text-neutral-400 group-hover:text-white transition-colors">
                          Expediente <ChevronRight size={10}/>
                        </span>

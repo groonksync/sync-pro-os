@@ -40,7 +40,7 @@ const App = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'resumen': return <CommandCenter meetingsList={meetingsList} />;
+      case 'resumen': return <CommandCenter meetingsList={meetingsList} data={data} />;
       case 'meeting_studio': return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} />;
       case 'prestamos': return <Prestamos data={data} setData={setData} />;
       case 'proyectos': return <ProyectosView />;
