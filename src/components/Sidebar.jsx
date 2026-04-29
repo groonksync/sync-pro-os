@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   TrendingUp, Video, Briefcase, LayoutDashboard, Download, CreditCard, FileText, 
-  Activity
+  Activity, FolderKanban
 } from 'lucide-react';
 
 const NavItem = ({ id, icon: Icon, label, badge, activeTab, setActiveTab }) => (
@@ -32,7 +32,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts = {} }) => {
         <NavItem id="meeting_studio" icon={Video} label="Meeting Studio" badge={counts.meetings} activeTab={activeTab} setActiveTab={setActiveTab} />
         
         <p className="px-3 text-[9px] font-bold text-neutral-600 uppercase tracking-widest mb-1.5 mt-6">Gestión</p>
-        <NavItem id="proyectos" icon={Briefcase} label="Proyectos" activeTab={activeTab} setActiveTab={setActiveTab} />
+        <NavItem id="proyectos" icon={FolderKanban} label="Proyectos" badge={counts.proyectos} activeTab={activeTab} setActiveTab={setActiveTab} />
         <NavItem id="prestamos" icon={LayoutDashboard} label="Préstamos" badge={counts.prestamos} activeTab={activeTab} setActiveTab={setActiveTab} />
         
         <p className="px-3 text-[9px] font-bold text-neutral-600 uppercase tracking-widest mb-1.5 mt-6">Finanzas</p>
