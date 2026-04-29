@@ -9,11 +9,14 @@ import MisEgresos from './views/MisEgresos';
 import Recibos from './views/Recibos';
 import { supabase } from './lib/supabaseClient';
 
+
+
 const App = () => {
   const [activeTab, setActiveTab] = useState('resumen');
+  
   const [meetingsList, setMeetingsList] = useState([]);
-  const [proyectos, setProyectos] = useState([]);
 
+  const [proyectos, setProyectos] = useState([]);
   const [data, setData] = useState({
     prestamos: [],
     ventas: [],
@@ -21,29 +24,30 @@ const App = () => {
     recibos: [],
   });
 
+  // Cargar datos de Supabase al iniciar
   useEffect(() => {
     const fetchData = async () => {
-      // Préstamos
+      // Cargar Préstamos
       const { data: prestamosData } = await supabase.from('prestamos').select('*');
       if (prestamosData) setData(prev => ({ ...prev, prestamos: prestamosData }));
 
-      // Reuniones
+      // Cargar Reuniones
       const { data: meetingsData } = await supabase.from('reuniones').select('*');
       if (meetingsData) setMeetingsList(meetingsData);
 
-      // Proyectos
+      // Cargar Proyectos
       const { data: proyectosData } = await supabase.from('proyectos').select('*');
       if (proyectosData) setProyectos(proyectosData);
 
-      // Ventas
+      // Cargar Ventas
       const { data: ventasData } = await supabase.from('ventas').select('*');
       if (ventasData) setData(prev => ({ ...prev, ventas: ventasData }));
 
-      // Egresos
+      // Cargar Egresos
       const { data: egresosData } = await supabase.from('egresos').select('*');
       if (egresosData) setData(prev => ({ ...prev, egresos: egresosData }));
 
-      // Recibos
+      // Cargar Recibos
       const { data: recibosData } = await supabase.from('recibos').select('*');
       if (recibosData) setData(prev => ({ ...prev, recibos: recibosData }));
     };
@@ -53,22 +57,14 @@ const App = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'resumen':
-        return <CommandCenter meetingsList={meetingsList} data={data} proyectos={proyectos} setData={setData} />;
-      case 'meeting_studio':
-        return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} />;
-      case 'prestamos':
-        return <Prestamos data={data} setData={setData} />;
-      case 'proyectos':
-        return <Proyectos proyectos={proyectos} setProyectos={setProyectos} />;
-      case 'ventas':
-        return <VentasDigitales data={data} setData={setData} />;
-      case 'pagos':
-        return <MisEgresos data={data} setData={setData} />;
-      case 'recibos':
-        return <Recibos data={data} setData={setData} />;
-      default:
-        return <CommandCenter meetingsList={meetingsList} data={data} proyectos={proyectos} setData={setData} />;
+      case 'resumen': return <CommandCenter meetingsList={meetingsList} data={data} setData={setData} proyectos={proyectos} />;
+      case 'meeting_studio': return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} />;
+      case 'prestamos': return <Prestamos data={data} setData={setData} />;
+      case 'proyectos': return <Proyectos proyectos={proyectos} setProyectos={setProyectos} />;
+      case 'ventas': return <VentasDigitales data={data} setData={setData} />;
+      case 'pagos': return <MisEgresos data={data} setData={setData} />;
+      case 'recibos': return <Recibos data={data} setData={setData} />;
+      default: return <CommandCenter meetingsList={meetingsList} data={data} setData={setData} proyectos={proyectos} />;
     }
   };
 
@@ -83,8 +79,9 @@ const App = () => {
           proyectos: proyectos.filter(p => p.estado !== 'Entregado').length,
         }}
       />
+      
       <main className="flex-1 h-full overflow-y-auto mac-scrollbar bg-[#050505] relative">
-        <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
         <div className="w-full px-8 py-8 lg:px-10 lg:py-10 relative z-10 flex flex-col min-h-full">
           {renderContent()}
         </div>
