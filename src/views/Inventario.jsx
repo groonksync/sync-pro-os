@@ -197,7 +197,7 @@ const Inventario = () => {
         <>
           <header className="mb-10 flex justify-between items-center">
             <div>
-              <h2 className="text-4xl font-black text-white tracking-tighter uppercase underline decoration-white/10 underline-offset-8">Inventario <span className="text-neutral-500">Pro</span></h2>
+              <h2 className="text-4xl font-black text-white tracking-tighter uppercase underline decoration-white/10 underline-offset-8">Inventario <span className="text-purple-500">Pro Max</span></h2>
               <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-[0.4em] mt-2 flex items-center gap-2"><Globe size={14}/> Centro Logístico Sovereign OS</p>
             </div>
             <div className="flex bg-neutral-900/50 p-1.5 rounded-2xl border border-white/5">
