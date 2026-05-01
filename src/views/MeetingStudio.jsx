@@ -949,21 +949,38 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
                {sessionTab === 'editor' && (
                  <div className="flex-1 w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-[24px] flex flex-col overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-500">
-                    {/* BARRA ÚNICA DE HERRAMIENTAS (MICRO) */}
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/5 bg-black/40 shrink-0 overflow-x-auto no-scrollbar">
-                        <div className="flex items-center gap-0.5 pr-2 border-r border-white/10 shrink-0">
-                           <button onMouseDown={(e) => formatText('bold', null, e)} className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Bold size={12}/></button>
-                           <button onMouseDown={(e) => formatText('italic', null, e)} className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Italic size={12}/></button>
-                           <button onMouseDown={insertChecklist} className="p-1.5 text-emerald-500 hover:text-emerald-400 rounded-md transition-colors"><CheckSquare size={12}/></button>
-                        </div>
-                        <div className="flex-1 flex items-center gap-1 px-2 overflow-x-auto no-scrollbar">
-                           {EDITOR_TAGS.map(tag => (
-                             <button key={tag.name} onMouseDown={(e) => insertTag(e, tag.name, tag.bg, tag.text, tag.border)} className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest shrink-0 transition-transform hover:scale-105" style={{ backgroundColor: tag.bg, color: tag.text, border: `1px solid ${tag.border}` }}>{tag.name}</button>
-                           ))}
-                        </div>
-                        <button onMouseDown={(e) => { e.preventDefault(); setShowAIModal(true); }} className="px-3 py-1.5 bg-purple-600 rounded-lg text-[8px] font-black uppercase text-white shadow-lg flex items-center gap-1.5 hover:bg-purple-500 transition-all shrink-0"><Sparkles size={10}/> IA MAGIC</button>
-                    </div>
-                    <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="w-full flex-1 p-6 text-neutral-300 font-normal text-[14px] leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})}></div>
+                     {/* BARRA DE HERRAMIENTAS RESTAURADA (PRO) */}
+                     <div className="flex items-center gap-1 px-3 py-1.5 border-b border-white/5 bg-black/40 shrink-0 overflow-x-auto no-scrollbar">
+                         <div className="flex items-center gap-0.5 pr-2 border-r border-white/10 shrink-0">
+                            <button onMouseDown={(e) => formatText('bold', null, e)} title="Negrita" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Bold size={14}/></button>
+                            <button onMouseDown={(e) => formatText('italic', null, e)} title="Itálica" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Italic size={14}/></button>
+                            <button onMouseDown={(e) => applyHighlight('#fef08a', e)} title="Resaltar" className="p-1.5 text-amber-300 hover:text-amber-200 rounded-md transition-colors"><Palette size={14}/></button>
+                            <button onMouseDown={initNoteAddition} title="Añadir Nota" className="p-1.5 text-blue-400 hover:text-blue-300 rounded-md transition-colors"><MessageSquare size={14}/></button>
+                         </div>
+                         
+                         <div className="flex items-center gap-0.5 px-2 border-r border-white/10 shrink-0">
+                            <button onMouseDown={insertChecklist} title="Checklist" className="p-1.5 text-emerald-500 hover:text-emerald-400 rounded-md transition-colors"><CheckSquare size={14}/></button>
+                            <button onMouseDown={insertTable} title="Tabla" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Table2 size={14}/></button>
+                         </div>
+
+                         <div className="flex-1 flex items-center gap-1 px-2 overflow-x-auto no-scrollbar">
+                            {EDITOR_TAGS.map(tag => (
+                              <button key={tag.name} onMouseDown={(e) => insertTag(e, tag.name, tag.bg, tag.text, tag.border)} className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shrink-0 transition-transform hover:scale-105" style={{ backgroundColor: tag.bg, color: tag.text, border: `1px solid ${tag.border}` }}>{tag.name}</button>
+                            ))}
+                         </div>
+                     </div>
+
+                     <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="w-full flex-1 p-6 text-neutral-300 font-normal text-[14px] leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})}></div>
+
+                     {/* BOTÓN FLOTANTE IA MAGIC */}
+                     <button 
+                       onMouseDown={(e) => { e.preventDefault(); setShowAIModal(true); }} 
+                       className="absolute bottom-8 right-8 px-5 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-[0_10px_30px_rgba(168,85,247,0.5)] border border-white/10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 z-50 group"
+                     >
+                        <Sparkles size={16} className="animate-pulse" />
+                        <span>IA Magic</span>
+                        <div className="absolute inset-0 bg-white/10 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                     </button>
                  </div>
                )}
 
