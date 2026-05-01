@@ -1,3 +1,4 @@
+// Sovereign OS - System Updated: 2026-05-01
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import CommandCenter from './views/CommandCenter';
