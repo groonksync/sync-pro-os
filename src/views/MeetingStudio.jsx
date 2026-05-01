@@ -860,13 +860,13 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
             </div>
           </header>
 
-          <div className={`flex-1 flex ${settings.isMobileMode ? 'flex-col overflow-y-auto' : 'flex-row overflow-hidden'}`}>
+          <div className={`flex-1 flex p-1.5 gap-1.5 ${settings.isMobileMode ? 'flex-col overflow-y-auto' : 'flex-row overflow-hidden'}`}>
             {/* IZQUIERDA: HERRAMIENTAS (Versión Compacta) */}
-            <div className={`w-[230px] shrink-0 flex flex-col bg-[#050505] border-r border-white/5 overflow-y-auto mac-scrollbar p-2.5 space-y-2.5`}>
+            <div className={`w-[230px] shrink-0 flex flex-col bg-[#050505] border-r border-white/5 overflow-y-auto mac-scrollbar p-1.5 space-y-1.5`}>
                
                {/* PRIORIDAD & VIBRA */}
-               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2.5">
-                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-2 tracking-widest flex items-center gap-2"><Zap size={10}/> Prioridad & Vibras</p>
+               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
+                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-1.5 tracking-widest flex items-center gap-2"><Zap size={10}/> Prioridad & Vibras</p>
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     {['Baja', 'Media', 'Alta', 'ASAP'].map(p => (
                       <button key={p} onClick={()=>setActiveMeeting({...activeMeeting, priority: p})} className={`px-2 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${activeMeeting.priority === p ? 'bg-white text-black' : 'bg-white/5 text-neutral-700'}`}>{p}</button>
@@ -882,8 +882,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                </div>
 
                {/* CALCULADORA (Micro-HUD) */}
-               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2.5">
-                  <div className="bg-black border border-white/5 rounded-lg p-2 text-right text-sm font-mono font-black text-white mb-1.5 truncate shadow-inner">{calcDisplay}</div>
+               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
+                  <div className="bg-black border border-white/5 rounded-lg p-1.5 text-right text-sm font-mono font-black text-white mb-1 truncate shadow-inner">{calcDisplay}</div>
                   <div className="grid grid-cols-4 gap-1">
                     {['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'].map(btn => (
                       <button key={btn} onClick={() => handleCalc(btn)} className={`p-1.5 rounded-md text-[9px] font-black ${btn === '=' ? 'bg-amber-500 text-black' : 'bg-white/5 text-neutral-500 hover:bg-white/10 hover:text-white'}`}>{btn}</button>
@@ -911,8 +911,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                </div>
 
                {/* DEADLINES (Micro) */}
-               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2.5">
-                  <div className="flex justify-between items-center mb-1.5">
+               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
+                  <div className="flex justify-between items-center mb-1">
                     <p className="text-[7px] text-neutral-700 font-black uppercase flex items-center gap-2"><Calendar size={10}/> Deadlines</p>
                     <button onClick={() => setActiveMeeting({...activeMeeting, deadlines_multiple: [...(activeMeeting.deadlines_multiple || []), { id: Date.now(), label: 'Entrega', date: '', done: false }]})} className="p-1 hover:text-white text-neutral-600"><Plus size={10}/></button>
                   </div>
@@ -930,7 +930,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
             </div>
 
             {/* CENTRO: EDITOR / DRIVE / CALENDAR (Espacio Proporcionado) */}
-            <div className={`flex-1 flex flex-col bg-black min-h-0 border-x border-white/5 ${settings.interfaceDensity === 'compacto' ? 'p-1 space-y-1' : 'p-3 space-y-3'} ${settings.isMobileMode ? 'min-h-[600px] overflow-visible' : ''}`}>
+            <div className={`flex-1 flex flex-col bg-black min-h-0 border-x border-white/5 p-1.5 space-y-1.5 ${settings.isMobileMode ? 'min-h-[600px] overflow-visible' : ''}`}>
                {/* TABS DE SESIÓN NEXUS */}
                <div className="flex max-w-[85%] mx-auto w-full bg-[#0a0a0a] border border-white/5 rounded-2xl p-1 shadow-xl">
                   {['editor', 'drive', 'calendar'].map(t => (
@@ -1124,11 +1124,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
             </div>
 
             {/* PANEL DERECHO: PRODUCTION HUB (BLINDADO) */}
-            <div className={`${settings.isMobileMode ? 'w-full' : 'w-[260px] shrink-0 border-l'} bg-black border-white/5 flex flex-col p-2.5 space-y-2.5 overflow-y-auto mac-scrollbar`}>
+            <div className={`${settings.isMobileMode ? 'w-full' : 'w-[260px] shrink-0 border-l'} bg-black border-white/5 flex flex-col p-1.5 space-y-1.5 overflow-y-auto mac-scrollbar`}>
                
                {/* PLATAFORMAS (Compacto) */}
-               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2.5 shadow-xl shrink-0">
-                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-2 flex items-center gap-2"><Smartphone size={10}/> Platforms</p>
+               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2 shadow-xl shrink-0">
+                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-1.5 flex items-center gap-2"><Smartphone size={10}/> Platforms</p>
                   <div className="flex justify-around gap-1.5">
                     <button onClick={()=>togglePlatform('YT')} className={`p-1.5 rounded-lg transition-all ${activeMeeting.platforms?.includes('YT') ? 'bg-rose-500/20 text-rose-500' : 'bg-white/5 text-neutral-800'}`}><Youtube size={14}/></button>
                     <button onClick={()=>togglePlatform('IG')} className={`p-1.5 rounded-lg transition-all ${activeMeeting.platforms?.includes('IG') ? 'bg-gradient-to-tr from-yellow-500/20 to-purple-500/20 text-pink-500' : 'bg-white/5 text-neutral-800'}`}><Instagram size={14}/></button>
@@ -1175,8 +1175,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                </div>
 
                {/* COBROS (Compacto) */}
-               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-3 shadow-xl shrink-0">
-                  <div className="flex justify-between items-center mb-2">
+               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2 shadow-xl shrink-0">
+                  <div className="flex justify-between items-center mb-1.5">
                     <p className="text-[7px] text-neutral-700 font-black uppercase flex items-center gap-2"><Target size={10}/> Cobros</p>
                     <button onClick={() => setActiveMeeting({...activeMeeting, hitos_pago: [...(activeMeeting.hitos_pago || []), { id: Date.now(), label: 'Hito', paid: false }]})} className="p-1 bg-white/5 rounded text-neutral-600 hover:text-white"><Plus size={10}/></button>
                   </div>
