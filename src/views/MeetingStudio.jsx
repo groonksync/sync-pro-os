@@ -54,7 +54,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [time, setTime] = useState(0);
-  const [rates, setRates] = useState({ USDT: 6.96, EUR: 7.52, BRL: 1.38 }); 
+  const [rates, setRates] = useState({ USDT_BOB: 10.80, USD_BOB: 6.96, BRL: 1.38 }); 
   
   const [calcDisplay, setCalcDisplay] = useState('0');
   const [convCurrency, setConvCurrency] = useState('USD');
@@ -866,13 +866,13 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                
                {/* PRIORIDAD & VIBRA */}
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
-                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-1.5 tracking-widest flex items-center gap-2"><Zap size={10}/> Prioridad & Vibras</p>
+                  <p className="text-[10px] text-neutral-700 font-black uppercase mb-1.5 tracking-widest flex items-center gap-2"><Zap size={12}/> Prioridad & Vibras</p>
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     {['Baja', 'Media', 'Alta', 'ASAP'].map(p => (
-                      <button key={p} onClick={()=>setActiveMeeting({...activeMeeting, priority: p})} className={`px-2 py-1.5 rounded-lg text-[8px] font-black uppercase transition-all ${activeMeeting.priority === p ? 'bg-white text-black' : 'bg-white/5 text-neutral-700'}`}>{p}</button>
+                      <button key={p} onClick={()=>setActiveMeeting({...activeMeeting, priority: p})} className={`px-2 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeMeeting.priority === p ? 'bg-white text-black' : 'bg-white/5 text-neutral-700'}`}>{p}</button>
                     ))}
                   </div>
-                  <select value={activeMeeting.mood || ''} onChange={e=>setActiveMeeting({...activeMeeting, mood: e.target.value})} className="w-full bg-black border border-white/5 rounded-lg p-2.5 text-[10px] text-white font-black uppercase outline-none">
+                  <select value={activeMeeting.mood || ''} onChange={e=>setActiveMeeting({...activeMeeting, mood: e.target.value})} className="w-full bg-black border border-white/5 rounded-lg p-2.5 text-[11px] text-white font-black uppercase outline-none">
                     <option value="">Mood del Video...</option>
                     <option value="Cinematic">Cinematic</option>
                     <option value="Fast-Paced">Fast-Paced</option>
@@ -886,14 +886,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                   <div className="bg-black border border-white/5 rounded-lg p-1.5 text-right text-sm font-mono font-black text-white mb-1 truncate shadow-inner">{calcDisplay}</div>
                   <div className="grid grid-cols-4 gap-1">
                     {['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'].map(btn => (
-                      <button key={btn} onClick={() => handleCalc(btn)} className={`p-1.5 rounded-md text-[9px] font-black ${btn === '=' ? 'bg-amber-500 text-black' : 'bg-white/5 text-neutral-500 hover:bg-white/10 hover:text-white'}`}>{btn}</button>
+                      <button key={btn} onClick={() => handleCalc(btn)} className={`p-1.5 rounded-md text-[11px] font-black ${btn === '=' ? 'bg-amber-500 text-black' : 'bg-white/5 text-neutral-500 hover:bg-white/10 hover:text-white'}`}>{btn}</button>
                     ))}
                   </div>
                   <div className="grid grid-cols-3 gap-1 mt-2.5 border-t border-white/5 pt-2.5">
                      {Object.entries(rates).map(([curr, val]) => (
                         <div key={curr} className="text-center bg-black/40 rounded-lg p-1 border border-white/5">
-                           <p className="text-[5px] text-neutral-600 font-bold uppercase">{curr}</p>
-                           <p className="text-[8px] text-white font-black">{val}</p>
+                           <p className="text-[8px] text-neutral-600 font-bold uppercase">{curr}</p>
+                           <p className="text-[10px] text-white font-black">{val}</p>
                         </div>
                      ))}
                   </div>
@@ -913,7 +913,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                {/* DEADLINES (Micro) */}
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
                   <div className="flex justify-between items-center mb-1">
-                    <p className="text-[7px] text-neutral-700 font-black uppercase flex items-center gap-2"><Calendar size={10}/> Deadlines</p>
+                    <p className="text-[10px] text-neutral-700 font-black uppercase flex items-center gap-2"><Calendar size={12}/> Deadlines</p>
                     <button onClick={() => setActiveMeeting({...activeMeeting, deadlines_multiple: [...(activeMeeting.deadlines_multiple || []), { id: Date.now(), label: 'Entrega', date: '', done: false }]})} className="p-1 hover:text-white text-neutral-600"><Plus size={10}/></button>
                   </div>
                   <div className="space-y-1">
@@ -963,7 +963,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                         </div>
                         <button onMouseDown={(e) => { e.preventDefault(); setShowAIModal(true); }} className="px-3 py-1.5 bg-purple-600 rounded-lg text-[8px] font-black uppercase text-white shadow-lg flex items-center gap-1.5 hover:bg-purple-500 transition-all shrink-0"><Sparkles size={10}/> IA MAGIC</button>
                     </div>
-                    <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="w-full flex-1 p-4 text-neutral-500 font-light text-[11px] leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})}></div>
+                    <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="w-full flex-1 p-6 text-neutral-300 font-normal text-[14px] leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})}></div>
                  </div>
                )}
 
