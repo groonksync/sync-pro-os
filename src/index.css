@@ -44,11 +44,17 @@ body {
 }
 
 /* --- MEETING STUDIO TOOLTIP (EL GLOBITO) --- */
+.annotated-text-pending {
+  background-color: rgba(245, 158, 11, 0.4);
+  border-radius: 3px;
+  padding: 1px 3px;
+}
+
 .annotated-text {
   position: relative;
   border-bottom: 1px dashed #f59e0b;
   cursor: help;
-  background-color: rgba(245, 158, 11, 0.15);
+  background-color: transparent;
   padding: 1px 3px;
   border-radius: 3px;
   transition: background-color 0.2s;
@@ -92,4 +98,35 @@ body {
 .editor-container {
   outline: none;
   min-height: 100%;
+}
+
+.editor-container h1 {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: -0.05em;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.editor-container h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #a1a1aa;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.editor-container blockquote {
+  border-left: 4px solid #f59e0b;
+  padding-left: 1.5rem;
+  font-style: italic;
+  color: #d1d5db;
+  margin: 1.5rem 0;
+  background: rgba(245, 158, 11, 0.05);
+  padding: 1rem 1.5rem;
+  border-radius: 0 1rem 1rem 0;
 }

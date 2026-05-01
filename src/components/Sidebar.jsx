@@ -1,46 +1,148 @@
 import React from 'react';
 import { 
-  TrendingUp, Video, Briefcase, LayoutDashboard, Download, CreditCard, FileText, 
-  Activity, FolderKanban
+  LayoutDashboard, 
+  Calendar, 
+  Wallet, 
+  Bell, 
+  Settings, 
+  LogOut,
+  CreditCard,
+  Package,
+  TrendingUp,
+  Activity,
+  Video,
+  Home,
+  Briefcase,
+  User,
+  Cloud,
+  Landmark,
+  ListTodo,
+  Trash2
 } from 'lucide-react';
 
-const NavItem = ({ id, icon: Icon, label, badge, activeTab, setActiveTab }) => (
-  <button onClick={() => setActiveTab(id)}
-    className={`w-full flex items-center justify-between px-3 py-2 rounded-md transition-all duration-200 group ${
-      activeTab === id ? 'bg-white/10 text-white shadow-sm' : 'text-neutral-500 hover:bg-white/5 hover:text-neutral-300'
-    }`}>
-    <div className="flex items-center gap-2.5">
-      <Icon size={14} strokeWidth={activeTab === id ? 2.5 : 2} className={activeTab === id ? 'text-amber-500' : ''} />
-      <span className="text-xs font-medium tracking-wide">{label}</span>
-    </div>
-    {badge > 0 && <span className="text-[9px] bg-white/10 px-1.5 py-0.5 rounded font-bold text-white">{badge}</span>}
-  </button>
-);
+const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser }) => {
+  const menuItems = [
+    { id: 'resumen', label: 'Centro de Control', icon: Activity },
+    { id: 'prestamos', label: 'Cartera Préstamos', icon: Landmark, count: counts?.prestamos },
+    { id: 'inventario', label: 'Inventario Pro', icon: Package },
+    { id: 'pagos', label: 'Mis Egresos', icon: Wallet },
+    { id: 'editor', label: 'Editor de Video', icon: Video, count: counts?.meetings },
+    { id: 'drive-sovereign', label: 'Drive Sovereign', icon: Cloud },
+    { id: 'calendar', label: 'Google Calendar', icon: Calendar },
+    { id: 'recordatorios', label: 'Recordatorios', icon: Bell, count: counts?.notificaciones },
+    { id: 'papelera', label: 'Papelera', icon: Trash2 },
+  ];
 
-const Sidebar = ({ activeTab, setActiveTab, counts = {} }) => {
-  return (
-    <aside className="w-[220px] h-full flex flex-col bg-[#0a0a0a] border-r border-white/[0.05] z-10 relative shrink-0">
-      <div className="pt-8 pb-6 px-6 cursor-default flex flex-col items-start border-b border-white/[0.02]">
-        <div className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
-          <Activity size={16} className="text-amber-500" />
-          sync <span className="text-amber-500 italic">pro</span>
-        </div>
-      </div>
-      <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto mac-scrollbar mt-4">
-        <p className="px-3 text-[9px] font-bold text-neutral-600 uppercase tracking-widest mb-1.5 mt-2">Dashboard</p>
-        <NavItem id="resumen" icon={TrendingUp} label="Command Center" activeTab={activeTab} setActiveTab={setActiveTab} />
-        <NavItem id="meeting_studio" icon={Video} label="Meeting Studio" badge={counts.meetings} activeTab={activeTab} setActiveTab={setActiveTab} />
-        
-        <p className="px-3 text-[9px] font-bold text-neutral-600 uppercase tracking-widest mb-1.5 mt-6">Gestión</p>
-        <NavItem id="proyectos" icon={FolderKanban} label="Proyectos" badge={counts.proyectos} activeTab={activeTab} setActiveTab={setActiveTab} />
-        <NavItem id="prestamos" icon={LayoutDashboard} label="Préstamos" badge={counts.prestamos} activeTab={activeTab} setActiveTab={setActiveTab} />
-        
-        <p className="px-3 text-[9px] font-bold text-neutral-600 uppercase tracking-widest mb-1.5 mt-6">Finanzas</p>
-        <NavItem id="ventas" icon={Download} label="Ventas Digitales" activeTab={activeTab} setActiveTab={setActiveTab} />
-        <NavItem id="pagos" icon={CreditCard} label="Mis Egresos" activeTab={activeTab} setActiveTab={setActiveTab} />
-        <NavItem id="recibos" icon={FileText} label="Recibos" activeTab={activeTab} setActiveTab={setActiveTab} />
+  // Estilos dinámicos basados en el Ajustador Maestro
+  const accentStyle = {
+    backgroundColor: settings.accentColor,
+    color: settings.accentColor === '#ffffff' ? '#000000' : '#ffffff',
+    boxShadow: `0 10px 30px -10px ${settings.accentColor}44`
+  };
+
+  // SI EL MODO MÓVIL ESTÁ ACTIVO, RENDERIZAR BARRA INFERIOR
+  if (settings.isMobileMode) {
+    return (
+      <nav className="fixed bottom-0 inset-x-0 h-20 bg-[#080808]/90 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-4 z-[1000] animate-in slide-in-from-bottom duration-500">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={`flex flex-col items-center gap-1 p-2 transition-all ${
+              activeTab === item.id ? 'scale-110' : 'opacity-40 grayscale'
+            }`}
+          >
+            <div 
+              className="p-2 rounded-xl transition-all"
+              style={activeTab === item.id ? { backgroundColor: `${settings.accentColor}22`, color: settings.accentColor } : {}}
+            >
+              <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+            </div>
+          </button>
+        ))}
+        <button 
+          onClick={() => setActiveTab('configuracion')}
+          className={`flex flex-col items-center gap-1 p-2 transition-all ${activeTab === 'configuracion' ? 'scale-110' : 'opacity-40 grayscale'}`}
+        >
+           <div className="p-2 rounded-xl" style={activeTab === 'configuracion' ? { backgroundColor: `${settings.accentColor}22`, color: settings.accentColor } : {}}>
+             <Settings size={20} />
+           </div>
+        </button>
       </nav>
-    </aside>
+    );
+  }
+
+  // RENDERIZADO NORMAL (DESKTOP)
+  return (
+    <div className="w-60 bg-[#080808] border-r border-white/5 flex flex-col h-full py-8 px-5 transition-all duration-500 overflow-hidden">
+      <div className="mb-8 px-2">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: settings.accentColor }}></div>
+          <h1 className="text-sm font-black uppercase tracking-[0.3em] text-neutral-400">Sync Pro</h1>
+        </div>
+        <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-widest">Sovereign OS v2.0</p>
+      </div>
+
+      <nav className="flex-1 space-y-2">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveTab(item.id)}
+            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-2xl transition-all duration-300 group ${
+              activeTab === item.id 
+                ? 'shadow-xl' 
+                : 'text-neutral-500 hover:text-white hover:bg-white/5'
+            }`}
+            style={activeTab === item.id ? accentStyle : {}}
+          >
+            <div className="flex items-center gap-3">
+              <item.icon size={18} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+              <span className={`text-xs font-bold tracking-tight ${activeTab === item.id ? 'font-black' : 'font-medium'}`}>
+                {item.label}
+              </span>
+            </div>
+            {item.count > 0 && (
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                activeTab === item.id ? 'bg-black/20 text-black' : 'bg-white/10 text-neutral-400 group-hover:bg-white/20'
+              }`}>
+                {item.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </nav>
+
+      {/* PERFIL DE GOOGLE (SI ESTÁ LOGUEADO) */}
+      {googleUser && (
+        <div className="mb-6 px-4 py-3 bg-white/5 rounded-2xl border border-white/5 flex items-center gap-3">
+          <img src={googleUser.picture} alt="Profile" className="w-8 h-8 rounded-full border border-white/10" />
+          <div className="overflow-hidden">
+            <p className="text-[10px] font-black text-white truncate">{googleUser.name}</p>
+            <p className="text-[8px] text-neutral-500 font-bold truncate uppercase tracking-widest">Google Sync Active</p>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-auto pt-8 border-t border-white/5 space-y-1">
+        <button 
+          onClick={() => setActiveTab('configuracion')}
+          className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-xs font-bold uppercase tracking-widest ${
+            activeTab === 'configuracion' ? 'shadow-lg' : 'text-neutral-600 hover:text-white'
+          }`}
+          style={activeTab === 'configuracion' ? accentStyle : {}}
+        >
+          <Settings size={16} /> Configuración
+        </button>
+        {googleUser && (
+          <button 
+            onClick={() => setActiveTab('logout-google')}
+            className="w-full flex items-center gap-3 px-4 py-3 bg-rose-500/5 border border-rose-500/10 rounded-2xl text-rose-500 hover:bg-rose-500 hover:text-white transition-all text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-rose-500/5"
+          >
+            <Cloud size={14} /> Cerrar Sesión Google
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 

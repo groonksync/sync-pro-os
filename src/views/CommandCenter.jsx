@@ -1,89 +1,206 @@
 import React from 'react';
-import { TrendingUp, LayoutDashboard, Briefcase, Calendar, Clock, Bell, AlertCircle } from 'lucide-react';
+import { 
+  TrendingUp, LayoutDashboard, Calendar, Clock, Bell, AlertCircle, 
+  User, DollarSign, ChevronRight, CreditCard, Activity, ShoppingBag,
+  CheckCircle2, Circle, AlertTriangle, CalendarDays, History
+} from 'lucide-react';
 
-const CommandCenter = ({ meetingsList = [], data = { prestamos: [] } }) => {
-  // Cálculos financieros
-  const totalCapital = data.prestamos.reduce((acc, p) => acc + (parseFloat(p.capital) || 0), 0);
-  const totalInteres = data.prestamos.reduce((acc, p) => acc + ((parseFloat(p.capital) || 0) * (parseFloat(p.interes) || 0) / 100), 0);
-  const totalPorCobrar = totalCapital + totalInteres;
+const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios = [], onNavigateToPrestamo, onQuickPayment }) => {
+  const hoy = new Date();
+  const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+  
+  const listaPrestamos = Array.isArray(data?.prestamos) ? data.prestamos.filter(p => p && p.id) : [];
 
-  // Alertas de Cobro (Préstamos que vencen hoy o pronto)
-  const hoy = new Date().toISOString().split('T')[0];
-  const proximosCobros = data.prestamos.filter(p => {
-    if (!p.fin) return false;
-    // Simplificación: Si la fecha contiene el día de hoy o es parecida
-    return p.fin.includes(hoy.split('-')[2]) || p.estado === 'Alerta';
-  });
+  const totalCapital = listaPrestamos.reduce((acc, p) => acc + (parseFloat(p?.capital) || 0), 0);
+  const totalInteresMensual = listaPrestamos.reduce((acc, p) => {
+    const cap = parseFloat(p?.capital) || 0;
+    const int = parseFloat(p?.interes) || 0;
+    return acc + (cap * (int / 100));
+  }, 0);
+
+  const listaServicios = Array.isArray(servicios) ? servicios.filter(s => s && s.id) : [];
+  const totalEgresos = listaServicios.reduce((acc, s) => acc + (parseFloat(s?.monto) || 0), 0);
+
+  const allCobros = listaPrestamos.map(p => {
+    if (!p?.inicio) return null;
+    const start = new Date(p.inicio);
+    if (isNaN(start.getTime())) return null;
+
+    // Cálculo de meses debidos
+    const monthsSinceStart = (hoy.getFullYear() - start.getFullYear()) * 12 + (hoy.getMonth() - start.getMonth());
+    const expectedPayments = monthsSinceStart; // No contamos el mes actual si aún no ha llegado el día
+    const actualPayments = (Array.isArray(p.pagos) ? p.pagos : []).length;
+    
+    // Si hoy ya pasó su día de cobro, debería tener un pago más
+    const billingDay = start.getDate();
+    const thisMonthBillingDate = new Date(hoy.getFullYear(), hoy.getMonth(), billingDay);
+    const hasPassedBillingDay = hoy >= thisMonthBillingDate;
+    
+    const totalExpected = hasPassedBillingDay ? monthsSinceStart + 1 : monthsSinceStart;
+    const debtMonths = Math.max(0, totalExpected - actualPayments);
+
+    let nextDate = new Date(hoy.getFullYear(), hoy.getMonth(), billingDay);
+    if (nextDate < hoy && nextDate.toDateString() !== hoy.toDateString()) {
+      nextDate = new Date(hoy.getFullYear(), hoy.getMonth() + 1, billingDay);
+    }
+    
+    const diff = Math.ceil((nextDate - hoy) / (1000 * 60 * 60 * 24));
+    const isPaidThisMonth = (Array.isArray(p.pagos) ? p.pagos : []).includes(mesActual);
+    
+    return { ...p, nextDate, diffDays: diff, isPaidThisMonth, debtMonths };
+  }).filter(p => p !== null);
+
+  const alertasUrgentes = allCobros.filter(p => p.diffDays >= 0 && p.diffDays <= 7 && !p.isPaidThisMonth);
+  const deudoresCronicos = allCobros.filter(p => p.debtMonths > 0);
+  const cobrosActivos = allCobros.filter(p => !p.isPaidThisMonth && p.diffDays <= 3).sort((a, b) => a.diffDays - b.diffDays);
+  const liquidados = allCobros.filter(p => p.isPaidThisMonth);
+
+  const proximosServicios = [...listaServicios].sort((a, b) => new Date(a.fecha_pago) - new Date(b.fecha_pago));
 
   return (
-    <div className="animate-in fade-in duration-500 max-w-[1200px]">
-      <header className="mb-8 flex justify-between items-center">
+    <div className="animate-in fade-in duration-500 max-w-[1200px] w-full">
+      <header className="mb-6 flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-light text-white tracking-tight mb-1">Buenos días.</h2>
-          <p className="text-xs text-neutral-500 font-medium">Resumen operativo de hoy.</p>
+          <h2 className="text-3xl font-light text-white tracking-tight mb-2">Centro de <span className="text-neutral-400 font-medium">Control</span></h2>
+          <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-[0.3em] flex items-center gap-2">
+            <Activity size={14} /> Gestión de Capital Sovereign OS
+          </p>
         </div>
-        <div className="text-right">
-          <p className="text-2xl font-mono text-white font-light">{totalPorCobrar.toLocaleString()} <span className="text-sm text-neutral-500">Bs.</span></p>
-          <p className="text-[10px] text-amber-500 tracking-widest uppercase mt-0.5 font-bold">Capital Total Proyectado</p>
+        <div className="flex gap-6">
+           <div className="text-right">
+            <p className="text-2xl font-mono text-white font-bold tracking-tighter">{totalCapital.toLocaleString()} <span className="text-xs text-neutral-600 uppercase">Bs.</span></p>
+            <p className="text-[10px] text-neutral-500 tracking-widest uppercase mt-1 font-bold">Capital en Calle</p>
+          </div>
+          <div className="text-right border-l border-white/10 pl-6">
+            <p className="text-2xl font-mono text-rose-500 font-bold tracking-tighter">{totalEgresos.toLocaleString()} <span className="text-xs text-rose-900 uppercase">Bs.</span></p>
+            <p className="text-[10px] text-rose-500/50 tracking-widest uppercase mt-1 font-bold">Egresos Mensuales</p>
+          </div>
         </div>
       </header>
 
-      <div className="grid grid-cols-12 gap-5 mb-8">
-        <div className="col-span-8 flex flex-col gap-5">
-          <div className="grid grid-cols-2 gap-5">
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-5 flex flex-col justify-between hover:bg-white/[0.03] transition-colors">
-              <p className="text-[11px] text-neutral-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><LayoutDashboard size={12}/> Capital Prestado</p>
-              <p className="text-3xl font-light text-white">{totalCapital.toLocaleString()} <span className="text-sm text-neutral-600">Bs.</span></p>
-            </div>
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-5 flex flex-col justify-between hover:bg-white/[0.03] transition-colors">
-              <p className="text-[11px] text-neutral-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><TrendingUp size={12}/> Interés Mensual Generado</p>
-              <p className="text-3xl font-light text-amber-500">{totalInteres.toLocaleString()} <span className="text-sm text-amber-600">Bs.</span></p>
-            </div>
+      {/* SECCIÓN DE DEUDORES CRÓNICOS */}
+      {deudoresCronicos.length > 0 && (
+        <div className="mb-6 p-6 bg-rose-500/5 border border-rose-500/20 rounded-[28px] shadow-xl relative overflow-hidden">
+           <div className="flex items-center gap-4 mb-4">
+              <History size={20} className="text-rose-500" />
+              <h3 className="text-base font-black text-white uppercase tracking-[0.2em]">Pagos Faltantes / Deudores</h3>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {deudoresCronicos.map(p => (
+                <div key={p.id} onClick={() => onNavigateToPrestamo(p.id)} className="bg-black/40 border border-white/5 p-5 rounded-2xl flex justify-between items-center group hover:border-rose-500/50 transition-all cursor-pointer">
+                   <div>
+                      <p className="text-xs font-bold text-white mb-1">{p.nombre}</p>
+                      <div className="px-2 py-0.5 bg-rose-500 text-white text-[8px] font-black rounded-full uppercase w-max">
+                         Debe {p.debtMonths} {p.debtMonths === 1 ? 'Mes' : 'Meses'}
+                      </div>
+                   </div>
+                   <ChevronRight size={16} className="text-neutral-700 group-hover:text-white" />
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
+
+      {alertasUrgentes.length > 0 && (
+        <div className="mb-6 p-6 bg-neutral-900/40 border border-white/10 rounded-[28px] shadow-2xl relative overflow-hidden">
+           <div className="flex items-center justify-between mb-6">
+              <h3 className="text-base font-black text-white uppercase tracking-[0.3em] flex items-center gap-3">
+                <AlertCircle size={20} className="text-rose-500" /> Cobros Pendientes
+              </h3>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {alertasUrgentes.map(p => (
+                <div key={p.id} className="bg-black/60 border border-white/5 p-6 rounded-3xl flex flex-col gap-4">
+                   <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-sm font-bold text-white mb-1">{p.nombre}</p>
+                        <p className="text-[10px] text-rose-500 font-black uppercase tracking-widest">Vence {p.nextDate.toLocaleDateString()}</p>
+                      </div>
+                   </div>
+                   <div className="flex justify-between items-center mt-2 pt-4 border-t border-white/5">
+                      <p className="text-lg font-mono text-white font-black">{(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toFixed(2)} Bs.</p>
+                      <button onClick={() => onQuickPayment(p.id)} className="w-10 h-10 rounded-xl bg-white/5 text-white flex items-center justify-center hover:bg-rose-500 transition-all"><CheckCircle2 size={20} /></button>
+                   </div>
+                </div>
+              ))}
+           </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-12 lg:col-span-4 space-y-6">
+          <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-[28px] p-6 shadow-xl">
+             <div className="flex items-center gap-3 mb-4 text-neutral-500">
+               <TrendingUp size={16}/>
+               <h3 className="text-[10px] font-black uppercase tracking-[0.2em]">Interés Mensual</h3>
+             </div>
+             <p className="text-2xl font-mono text-emerald-400 font-black">+{totalInteresMensual.toLocaleString()} <span className="text-[10px] font-sans opacity-50">Bs.</span></p>
           </div>
 
-          {/* Sección de Alertas Críticas */}
-          <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-5">
-            <h3 className="text-[11px] text-rose-500 uppercase tracking-widest mb-4 font-bold flex items-center gap-1.5"><Bell size={12}/> Alertas de Cobro Urgente</h3>
-            <div className="space-y-3">
-              {proximosCobros.length > 0 ? proximosCobros.map(p => (
-                <div key={p.id} className="flex items-center justify-between bg-black/40 p-3 rounded-lg border border-white/5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
-                      <AlertCircle size={16} />
-                    </div>
-                    <div>
-                      <p className="text-xs text-white font-bold">{p.nombre}</p>
-                      <p className="text-[10px] text-neutral-500">Vence: {p.fin} | Capital: {p.capital} Bs.</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-rose-500 font-bold uppercase">Cobrar Hoy</p>
-                  </div>
+          <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-[28px] p-6 shadow-xl">
+            <h3 className="text-[10px] text-neutral-500 uppercase tracking-[0.2em] mb-4 font-black flex items-center gap-2"><ShoppingBag size={14}/> Mis Egresos</h3>
+            <div className="space-y-4">
+              {proximosServicios.slice(0, 4).map(s => (
+                <div key={s.id} className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl flex justify-between items-center">
+                  <p className="text-xs text-white font-bold">{s.nombre}</p>
+                  <p className="text-xs font-mono text-rose-500 font-bold">{s.monto} Bs.</p>
                 </div>
-              )) : (
-                <p className="text-[10px] text-neutral-600 italic">No hay cobros urgentes programados para hoy.</p>
-              )}
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="col-span-4 bg-[#0a0a0a] border border-white/[0.05] rounded-xl p-5 flex flex-col">
-           <h3 className="text-[11px] text-amber-500 uppercase tracking-widest mb-4 font-bold flex items-center gap-1.5"><Calendar size={12}/> Agenda de Reuniones</h3>
-           <div className="space-y-0 flex-1">
-             {meetingsList.length > 0 ? meetingsList.filter(m => m.estado !== 'Finalizado').map(m => (
-               <div key={m.id} className="flex gap-3 group cursor-pointer py-2.5 border-b border-white/5 last:border-0 hover:bg-white/[0.01]">
-                 <div className="flex flex-col items-center justify-center w-8 h-8 rounded bg-white/[0.02] border border-white/5 shrink-0">
-                   <span className="text-[10px] font-bold text-white leading-none">{m.fecha?.split('-')[2] || '??'}</span>
-                 </div>
-                 <div className="flex-1 flex flex-col justify-center">
-                   <p className="text-xs text-white font-medium group-hover:text-amber-500 transition-colors truncate">{m.cliente}</p>
-                   <p className="text-[10px] text-neutral-500 flex items-center gap-1 mt-0.5"><Clock size={9}/> {m.estado}</p>
-                 </div>
-               </div>
-             )) : (
-               <p className="text-[10px] text-neutral-600 italic">No hay reuniones pendientes.</p>
-             )}
-           </div>
+        <div className="col-span-12 lg:col-span-8 bg-[#0a0a0a] border border-white/[0.05] rounded-[28px] p-8 shadow-2xl">
+          <div className="mb-6">
+            <h3 className="text-xl font-bold text-white tracking-tight">Cobros de la Semana</h3>
+            <p className="text-[10px] text-neutral-600 uppercase font-bold tracking-[0.2em] mt-1">Ventana de Cobro: 3 Días</p>
+          </div>
+
+          <div className="space-y-4">
+            {cobrosActivos.length > 0 ? cobrosActivos.map(p => (
+              <div key={p.id} className="flex items-center justify-between p-5 rounded-[24px] border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all">
+                <div className="flex items-center gap-5 flex-1">
+                  <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-neutral-500"><User size={24}/></div>
+                  <div>
+                    <h4 className="text-base font-bold text-white">{p.nombre}</h4>
+                    <p className="text-[10px] text-rose-500 font-black uppercase tracking-widest mt-1 flex items-center gap-2">
+                       <CalendarDays size={12}/> Cobrar el {p.nextDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-10">
+                  <p className="text-xl font-mono font-black text-white">{(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toFixed(2)} Bs.</p>
+                  <button onClick={() => onQuickPayment(p.id)} className="w-14 h-14 rounded-2xl bg-white/5 text-neutral-600 hover:bg-white hover:text-black transition-all shadow-xl">
+                    <Circle size={24} />
+                  </button>
+                </div>
+              </div>
+            )) : (
+              <div className="py-10 text-center border border-dashed border-white/5 rounded-3xl">
+                 <p className="text-neutral-600 text-xs italic">No hay cobros para los próximos 3 días.</p>
+              </div>
+            )}
+
+            {liquidados.length > 0 && (
+              <div className="mt-12 pt-8 border-t border-white/5">
+                <p className="text-[9px] text-neutral-600 font-black uppercase tracking-[0.3em] mb-6">Cobros Liquidados</p>
+                <div className="space-y-4 opacity-40">
+                  {liquidados.map(p => (
+                    <div key={p.id} className="flex items-center justify-between p-5 rounded-[24px] border border-emerald-500/10 bg-emerald-500/[0.02]">
+                       <div className="flex items-center gap-4">
+                          <CheckCircle2 size={18} className="text-emerald-500" />
+                          <div>
+                             <p className="text-sm font-bold text-white">{p.nombre}</p>
+                             <p className="text-[9px] text-neutral-500 font-bold uppercase">Reinicio: {p.nextDate.toLocaleDateString()}</p>
+                          </div>
+                       </div>
+                       <button onClick={() => onQuickPayment(p.id)} className="text-emerald-500 p-2"><CheckCircle2 size={20}/></button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
