@@ -929,10 +929,10 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                </div>
             </div>
 
-            {/* CENTRO: EDITOR / DRIVE / CALENDAR (Espacio Proporcionado) */}
-            <div className={`flex-1 flex flex-col bg-black min-h-0 border-x border-white/5 p-1.5 space-y-1.5 ${settings.isMobileMode ? 'min-h-[600px] overflow-visible' : ''}`}>
+            {/* CENTRO: EDITOR / DRIVE / CALENDAR (Estructura Blindada) */}
+            <div className={`flex-1 min-w-0 flex flex-col bg-black border-x border-white/5 p-1.5 space-y-1.5 items-center ${settings.isMobileMode ? 'min-h-[600px] overflow-visible' : ''}`}>
                {/* TABS DE SESIÓN NEXUS */}
-               <div className="flex max-w-[85%] mx-auto w-full bg-[#0a0a0a] border border-white/5 rounded-2xl p-1 shadow-xl">
+               <div className="flex w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-2xl p-1 shadow-xl">
                   {['editor', 'drive', 'calendar'].map(t => (
                     <button 
                       key={t} 
@@ -948,7 +948,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                </div>
 
                {sessionTab === 'editor' && (
-                 <div className="flex-1 max-w-[85%] mx-auto w-full bg-[#0a0a0a] border border-white/5 rounded-[24px] flex flex-col overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-500">
+                 <div className="flex-1 w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-[24px] flex flex-col overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-500">
                     {/* BARRA ÚNICA DE HERRAMIENTAS (MICRO) */}
                     <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/5 bg-black/40 shrink-0 overflow-x-auto no-scrollbar">
                         <div className="flex items-center gap-0.5 pr-2 border-r border-white/10 shrink-0">
@@ -968,7 +968,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                )}
 
                {sessionTab === 'drive' && (
-                 <div className="flex-1 bg-[#0a0a0a] border border-white/5 rounded-[32px] flex flex-col overflow-hidden shadow-2xl animate-in fade-in slide-in-from-right-4 duration-500">
+                 <div className="flex-1 w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-[32px] flex flex-col overflow-hidden shadow-2xl animate-in fade-in slide-in-from-right-4 duration-500">
                     <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-black/40">
                       <div className="flex flex-col">
                         <div className="flex items-center gap-3 text-blue-500 font-black text-[9px] uppercase tracking-widest"><HardDrive size={16}/> Almacenamiento Nexus</div>
@@ -1037,7 +1037,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                )}
 
                {sessionTab === 'calendar' && (
-                 <div className="flex-1 bg-[#0a0a0a] border border-white/5 rounded-[32px] flex flex-col overflow-hidden shadow-2xl animate-in fade-in slide-in-from-right-4 duration-500">
+                 <div className="flex-1 w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-[32px] flex flex-col overflow-hidden shadow-2xl animate-in fade-in slide-in-from-right-4 duration-500">
                     <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-black/40">
                       <div className="flex flex-col">
                         <div className="flex items-center gap-3 text-emerald-500 font-black text-[9px] uppercase tracking-widest"><Calendar size={16}/> Agenda Nexus</div>
