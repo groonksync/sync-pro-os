@@ -35,21 +35,71 @@ const Inventario = () => {
   const [newEntrega, setNewEntrega] = useState({ producto_id: '', cantidad: 1, monto: 0, serial_vinculado: '' });
   const [newPago, setNewPago] = useState({ monto: 0 });
 
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const ITEMS_PER_PAGE = 24;
+
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [page]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const { data: prodData } = await supabase.from('productos').select('*');
-      setProductos(Array.isArray(prodData) ? prodData : []);
+      const from = page * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      const { data: prodData, error: prodError } = await supabase
+        .from('productos')
+        .select('*')
+        .range(from, to)
+        .order('created_at', { ascending: false });
+
+      if (prodError) throw prodError;
+      
+      if (page === 0) {
+        setProductos(prodData || []);
+      } else {
+        setProductos(prev => [...prev, ...prodData]);
+      }
+      
+      setHasMore(prodData.length === ITEMS_PER_PAGE);
+
       const { data: mayoData } = await supabase.from('mayoristas').select('*');
       setMayoristas(Array.isArray(mayoData) ? mayoData : []);
+      
       const { data: movData } = await supabase.from('movimientos_mayoristas').select('*, productos(nombre)');
       setMovimientos(Array.isArray(movData) ? movData : []);
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setLoading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `product-images/${fileName}`;
+
+      let { error: uploadError } = await supabase.storage
+        .from('productos')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('productos')
+        .getPublicUrl(filePath);
+
+      setEditingProduct({ ...editingProduct, imagen: publicUrl });
+    } catch (error) {
+      alert('Error al subir imagen: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -168,46 +218,57 @@ const Inventario = () => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {filteredProducts.map(p => (
-                  <div key={p.id} className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-6 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden">
-                    <div className="flex gap-6 mb-6">
-                       <div className="w-28 h-28 bg-neutral-900 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 border border-white/5">
-                          {p.imagen ? <img src={p.imagen} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"/> : <ImageIcon size={40} className="text-neutral-800"/>}
-                       </div>
-                       <div className="flex-1 space-y-4">
-                          <div className="flex justify-between items-start">
-                             <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full">{p.categoria}</span>
-                             <p className={`text-xl font-mono font-black ${p.stock_actual <= (p.stock_minimo || 5) ? 'text-rose-500' : 'text-white'}`}>{p.stock_actual} U.</p>
+                  <div key={p.id} className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden">
+                    <div className="aspect-square bg-neutral-900 flex items-center justify-center overflow-hidden border-b border-white/5 relative">
+                       {p.imagen ? (
+                          <img src={p.imagen} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"/>
+                       ) : (
+                          <div className="flex flex-col items-center gap-3 text-neutral-800">
+                             <ImageIcon size={60}/>
+                             <span className="text-[10px] font-black uppercase tracking-[0.3em]">Sin Imagen</span>
                           </div>
-                          <h3 className="text-xl font-bold text-white line-clamp-2 leading-tight">{p.nombre}</h3>
-                          <div className="flex flex-wrap gap-2">
-                             {p.codigo && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-400 border border-white/5 uppercase tracking-widest">SKU: {p.codigo}</div>}
-                             {p.serial && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-400 border border-white/5 uppercase tracking-widest">S/N: {p.serial}</div>}
+                       )}
+                       <div className="absolute top-4 right-4 z-10">
+                          <p className={`text-xl font-mono font-black px-4 py-2 rounded-2xl backdrop-blur-xl border border-white/10 ${p.stock_actual <= (p.stock_minimo || 5) ? 'bg-rose-500/80 text-white' : 'bg-black/60 text-white'}`}>{p.stock_actual} U.</p>
+                       </div>
+                       <div className="absolute top-4 left-4 z-10">
+                          <span className="text-[9px] text-white font-black uppercase tracking-widest bg-blue-600/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl">{p.categoria}</span>
+                       </div>
+                    </div>
+
+                    <div className="p-6 flex-1 flex flex-col">
+                       <div className="flex-1 space-y-3 mb-6">
+                          <h3 className="text-xl font-bold text-white line-clamp-1 leading-tight tracking-tight">{p.nombre}</h3>
+                          <div className="flex gap-2">
+                             {p.codigo && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest">SKU: {p.codigo}</div>}
+                             {p.serial && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest">S/N: {p.serial}</div>}
                           </div>
+                          <p className="text-[11px] text-neutral-500 line-clamp-2 font-medium italic leading-relaxed">{p.ficha_tecnica || 'Sin ficha técnica detallada'}</p>
+                       </div>
+
+                       <div className="pt-6 border-t border-white/5 flex justify-between items-center">
+                          <div>
+                             <p className="text-[9px] text-neutral-600 font-black uppercase mb-1">Precio Mercado</p>
+                             <p className="text-3xl font-mono text-white font-black tracking-tighter">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-sm opacity-30">Bs.</span></p>
+                          </div>
+                          <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="w-14 h-14 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl group-hover:scale-105 duration-300"><Edit3 size={22}/></button>
                        </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                       <div className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl">
-                          <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1 flex items-center gap-2"><MapPin size={10}/> Ubicación</p>
-                          <p className="text-xs text-white font-bold">{p.ubicacion || '---'}</p>
-                       </div>
-                       <div className="bg-white/[0.02] border border-white/5 p-4 rounded-2xl">
-                          <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1 flex items-center gap-2"><Cpu size={10}/> Ficha Técnica</p>
-                          <p className="text-[10px] text-neutral-400 line-clamp-1 italic">{p.ficha_tecnica || 'Sin detalles'}</p>
-                       </div>
-                    </div>
-                    <div className="mt-auto pt-8 border-t border-white/5 flex justify-between items-center">
-                       <div>
-                          <p className="text-[9px] text-neutral-600 font-black uppercase mb-1">Precio Público</p>
-                          <p className="text-3xl font-mono text-white font-black">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-sm opacity-30">Bs.</span></p>
-                       </div>
-                       <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="w-14 h-14 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl"><Edit3 size={20}/></button>
-                    </div>
-                    {p.stock_actual <= (p.stock_minimo || 5) && (
-                      <div className="absolute top-0 right-0 w-2 h-full bg-rose-500 animate-pulse"></div>
-                    )}
                   </div>
                 ))}
               </div>
+
+              {hasMore && (
+                <div className="flex justify-center pt-10">
+                  <button 
+                    onClick={() => setPage(prev => prev + 1)} 
+                    disabled={loading}
+                    className="px-16 py-5 bg-white/5 border border-white/10 rounded-[32px] text-[11px] font-black text-white uppercase tracking-[0.4em] hover:bg-white/10 transition-all"
+                  >
+                    {loading ? 'Cargando Catálogo...' : 'Ver más productos'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -325,39 +386,79 @@ const Inventario = () => {
         </div>
       )}
 
-      {/* MODAL PRODUCTO */}
+      {/* MODAL PRODUCTO PRO */}
       {isModalOpen && editingProduct && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
-           <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-[900px] rounded-[32px] p-8 shadow-2xl overflow-y-auto max-h-[95vh] mac-scrollbar">
-              <div className="flex justify-between items-center mb-8">
-                 <h3 className="text-3xl font-black text-white tracking-tighter uppercase">Ficha Logística</h3>
-                 <button onClick={() => { setIsModalOpen(false); setEditingProduct(null); }} className="text-neutral-700 hover:text-white p-3 bg-white/5 rounded-full"><X size={32}/></button>
+           <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-[1000px] rounded-[48px] p-10 shadow-2xl overflow-y-auto max-h-[95vh] mac-scrollbar">
+              <div className="flex justify-between items-center mb-10">
+                 <h3 className="text-3xl font-black text-white tracking-tighter uppercase underline decoration-white/10 underline-offset-8">Ficha Logística <span className="text-neutral-600">Sovereign</span></h3>
+                 <button onClick={() => { setIsModalOpen(false); setEditingProduct(null); }} className="text-neutral-700 hover:text-white p-3 bg-white/5 rounded-full transition-colors"><X size={32}/></button>
               </div>
+
               <div className="grid grid-cols-12 gap-10">
-                <div className="col-span-12 lg:col-span-8 space-y-8">
-                  <input type="text" value={editingProduct.nombre} onChange={e => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white font-black outline-none text-2xl" placeholder="Nombre..."/>
-                  <div className="grid grid-cols-2 gap-6">
-                    <input type="text" value={editingProduct.serial} onChange={e => setEditingProduct({...editingProduct, serial: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[24px] py-5 px-6 text-white font-mono uppercase text-sm outline-none" placeholder="S/N..."/>
-                    <input type="text" value={editingProduct.ubicacion} onChange={e => setEditingProduct({...editingProduct, ubicacion: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[24px] py-5 px-6 text-white text-sm outline-none" placeholder="Ubicación..."/>
-                  </div>
-                  <textarea value={editingProduct.ficha_tecnica} onChange={e => setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[32px] p-8 text-white outline-none h-40 resize-none italic" placeholder="Especificaciones..."/>
-                </div>
-                <div className="col-span-12 lg:col-span-4 space-y-8">
-                   <div className="bg-emerald-500/5 p-8 rounded-[40px] border border-emerald-500/10">
-                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-4 block">Venta Final</label>
-                      <input type="number" value={editingProduct.precio_venta} onChange={e => setEditingProduct({...editingProduct, precio_venta: parseFloat(e.target.value) || 0})} className="w-full bg-black/40 border border-emerald-500/20 p-6 rounded-3xl text-white font-mono text-3xl outline-none font-black" />
-                   </div>
-                   <div className="bg-rose-500/5 p-8 rounded-[40px] border border-rose-500/10">
-                      <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-4 block">Costo Interno</label>
-                      <input type="number" value={editingProduct.precio_costo} onChange={e => setEditingProduct({...editingProduct, precio_costo: parseFloat(e.target.value) || 0})} className="w-full bg-black/40 border border-rose-500/10 p-5 rounded-2xl text-white font-mono text-xl outline-none font-bold" />
-                   </div>
-                   <div className="bg-white/5 p-8 rounded-[40px] border border-white/5 text-center text-white">
-                      <label className="text-[9px] font-bold text-neutral-600 uppercase mb-2 block tracking-widest">Stock</label>
-                      <input type="number" value={editingProduct.stock_actual} onChange={e => setEditingProduct({...editingProduct, stock_actual: parseInt(e.target.value) || 0})} className="bg-transparent text-3xl font-mono w-full outline-none font-black text-center" />
-                   </div>
-                </div>
+                 <div className="col-span-12 lg:col-span-4 space-y-6">
+                    <div className="aspect-square bg-white/5 border border-white/10 rounded-[48px] overflow-hidden flex items-center justify-center group relative cursor-pointer hover:border-white/20 transition-all shadow-2xl">
+                       {editingProduct.imagen ? (
+                          <img src={editingProduct.imagen} className="w-full h-full object-cover"/>
+                       ) : (
+                          <div className="flex flex-col items-center gap-4 text-neutral-600">
+                             <ImageIcon size={60}/>
+                             <span className="text-[10px] font-black uppercase tracking-widest">Añadir Foto</span>
+                          </div>
+                       )}
+                       <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Plus className="text-white" size={40}/>
+                          <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload}/>
+                       </label>
+                    </div>
+                    <div className="bg-white/5 p-8 rounded-[40px] border border-white/5 text-center text-white">
+                       <label className="text-[9px] font-bold text-neutral-600 uppercase mb-2 block tracking-widest">Stock Disponible</label>
+                       <input type="number" value={editingProduct.stock_actual} onChange={e => setEditingProduct({...editingProduct, stock_actual: parseInt(e.target.value) || 0})} className="bg-transparent text-5xl font-mono w-full outline-none font-black text-center tracking-tighter" />
+                    </div>
+                 </div>
+                 
+                 <div className="col-span-12 lg:col-span-8 space-y-6">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Nombre del Producto</label>
+                       <input type="text" value={editingProduct.nombre} onChange={e => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[32px] p-7 text-white font-black outline-none text-2xl shadow-inner" placeholder="Ej: MacBook Pro M3 16\"..."/>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Categoría</label>
+                          <select value={editingProduct.categoria} onChange={e => setEditingProduct({...editingProduct, categoria: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white font-bold outline-none">
+                             <option value="Computadoras">Computadoras</option>
+                             <option value="Celulares">Celulares</option>
+                             <option value="Accesorios">Accesorios</option>
+                             <option value="Servicios">Servicios</option>
+                          </select>
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">SKU / Código</label>
+                          <input type="text" value={editingProduct.codigo} onChange={e => setEditingProduct({...editingProduct, codigo: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white font-mono uppercase text-sm outline-none" placeholder="COD-000"/>
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="bg-emerald-500/5 p-8 rounded-[48px] border border-emerald-500/10">
+                          <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2 block">Precio Venta (Bs.)</label>
+                          <input type="number" value={editingProduct.precio_venta} onChange={e => setEditingProduct({...editingProduct, precio_venta: parseFloat(e.target.value) || 0})} className="w-full bg-transparent p-0 text-white font-mono text-4xl outline-none font-black tracking-tighter" />
+                       </div>
+                       <div className="bg-rose-500/5 p-8 rounded-[48px] border border-rose-500/10 opacity-60">
+                          <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2 block">Costo Interno</label>
+                          <input type="number" value={editingProduct.precio_costo} onChange={e => setEditingProduct({...editingProduct, precio_costo: parseFloat(e.target.value) || 0})} className="w-full bg-transparent p-0 text-white font-mono text-2xl outline-none font-bold" />
+                       </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Descripción & Ficha Técnica</label>
+                       <textarea value={editingProduct.ficha_tecnica} onChange={e => setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[40px] p-8 text-white outline-none h-44 resize-none italic leading-relaxed text-sm" placeholder="Detalla las especificaciones técnicas aquí..."/>
+                    </div>
+                 </div>
               </div>
-              <button onClick={handleSaveProduct} disabled={loading} className="w-full mt-16 py-8 bg-white text-black font-black rounded-[40px] uppercase text-sm shadow-2xl hover:bg-neutral-200 transition-all">Finalizar</button>
+              <button onClick={handleSaveProduct} disabled={loading} className="w-full mt-12 py-8 bg-white text-black font-black rounded-[40px] uppercase text-[11px] tracking-[0.4em] shadow-2xl hover:bg-neutral-200 transition-all flex items-center justify-center gap-4">
+                {loading ? 'Procesando...' : 'Guardar en Catálogo'} <Plus size={20}/>
+              </button>
            </div>
         </div>
       )}
