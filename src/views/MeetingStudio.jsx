@@ -948,7 +948,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                </div>
 
                {sessionTab === 'editor' && (
-                 <div className="flex-1 bg-[#0a0a0a] border border-white/5 rounded-[24px] flex flex-col overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-500">
+                 <div className="flex-1 max-w-[85%] mx-auto w-full bg-[#0a0a0a] border border-white/5 rounded-[24px] flex flex-col overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-500">
                     {/* BARRA ÚNICA DE HERRAMIENTAS (MICRO) */}
                     <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/5 bg-black/40 shrink-0 overflow-x-auto no-scrollbar">
                         <div className="flex items-center gap-0.5 pr-2 border-r border-white/10 shrink-0">
