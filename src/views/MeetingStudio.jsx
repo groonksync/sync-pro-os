@@ -972,10 +972,21 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
                      <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="w-full flex-1 p-6 text-neutral-300 font-normal text-[14px] leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})}></div>
 
+                     {/* BARRA DE ESTRUCTURA INFERIOR (H1/H2) */}
+                     <div className="flex items-center gap-3 px-4 py-2.5 border-t border-white/5 bg-black/60 shrink-0">
+                        <button onMouseDown={(e) => formatText('formatBlock', 'H1', e)} className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white text-[10px] font-black uppercase transition-all border border-white/5">
+                           <Heading1 size={14} className="text-blue-400" /> Título Principal
+                        </button>
+                        <button onMouseDown={(e) => formatText('formatBlock', 'H2', e)} className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white text-[10px] font-black uppercase transition-all border border-white/5">
+                           <Heading2 size={14} className="text-emerald-400" /> Subtítulo
+                        </button>
+                        <div className="flex-1" /> {/* Espaciador para no tapar el centro */}
+                     </div>
+
                      {/* BOTÓN FLOTANTE IA MAGIC */}
                      <button 
                        onMouseDown={(e) => { e.preventDefault(); setShowAIModal(true); }} 
-                       className="absolute bottom-8 right-8 px-5 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-[0_10px_30px_rgba(168,85,247,0.5)] border border-white/10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 z-50 group"
+                       className="absolute bottom-16 right-8 px-5 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-[0_10px_30px_rgba(168,85,247,0.5)] border border-white/10 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 z-50 group"
                      >
                         <Sparkles size={16} className="animate-pulse" />
                         <span>IA Magic</span>
