@@ -932,7 +932,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
             {/* CENTRO: EDITOR / DRIVE / CALENDAR (Espacio Proporcionado) */}
             <div className={`flex-1 flex flex-col bg-black min-h-0 border-x border-white/5 ${settings.interfaceDensity === 'compacto' ? 'p-1 space-y-1' : 'p-3 space-y-3'} ${settings.isMobileMode ? 'min-h-[600px] overflow-visible' : ''}`}>
                {/* TABS DE SESIÓN NEXUS */}
-               <div className="flex bg-[#0a0a0a] border border-white/5 rounded-2xl p-1 shadow-xl">
+               <div className="flex max-w-[85%] mx-auto w-full bg-[#0a0a0a] border border-white/5 rounded-2xl p-1 shadow-xl">
                   {['editor', 'drive', 'calendar'].map(t => (
                     <button 
                       key={t} 
