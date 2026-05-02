@@ -48,23 +48,17 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
           </div>
         )}
 
-        {/* SELLO AGOTADO EXECUTIVE LUX */}
+        {/* SELLO AGOTADO INFINITE BAND */}
         {parseInt(p.stock_actual) === 0 && (
-           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
-              <div className="relative flex items-center justify-center w-full">
-                 {/* Líneas de diseño cruzadas */}
-                 <div className="absolute w-[150%] h-[1px] bg-white/10 -rotate-[45deg] translate-y-[-20px]" />
-                 <div className="absolute w-[150%] h-[1px] bg-white/10 -rotate-[45deg] translate-y-[20px]" />
+           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none group-hover:scale-110 transition-transform duration-1000 overflow-hidden">
+              <div className="bg-black/60 backdrop-blur-3xl border-y border-white/20 py-4 md:py-8 w-[160%] -rotate-[45deg] shadow-[0_0_100px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center relative">
+                 {/* Efecto Shimmer interno */}
+                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
                  
-                 <div className="bg-black/40 backdrop-blur-2xl border-y border-white/20 py-4 md:py-6 w-[140%] -rotate-[45deg] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col items-center justify-center overflow-hidden">
-                    {/* Efecto Shimmer interno */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
-                    
-                    <span className="text-white text-lg md:text-3xl font-black tracking-[0.6em] md:tracking-[0.8em] uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
-                       Agotado
-                    </span>
-                    <div className="h-[1px] w-48 md:w-80 bg-rose-600 mt-4 animate-pulse shadow-[0_0_20px_rgba(225,29,72,1)] opacity-80" />
-                 </div>
+                 <span className="text-white text-lg md:text-4xl font-black tracking-[0.8em] md:tracking-[1em] uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                    Agotado
+                 </span>
+                 <div className="h-[1px] w-full bg-rose-600/50 mt-4 shadow-[0_0_30px_rgba(225,29,72,1)]" />
               </div>
            </div>
         )}
