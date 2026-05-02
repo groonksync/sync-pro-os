@@ -11,6 +11,102 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
+const ProductCard = ({ p, onEdit, onDelete }) => {
+  const [imgIndex, setImgIndex] = useState(0);
+  const allImages = [p.imagen, ...(p.imagenes || [])].filter(Boolean);
+
+  const nextImg = (e) => {
+    e.stopPropagation();
+    setImgIndex((prev) => (prev + 1) % allImages.length);
+  };
+
+  const prevImg = (e) => {
+    e.stopPropagation();
+    setImgIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
+  };
+
+  return (
+    <div className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden">
+      {/* IMAGEN DEL PRODUCTO CON SLIDER */}
+      <div className="aspect-[4/3] bg-[#050505] relative overflow-hidden">
+        {allImages.length > 0 ? (
+          <img 
+            src={allImages[imgIndex]} 
+            alt={p.nombre}
+            className="w-full h-full object-cover transition-all duration-700"
+            onError={(e) => {
+              e.target.onerror = null; 
+              e.target.src = "https://via.placeholder.com/600x400/0a0a0a/ffffff?text=Imagen+Sovereign";
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-neutral-900 to-black">
+            <Package size={60} className="text-neutral-800" />
+            <span className="text-[8px] font-black text-neutral-800 uppercase tracking-widest">Sin Imagen</span>
+          </div>
+        )}
+
+        {/* CONTROLES DEL SLIDER */}
+        {allImages.length > 1 && (
+          <>
+            <div className="absolute inset-y-0 left-0 flex items-center px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={prevImg} className="w-8 h-8 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                <ChevronRight className="rotate-180" size={16}/>
+              </button>
+            </div>
+            <div className="absolute inset-y-0 right-0 flex items-center px-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={nextImg} className="w-8 h-8 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                <ChevronRight size={16}/>
+              </button>
+            </div>
+            <div className="absolute bottom-4 right-4 z-10 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10">
+               <p className="text-[9px] font-mono font-black text-white">{imgIndex + 1} / {allImages.length}</p>
+            </div>
+          </>
+        )}
+        
+        <div className="absolute top-4 left-4 z-10">
+          <span className="text-[9px] text-white font-black uppercase tracking-widest bg-blue-600/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl">{p.categoria || 'General'}</span>
+        </div>
+        
+        <div className="absolute top-4 right-4 z-10">
+          <p className={`text-sm font-mono font-black px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10 ${p.stock_actual <= (p.stock_minimo || 5) ? 'bg-rose-500/80 text-white' : 'bg-black/60 text-white'}`}>{p.stock_actual} U.</p>
+        </div>
+      </div>
+
+      <div className="p-7 flex-1 flex flex-col">
+        <div className="flex-1 space-y-4 mb-8">
+          <h3 className="text-xl font-bold text-white line-clamp-1 leading-tight tracking-tight">{p.nombre}</h3>
+          
+          <div className="flex flex-wrap gap-2">
+            {p.sku && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black">SKU: {p.sku}</div>}
+            {p.codigo && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest">COD: {p.codigo}</div>}
+            {p.garantia && <div className="px-3 py-1 bg-blue-500/10 rounded-lg text-[9px] font-mono text-blue-400 border border-blue-500/10 uppercase tracking-widest">Garantía: {p.garantia}</div>}
+          </div>
+          
+          <p className="text-xs text-neutral-500 line-clamp-2 font-medium italic leading-relaxed">{p.ficha_tecnica || 'Sin ficha técnica detallada'}</p>
+          
+          <div className="flex gap-4 pt-2 border-t border-white/5">
+            {p.peso && <p className="text-[9px] text-neutral-600 font-bold flex items-center gap-1"><Scale size={12}/> {p.peso} Kg</p>}
+            {p.volumen && <p className="text-[9px] text-neutral-600 font-bold flex items-center gap-1"><BoxIcon size={12}/> {p.volumen} m³</p>}
+          </div>
+        </div>
+
+        <div className="pt-6 border-t border-white/10 flex justify-between items-center">
+          <div>
+            <p className="text-[9px] text-neutral-600 font-black uppercase mb-1">Precio Mercado</p>
+            <p className="text-3xl font-mono text-white font-black tracking-tighter">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-sm opacity-30">Bs.</span></p>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={() => onDelete(p.id, p.imagen)} className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg border border-rose-500/20"><Trash2 size={20}/></button>
+            <button onClick={() => onEdit(p)} className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl shadow-white/5"><Edit3 size={20}/></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Inventario = () => {
   const [activeSubTab, setActiveSubTab] = useState('productos');
   const [viewState, setViewState] = useState('list');
@@ -244,65 +340,12 @@ const Inventario = () => {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {filteredProducts.map(p => (
-                  <div key={p.id} className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden">
-                     {/* IMAGEN DEL PRODUCTO */}
-                     <div className="aspect-[4/3] bg-[#050505] relative overflow-hidden">
-                        {p.imagen ? (
-                           <img 
-                              src={p.imagen} 
-                              alt={p.nombre}
-                              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                              onError={(e) => {
-                                 e.target.onerror = null; 
-                                 e.target.src = "https://via.placeholder.com/600x400/0a0a0a/ffffff?text=Imagen+Sovereign";
-                              }}
-                           />
-                        ) : (
-                           <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-neutral-900 to-black">
-                              <Package size={60} className="text-neutral-800" />
-                              <span className="text-[8px] font-black text-neutral-800 uppercase tracking-widest">Sin Imagen</span>
-                           </div>
-                        )}
-                        
-                        <div className="absolute top-4 left-4 z-10">
-                           <span className="text-[9px] text-white font-black uppercase tracking-widest bg-blue-600/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl">{p.categoria || 'General'}</span>
-                        </div>
-                        
-                        <div className="absolute top-4 right-4 z-10">
-                           <p className={`text-sm font-mono font-black px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10 ${p.stock_actual <= (p.stock_minimo || 5) ? 'bg-rose-500/80 text-white' : 'bg-black/60 text-white'}`}>{p.stock_actual} U.</p>
-                        </div>
-                     </div>
-
-                     <div className="p-7 flex-1 flex flex-col">
-                        <div className="flex-1 space-y-4 mb-8">
-                           <h3 className="text-xl font-bold text-white line-clamp-1 leading-tight tracking-tight">{p.nombre}</h3>
-                           
-                           <div className="flex flex-wrap gap-2">
-                              {p.sku && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black">SKU: {p.sku}</div>}
-                              {p.codigo && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest">COD: {p.codigo}</div>}
-                              {p.garantia && <div className="px-3 py-1 bg-blue-500/10 rounded-lg text-[9px] font-mono text-blue-400 border border-blue-500/10 uppercase tracking-widest">Garantía: {p.garantia}</div>}
-                           </div>
-                           
-                           <p className="text-xs text-neutral-500 line-clamp-2 font-medium italic leading-relaxed">{p.ficha_tecnica || 'Sin ficha técnica detallada'}</p>
-                           
-                           <div className="flex gap-4 pt-2 border-t border-white/5">
-                              {p.peso && <p className="text-[9px] text-neutral-600 font-bold flex items-center gap-1"><Scale size={12}/> {p.peso} Kg</p>}
-                              {p.volumen && <p className="text-[9px] text-neutral-600 font-bold flex items-center gap-1"><BoxIcon size={12}/> {p.volumen} m³</p>}
-                           </div>
-                        </div>
-
-                        <div className="pt-6 border-t border-white/10 flex justify-between items-center">
-                           <div>
-                              <p className="text-[9px] text-neutral-600 font-black uppercase mb-1">Precio Mercado</p>
-                              <p className="text-3xl font-mono text-white font-black tracking-tighter">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-sm opacity-30">Bs.</span></p>
-                           </div>
-                           <div className="flex gap-2">
-                              <button onClick={() => handleDeleteProduct(p.id, p.imagen)} className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg border border-rose-500/20"><Trash2 size={20}/></button>
-                              <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl shadow-white/5"><Edit3 size={20}/></button>
-                           </div>
-                        </div>
-                     </div>
-                  </div>
+                  <ProductCard 
+                    key={p.id} 
+                    p={p} 
+                    onEdit={(prod) => { setEditingProduct(prod); setIsModalOpen(true); }}
+                    onDelete={handleDeleteProduct}
+                  />
                 ))}
               </div>
 
