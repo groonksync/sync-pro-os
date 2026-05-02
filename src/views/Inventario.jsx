@@ -26,18 +26,13 @@ const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
   };
 
   return (
-    <div className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden">
-      {/* IMAGEN DEL PRODUCTO CON SLIDER */}
-      <div className="aspect-square bg-[#050505] relative overflow-hidden cursor-zoom-in group/img" onClick={() => onViewImage(allImages[imgIndex])}>
+    <div className="bg-[#0a0a0a] border border-white/5 rounded-[40px] overflow-hidden hover:border-white/20 transition-all flex flex-col group relative shadow-2xl">
+      <div className="aspect-square bg-[#050505] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
+            className="max-w-[85%] max-h-[85%] object-contain transition-transform duration-700 group-hover:scale-110"
             alt={p.nombre}
-            className="w-full h-full object-contain transition-all duration-700 hover:scale-105"
-            onError={(e) => {
-              e.target.onerror = null; 
-              e.target.src = "https://via.placeholder.com/600x400/0a0a0a/ffffff?text=Imagen+Sovereign";
-            }}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-neutral-900 to-black">
@@ -59,9 +54,6 @@ const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
                 <ChevronRight size={16}/>
               </button>
             </div>
-            <div className="absolute bottom-4 right-4 z-10 px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg border border-white/10">
-               <p className="text-[9px] font-mono font-black text-white">{imgIndex + 1} / {allImages.length}</p>
-            </div>
           </>
         )}
         
@@ -75,31 +67,24 @@ const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
       </div>
 
       <div className="p-7 flex-1 flex flex-col">
-        <div className="flex-1 space-y-4 mb-8">
-          <h3 className="text-xl font-bold text-white line-clamp-1 leading-tight tracking-tight">{p.nombre}</h3>
+        <div className="flex-1 space-y-2 mb-8">
+          <h3 className="text-xl font-bold text-white line-clamp-1 leading-tight tracking-tight uppercase">{p.nombre}</h3>
+          {p.marca && <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">{p.marca}</p>}
           
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mt-4">
             {p.sku && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black">SKU: {p.sku}</div>}
-            {p.codigo && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest">COD: {p.codigo}</div>}
-            {p.garantia && <div className="px-3 py-1 bg-blue-500/10 rounded-lg text-[9px] font-mono text-blue-400 border border-blue-500/10 uppercase tracking-widest">Garantía: {p.garantia}</div>}
-          </div>
-          
-          <p className="text-xs text-neutral-500 line-clamp-2 font-medium italic leading-relaxed">{p.ficha_tecnica || 'Sin ficha técnica detallada'}</p>
-          
-          <div className="flex gap-4 pt-2 border-t border-white/5">
-            {p.peso && <p className="text-[9px] text-neutral-600 font-bold flex items-center gap-1"><Scale size={12}/> {p.peso} Kg</p>}
-            {p.volumen && <p className="text-[9px] text-neutral-600 font-bold flex items-center gap-1"><BoxIcon size={12}/> {p.volumen} m³</p>}
+            {p.entrega_habilitada && <div className="px-3 py-1 bg-blue-500/10 rounded-lg text-[9px] font-mono text-blue-400 border border-blue-500/10 uppercase tracking-widest">Entrega OK</div>}
           </div>
         </div>
 
         <div className="pt-6 border-t border-white/10 flex justify-between items-end">
           <div>
-            <p className="text-[10px] text-neutral-600 font-black uppercase mb-2 tracking-[0.2em]">Precio Mercado</p>
-            <p className="text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-lg opacity-20 ml-1">Bs.</span></p>
+            <p className="text-[10px] text-neutral-600 font-black uppercase mb-1 tracking-[0.2em]">Precio Venta</p>
+            <p className="text-3xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-xs opacity-20 ml-1">Bs.</span></p>
           </div>
-          <div className="flex gap-2 pb-1">
-            <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg border border-rose-500/20"><Trash2 size={20}/></button>
-            <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl shadow-white/5"><Edit3 size={20}/></button>
+          <div className="flex gap-2">
+            <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-10 h-10 bg-rose-500/10 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"><Trash2 size={18}/></button>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center hover:bg-neutral-200 transition-all"><Edit3 size={18}/></button>
           </div>
         </div>
       </div>
@@ -323,7 +308,7 @@ const Inventario = () => {
         <>
           <header className="mb-10 flex justify-between items-center">
             <div>
-              <h2 className="text-4xl font-black text-white tracking-tighter uppercase underline decoration-white/10 underline-offset-8">Inventario <span className="text-purple-500">Pro Max</span></h2>
+              <h2 className="text-4xl font-black text-white tracking-tighter uppercase underline decoration-white/10 underline-offset-8">Inventario <span className="text-blue-500">Pro</span></h2>
               <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-[0.4em] mt-2 flex items-center gap-2"><Globe size={14}/> Centro Logístico Sovereign OS</p>
             </div>
             <div className="flex bg-neutral-900/50 p-1.5 rounded-2xl border border-white/5">
@@ -452,9 +437,10 @@ const Inventario = () => {
            <button onClick={() => setIsReportOpen(false)} className="fixed top-8 right-8 p-4 bg-black text-white rounded-full"><X size={32}/></button>
            <div className="max-w-[800px] w-full mx-auto">
               <div className="flex justify-between items-start border-b-4 border-black pb-12 mb-12">
-                 <div>
-                   <h1 className="text-6xl font-black uppercase tracking-tighter">Estado de Cuenta</h1>
-                   <p className="text-xl font-bold text-neutral-500 mt-2">Sovereign OS Logistics System</p>
+                 <div className="flex-1">
+                   <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">{activeMayorista.marca || 'S/M'}</p>
+                   <h3 className="text-xl font-black text-black leading-tight uppercase line-clamp-1">{activeMayorista.nombre}</h3>
+                   <p className="text-[9px] font-bold text-neutral-500 mt-1 uppercase tracking-widest">SKU: {activeMayorista.sku || 'N/A'}</p>
                  </div>
                  <div className="text-right font-mono text-sm font-black uppercase">
                    <p>Reporte Fecha: {new Date().toLocaleDateString()}</p>
@@ -565,9 +551,31 @@ const Inventario = () => {
                  </div>
                  
                  <div className="col-span-12 lg:col-span-8 space-y-6">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Nombre del Producto</label>
-                       <input type="text" value={editingProduct.nombre} onChange={e => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[32px] p-7 text-white font-black outline-none text-2xl shadow-inner" placeholder="Ej: MacBook Pro M3 16..."/>
+                    <div className="space-y-4">
+                       <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest ml-4">Especificaciones Clave</label>
+                       <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                             <p className="text-[8px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Nombre del Producto</p>
+                             <input type="text" value={editingProduct.nombre || ''} onChange={(e) => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-transparent text-sm font-bold text-white outline-none" placeholder="Ej: iPhone 15 Pro" />
+                          </div>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                             <p className="text-[8px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Marca</p>
+                             <input type="text" value={editingProduct.marca || ''} onChange={(e) => setEditingProduct({...editingProduct, marca: e.target.value})} className="w-full bg-transparent text-sm font-bold text-white outline-none" placeholder="Ej: Apple" />
+                          </div>
+                       </div>
+                    </div>
+
+                    <div className="flex items-center justify-between bg-blue-600/10 p-6 rounded-3xl border border-blue-500/20">
+                       <div>
+                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Logística de Entrega</p>
+                          <p className="text-[9px] text-neutral-500 font-medium">Habilitar si el equipo está listo para envío inmediato</p>
+                       </div>
+                       <button 
+                         onClick={() => setEditingProduct({...editingProduct, entrega_habilitada: !editingProduct.entrega_habilitada})}
+                         className={`w-14 h-8 rounded-full p-1 transition-all duration-300 ${editingProduct.entrega_habilitada ? 'bg-emerald-500' : 'bg-neutral-800'}`}
+                       >
+                          <div className={`w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${editingProduct.entrega_habilitada ? 'translate-x-6' : 'translate-x-0'}`} />
+                       </button>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-6">

@@ -39,13 +39,22 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
-            className="max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110"
+            className={`max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-40' : ''}`}
             alt={p.nombre}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-neutral-900">
              <Package size={30} className="text-neutral-800" />
           </div>
+        )}
+
+        {/* SELLO AGOTADO 45 GRADOS */}
+        {parseInt(p.stock_actual) === 0 && (
+           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
+              <div className="w-[150%] py-4 bg-rose-600/90 backdrop-blur-md text-white text-center font-black text-xl md:text-2xl tracking-[0.5em] uppercase border-y-4 border-white/20 -rotate-[45deg] shadow-[0_0_50px_rgba(225,29,72,0.5)]">
+                 AGOTADO
+              </div>
+           </div>
         )}
 
         {/* INSIGNIAS DE VENTA */}
@@ -85,6 +94,9 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
              )}
           </div>
           <h3 className="text-sm md:text-xl font-black text-white leading-tight tracking-tight group-hover:text-blue-400 transition-colors line-clamp-2 uppercase">{p.nombre}</h3>
+          {p.marca && (
+            <p className="text-[10px] md:text-xs font-bold text-blue-500/80 uppercase tracking-widest">{p.marca}</p>
+          )}
         </div>
 
         <div className="pt-4 md:pt-6 border-t border-white/5 flex flex-col gap-4">
