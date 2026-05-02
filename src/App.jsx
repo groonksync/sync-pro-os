@@ -18,10 +18,12 @@ import { supabase } from './lib/supabaseClient';
 
 const App = () => {
   // Detectar si estamos en la vista de Portal del Cliente
-  const [path, setPath] = useState(window.location.pathname);
+  const path = window.location.pathname;
   const isPortal = path.startsWith('/portal/');
-  const portalId = isPortal ? path.split('/portal/')[1] : null;
   const isCatalog = path === '/catalogo' || path === '/catalogo/';
+  
+  if (isCatalog) return <PublicCatalog />;
+  if (isPortal) return <ClientPortal portalId={path.split('/portal/')[1]} />;
 
   const [activeTab, setActiveTab] = useState('resumen');
   const [meetingsList, setMeetingsList] = useState([]);
@@ -220,14 +222,6 @@ const App = () => {
       );
     }
   };
-
-  if (isCatalog) {
-    return <PublicCatalog />;
-  }
-
-  if (isPortal) {
-    return <ClientPortal portalId={portalId} />;
-  }
 
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
