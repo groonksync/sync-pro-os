@@ -21,11 +21,12 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
   };
 
   const isLowStock = parseInt(p.stock_actual) <= (p.stock_minimo || 3) && parseInt(p.stock_actual) > 0;
+  const oldPrice = parseFloat(p.precio_venta || 0) * 1.25;
 
   return (
-    <div className="bg-[#0d0d0d] border border-white/5 rounded-[24px] md:rounded-[32px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="bg-[#0d0d0d] border border-white/5 rounded-[40px] p-0 hover:border-white/10 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* IMAGEN CON SLIDER */}
-      <div className="aspect-square bg-[#050505] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
+      <div className="aspect-square bg-[#050505] m-3 rounded-[32px] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
@@ -63,21 +64,32 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
         )}
       </div>
 
-      <div className="p-4 md:p-8 flex-1 flex flex-col">
-        <div className="flex-1 space-y-2 md:space-y-4 mb-4 md:mb-8">
-          <h3 className="text-sm md:text-2xl font-black text-white leading-tight tracking-tight group-hover:text-blue-400 transition-colors line-clamp-2">{p.nombre}</h3>
-          
-          <div className="flex flex-wrap gap-1 md:gap-2">
-             <div className="px-2 py-0.5 bg-white/5 rounded-md text-[7px] md:text-[9px] font-mono text-neutral-400 border border-white/5 uppercase tracking-widest">Garantía: {p.garantia || '180 Días'}</div>
-             <div className="hidden md:block px-3 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black text-center">Certificado Sync Pro</div>
+        <div className="flex-1 space-y-2 md:space-y-3 mb-4 md:mb-6">
+          <div className="flex items-center gap-2 mb-2">
+             <span className="px-3 py-1 bg-blue-600/10 text-blue-500 text-[8px] font-black rounded-full uppercase tracking-[0.2em] border border-blue-500/10">
+                {p.categoria || 'Sync Pro'}
+             </span>
+             {isLowStock && (
+                <span className="px-2 py-1 bg-orange-600 text-white text-[7px] font-black rounded-full uppercase tracking-widest animate-pulse">
+                   {p.stock_actual} disp.
+                </span>
+             )}
           </div>
+          <h3 className="text-sm md:text-xl font-black text-white leading-tight tracking-tight group-hover:text-blue-400 transition-colors line-clamp-2 uppercase">{p.nombre}</h3>
         </div>
 
-        <div className="pt-4 md:pt-8 border-t border-white/5 flex flex-col gap-4 md:gap-6">
-           <div className="flex justify-between items-end">
-              <div>
-                 <p className="text-[7px] md:text-[10px] text-neutral-600 font-black uppercase mb-1 tracking-[0.3em]">Precio Mercado</p>
-                 <p className="text-xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-[10px] md:text-lg opacity-20 ml-1">Bs.</span></p>
+        <div className="pt-4 md:pt-6 border-t border-white/5 flex flex-col gap-4">
+           <div className="flex flex-col">
+              <p className="text-[10px] md:text-xs text-rose-500 font-mono line-through opacity-50 mb-1">
+                 {oldPrice.toLocaleString()} Bs.
+              </p>
+              <div className="flex justify-between items-end">
+                 <div>
+                    <p className="text-2xl md:text-4xl font-mono text-white font-black tracking-tighter leading-none">
+                       {parseFloat(p.precio_venta || 0).toLocaleString()} 
+                       <span className="text-[10px] md:text-sm opacity-20 ml-2 font-sans tracking-widest uppercase">Bs.</span>
+                    </p>
+                 </div>
               </div>
            </div>
 
