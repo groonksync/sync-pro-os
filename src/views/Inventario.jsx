@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-const ProductCard = ({ p, onEdit, onDelete }) => {
+const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
   const [imgIndex, setImgIndex] = useState(0);
   const allImages = [p.imagen, ...(p.imagenes || [])].filter(Boolean);
 
@@ -28,12 +28,12 @@ const ProductCard = ({ p, onEdit, onDelete }) => {
   return (
     <div className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden">
       {/* IMAGEN DEL PRODUCTO CON SLIDER */}
-      <div className="aspect-[4/3] bg-[#050505] relative overflow-hidden">
+      <div className="aspect-[4/3] bg-[#050505] relative overflow-hidden cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
             alt={p.nombre}
-            className="w-full h-full object-cover transition-all duration-700"
+            className="w-full h-full object-contain transition-all duration-700 p-4"
             onError={(e) => {
               e.target.onerror = null; 
               e.target.src = "https://via.placeholder.com/600x400/0a0a0a/ffffff?text=Imagen+Sovereign";
@@ -92,14 +92,14 @@ const ProductCard = ({ p, onEdit, onDelete }) => {
           </div>
         </div>
 
-        <div className="pt-6 border-t border-white/10 flex justify-between items-center">
+        <div className="pt-6 border-t border-white/10 flex justify-between items-end">
           <div>
-            <p className="text-[9px] text-neutral-600 font-black uppercase mb-1">Precio Mercado</p>
-            <p className="text-3xl font-mono text-white font-black tracking-tighter">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-sm opacity-30">Bs.</span></p>
+            <p className="text-[10px] text-neutral-600 font-black uppercase mb-2 tracking-[0.2em]">Precio Mercado</p>
+            <p className="text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-lg opacity-20 ml-1">Bs.</span></p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={() => onDelete(p.id, p.imagen)} className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg border border-rose-500/20"><Trash2 size={20}/></button>
-            <button onClick={() => onEdit(p)} className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl shadow-white/5"><Edit3 size={20}/></button>
+          <div className="flex gap-2 pb-1">
+            <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg border border-rose-500/20"><Trash2 size={20}/></button>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl shadow-white/5"><Edit3 size={20}/></button>
           </div>
         </div>
       </div>
@@ -110,6 +110,7 @@ const ProductCard = ({ p, onEdit, onDelete }) => {
 const Inventario = () => {
   const [activeSubTab, setActiveSubTab] = useState('productos');
   const [viewState, setViewState] = useState('list');
+  const [fullViewImage, setFullViewImage] = useState(null);
   const [productos, setProductos] = useState([]);
   const [mayoristas, setMayoristas] = useState([]);
   const [movimientos, setMovimientos] = useState([]);
@@ -345,6 +346,7 @@ const Inventario = () => {
                     p={p} 
                     onEdit={(prod) => { setEditingProduct(prod); setIsModalOpen(true); }}
                     onDelete={handleDeleteProduct}
+                    onViewImage={setFullViewImage}
                   />
                 ))}
               </div>
@@ -658,6 +660,17 @@ const Inventario = () => {
               <input type="number" value={newPago.monto} onChange={e => setNewPago({monto: parseFloat(e.target.value) || 0})} className="w-full bg-white/5 border border-emerald-500/20 p-8 rounded-[32px] text-white font-mono text-5xl outline-none font-black text-center" placeholder="0.00" />
               <button onClick={handlePago} className="w-full mt-16 py-7 bg-emerald-500 text-white font-black rounded-[40px] uppercase shadow-2xl">Confirmar</button>
            </div>
+        </div>
+      )}
+
+      {/* VISOR DE IMAGEN FULL SCREEN */}
+      {fullViewImage && (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-300" onClick={() => setFullViewImage(null)}>
+           <button className="absolute top-10 right-10 w-16 h-16 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10">
+              <X size={32}/>
+           </button>
+           <img src={fullViewImage} className="max-w-full max-h-[85vh] object-contain rounded-3xl shadow-[0_0_100px_rgba(255,255,255,0.1)]" />
+           <p className="mt-8 text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">Haz clic en cualquier lugar para cerrar</p>
         </div>
       )}
     </div>
