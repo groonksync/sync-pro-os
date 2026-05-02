@@ -123,7 +123,6 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
            </button>
         </div>
       </div>
-    </div>
   );
 };
 
