@@ -420,7 +420,7 @@ const Inventario = () => {
                  <div className="col-span-12 lg:col-span-8 space-y-6">
                     <div className="space-y-2">
                        <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Nombre del Producto</label>
-                       <input type="text" value={editingProduct.nombre} onChange={e => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[32px] p-7 text-white font-black outline-none text-2xl shadow-inner" placeholder="Ej: MacBook Pro M3 16\"..."/>
+                       <input type="text" value={editingProduct.nombre} onChange={e => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[32px] p-7 text-white font-black outline-none text-2xl shadow-inner" placeholder="Ej: MacBook Pro M3 16..."/>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-6">
