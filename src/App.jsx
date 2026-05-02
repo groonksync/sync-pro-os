@@ -12,6 +12,7 @@ import DriveSovereign from './views/DriveSovereign';
 import GoogleCalendar from './views/GoogleCalendar';
 import TrashView from './views/TrashView';
 import ClientPortal from './views/ClientPortal';
+import PublicCatalog from './views/PublicCatalog';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { supabase } from './lib/supabaseClient';
 
@@ -20,6 +21,7 @@ const App = () => {
   const path = window.location.pathname;
   const isPortal = path.startsWith('/portal/');
   const portalId = isPortal ? path.split('/portal/')[1] : null;
+  const isCatalog = path === '/catalogo' || path === '/catalogo/';
 
   const [activeTab, setActiveTab] = useState('resumen');
   const [meetingsList, setMeetingsList] = useState([]);
@@ -218,6 +220,10 @@ const App = () => {
       );
     }
   };
+
+  if (isCatalog) {
+    return <PublicCatalog />;
+  }
 
   if (isPortal) {
     return <ClientPortal portalId={portalId} />;

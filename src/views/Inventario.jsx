@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Package, TrendingUp, Users, Plus, Search, Filter, 
+  Package, TrendingUp, Users, Plus, Search, Filter, Share2,
   ChevronRight, ArrowLeft, Save, Trash2, Edit3, 
   AlertTriangle, CheckCircle2, Box, DollarSign, 
   Percent, ShoppingCart, Truck, X, Image as ImageIcon,
@@ -259,6 +259,12 @@ const Inventario = () => {
     (m.region || '').toLowerCase().includes(searchDistributor.toLowerCase())
   );
 
+  const handleShareCatalog = () => {
+    const url = `${window.location.origin}/catalogo`;
+    navigator.clipboard.writeText(url);
+    alert('🔗 ¡Link del Catálogo Sync Pro copiado al portapapeles!');
+  };
+
   const handleSaveProduct = async () => {
     if (!editingProduct?.nombre) return;
     setLoading(true);
@@ -336,7 +342,13 @@ const Inventario = () => {
                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-600" size={20}/>
                   <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Buscar por Nombre, Serial o SKU..." className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-4 pl-16 pr-8 text-sm text-white outline-none focus:border-white/20 shadow-2xl"/>
                 </div>
-                <button onClick={openNewProduct} className="px-10 py-4 bg-white text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl">Nuevo Ingreso</button>
+                 <div className="flex gap-4">
+                    <button onClick={handleShareCatalog} className="px-8 py-4 bg-blue-600/10 text-blue-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-500/20 flex items-center gap-3">
+                       <Share2 size={16}/>
+                       Compartir Catálogo
+                    </button>
+                    <button onClick={openNewProduct} className="px-10 py-4 bg-white text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl">Nuevo Ingreso</button>
+                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
