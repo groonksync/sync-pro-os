@@ -128,7 +128,6 @@ const PublicCatalog = () => {
       const { data, error } = await supabase
         .from('productos')
         .select('*')
-        .gt('stock_actual', 0)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -188,19 +187,19 @@ const PublicCatalog = () => {
       <main className="px-6 lg:px-20 py-16">
          {/* SECCIÓN PASOS PARA COMPRAR */}
          <section className="mb-24 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-blue-500/30 transition-all">
+            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-blue-500/30 transition-all cursor-pointer" onClick={() => window.scrollTo({top: 800, behavior: 'smooth'})}>
                <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all"></div>
                <p className="text-5xl font-black text-white/10 mb-4 font-mono">01</p>
                <h4 className="text-xl font-bold mb-3 uppercase tracking-tight">Elige tu Equipo</h4>
                <p className="text-sm text-neutral-500 leading-relaxed">Explora nuestra selección premium de tecnología Sync Pro con fotos reales.</p>
             </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer" onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')}>
                <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all"></div>
                <p className="text-5xl font-black text-white/10 mb-4 font-mono">02</p>
                <h4 className="text-xl font-bold mb-3 uppercase tracking-tight">Pide por WhatsApp</h4>
-               <p className="text-sm text-neutral-500 leading-relaxed">Toca el botón de consulta y recibe atención personalizada al instante.</p>
+               <p className="text-sm text-neutral-500 leading-relaxed">Toca aquí para recibir atención personalizada al instante.</p>
             </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-yellow-500/30 transition-all">
+            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-yellow-500/30 transition-all cursor-pointer" onClick={() => alert('Coordinamos envíos a todo el país vía Courier')}>
                <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-500/10 rounded-full blur-3xl group-hover:bg-yellow-500/20 transition-all"></div>
                <p className="text-5xl font-black text-white/10 mb-4 font-mono">03</p>
                <h4 className="text-xl font-bold mb-3 uppercase tracking-tight">Envío Inmediato</h4>
