@@ -103,16 +103,18 @@ const Inventario = () => {
     setLoading(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
-      const filePath = `product-images/${fileName}`;
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const filePath = fileName;
 
-      let { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('productos')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      const publicUrl = supabase.storage.from('productos').getPublicUrl(fileName).data.publicUrl;
+      const { data: { publicUrl } } = supabase.storage
+        .from('productos')
+        .getPublicUrl(filePath);
 
       if (isGallery) {
          const currentImages = editingProduct.imagenes || [];
