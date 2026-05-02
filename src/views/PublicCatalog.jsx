@@ -25,11 +25,11 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
   return (
     <div className="bg-[#0d0d0d] border border-white/5 rounded-[24px] md:rounded-[32px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* IMAGEN CON SLIDER */}
-      <div className="aspect-square bg-[#050505] relative overflow-hidden cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
+      <div className="aspect-square bg-[#050505] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
-            className="w-full h-full object-contain p-2 md:p-4 transition-transform duration-1000 group-hover:scale-110"
+            className="max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110"
             alt={p.nombre}
           />
         ) : (
@@ -167,33 +167,9 @@ const PublicCatalog = () => {
          </div>
       </header>
 
-      <main className="px-6 lg:px-20 py-16">
-         {/* BARRA DE ACCIÓN HUD COMPACTA */}
-         <section className="mb-12 flex flex-wrap justify-center gap-4 md:gap-8">
-            <button onClick={() => window.scrollTo({top: 500, behavior: 'smooth'})} className="flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group">
-               <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                  <Smartphone size={14} />
-               </div>
-               <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 group-hover:text-white">Ver Equipos</span>
-            </button>
-            
-            <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')} className="flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group">
-               <div className="w-8 h-8 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-600 group-hover:text-white transition-all">
-                  <MessageCircle size={14} />
-               </div>
-               <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 group-hover:text-white">Asesoría Live</span>
-            </button>
-
-            <button onClick={() => alert('Logística Sync Pro: Envíos inmediatos a todo el país.')} className="flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group">
-               <div className="w-8 h-8 rounded-full bg-orange-600/20 flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all">
-                  <Truck size={14} />
-               </div>
-               <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 group-hover:text-white">Logística VIP</span>
-            </button>
-         </section>
-
+      <main className="px-4 md:px-20 py-8 md:py-16">
          {/* FILTROS DE CATEGORÍA */}
-         <div className="flex overflow-x-auto gap-3 pb-8 no-scrollbar scroll-smooth snap-x touch-pan-x">
+         <div className="flex overflow-x-auto gap-2 md:gap-3 pb-6 md:pb-8 no-scrollbar scroll-smooth snap-x touch-pan-x">
             {categories.map(cat => (
                <button
                  key={cat}
@@ -237,6 +213,22 @@ const PublicCatalog = () => {
             </a>
          </div>
       </footer>
+
+      {/* BOTONES FLOTANTES HUD */}
+      <div className="fixed bottom-8 right-6 z-[100] flex flex-col gap-4 animate-in slide-in-from-right duration-500">
+         <button 
+           onClick={() => alert('Logística VIP Sync Pro: Envíos asegurados y garantizados a nivel nacional.')}
+           className="w-12 h-12 md:w-16 md:h-16 bg-white/10 backdrop-blur-xl border border-white/10 text-orange-500 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-white transition-all"
+         >
+            <Truck size={24} />
+         </button>
+         <button 
+           onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')}
+           className="w-14 h-14 md:w-20 md:h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.4)] hover:scale-110 active:scale-95 transition-all animate-bounce-subtle"
+         >
+            <MessageCircle size={32} />
+         </button>
+      </div>
 
       {/* VISOR CINEMA */}
       {fullViewImage && (
