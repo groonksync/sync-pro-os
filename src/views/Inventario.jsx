@@ -193,33 +193,29 @@ const Inventario = () => {
      setLoading(false);
   };
 
-  const handleImageUpload = async (e, isGallery = false) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const handleImageUpload = async (e, type = 'main') => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
     
     setLoading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-      const filePath = fileName;
+      const urls = [];
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('productos').upload(fileName, file);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('productos').getPublicUrl(fileName);
+        urls.push(publicUrl);
+      }
 
-      const { error: uploadError } = await supabase.storage
-        .from('productos')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('productos')
-        .getPublicUrl(filePath);
-
-      console.log('✅ IMAGEN SUBIDA - URL GENERADA:', publicUrl);
-
-      if (isGallery) {
-         const currentImages = editingProduct.imagenes || [];
-         setEditingProduct({ ...editingProduct, imagenes: [...currentImages, publicUrl], imagen: publicUrl });
+      if (type === 'gallery') {
+        setEditingProduct(prev => ({ 
+          ...prev, 
+          imagenes: [...(prev.imagenes || []), ...urls]
+        }));
       } else {
-         setEditingProduct({ ...editingProduct, imagen: publicUrl });
+        setEditingProduct({ ...editingProduct, imagen: urls[0] });
       }
     } catch (err) {
       alert('Error al subir imagen: ' + err.message);
@@ -269,7 +265,8 @@ const Inventario = () => {
     if (!editingProduct?.nombre) return;
     setLoading(true);
     try {
-      await supabase.from('productos').upsert(editingProduct);
+      const payload = { ...editingProduct, imagen: editingProduct.imagenes?.[0] || editingProduct.imagen };
+      await supabase.from('productos').upsert(payload);
       await fetchData();
       setIsModalOpen(false);
     } catch (e) { alert(e.message); }
@@ -506,39 +503,59 @@ const Inventario = () => {
 
               <div className="grid grid-cols-12 gap-10">
                  <div className="col-span-12 lg:col-span-4 space-y-6">
-                    <div className="aspect-square bg-white/5 border border-white/10 rounded-[48px] overflow-hidden flex items-center justify-center group relative cursor-pointer hover:border-white/20 transition-all shadow-2xl">
-                       {editingProduct.imagen ? (
-                          <img src={editingProduct.imagen} className="w-full h-full object-cover"/>
+                    {/* VISOR PRINCIPAL */}
+                    <div className="aspect-square bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center relative overflow-hidden group">
+                       {editingProduct?.imagenes?.length > 0 ? (
+                          <img src={editingProduct.imagenes[0]} className="w-full h-full object-contain p-4" alt="Principal"/>
                        ) : (
-                          <div className="flex flex-col items-center gap-4 text-neutral-600">
-                             <ImageIcon size={60}/>
-                             <span className="text-[10px] font-black uppercase tracking-widest">Foto Principal</span>
+                          <div className="text-center">
+                             <ImageIcon size={48} className="text-neutral-700 mx-auto mb-2" />
+                             <p className="text-[8px] font-black uppercase text-neutral-600 tracking-widest">Sin Imagen</p>
                           </div>
                        )}
-                       <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <Plus className="text-white" size={40}/>
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, false)}/>
-                       </label>
+                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white">Catálogo Preview</p>
+                       </div>
                     </div>
+                    <p className="text-[9px] text-neutral-500 font-medium italic text-center">La primera imagen de la galería será la portada oficial.</p>
 
                     {/* GALERÍA DE FOTOS */}
                     <div className="space-y-4">
-                       <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest ml-4">Galería / Más Fotos</label>
-                       <div className="grid grid-cols-3 gap-3">
-                          {editingProduct.imagenes?.map((img, idx) => (
-                             <div key={idx} className="aspect-square rounded-2xl border border-white/5 overflow-hidden relative group">
-                                <img src={img} className="w-full h-full object-cover" />
-                                <button onClick={() => {
-                                   const news = editingProduct.imagenes.filter((_, i) => i !== idx);
-                                   setEditingProduct({...editingProduct, imagenes: news});
-                                }} className="absolute top-1 right-1 bg-rose-500 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><X size={12}/></button>
-                             </div>
-                          ))}
-                          <label className="aspect-square rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-neutral-600 hover:border-white/30 cursor-pointer transition-all">
-                             <Plus size={20}/>
-                             <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, true)}/>
-                          </label>
-                       </div>
+                       <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest ml-4">Galería de Imágenes</label>
+                       <div className="flex flex-wrap gap-4">
+                           {editingProduct?.imagenes?.map((img, idx) => (
+                              <div key={idx} className="w-24 h-24 bg-white/5 rounded-xl border border-white/10 relative group overflow-hidden">
+                                 <img src={img} className="w-full h-full object-cover" />
+                                 <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                                    <div className="flex gap-2">
+                                       {idx > 0 && (
+                                          <button onClick={() => {
+                                             const newImgs = [...editingProduct.imagenes];
+                                             [newImgs[idx], newImgs[idx-1]] = [newImgs[idx-1], newImgs[idx]];
+                                             setEditingProduct({...editingProduct, imagenes: newImgs});
+                                          }} className="w-6 h-6 bg-blue-600 text-white rounded-md flex items-center justify-center hover:bg-blue-500"><ArrowLeft size={12} /></button>
+                                       )}
+                                       {idx < editingProduct.imagenes.length - 1 && (
+                                          <button onClick={() => {
+                                             const newImgs = [...editingProduct.imagenes];
+                                             [newImgs[idx], newImgs[idx+1]] = [newImgs[idx+1], newImgs[idx]];
+                                             setEditingProduct({...editingProduct, imagenes: newImgs});
+                                          }} className="w-6 h-6 bg-blue-600 text-white rounded-md flex items-center justify-center hover:bg-blue-500"><ChevronRight size={12} /></button>
+                                       )}
+                                    </div>
+                                    <button onClick={() => {
+                                       const newImgs = editingProduct.imagenes.filter((_, i) => i !== idx);
+                                       setEditingProduct({...editingProduct, imagenes: newImgs});
+                                    }} className="w-6 h-6 bg-red-600 text-white rounded-md flex items-center justify-center hover:bg-red-500"><Trash2 size={12} /></button>
+                                 </div>
+                                 {idx === 0 && <div className="absolute top-1 left-1 px-1 py-0.5 bg-blue-600 text-[6px] font-black text-white uppercase rounded-sm">Portada</div>}
+                              </div>
+                           ))}
+                           <label className="w-24 h-24 bg-white/5 border border-dashed border-white/20 rounded-xl flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all">
+                              <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => handleImageUpload(e, 'gallery')} />
+                              <Plus className="text-neutral-600" />
+                           </label>
+                        </div>
                     </div>
 
                     <div className="bg-white/5 p-8 rounded-[40px] border border-white/5 text-center text-white">
