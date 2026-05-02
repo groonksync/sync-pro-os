@@ -239,11 +239,16 @@ const Inventario = () => {
                     <div className="p-6 flex-1 flex flex-col">
                        <div className="flex-1 space-y-3 mb-6">
                           <h3 className="text-xl font-bold text-white line-clamp-1 leading-tight tracking-tight">{p.nombre}</h3>
-                          <div className="flex gap-2">
-                             {p.codigo && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest">SKU: {p.codigo}</div>}
-                             {p.serial && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest">S/N: {p.serial}</div>}
+                          <div className="flex flex-wrap gap-2">
+                             {p.sku && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black">SKU: {p.sku}</div>}
+                             {p.codigo && <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest">COD: {p.codigo}</div>}
+                             {p.garantia && <div className="px-3 py-1 bg-blue-500/10 rounded-lg text-[9px] font-mono text-blue-400 border border-blue-500/10 uppercase tracking-widest">Garantía: {p.garantia}</div>}
                           </div>
                           <p className="text-[11px] text-neutral-500 line-clamp-2 font-medium italic leading-relaxed">{p.ficha_tecnica || 'Sin ficha técnica detallada'}</p>
+                          <div className="flex gap-4 mt-2">
+                             {p.peso && <p className="text-[9px] text-neutral-600 font-bold flex items-center gap-1"><Scale size={12}/> {p.peso} Kg</p>}
+                             {p.volumen && <p className="text-[9px] text-neutral-600 font-bold flex items-center gap-1"><BoxIcon size={12}/> {p.volumen} m³</p>}
+                          </div>
                        </div>
 
                        <div className="pt-6 border-t border-white/5 flex justify-between items-center">
@@ -434,8 +439,19 @@ const Inventario = () => {
                           </select>
                        </div>
                        <div className="space-y-2">
-                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">SKU / Código</label>
+                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Código de Barras</label>
                           <input type="text" value={editingProduct.codigo} onChange={e => setEditingProduct({...editingProduct, codigo: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white font-mono uppercase text-sm outline-none" placeholder="COD-000"/>
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">SKU Único</label>
+                          <input type="text" value={editingProduct.sku} onChange={e => setEditingProduct({...editingProduct, sku: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white font-mono uppercase text-sm outline-none" placeholder="SKU-PRO-000"/>
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Garantía (Ej: 180 días)</label>
+                          <input type="text" value={editingProduct.garantia} onChange={e => setEditingProduct({...editingProduct, garantia: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white text-sm outline-none" placeholder="Ej: 1 año / 180 días"/>
                        </div>
                     </div>
 
@@ -447,6 +463,17 @@ const Inventario = () => {
                        <div className="bg-rose-500/5 p-8 rounded-[48px] border border-rose-500/10 opacity-60">
                           <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2 block">Costo Interno</label>
                           <input type="number" value={editingProduct.precio_costo} onChange={e => setEditingProduct({...editingProduct, precio_costo: parseFloat(e.target.value) || 0})} className="w-full bg-transparent p-0 text-white font-mono text-2xl outline-none font-bold" />
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6 bg-white/[0.02] p-8 rounded-[40px] border border-white/5">
+                       <div className="space-y-2 border-r border-white/10 pr-6">
+                          <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2"><Scale size={14}/> Peso (Kg)</label>
+                          <input type="text" value={editingProduct.peso} onChange={e => setEditingProduct({...editingProduct, peso: e.target.value})} className="w-full bg-transparent text-white font-mono text-xl outline-none font-bold" placeholder="0.0 Kg"/>
+                       </div>
+                       <div className="space-y-2 pl-6">
+                          <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2"><BoxIcon size={14}/> Volumen (m³)</label>
+                          <input type="text" value={editingProduct.volumen} onChange={e => setEditingProduct({...editingProduct, volumen: e.target.value})} className="w-full bg-transparent text-white font-mono text-xl outline-none font-bold" placeholder="0.000 m³"/>
                        </div>
                     </div>
                     
