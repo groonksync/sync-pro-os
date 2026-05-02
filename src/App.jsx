@@ -21,9 +21,6 @@ const App = () => {
   const path = window.location.pathname;
   const isPortal = path.startsWith('/portal/');
   const isCatalog = path === '/catalogo' || path === '/catalogo/';
-  
-  if (isCatalog) return <PublicCatalog />;
-  if (isPortal) return <ClientPortal portalId={path.split('/portal/')[1]} />;
 
   const [activeTab, setActiveTab] = useState('resumen');
   const [meetingsList, setMeetingsList] = useState([]);
@@ -108,6 +105,9 @@ const App = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  if (isCatalog) return <PublicCatalog />;
+  if (isPortal) return <ClientPortal portalId={path.split('/portal/')[1]} />;
 
   const handleNavigateToPrestamo = (id) => {
     setSelectedPrestamoId(id);
