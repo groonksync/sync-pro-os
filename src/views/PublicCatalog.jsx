@@ -63,7 +63,7 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
                     <span className="text-white text-lg md:text-3xl font-black tracking-[0.6em] md:tracking-[0.8em] uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
                        Agotado
                     </span>
-                    <div className="h-[2px] w-12 bg-rose-600 mt-2 rounded-full animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.8)]" />
+                    <div className="h-[1px] w-48 md:w-80 bg-rose-600 mt-4 animate-pulse shadow-[0_0_20px_rgba(225,29,72,1)] opacity-80" />
                  </div>
               </div>
            </div>
