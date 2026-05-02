@@ -39,7 +39,7 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
-            className={`max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-40' : ''}`}
+            className={`max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
@@ -48,11 +48,23 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
           </div>
         )}
 
-        {/* SELLO AGOTADO 45 GRADOS */}
+        {/* SELLO AGOTADO EXECUTIVE LUX */}
         {parseInt(p.stock_actual) === 0 && (
-           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
-              <div className="w-[150%] py-4 bg-rose-600/90 backdrop-blur-md text-white text-center font-black text-xl md:text-2xl tracking-[0.5em] uppercase border-y-4 border-white/20 -rotate-[45deg] shadow-[0_0_50px_rgba(225,29,72,0.5)]">
-                 AGOTADO
+           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+              <div className="relative flex items-center justify-center w-full">
+                 {/* Líneas de diseño cruzadas */}
+                 <div className="absolute w-[150%] h-[1px] bg-white/10 -rotate-[45deg] translate-y-[-20px]" />
+                 <div className="absolute w-[150%] h-[1px] bg-white/10 -rotate-[45deg] translate-y-[20px]" />
+                 
+                 <div className="bg-black/40 backdrop-blur-2xl border-y border-white/20 py-4 md:py-6 w-[140%] -rotate-[45deg] shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col items-center justify-center overflow-hidden">
+                    {/* Efecto Shimmer interno */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
+                    
+                    <span className="text-white text-lg md:text-3xl font-black tracking-[0.6em] md:tracking-[0.8em] uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                       Agotado
+                    </span>
+                    <div className="h-[2px] w-12 bg-rose-600 mt-2 rounded-full animate-pulse shadow-[0_0_10px_rgba(225,29,72,0.8)]" />
+                 </div>
               </div>
            </div>
         )}
