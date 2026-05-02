@@ -117,7 +117,7 @@ const PublicCatalog = () => {
   const [filterCategory, setFilterCategory] = useState('Todos');
   const [fullViewImage, setFullViewImage] = useState(null);
 
-  const WHATSAPP_NUMBER = "59178550563"; // Reemplaza con tu número real
+  const WHATSAPP_NUMBER = "59169109766"; // Tu número actualizado
 
   useEffect(() => {
     fetchProducts();
