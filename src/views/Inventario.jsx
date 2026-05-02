@@ -77,7 +77,26 @@ const Inventario = () => {
     }
   };
 
-  const handleImageUpload = async (e) => {
+  const handleDeleteProduct = async (id, imageUrl) => {
+     if (!confirm('¿Seguro que deseas eliminar este producto permanentemente?')) return;
+     setLoading(true);
+     try {
+        // Borrar de la tabla
+        const { error } = await supabase.from('productos').delete().eq('id', id);
+        if (error) throw error;
+        
+        // Borrar imagen del storage si existe
+        if (imageUrl) {
+           const path = imageUrl.split('/').pop();
+           await supabase.storage.from('productos').remove([path]);
+        }
+        
+        await fetchData();
+     } catch(e) { alert(e.message); }
+     setLoading(false);
+  };
+
+  const handleImageUpload = async (e, isGallery = false) => {
     const file = e.target.files[0];
     if (!file) return;
     
@@ -93,13 +112,16 @@ const Inventario = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('productos')
-        .getPublicUrl(filePath);
+      const publicUrl = supabase.storage.from('productos').getPublicUrl(fileName).data.publicUrl;
 
-      setEditingProduct({ ...editingProduct, imagen: publicUrl });
-    } catch (error) {
-      alert('Error al subir imagen: ' + error.message);
+      if (isGallery) {
+         const currentImages = editingProduct.imagenes || [];
+         setEditingProduct({ ...editingProduct, imagenes: [...currentImages, publicUrl], imagen: publicUrl });
+      } else {
+         setEditingProduct({ ...editingProduct, imagen: publicUrl });
+      }
+    } catch (err) {
+      alert('Error al subir imagen: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -110,7 +132,7 @@ const Inventario = () => {
       id: Date.now().toString(), nombre: '', categoria: 'Computadoras', 
       precio_costo: 0, precio_venta: 0, stock_actual: 0, stock_minimo: 5, 
       stock_vendido: 0, ficha_tecnica: '', estado: 'Stock', imagen: '', 
-      codigo: '', ubicacion: '', serial: '' 
+      codigo: '', ubicacion: '', serial: '', imagenes: []
     });
     setIsModalOpen(true);
   };
@@ -256,7 +278,10 @@ const Inventario = () => {
                              <p className="text-[9px] text-neutral-600 font-black uppercase mb-1">Precio Mercado</p>
                              <p className="text-3xl font-mono text-white font-black tracking-tighter">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-sm opacity-30">Bs.</span></p>
                           </div>
-                          <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="w-14 h-14 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl group-hover:scale-105 duration-300"><Edit3 size={22}/></button>
+                          <div className="flex gap-2">
+                              <button onClick={() => handleDeleteProduct(p.id, p.imagen)} className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-lg border border-rose-500/20"><Trash2 size={20}/></button>
+                              <button onClick={() => { setEditingProduct(p); setIsModalOpen(true); }} className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-neutral-200 transition-all shadow-xl shadow-white/5"><Edit3 size={20}/></button>
+                           </div>
                        </div>
                     </div>
                   </div>
@@ -408,14 +433,35 @@ const Inventario = () => {
                        ) : (
                           <div className="flex flex-col items-center gap-4 text-neutral-600">
                              <ImageIcon size={60}/>
-                             <span className="text-[10px] font-black uppercase tracking-widest">Añadir Foto</span>
+                             <span className="text-[10px] font-black uppercase tracking-widest">Foto Principal</span>
                           </div>
                        )}
                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity">
                           <Plus className="text-white" size={40}/>
-                          <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload}/>
+                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, false)}/>
                        </label>
                     </div>
+
+                    {/* GALERÍA DE FOTOS */}
+                    <div className="space-y-4">
+                       <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest ml-4">Galería / Más Fotos</label>
+                       <div className="grid grid-cols-3 gap-3">
+                          {editingProduct.imagenes?.map((img, idx) => (
+                             <div key={idx} className="aspect-square rounded-2xl border border-white/5 overflow-hidden relative group">
+                                <img src={img} className="w-full h-full object-cover" />
+                                <button onClick={() => {
+                                   const news = editingProduct.imagenes.filter((_, i) => i !== idx);
+                                   setEditingProduct({...editingProduct, imagenes: news});
+                                }} className="absolute top-1 right-1 bg-rose-500 text-white p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"><X size={12}/></button>
+                             </div>
+                          ))}
+                          <label className="aspect-square rounded-2xl border border-dashed border-white/10 flex items-center justify-center text-neutral-600 hover:border-white/30 cursor-pointer transition-all">
+                             <Plus size={20}/>
+                             <input type="file" className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, true)}/>
+                          </label>
+                       </div>
+                    </div>
+
                     <div className="bg-white/5 p-8 rounded-[40px] border border-white/5 text-center text-white">
                        <label className="text-[9px] font-bold text-neutral-600 uppercase mb-2 block tracking-widest">Stock Disponible</label>
                        <input type="number" value={editingProduct.stock_actual} onChange={e => setEditingProduct({...editingProduct, stock_actual: parseInt(e.target.value) || 0})} className="bg-transparent text-5xl font-mono w-full outline-none font-black text-center tracking-tighter" />
