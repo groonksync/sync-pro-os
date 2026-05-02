@@ -21,10 +21,19 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
   };
 
   const isLowStock = parseInt(p.stock_actual) <= (p.stock_minimo || 3) && parseInt(p.stock_actual) > 0;
-  const oldPrice = parseFloat(p.precio_venta || 0) * 1.25;
+  const oldPrice = p.precio_anterior || (parseFloat(p.precio_venta || 0) * 1.25);
+  const [viewers] = useState(Math.floor(Math.random() * 8) + 3);
 
   return (
-    <div className="bg-[#0d0d0d] border border-white/5 rounded-[40px] p-0 hover:border-white/10 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="bg-[#0d0d0d] border border-white/5 rounded-[40px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* SOCIAL PROOF BADGE */}
+      <div className="absolute top-6 right-6 z-30 pointer-events-none">
+         <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
+            <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-ping" />
+            <span className="text-[8px] font-black text-white/70 uppercase tracking-widest">{viewers} viendo ahora</span>
+         </div>
+      </div>
+
       {/* IMAGEN CON SLIDER */}
       <div className="aspect-square bg-[#050505] m-3 rounded-[32px] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
@@ -193,11 +202,14 @@ const PublicCatalog = () => {
             ))}
          </div>
 
-         {/* GRID DE PRODUCTOS */}
+         {/* SKELETON LOADING GRID */}
          {loading ? (
-            <div className="flex flex-col items-center justify-center py-40 gap-6">
-               <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-               <p className="text-[10px] font-black uppercase tracking-[0.5em] text-neutral-600">Sincronizando Catálogo...</p>
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-10">
+               {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="aspect-[4/5] bg-white/5 rounded-[40px] animate-pulse relative overflow-hidden">
+                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                  </div>
+               ))}
             </div>
          ) : (
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-10">

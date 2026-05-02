@@ -597,16 +597,6 @@ const Inventario = () => {
                        </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
-                       <div className="bg-emerald-500/5 p-8 rounded-[48px] border border-emerald-500/10">
-                          <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2 block">Precio Venta (Bs.)</label>
-                          <input type="number" value={editingProduct.precio_venta} onChange={e => setEditingProduct({...editingProduct, precio_venta: parseFloat(e.target.value) || 0})} className="w-full bg-transparent p-0 text-white font-mono text-4xl outline-none font-black tracking-tighter" />
-                       </div>
-                       <div className="bg-rose-500/5 p-8 rounded-[48px] border border-rose-500/10 opacity-60">
-                          <label className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2 block">Costo Interno</label>
-                          <input type="number" value={editingProduct.precio_costo} onChange={e => setEditingProduct({...editingProduct, precio_costo: parseFloat(e.target.value) || 0})} className="w-full bg-transparent p-0 text-white font-mono text-2xl outline-none font-bold" />
-                       </div>
-                    </div>
 
                     <div className="grid grid-cols-2 gap-6 bg-white/[0.02] p-8 rounded-[40px] border border-white/5">
                        <div className="space-y-2 border-r border-white/10 pr-6">
