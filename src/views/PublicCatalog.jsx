@@ -138,57 +138,58 @@ const PublicCatalog = () => {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500 selection:text-white">
-      {/* HEADER PREMIUM */}
-      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-2xl border-b border-white/5 py-8 px-6 lg:px-20 flex flex-col lg:flex-row justify-between items-center gap-8">
-         <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-blue-400 rounded-2xl flex items-center justify-center shadow-2xl shadow-blue-500/20">
-               <Zap size={32} className="text-white fill-white" />
+      {/* HEADER MINIMALISTA EXECUTIVE */}
+      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-4 md:py-6 px-6 lg:px-20 flex flex-col md:flex-row justify-between items-center gap-4">
+         <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-2xl shadow-blue-500/20">
+               <Zap size={20} className="text-white fill-white" />
             </div>
-            <div>
-               <h1 className="text-3xl font-black tracking-tighter leading-none">SYNC PRO <span className="text-blue-500 italic">CATALOG</span></h1>
-               <p className="text-[9px] font-black uppercase tracking-[0.5em] text-neutral-500 mt-1">Soberanía Tecnológica</p>
+            <div className="flex flex-col">
+               <h1 className="text-lg md:text-xl font-black tracking-[0.2em] leading-none text-white">SYNC PRO</h1>
+               <div className="flex items-center gap-2 mt-1">
+                  <p className="text-[7px] font-black uppercase tracking-[0.4em] text-blue-500">EXECUTIVE CATALOG</p>
+                  <ShieldCheck size={8} className="text-blue-500" />
+               </div>
             </div>
          </div>
 
-         <div className="flex items-center gap-6 w-full lg:w-auto">
-            <div className="relative flex-1 lg:w-96">
-               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-600" size={18} />
+         <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="relative flex-1 md:w-80">
+               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-neutral-600" size={14} />
                <input 
                  type="text" 
                  placeholder="Buscar equipo..."
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
-                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-16 pr-8 text-sm outline-none focus:border-blue-500/50 transition-all"
+                 className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-6 text-[11px] md:text-xs outline-none focus:border-blue-500/50 transition-all placeholder:text-neutral-700"
                />
             </div>
-            <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" className="hidden lg:flex items-center gap-3 px-8 py-4 bg-emerald-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-xl">
-               <MessageCircle size={18} />
-               Soporte Live
-            </a>
          </div>
       </header>
 
       <main className="px-6 lg:px-20 py-16">
-         {/* SECCIÓN PASOS PARA COMPRAR */}
-         <section className="mb-24 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-blue-500/30 transition-all cursor-pointer" onClick={() => window.scrollTo({top: 800, behavior: 'smooth'})}>
-               <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all"></div>
-               <p className="text-5xl font-black text-white/10 mb-4 font-mono">01</p>
-               <h4 className="text-xl font-bold mb-3 uppercase tracking-tight">Elige tu Equipo</h4>
-               <p className="text-sm text-neutral-500 leading-relaxed">Explora nuestra selección premium de tecnología Sync Pro con fotos reales.</p>
-            </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-emerald-500/30 transition-all cursor-pointer" onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')}>
-               <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all"></div>
-               <p className="text-5xl font-black text-white/10 mb-4 font-mono">02</p>
-               <h4 className="text-xl font-bold mb-3 uppercase tracking-tight">Pide por WhatsApp</h4>
-               <p className="text-sm text-neutral-500 leading-relaxed">Toca aquí para recibir atención personalizada al instante.</p>
-            </div>
-            <div className="bg-[#0a0a0a] border border-white/5 p-10 rounded-[40px] relative overflow-hidden group hover:border-yellow-500/30 transition-all cursor-pointer" onClick={() => alert('Coordinamos envíos a todo el país vía Courier')}>
-               <div className="absolute -top-10 -right-10 w-40 h-40 bg-yellow-500/10 rounded-full blur-3xl group-hover:bg-yellow-500/20 transition-all"></div>
-               <p className="text-5xl font-black text-white/10 mb-4 font-mono">03</p>
-               <h4 className="text-xl font-bold mb-3 uppercase tracking-tight">Envío Inmediato</h4>
-               <p className="text-sm text-neutral-500 leading-relaxed">Coordinamos el pago y enviamos tu equipo con certificado Sync Pro.</p>
-            </div>
+         {/* BARRA DE ACCIÓN HUD COMPACTA */}
+         <section className="mb-12 flex flex-wrap justify-center gap-4 md:gap-8">
+            <button onClick={() => window.scrollTo({top: 500, behavior: 'smooth'})} className="flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group">
+               <div className="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center text-blue-500 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                  <Smartphone size={14} />
+               </div>
+               <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 group-hover:text-white">Ver Equipos</span>
+            </button>
+            
+            <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')} className="flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group">
+               <div className="w-8 h-8 rounded-full bg-emerald-600/20 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                  <MessageCircle size={14} />
+               </div>
+               <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 group-hover:text-white">Asesoría Live</span>
+            </button>
+
+            <button onClick={() => alert('Logística Sync Pro: Envíos inmediatos a todo el país.')} className="flex items-center gap-3 px-5 py-3 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group">
+               <div className="w-8 h-8 rounded-full bg-orange-600/20 flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all">
+                  <Truck size={14} />
+               </div>
+               <span className="text-[9px] font-black uppercase tracking-widest text-neutral-400 group-hover:text-white">Logística VIP</span>
+            </button>
          </section>
 
          {/* FILTROS DE CATEGORÍA */}
