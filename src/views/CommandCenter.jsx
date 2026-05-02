@@ -61,7 +61,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
     <div className="animate-in fade-in duration-500 max-w-[1200px] w-full">
       <header className="mb-6 flex justify-between items-end">
         <div>
-          <h2 className="text-3xl font-light text-white tracking-tight mb-2">Centro de <span className="text-neutral-400 font-medium">Control</span></h2>
+          <h2 className="text-3xl font-black text-white tracking-tight mb-2 uppercase underline decoration-purple-500/30 underline-offset-8">Centro de Control <span className="text-purple-500">PRO MAX</span></h2>
           <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-[0.3em] flex items-center gap-2">
             <Activity size={14} /> Gestión de Capital Sovereign OS
           </p>
