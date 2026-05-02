@@ -18,7 +18,7 @@ import { supabase } from './lib/supabaseClient';
 
 const App = () => {
   // Detectar si estamos en la vista de Portal del Cliente
-  const path = window.location.pathname;
+  const [path, setPath] = useState(window.location.pathname);
   const isPortal = path.startsWith('/portal/');
   const portalId = isPortal ? path.split('/portal/')[1] : null;
   const isCatalog = path === '/catalogo' || path === '/catalogo/';
