@@ -23,86 +23,70 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
   const isLowStock = parseInt(p.stock_actual) <= (p.stock_minimo || 3) && parseInt(p.stock_actual) > 0;
 
   return (
-    <div className="bg-[#0d0d0d] border border-white/5 rounded-[32px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="bg-[#0d0d0d] border border-white/5 rounded-[24px] md:rounded-[32px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* IMAGEN CON SLIDER */}
       <div className="aspect-square bg-[#050505] relative overflow-hidden cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
-            className="w-full h-full object-contain p-4 transition-transform duration-1000 group-hover:scale-110"
+            className="w-full h-full object-contain p-2 md:p-4 transition-transform duration-1000 group-hover:scale-110"
             alt={p.nombre}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-neutral-900">
-             <Package size={60} className="text-neutral-800" />
+             <Package size={30} className="text-neutral-800" />
           </div>
         )}
 
         {/* INSIGNIAS DE VENTA */}
-        <div className="absolute top-6 left-6 flex flex-col gap-2 z-20">
-           <span className="px-4 py-2 bg-blue-600 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-2xl backdrop-blur-md">
+        <div className="absolute top-3 left-3 md:top-6 md:left-6 flex flex-col gap-1 md:gap-2 z-20">
+           <span className="px-2 py-1 md:px-4 md:py-2 bg-blue-600 text-white text-[7px] md:text-[9px] font-black rounded-full uppercase tracking-widest shadow-2xl backdrop-blur-md">
               {p.categoria || 'Sync Pro'}
            </span>
            {isLowStock && (
-              <span className="px-4 py-2 bg-orange-600 text-white text-[9px] font-black rounded-full uppercase tracking-widest shadow-2xl animate-pulse">
-                 ¡Solo quedan {p.stock_actual}!
+              <span className="px-2 py-1 md:px-4 md:py-2 bg-orange-600 text-white text-[7px] md:text-[9px] font-black rounded-full uppercase tracking-widest shadow-2xl animate-pulse">
+                 {p.stock_actual} disp.
               </span>
            )}
-        </div>
-
-        <div className="absolute top-6 right-6 z-20">
-           <div className="w-10 h-10 bg-black/60 backdrop-blur-md border border-white/10 rounded-full flex items-center justify-center text-emerald-400 shadow-2xl" title="Certificado Sync Pro">
-              <ShieldCheck size={20} />
-           </div>
         </div>
 
         {/* CONTROLES SLIDER */}
         {allImages.length > 1 && (
           <>
-            <button onClick={prevImg} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black">
-              <ChevronRight className="rotate-180" size={20}/>
+            <button onClick={prevImg} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black">
+              <ChevronRight className="rotate-180" size={16}/>
             </button>
-            <button onClick={nextImg} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black">
-              <ChevronRight size={20}/>
+            <button onClick={nextImg} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black">
+              <ChevronRight size={16}/>
             </button>
           </>
         )}
       </div>
 
-      <div className="p-8 flex-1 flex flex-col">
-        <div className="flex-1 space-y-4 mb-8">
-          <h3 className="text-2xl font-black text-white leading-tight tracking-tight group-hover:text-blue-400 transition-colors">{p.nombre}</h3>
+      <div className="p-4 md:p-8 flex-1 flex flex-col">
+        <div className="flex-1 space-y-2 md:space-y-4 mb-4 md:mb-8">
+          <h3 className="text-sm md:text-2xl font-black text-white leading-tight tracking-tight group-hover:text-blue-400 transition-colors line-clamp-2">{p.nombre}</h3>
           
-          <div className="flex flex-wrap gap-2">
-             <div className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-mono text-neutral-400 border border-white/5 uppercase tracking-widest">Garantía: {p.garantia || '180 Días'}</div>
-             <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black">Certificado Sync Pro</div>
+          <div className="flex flex-wrap gap-1 md:gap-2">
+             <div className="px-2 py-0.5 bg-white/5 rounded-md text-[7px] md:text-[9px] font-mono text-neutral-400 border border-white/5 uppercase tracking-widest">Garantía: {p.garantia || '180 Días'}</div>
+             <div className="hidden md:block px-3 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black text-center">Certificado Sync Pro</div>
           </div>
-
-          <p className="text-sm text-neutral-500 line-clamp-3 font-medium leading-relaxed italic border-l-2 border-white/5 pl-4">
-             {p.ficha_tecnica || 'Consulte especificaciones técnicas detalladas con nuestro equipo.'}
-          </p>
         </div>
 
-        <div className="pt-8 border-t border-white/5 flex flex-col gap-6">
+        <div className="pt-4 md:pt-8 border-t border-white/5 flex flex-col gap-4 md:gap-6">
            <div className="flex justify-between items-end">
               <div>
-                 <p className="text-[10px] text-neutral-600 font-black uppercase mb-1 tracking-[0.3em]">Precio Oficial</p>
-                 <p className="text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-lg opacity-20 ml-1">Bs.</span></p>
-              </div>
-              <div className="flex flex-col items-end">
-                 <div className="flex gap-1 text-yellow-500 mb-1">
-                    <Star size={10} fill="currentColor"/><Star size={10} fill="currentColor"/><Star size={10} fill="currentColor"/><Star size={10} fill="currentColor"/><Star size={10} fill="currentColor"/>
-                 </div>
-                 <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Disponible</p>
+                 <p className="text-[7px] md:text-[10px] text-neutral-600 font-black uppercase mb-1 tracking-[0.3em]">Precio Mercado</p>
+                 <p className="text-xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-[10px] md:text-lg opacity-20 ml-1">Bs.</span></p>
               </div>
            </div>
 
            <button 
              onClick={() => onConsult(p)}
-             className="w-full py-5 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] hover:bg-blue-500 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-3 group/btn"
+             className="w-full py-3 md:py-5 bg-white text-black rounded-xl md:rounded-2xl font-black text-[8px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-blue-500 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-2 md:gap-3 group/btn"
            >
-              <MessageCircle size={18} className="group-hover/btn:animate-bounce"/>
-              Consultar Disponibilidad
+              <MessageCircle size={14} className="md:w-[18px] md:h-[18px] group-hover/btn:animate-bounce"/>
+              Consultar
            </button>
         </div>
       </div>
@@ -208,12 +192,12 @@ const PublicCatalog = () => {
          </section>
 
          {/* FILTROS DE CATEGORÍA */}
-         <div className="flex overflow-x-auto gap-4 pb-12 no-scrollbar">
+         <div className="flex overflow-x-auto gap-3 pb-8 no-scrollbar scroll-smooth snap-x touch-pan-x">
             {categories.map(cat => (
                <button
                  key={cat}
                  onClick={() => setFilterCategory(cat)}
-                 className={`px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${filterCategory === cat ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-500/20' : 'bg-white/5 border-white/10 text-neutral-500 hover:text-white hover:bg-white/10'}`}
+                 className={`px-6 py-3 md:px-10 md:py-4 rounded-xl md:rounded-2xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border snap-start ${filterCategory === cat ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-500/20' : 'bg-white/5 border-white/10 text-neutral-500 hover:text-white hover:bg-white/10'}`}
                >
                   {cat}
                </button>
@@ -227,7 +211,7 @@ const PublicCatalog = () => {
                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-neutral-600">Sincronizando Catálogo...</p>
             </div>
          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-10">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-10">
                {filteredProducts.map(p => (
                   <PublicProductCard 
                     key={p.id} 

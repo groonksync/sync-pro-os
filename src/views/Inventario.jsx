@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Package, TrendingUp, Users, Plus, Search, Filter, Share2,
+  Package, TrendingUp, Users, Plus, Search, Filter, Share2, ExternalLink,
   ChevronRight, ArrowLeft, Save, Trash2, Edit3, 
   AlertTriangle, CheckCircle2, Box, DollarSign, 
   Percent, ShoppingCart, Truck, X, Image as ImageIcon,
@@ -345,7 +345,11 @@ const Inventario = () => {
                  <div className="flex gap-4">
                     <button onClick={handleShareCatalog} className="px-8 py-4 bg-blue-600/10 text-blue-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-500/20 flex items-center gap-3">
                        <Share2 size={16}/>
-                       Compartir Catálogo
+                       Link
+                    </button>
+                    <button onClick={() => window.open('/catalogo', '_blank')} className="px-8 py-4 bg-emerald-600/10 text-emerald-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all border border-emerald-500/20 flex items-center gap-3">
+                       <ExternalLink size={16}/>
+                       Ver Catálogo Live
                     </button>
                     <button onClick={openNewProduct} className="px-10 py-4 bg-white text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl">Nuevo Ingreso</button>
                  </div>
