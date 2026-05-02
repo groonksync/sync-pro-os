@@ -7,7 +7,7 @@ import {
   FileText, Smartphone, MessageCircle, MoreVertical, 
   History, ArrowUpRight, ArrowDownLeft, User as UserIcon,
   Cpu, Info, Hash, MapPin, Tag, BarChart3, Globe,
-  ShieldAlert, Trophy, Wallet, Printer, ClipboardList
+  ShieldAlert, Trophy, Wallet, Printer, ClipboardList, Scale, Box as BoxIcon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
