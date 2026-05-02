@@ -28,12 +28,12 @@ const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
   return (
     <div className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden">
       {/* IMAGEN DEL PRODUCTO CON SLIDER */}
-      <div className="aspect-[4/3] bg-[#050505] relative overflow-hidden cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
+      <div className="aspect-square bg-[#050505] relative overflow-hidden cursor-zoom-in group/img" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
             alt={p.nombre}
-            className="w-full h-full object-contain transition-all duration-700 p-4"
+            className="w-full h-full object-contain transition-all duration-700 hover:scale-105"
             onError={(e) => {
               e.target.onerror = null; 
               e.target.src = "https://via.placeholder.com/600x400/0a0a0a/ffffff?text=Imagen+Sovereign";
