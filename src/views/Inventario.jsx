@@ -31,23 +31,21 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect, isDark }) => {
   
   return (
     <div onClick={() => onSelect(p)} className={`${isDark ? 'bg-[#121212] border-white/5 hover:border-emerald-500/30' : 'bg-white border-neutral-200 hover:border-emerald-500/50'} border rounded-[32px] overflow-hidden transition-all flex flex-col group relative shadow-xl h-full cursor-pointer`}>
-      {/* IMAGEN Y EFECTO AGOTADO */}
+      {/* IMAGEN Y EFECTO AGOTADO MINIMALISTA */}
       <div className={`${isDark ? 'bg-[#080808]' : 'bg-neutral-50'} aspect-square relative overflow-hidden flex items-center justify-center border-b ${isDark ? 'border-white/5' : 'border-neutral-100'}`}>
         {p.imagen ? (
-          <img src={p.imagen} className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${isAgotado ? 'grayscale opacity-30 blur-[4px]' : ''}`} alt={p.nombre}/>
+          <img src={p.imagen} className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${isAgotado ? 'grayscale brightness-50 blur-[2px]' : ''}`} alt={p.nombre}/>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2"><Package size={30} strokeWidth={1} className="text-neutral-400" /></div>
         )}
         
         {isAgotado && (
-           <div className="absolute inset-0 z-40 flex items-center justify-center overflow-hidden">
-              <div className="bg-emerald-600/90 backdrop-blur-md border-y border-white/10 py-2.5 w-[400%] -rotate-[15deg] shadow-2xl flex items-center justify-center">
-                 <span className="text-white text-[10px] font-black tracking-[1em] uppercase">AGOTADO</span>
-              </div>
+           <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+              <span className="text-white text-xs font-black tracking-[0.8em] uppercase drop-shadow-2xl">AGOTADO</span>
            </div>
         )}
 
-        {/* ETIQUETA CATEGORÍA - ESTILO ESMERALDA */}
+        {/* ETIQUETA CATEGORÍA */}
         <div className="absolute top-4 left-4 z-10">
           <span className="text-[7px] text-white font-black uppercase tracking-widest bg-emerald-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 shadow-2xl">
             {p.categoria || 'Accesorio'}
@@ -60,21 +58,22 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect, isDark }) => {
           <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-10 h-10 bg-white/80 backdrop-blur-md text-black rounded-xl flex items-center justify-center hover:bg-white transition-all border border-white/10 shadow-2xl active:scale-90"><Edit3 size={14} /></button>
         </div>
 
-        {/* INDICADOR STOCK - ESTILO ESMERALDA */}
-        <div className="absolute top-4 right-4 z-10">
-          <p className="text-[9px] font-mono font-black px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/10 bg-black/40 text-emerald-400 shadow-2xl">
-            {p.stock_actual} UDS
-          </p>
-        </div>
+        {/* INDICADOR STOCK */}
+        {!isAgotado && (
+          <div className="absolute top-4 right-4 z-10">
+            <p className="text-[9px] font-mono font-black px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/10 bg-black/40 text-emerald-400 shadow-2xl">
+              {p.stock_actual} UDS
+            </p>
+          </div>
+        )}
       </div>
 
       {/* INFORMACIÓN DETALLADA */}
       <div className="p-6 flex flex-col gap-4">
         <div className="space-y-1">
-           <h3 className={`text-lg font-black ${isDark ? 'text-white' : 'text-neutral-900'} line-clamp-1 leading-tight tracking-tight uppercase`}>{p.nombre}</h3>
+           <h3 className={`text-sm md:text-base font-black ${isDark ? 'text-white' : 'text-neutral-900'} line-clamp-2 leading-tight tracking-tight uppercase`}>{p.nombre}</h3>
            <div className="flex items-center justify-between">
-              <p className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.3em]">{p.marca || 'Sovereign Core'}</p>
-              {/* ETIQUETA ENVÍO */}
+              <p className="text-[8px] font-black text-emerald-500 uppercase tracking-[0.3em]">{p.marca || 'Sovereign Core'}</p>
               <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[7px] font-black uppercase tracking-widest ${p.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-white/5 border-white/10 text-neutral-500'}`}>
                  <Truck size={8} />
                  {p.tipo_envio === 'Envío Gratuito' ? 'Gratis' : 'Adic.'}
@@ -84,9 +83,9 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect, isDark }) => {
         
         <div className="flex flex-col">
            <p className="text-[8px] text-neutral-500 font-black uppercase tracking-widest mb-0.5">Venta Final</p>
-           <p className={`text-4xl font-mono ${isDark ? 'text-white' : 'text-neutral-900'} font-black tracking-tighter leading-none flex items-baseline`}>
+           <p className={`text-2xl md:text-3xl font-mono ${isDark ? 'text-white' : 'text-neutral-900'} font-black tracking-tighter leading-none flex items-baseline`}>
               {parseFloat(p.precio_venta || 0).toLocaleString()}
-              <span className="text-xs opacity-20 ml-1 font-sans font-black">BS.</span>
+              <span className="text-[10px] opacity-20 ml-1 font-sans font-black">BS.</span>
            </p>
         </div>
       </div>
@@ -104,7 +103,6 @@ const Inventario = ({ settings, isDark }) => {
   const [hasMore, setHasMore] = useState(true);
   const ITEMS_PER_PAGE = 24;
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [currentImgIndex, setCurrentImgIndex] = useState(0);
   const [toast, setToast] = useState({ show: false, message: '' });
 
   const isMobile = settings?.isMobileMode;
@@ -172,7 +170,6 @@ const Inventario = ({ settings, isDark }) => {
   };
 
   const filteredProducts = productos.filter(p => { const norm = normalizeText(searchTerm); return normalizeText(p.nombre).includes(norm) || normalizeText(p.codigo).includes(norm); });
-  const allImages = selectedProduct ? [selectedProduct.imagen, ...(selectedProduct.imagenes || [])].filter(Boolean) : [];
 
   return (
     <div className={`flex flex-col h-full w-full animate-in fade-in duration-500 ${isMobile ? 'pb-20' : ''}`}>
@@ -193,7 +190,8 @@ const Inventario = ({ settings, isDark }) => {
         <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identificar activos..." className={`w-full ${isDark ? 'bg-black/20 border-white/10 text-white' : 'bg-white border-neutral-200 text-neutral-900'} border rounded-[2.5rem] py-6 md:py-8 pl-20 pr-8 text-base outline-none focus:border-emerald-500/50 transition-all shadow-inner`} />
       </div>
 
-      <div className={`grid gap-4 md:gap-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7'}`}>
+      {/* REJILLA AJUSTADA A 6 COLUMNAS MÁXIMO PARA MAYOR TAMAÑO */}
+      <div className={`grid gap-4 md:gap-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6'}`}>
         {filteredProducts.map(p => ( <ProductCard key={p.id} p={p} isDark={isDark} onEdit={handleEditProduct} onDelete={handleDeleteProduct} onSelect={setSelectedProduct} /> ))}
       </div>
 
@@ -223,7 +221,6 @@ const Inventario = ({ settings, isDark }) => {
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Nombre del Producto</p><input type="text" value={editingProduct.nombre || ''} onChange={(e) => setEditingProduct({...editingProduct, nombre: e.target.value})} className={`w-full bg-transparent text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`} /></div>
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Marca</p><input type="text" value={editingProduct.marca || ''} onChange={(e) => setEditingProduct({...editingProduct, marca: e.target.value})} className="w-full bg-transparent text-sm font-black text-emerald-500 outline-none" /></div>
-                          {/* RESTAURACIÓN DISTRIBUIDOR */}
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5 col-span-2"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Distribuidor / Proveedor Maestro</p><div className="flex items-center gap-3"><Briefcase size={14} className="text-neutral-700" /><input type="text" value={editingProduct.distribuidor || ''} onChange={(e) => setEditingProduct({...editingProduct, distribuidor: e.target.value})} className={`w-full bg-transparent text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`} placeholder="Nombre del proveedor..."/></div></div>
                        </div>
                     </div>
