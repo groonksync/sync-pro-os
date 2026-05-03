@@ -226,111 +226,117 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   return (
     <div className={`flex flex-col h-screen w-full ${colors.bg} ${colors.text} overflow-hidden font-sans transition-colors duration-500`}>
       
-      {/* VISTA: LISTA DE CLIENTES (ELITE MOTION REORG) */}
+      {/* VISTA: LISTA DE CLIENTES (THE SOVEREIGN ATLAS) */}
       {viewState === 'client-list' && (
-        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000 relative">
+        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000">
           
-          {/* DECORACIÓN DE FONDO (PARTÍCULAS) */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
-             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#10b981]/10 blur-[120px] rounded-full animate-pulse"></div>
-             <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/5 blur-[100px] rounded-full"></div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto mac-scrollbar p-10 space-y-12 relative z-10 max-w-[1900px] mx-auto w-full">
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-8 space-y-8 max-w-[1900px] mx-auto w-full relative z-10">
             
-            {/* HERO COMMAND CENTER CON GRÁFICOS */}
-            <header className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-end pb-12 border-b border-white/5">
-              <div className="lg:col-span-2 space-y-6">
-                <div>
-                  <p className={`text-[10px] text-[#10b981] font-black uppercase tracking-[0.6em] mb-4 flex items-center gap-3 animate-in slide-in-from-left duration-700`}>
-                    <Sparkles size={14} className="animate-pulse"/> Sovereign OS • Global Intelligence Terminal
-                  </p>
-                  <h2 className={`text-8xl font-black ${colors.text} tracking-tighter uppercase leading-[0.8] mb-4 animate-in slide-in-from-left duration-1000`}>
-                    Identificar <br/><span className={isLight ? 'text-slate-200' : 'text-neutral-900'}>Talento</span>
-                  </h2>
-                </div>
-                
-                {/* GRÁFICO DE ACTIVIDAD (SVG PULSE) */}
-                <div className={`${colors.card} rounded-[2.5rem] p-8 flex items-center gap-10 animate-in fade-in zoom-in duration-1000 shadow-2xl`}>
-                   <div className="flex-1 space-y-4">
-                      <p className={`text-[9px] ${colors.textMuted} font-black uppercase tracking-widest`}>Pulso de Producción Global</p>
-                      <div className="h-16 flex items-end gap-1.5">
-                         {[40, 70, 45, 90, 65, 80, 50, 100, 75, 85, 60, 95].map((h, i) => (
-                           <div key={i} className="flex-1 bg-gradient-to-t from-[#10b981]/10 to-[#10b981] rounded-full hover:scale-y-110 transition-all cursor-crosshair shadow-[0_0_10px_rgba(16,185,129,0.3)]" style={{ height: `${h}%` }}></div>
-                         ))}
-                      </div>
-                   </div>
-                   <div className="shrink-0 text-right">
-                      <p className="text-[10px] text-neutral-600 font-black uppercase mb-1">Carga de Agencia</p>
-                      <p className="text-5xl font-black text-[#10b981]">84%</p>
-                   </div>
-                </div>
-              </div>
+            {/* ATLAS HUD: SEGMENTACIÓN DE INTELIGENCIA */}
+            <header className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in slide-in-from-top duration-700">
+               {/* CLUSTER: VIP COMMAND */}
+               <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-amber-500 shadow-2xl relative overflow-hidden group`}>
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all rotate-12"><Crown size={64}/></div>
+                  <div className="relative z-10">
+                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Top Tier • VIPs</p>
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner"><Crown size={24}/></div>
+                        <div><p className="text-2xl font-black text-white leading-none">08</p><p className="text-[8px] text-amber-500/60 font-bold uppercase">High Payers</p></div>
+                     </div>
+                  </div>
+               </div>
 
-              <div className="space-y-6 animate-in slide-in-from-right duration-1000">
-                <div className={`${colors.card} rounded-[2.5rem] p-8 border-l-4 border-l-[#10b981] shadow-2xl`}>
-                  <p className="text-[10px] text-neutral-600 font-black uppercase mb-3 tracking-widest">Smart Insights</p>
-                  <div className="flex items-center gap-4 mb-4">
-                     <div className="w-12 h-12 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981]"><TrendingUp size={24}/></div>
-                     <div>
-                        <p className="text-xs font-black text-white uppercase tracking-tighter">Top Talento Semanal</p>
-                        <p className="text-[10px] text-neutral-500 font-bold uppercase">Susi Bolivia</p>
+               {/* CLUSTER: FREQUENCY PULSE */}
+               <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-blue-500 shadow-2xl relative overflow-hidden group`}>
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all -rotate-12"><Zap size={64}/></div>
+                  <div className="relative z-10">
+                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">High Frequency</p>
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner"><Zap size={24}/></div>
+                        <div><p className="text-2xl font-black text-white leading-none">14</p><p className="text-[8px] text-blue-500/60 font-bold uppercase">Active Weekly</p></div>
                      </div>
                   </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                     <div className="text-center">
-                        <p className="text-[8px] text-neutral-700 font-black mb-1 uppercase">Proyectos</p>
-                        <p className="text-xl font-black text-white">24</p>
-                     </div>
-                     <div className="text-center">
-                        <p className="text-[8px] text-neutral-700 font-black mb-1 uppercase">Talento</p>
-                        <p className="text-xl font-black text-white">{clients.length}</p>
-                     </div>
-                     <div className="text-center">
-                        <p className="text-[8px] text-neutral-700 font-black mb-1 uppercase">Status</p>
-                        <p className="text-xl font-black text-[#10b981]">LIVE</p>
+               </div>
+
+               {/* CLUSTER: GLOBAL REACH */}
+               <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-emerald-500 shadow-2xl relative overflow-hidden group`}>
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all"><Globe size={64}/></div>
+                  <div className="relative z-10">
+                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Global Reach</p>
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner"><Globe size={24}/></div>
+                        <div><p className="text-2xl font-black text-white leading-none">12</p><p className="text-[8px] text-emerald-500/60 font-bold uppercase">Countries</p></div>
                      </div>
                   </div>
-                </div>
-                <button onClick={() => setIsClientModalOpen(true)} className="w-full py-6 bg-[#10b981] text-white rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_20px_50px_rgba(16,185,129,0.3)] flex items-center justify-center gap-4">
-                  <Plus size={20} strokeWidth={3}/> Reclutar Nuevo Talento
-                </button>
-              </div>
+               </div>
+
+               {/* CLUSTER: GROWTH MOMENTUM */}
+               <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-purple-500 shadow-2xl relative overflow-hidden group`}>
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all rotate-45"><TrendingUp size={64}/></div>
+                  <div className="relative z-10">
+                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Momentum</p>
+                     <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500 shadow-inner"><TrendingUp size={24}/></div>
+                        <div><p className="text-2xl font-black text-white leading-none">92%</p><p className="text-[8px] text-purple-500/60 font-bold uppercase">Efficiency</p></div>
+                     </div>
+                  </div>
+               </div>
             </header>
 
-            {/* BÚSQUEDA Y REJILLA */}
-            <div className="space-y-8 animate-in slide-in-from-bottom duration-1000 delay-300">
-              <div className="relative group max-w-4xl">
-                <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={24}/>
-                <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Escanear base de datos por nombre, empresa o país..." className={`w-full ${colors.input} rounded-[2.5rem] py-7 pl-20 pr-8 text-xl outline-none focus:border-[#10b981]/30 transition-all font-bold placeholder:text-neutral-900 shadow-2xl`} />
+            {/* BARRA TÁCTICA: BÚSQUEDA Y ACCIÓN */}
+            <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
+              <div className="relative group flex-1 max-w-2xl">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={20}/>
+                <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Identificar talento por segmento..." className={`w-full ${colors.input} rounded-2xl py-4 pl-14 pr-6 text-base outline-none focus:border-[#10b981]/30 transition-all font-bold placeholder:text-neutral-900 shadow-xl`} />
               </div>
+              <div className="flex items-center gap-4">
+                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
+                    {[<Filter size={14}/>, <DollarSign size={14}/>, <Clock size={14}/>, <Globe size={14}/>].map((icon, i) => (
+                      <button key={i} className="p-3 text-neutral-700 hover:text-white transition-all hover:bg-white/5 rounded-lg">{icon}</button>
+                    ))}
+                 </div>
+                 <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-4 bg-[#10b981] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3">
+                   <Plus size={16} strokeWidth={3}/> Reclutar
+                 </button>
+              </div>
+            </div>
 
-              <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-                {filteredClients.map((client, idx) => (
-                  <div key={client.id} onClick={() => openClientProfile(client)} className={`${colors.card} rounded-[3rem] aspect-square p-8 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col items-center justify-center group active:scale-95 relative overflow-hidden border-b-2 border-b-transparent hover:border-b-[#10b981] hover:-translate-y-3 animate-in fade-in slide-in-from-bottom duration-700`} style={{ animationDelay: `${idx * 50}ms` }}>
-                    
-                    {/* HUD FLOTANTE */}
-                    <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 z-20">
-                       <button onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${client.email}`; }} className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-[#10b981] hover:text-white transition-all"><MailIcon size={18}/></button>
-                       <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-blue-500 hover:text-white transition-all"><Edit3 size={18}/></button>
-                       <button onClick={(e) => handleDeleteClient(client.id, e)} className="w-10 h-10 bg-white text-rose-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-rose-600 hover:text-white transition-all"><Trash2 size={18}/></button>
-                    </div>
-
-                    <div className="w-36 h-36 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-2xl overflow-hidden mb-8 group-hover:scale-105 transition-all relative z-10 ring-4 ring-transparent group-hover:ring-[#10b981]/20">
-                      {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={56} className={isLight ? 'text-slate-200' : 'text-neutral-900'} />}
-                    </div>
-
-                    <div className="text-center relative z-10">
-                      <h4 className={`text-2xl font-black ${colors.text} uppercase tracking-tighter leading-none mb-3`}>{client.nombre}</h4>
-                      <p className={`text-[10px] ${colors.textMuted} font-black uppercase tracking-[0.4em] flex items-center justify-center gap-2`}><Globe size={12}/> {client.pais || 'Global'}</p>
-                    </div>
-
-                    <button onClick={(e) => toggleClientStatus(client, e)} className={`mt-8 px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${client.status === 'Activo' ? 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-rose-500/10 text-rose-500 border border-rose-500/30'}`}>
-                       {client.status || 'Activo'}
-                    </button>
+            {/* THE ATLAS GRID: MICRO-HUD CARDS */}
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 pb-20">
+              {filteredClients.map((client, idx) => (
+                <div key={client.id} onClick={() => openClientProfile(client)} className={`${colors.card} rounded-[2.5rem] aspect-square p-5 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col items-center justify-center group active:scale-95 relative overflow-hidden border-b-2 border-b-transparent hover:border-b-[#10b981] animate-in fade-in zoom-in duration-500`} style={{ animationDelay: `${idx * 40}ms` }}>
+                  
+                  {/* BADGE DE SEGMENTO DINÁMICO */}
+                  <div className="absolute top-4 right-4">
+                     {idx % 4 === 0 && <div className="text-amber-500 animate-pulse"><Crown size={14}/></div>}
+                     {idx % 4 === 1 && <div className="text-blue-500"><Zap size={14}/></div>}
+                     {idx % 4 === 2 && <div className="text-emerald-500"><Globe size={14}/></div>}
+                     {idx % 4 === 3 && <div className="text-purple-500"><TrendingUp size={14}/></div>}
                   </div>
-                ))}
-              </div>
+
+                  {/* HUD FLOTANTE ACCIONES */}
+                  <div className="absolute top-4 left-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all transform -translate-x-2 group-hover:translate-x-0 z-20">
+                     <button onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${client.email}`; }} className="w-8 h-8 bg-white text-black rounded-lg flex items-center justify-center shadow-2xl hover:bg-[#10b981] hover:text-white transition-all"><MailIcon size={14}/></button>
+                     <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="w-8 h-8 bg-white text-black rounded-lg flex items-center justify-center shadow-2xl hover:bg-blue-500 hover:text-white transition-all"><Edit3 size={14}/></button>
+                     <button onClick={(e) => handleDeleteClient(client.id, e)} className="w-8 h-8 bg-white text-rose-600 rounded-lg flex items-center justify-center shadow-2xl hover:bg-rose-600 hover:text-white transition-all"><Trash2 size={14}/></button>
+                  </div>
+
+                  <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-2xl overflow-hidden mb-4 group-hover:scale-105 transition-all relative z-10">
+                    {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={32} className={isLight ? 'text-slate-200' : 'text-neutral-900'} />}
+                  </div>
+
+                  <div className="text-center relative z-10 w-full px-2">
+                    <h4 className={`text-xs font-black ${colors.text} uppercase tracking-tighter truncate leading-none mb-2`}>{client.nombre}</h4>
+                    <div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all">
+                       <p className={`text-[7px] ${colors.textMuted} font-black uppercase tracking-widest`}>{client.pais || 'Global'}</p>
+                    </div>
+                  </div>
+
+                  <button onClick={(e) => toggleClientStatus(client, e)} className={`mt-4 px-3 py-1 rounded-lg text-[6px] font-black uppercase tracking-widest transition-all ${client.status === 'Activo' ? 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
+                     {client.status || 'Activo'}
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
