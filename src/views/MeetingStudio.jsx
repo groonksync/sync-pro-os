@@ -448,8 +448,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
               {/* LISTADO DE PROYECTOS */}
               <div className="space-y-10 relative z-10">
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {(companies.length > 0 ? companies : [...Array(6)]).map((company, i) => {
-                       const data = company.nombre_empresa ? company : { nombre_empresa: 'Global Dynamics', dueño: 'Marcus Aurelius', drive_url: '#', telefono: '+1 800 234 567' };
+                    {((companies && companies.length > 0) ? companies : [...Array(6)]).map((company, i) => {
+                       const data = (company && company.nombre_empresa) ? company : { nombre_empresa: 'Global Dynamics', dueño: 'Marcus Aurelius', drive_url: '#', telefono: '+1 800 234 567' };
                        return (
                           <div key={i} onClick={() => { setSelectedCompany(data); setViewState('agency-session'); }} className="group relative">
                              <div className="absolute -inset-2 bg-gradient-to-tr from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-all blur-2xl rounded-[3rem]"></div>
@@ -483,13 +483,13 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
                                 <div className="flex gap-4">
                                    <button 
-                                      onClick={(e) => { e.stopPropagation(); window.open(data.drive_url, '_blank'); }} 
+                                      onClick={(e) => { e.stopPropagation(); if(data.drive_url !== '#') window.open(data.drive_url, '_blank'); }} 
                                       className="flex-1 py-4 bg-white/5 hover:bg-white text-neutral-500 hover:text-black font-black text-[9px] uppercase tracking-widest rounded-xl transition-all border border-white/10 flex items-center justify-center gap-3"
                                    >
                                       <FolderOpen size={14}/> Drive Archive
                                    </button>
                                    <button 
-                                      onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(data.telefono); alert('Copiado: ' + data.telefono); }} 
+                                      onClick={(e) => { e.stopPropagation(); if(data.telefono) { navigator.clipboard.writeText(data.telefono); alert('Copiado: ' + data.telefono); } }} 
                                       className="w-14 h-14 bg-white/5 hover:bg-amber-500 text-white rounded-xl flex items-center justify-center transition-all border border-white/10"
                                    >
                                       <Phone size={18}/>
