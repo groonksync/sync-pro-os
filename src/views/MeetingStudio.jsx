@@ -227,130 +227,128 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   return (
     <div className={`flex flex-col h-screen w-full ${colors.bg} ${colors.text} overflow-hidden font-sans transition-colors duration-500`}>
       
-      {/* VISTA: LISTA DE CLIENTES (THE SOVEREIGN ATLAS) */}
+      {/* VISTA: LISTA DE CLIENTES (THE SOVEREIGN MATRIX) */}
       {viewState === 'client-list' && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000">
           
           <div className="flex-1 overflow-y-auto mac-scrollbar p-8 space-y-8 max-w-[1900px] mx-auto w-full relative z-10">
             
-            {/* ATLAS HUD: SEGMENTACIÓN DE INTELIGENCIA (RE-SYNC) */}
-            <header className="space-y-8 animate-in slide-in-from-top duration-700">
-               <div className="flex justify-between items-end">
+            {/* MATRIX PULSE MONITOR (GRÁFICA DE LÍNEAS SVG) */}
+            <header className={`${colors.card} rounded-[2.5rem] p-8 shadow-2xl border-b-4 border-b-[#10b981]/20 animate-in slide-in-from-top duration-700`}>
+               <div className="flex justify-between items-start mb-8">
                   <div>
-                    <p className={`text-[10px] text-[#10b981] font-black uppercase tracking-[0.6em] mb-2 flex items-center gap-2`}><Sparkles size={12} className="animate-pulse"/> Sovereign OS • Editor Pro</p>
-                    <h2 className={`text-5xl font-black ${colors.text} tracking-tighter uppercase leading-none`}>Identificar <span className={isLight ? 'text-slate-300' : 'text-white/10'}>Talento</span></h2>
+                    <p className={`text-[10px] text-[#10b981] font-black uppercase tracking-[0.6em] mb-2 flex items-center gap-2`}><Activity size={12} className="animate-pulse"/> Sovereign OS • Matrix Command</p>
+                    <h2 className={`text-4xl font-black ${colors.text} tracking-tighter uppercase leading-none`}>Operaciones <span className={isLight ? 'text-slate-300' : 'text-white/10'}>Globales</span></h2>
                   </div>
-                  <div className="text-right">
-                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-1">Status Global</p>
-                     <p className="text-2xl font-black text-[#10b981] leading-none animate-pulse uppercase">Live Terminal</p>
+                  <div className="flex gap-4">
+                     <div className="text-right border-r border-white/10 pr-6">
+                        <p className="text-[8px] text-neutral-600 font-black uppercase mb-1">Volumen Total</p>
+                        <p className="text-2xl font-black text-white leading-none">12.4K <span className="text-[10px] text-[#10b981]">+12%</span></p>
+                     </div>
+                     <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-3 bg-[#10b981] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3">
+                       <Plus size={16} strokeWidth={3}/> Reclutar Talento
+                     </button>
                   </div>
                </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {/* CLUSTER: VIP COMMAND */}
-                  <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-amber-500 shadow-2xl relative overflow-hidden group`}>
-                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all rotate-12"><Crown size={64}/></div>
-                     <div className="relative z-10">
-                        <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Top Tier • VIPs</p>
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner"><Crown size={24}/></div>
-                           <div><p className="text-2xl font-black text-white leading-none">08</p><p className="text-[8px] text-amber-500/60 font-bold uppercase">High Payers</p></div>
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* CLUSTER: FREQUENCY PULSE */}
-                  <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-blue-500 shadow-2xl relative overflow-hidden group`}>
-                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all -rotate-12"><Zap size={64}/></div>
-                     <div className="relative z-10">
-                        <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">High Frequency</p>
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner"><Zap size={24}/></div>
-                           <div><p className="text-2xl font-black text-white leading-none">14</p><p className="text-[8px] text-blue-500/60 font-bold uppercase">Active Weekly</p></div>
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* CLUSTER: GLOBAL REACH */}
-                  <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-emerald-500 shadow-2xl relative overflow-hidden group`}>
-                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all"><Globe size={64}/></div>
-                     <div className="relative z-10">
-                        <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Global Reach</p>
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner"><Globe size={24}/></div>
-                           <div><p className="text-2xl font-black text-white leading-none">12</p><p className="text-[8px] text-emerald-500/60 font-bold uppercase">Countries</p></div>
-                        </div>
-                     </div>
-                  </div>
-
-                  {/* CLUSTER: GROWTH MOMENTUM */}
-                  <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-purple-500 shadow-2xl relative overflow-hidden group`}>
-                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all rotate-45"><TrendingUp size={64}/></div>
-                     <div className="relative z-10">
-                        <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Momentum</p>
-                        <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500 shadow-inner"><TrendingUp size={24}/></div>
-                           <div><p className="text-2xl font-black text-white leading-none">92%</p><p className="text-[8px] text-purple-500/60 font-bold uppercase">Efficiency</p></div>
-                        </div>
-                     </div>
+               <div className="h-24 w-full relative">
+                  <svg className="w-full h-full opacity-50" preserveAspectRatio="none" viewBox="0 0 1000 100">
+                     <path d="M0,80 Q50,20 100,50 T200,30 T300,70 T400,40 T500,60 T600,20 T700,50 T800,30 T900,80 T1000,40" fill="none" stroke="#10b981" strokeWidth="3" className="animate-dash" />
+                     <path d="M0,80 Q50,20 100,50 T200,30 T300,70 T400,40 T500,60 T600,20 T700,50 T800,30 T900,80 T1000,40 L1000,100 L0,100 Z" fill="url(#emerald-grad)" opacity="0.1" />
+                     <defs>
+                        <linearGradient id="emerald-grad" x1="0" x2="0" y1="0" y2="1">
+                           <stop offset="0%" stopColor="#10b981" />
+                           <stop offset="100%" stopColor="transparent" />
+                        </linearGradient>
+                     </defs>
+                  </svg>
+                  <div className="absolute inset-0 flex justify-between items-end px-2 pointer-events-none">
+                     {[...Array(10)].map((_, i) => <div key={i} className="w-[1px] h-full bg-white/5"></div>)}
                   </div>
                </div>
             </header>
 
-            {/* BARRA TÁCTICA: BÚSQUEDA Y ACCIÓN */}
-            <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
-              <div className="relative group flex-1 max-w-2xl">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={20}/>
-                <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Identificar talento por segmento..." className={`w-full ${colors.input} rounded-2xl py-4 pl-14 pr-6 text-base outline-none focus:border-[#10b981]/30 transition-all font-bold placeholder:text-neutral-900 shadow-xl`} />
+            {/* BARRA DE BÚSQUEDA TÁCTICA */}
+            <div className="flex gap-4 items-center animate-in fade-in duration-1000 delay-300">
+              <div className="relative group flex-1">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800" size={20}/>
+                <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Filtrar matriz de operaciones..." className={`w-full ${colors.input} rounded-2xl py-4 pl-14 pr-6 text-base outline-none focus:border-[#10b981]/30 transition-all font-bold placeholder:text-neutral-900 shadow-xl`} />
               </div>
-              <div className="flex items-center gap-4">
-                 <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-                    {[<Filter size={14}/>, <DollarSign size={14}/>, <Clock size={14}/>, <Globe size={14}/>].map((icon, i) => (
-                      <button key={i} className="p-3 text-neutral-700 hover:text-white transition-all hover:bg-white/5 rounded-lg">{icon}</button>
-                    ))}
-                 </div>
-                 <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-4 bg-[#10b981] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3">
-                   <Plus size={16} strokeWidth={3}/> Reclutar
-                 </button>
+              <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
+                 {[<BarChart3 size={16}/>, <List size={16}/>, <Grid size={16}/>].map((icon, i) => (
+                   <button key={i} className={`p-3 transition-all rounded-lg ${i === 1 ? 'bg-[#10b981] text-white shadow-lg' : 'text-neutral-700 hover:text-white hover:bg-white/5'}`}>{icon}</button>
+                 ))}
               </div>
             </div>
 
-            {/* THE ATLAS GRID: MICRO-HUD CARDS */}
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-8 pb-20">
-              {filteredClients.map((client, idx) => (
-                <div key={client.id} onClick={() => openClientProfile(client)} className={`${colors.card} rounded-[2.5rem] aspect-square p-5 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col items-center justify-center group active:scale-95 relative overflow-hidden border-b-2 border-b-transparent hover:border-b-[#10b981] animate-in fade-in zoom-in duration-500`} style={{ animationDelay: `${idx * 40}ms` }}>
-                  
-                  {/* BADGE DE SEGMENTO DINÁMICO */}
-                  <div className="absolute top-4 right-4">
-                     {idx % 4 === 0 && <div className="text-amber-500 animate-pulse"><Crown size={14}/></div>}
-                     {idx % 4 === 1 && <div className="text-blue-500"><Zap size={14}/></div>}
-                     {idx % 4 === 2 && <div className="text-emerald-500"><Globe size={14}/></div>}
-                     {idx % 4 === 3 && <div className="text-purple-500"><TrendingUp size={14}/></div>}
-                  </div>
-
-                  {/* HUD FLOTANTE ACCIONES */}
-                  <div className="absolute top-4 left-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all transform -translate-x-2 group-hover:translate-x-0 z-20">
-                     <button onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${client.email}`; }} className="w-8 h-8 bg-white text-black rounded-lg flex items-center justify-center shadow-2xl hover:bg-[#10b981] hover:text-white transition-all"><MailIcon size={14}/></button>
-                     <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="w-8 h-8 bg-white text-black rounded-lg flex items-center justify-center shadow-2xl hover:bg-blue-500 hover:text-white transition-all"><Edit3 size={14}/></button>
-                     <button onClick={(e) => handleDeleteClient(client.id, e)} className="w-8 h-8 bg-white text-rose-600 rounded-lg flex items-center justify-center shadow-2xl hover:bg-rose-600 hover:text-white transition-all"><Trash2 size={14}/></button>
-                  </div>
-
-                  <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-2xl overflow-hidden mb-4 group-hover:scale-105 transition-all relative z-10">
-                    {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={32} className={isLight ? 'text-slate-200' : 'text-neutral-900'} />}
-                  </div>
-
-                  <div className="text-center relative z-10 w-full px-2">
-                    <h4 className={`text-xs font-black ${colors.text} uppercase tracking-tighter truncate leading-none mb-2`}>{client.nombre}</h4>
-                    <div className="flex items-center justify-center gap-1.5 opacity-40 group-hover:opacity-100 transition-all">
-                       <p className={`text-[7px] ${colors.textMuted} font-black uppercase tracking-widest`}>{client.pais || 'Global'}</p>
-                    </div>
-                  </div>
-
-                  <button onClick={(e) => toggleClientStatus(client, e)} className={`mt-4 px-3 py-1 rounded-lg text-[6px] font-black uppercase tracking-widest transition-all ${client.status === 'Activo' ? 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/20' : 'bg-rose-500/10 text-rose-500 border border-rose-500/20'}`}>
-                     {client.status || 'Activo'}
-                  </button>
-                </div>
-              ))}
+            {/* THE MATRIX: DATA-GRID TABLE */}
+            <div className={`${colors.card} rounded-[2.5rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-1000 delay-500`}>
+               <table className="w-full text-left border-collapse">
+                  <thead>
+                     <tr className="border-b border-white/5 bg-white/[0.01]">
+                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest">Rango</th>
+                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest">Identidad del Talento</th>
+                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest">Región</th>
+                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest">Segmento</th>
+                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest text-center">Frecuencia</th>
+                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest text-right">Métrica / Tendencia</th>
+                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest text-right">Acciones</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                     {filteredClients.map((client, idx) => (
+                       <tr key={client.id} onClick={() => openClientProfile(client)} className="group hover:bg-white/[0.03] transition-all cursor-pointer">
+                          <td className="p-6"><span className="text-xs font-mono text-neutral-700">#{(idx + 1).toString().padStart(2, '0')}</span></td>
+                          <td className="p-6">
+                             <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 group-hover:scale-110 transition-all">
+                                   {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={20} className="text-neutral-800 m-auto mt-2.5" />}
+                                </div>
+                                <div>
+                                   <p className={`text-sm font-black ${colors.text} uppercase tracking-tighter`}>{client.nombre}</p>
+                                   <p className="text-[8px] text-[#10b981] font-bold uppercase tracking-widest">{client.email || 'NO_CONTACT_DATA'}</p>
+                                </div>
+                             </div>
+                          </td>
+                          <td className="p-6"><div className="flex items-center gap-2 text-[10px] font-bold text-neutral-500 uppercase tracking-widest"><Globe size={12}/> {client.pais || 'Global'}</div></td>
+                          <td className="p-6">
+                             <div className="flex items-center gap-2">
+                                {idx % 4 === 0 && <div className="px-3 py-1 bg-amber-500/10 rounded-lg text-[7px] font-black text-amber-500 uppercase flex items-center gap-1.5"><Crown size={10}/> Whale</div>}
+                                {idx % 4 === 1 && <div className="px-3 py-1 bg-blue-500/10 rounded-lg text-[7px] font-black text-blue-500 uppercase flex items-center gap-1.5"><Zap size={10}/> Frequent</div>}
+                                {idx % 4 === 2 && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[7px] font-black text-emerald-500 uppercase flex items-center gap-1.5"><Globe size={10}/> Global</div>}
+                                {idx % 4 === 3 && <div className="px-3 py-1 bg-purple-500/10 rounded-lg text-[7px] font-black text-purple-500 uppercase flex items-center gap-1.5"><TrendingUp size={10}/> Growth</div>}
+                             </div>
+                          </td>
+                          <td className="p-6">
+                             <div className="w-32 mx-auto space-y-1.5">
+                                <div className="flex justify-between text-[7px] font-black text-neutral-700 uppercase"><span>Load</span><span>{70 + (idx * 5) % 30}%</span></div>
+                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                   <div className="h-full bg-gradient-to-r from-blue-500 to-[#10b981]" style={{ width: `${70 + (idx * 5) % 30}%` }}></div>
+                                </div>
+                             </div>
+                          </td>
+                          <td className="p-6 text-right">
+                             <div className="inline-flex items-center gap-4">
+                                <svg className="w-16 h-8 opacity-40 group-hover:opacity-100 transition-all" viewBox="0 0 100 40">
+                                   <path d={`M0,${30 - (idx%5)*4} Q20,${10 + (idx%3)*8} 40,${25 - (idx%4)*5} T80,${15 + (idx%2)*10} T100,20`} fill="none" stroke={idx % 2 === 0 ? "#10b981" : "#f43f5e"} strokeWidth="2" />
+                                </svg>
+                                <div className="text-right min-w-[60px]">
+                                   <p className="text-[10px] font-black text-white font-mono leading-none mb-1">+{(2.4 + idx*0.3).toFixed(1)}%</p>
+                                   <p className={`text-[8px] font-black uppercase ${idx % 2 === 0 ? 'text-[#10b981]' : 'text-rose-500'}`}>{idx % 2 === 0 ? 'Rising' : 'Cooling'}</p>
+                                </div>
+                             </div>
+                          </td>
+                          <td className="p-6">
+                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                                <button onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${client.email}`; }} className="p-2.5 bg-white/5 hover:bg-[#10b981] text-white rounded-lg transition-all"><MailIcon size={14}/></button>
+                                <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="p-2.5 bg-white/5 hover:bg-blue-500 text-white rounded-lg transition-all"><Edit3 size={14}/></button>
+                                <button onClick={(e) => handleDeleteClient(client.id, e)} className="p-2.5 bg-white/5 hover:bg-rose-600 text-white rounded-lg transition-all"><Trash2 size={14}/></button>
+                             </div>
+                          </td>
+                       </tr>
+                     ))}
+                  </tbody>
+               </table>
             </div>
           </div>
         </div>
