@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Package, Search, Filter, ChevronRight, X, 
+  Package, Search, Filter, ChevronRight, ChevronLeft, X, 
   MessageCircle, Info, ShieldCheck, Truck, 
   CreditCard, Smartphone, Zap, Star, Eye, ShoppingCart, ArrowUpRight, FileText
 } from 'lucide-react';
@@ -13,8 +13,6 @@ const WhatsAppIcon = ({ size = 24, className = "" }) => (
 );
 
 const PublicProductCard = ({ p, onSelect }) => {
-  const isLowStock = parseInt(p.stock_actual) <= (p.stock_minimo || 3) && parseInt(p.stock_actual) > 0;
-  
   return (
     <div 
       onClick={() => onSelect(p)}
@@ -77,6 +75,9 @@ const PublicCatalog = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   const WHATSAPP_NUMBER = "59169109766"; 
 
@@ -121,6 +122,34 @@ const PublicCatalog = () => {
   const handleConsult = (p) => {
     const text = `Hola Sync Pro! Me interesa este producto: *${p.nombre}*\nCódigo: ${p.codigo || 'N/A'}\nPrecio: ${p.precio_venta} BS.\n¿Podrían darme más información?`;
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  // Lógica de Carrusel
+  const allImages = selectedProduct ? [selectedProduct.imagen, ...(selectedProduct.imagenes || [])].filter(Boolean) : [];
+  
+  const nextImg = () => {
+    setCurrentImgIndex(prev => (prev + 1) % allImages.length);
+  };
+  
+  const prevImg = () => {
+    setCurrentImgIndex(prev => (prev - 1 + allImages.length) % allImages.length);
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current - touchEndX.current > 50) {
+      nextImg(); // Swipe left -> Next
+    }
+    if (touchStartX.current - touchEndX.current < -50) {
+      prevImg(); // Swipe right -> Prev
+    }
   };
 
   return (
@@ -175,7 +204,7 @@ const PublicCatalog = () => {
                   <PublicProductCard 
                     key={p.id} 
                     p={p} 
-                    onSelect={setSelectedProduct}
+                    onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }}
                   />
                ))}
             </div>
@@ -192,17 +221,53 @@ const PublicCatalog = () => {
       </footer>
 
       {selectedProduct && (
-         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300">
+         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-500">
             <div className="bg-[#121212] border border-white/10 w-full max-w-[1200px] rounded-[32px] md:rounded-[48px] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] relative max-h-[95vh] flex flex-col md:flex-row">
                <button 
                  onClick={() => setSelectedProduct(null)}
-                 className="absolute top-4 right-4 md:top-8 md:right-8 z-50 w-10 h-10 md:w-14 md:h-14 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
+                 className="absolute top-4 right-4 md:top-8 md:right-8 z-[110] w-10 h-10 md:w-14 md:h-14 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
                >
                   <X size={24}/>
                </button>
 
-               <div className="w-full md:w-1/2 bg-[#080808] p-6 md:p-16 flex items-center justify-center relative">
-                  <img src={selectedProduct.imagen} className="max-w-full max-h-[40vh] md:max-h-[70vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
+               {/* ÁREA DE IMAGEN CON CARRUSEL TÁCTIL */}
+               <div 
+                 className="w-full md:w-1/2 bg-[#080808] p-6 md:p-16 flex items-center justify-center relative touch-pan-y group/carousel"
+                 onTouchStart={handleTouchStart}
+                 onTouchMove={handleTouchMove}
+                 onTouchEnd={handleTouchEnd}
+               >
+                  <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
+                     <img 
+                       src={allImages[currentImgIndex]} 
+                       className="max-w-full max-h-[40vh] md:max-h-[70vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" 
+                       alt={`Product ${currentImgIndex}`}
+                     />
+                  </div>
+
+                  {/* CONTROLES DEL CARRUSEL (Escritorio) */}
+                  {allImages.length > 1 && (
+                    <>
+                      <button onClick={prevImg} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 opacity-0 group-hover/carousel:opacity-100 hidden md:flex">
+                        <ChevronLeft size={24}/>
+                      </button>
+                      <button onClick={nextImg} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 opacity-0 group-hover/carousel:opacity-100 hidden md:flex">
+                        <ChevronRight size={24}/>
+                      </button>
+                      
+                      {/* INDICADORES (Dots) */}
+                      <div className="absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 flex gap-2">
+                        {allImages.map((_, idx) => (
+                          <div 
+                            key={idx} 
+                            onClick={() => setCurrentImgIndex(idx)}
+                            className={`w-2 h-2 rounded-full transition-all cursor-pointer ${idx === currentImgIndex ? 'bg-blue-500 w-6' : 'bg-white/20 hover:bg-white/40'}`} 
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
+
                   <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12">
                      <span className="px-4 py-1 md:px-8 md:py-3 bg-blue-600 text-white text-[7px] md:text-xs font-black rounded-full uppercase tracking-widest shadow-2xl">
                         {selectedProduct.categoria}
@@ -210,6 +275,7 @@ const PublicCatalog = () => {
                   </div>
                </div>
 
+               {/* ÁREA DE ESPECIFICACIONES */}
                <div className="w-full md:w-1/2 p-6 md:p-16 overflow-y-auto mac-scrollbar bg-[#121212] flex flex-col">
                   <div className="flex-1 space-y-8 md:space-y-12">
                      <div className="space-y-2 md:space-y-4">

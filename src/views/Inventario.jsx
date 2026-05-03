@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Package, TrendingUp, Users, Plus, Search, Filter, Share2, ExternalLink,
-  ChevronRight, ArrowLeft, Save, Trash2, Edit3, 
+  ChevronRight, ChevronLeft, ArrowLeft, Save, Trash2, Edit3, 
   AlertTriangle, CheckCircle2, Box, DollarSign, 
   Percent, ShoppingCart, Truck, X, Image as ImageIcon,
   FileText, Smartphone, MessageCircle, MoreVertical, 
@@ -106,6 +106,9 @@ const Inventario = () => {
   const [hasMore, setHasMore] = useState(true);
   const ITEMS_PER_PAGE = 24;
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const touchStartX = useRef(0);
+  const touchEndX = useRef(0);
 
   useEffect(() => {
     fetchData();
@@ -145,54 +148,70 @@ const Inventario = () => {
     }
   };
 
+  const handleConsult = (p) => {
+    const text = `Hola Sync Pro! Estoy gestionando este activo: *${p.nombre}*\nID: ${p.codigo || 'N/A'}\nInversión: ${p.precio_venta} BS.`;
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const handleShareCatalog = () => {
+    const url = `${window.location.origin}/catalogo`;
+    navigator.clipboard.writeText(url);
+    alert('🔗 ¡Link del Catálogo Sync Pro copiado al portapapeles!');
+  };
+
+  // Lógica de Carrusel
+  const allImages = selectedProduct ? [selectedProduct.imagen, ...(selectedProduct.imagenes || [])].filter(Boolean) : [];
+  
+  const nextImg = () => {
+    setCurrentImgIndex(prev => (prev + 1) % allImages.length);
+  };
+  
+  const prevImg = () => {
+    setCurrentImgIndex(prev => (prev - 1 + allImages.length) % allImages.length);
+  };
+
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartX.current - touchEndX.current > 50) {
+      nextImg();
+    }
+    if (touchStartX.current - touchEndX.current < -50) {
+      prevImg();
+    }
+  };
+
+  const handleSaveProduct = async () => {
+    if (!editingProduct?.nombre) return;
+    setLoading(true);
+    try {
+      const payload = { ...editingProduct, imagen: editingProduct.imagenes?.[0] || editingProduct.imagen };
+      await supabase.from('productos').upsert(payload);
+      await fetchData();
+      setIsModalOpen(false);
+    } catch (e) { alert(e.message); }
+    setLoading(false);
+  };
+
   const handleDeleteProduct = async (id, imageUrl) => {
      if (!confirm('¿Seguro que deseas eliminar este producto permanentemente?')) return;
      setLoading(true);
      try {
-        // Borrar de la tabla
         const { error } = await supabase.from('productos').delete().eq('id', id);
         if (error) throw error;
-        
-        // Borrar imagen del storage si existe
         if (imageUrl) {
            const path = imageUrl.split('/').pop();
            await supabase.storage.from('productos').remove([path]);
         }
-        
         await fetchData();
      } catch(e) { alert(e.message); }
      setLoading(false);
-  };
-
-  const handleImageUpload = async (e, type = 'main') => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-    
-    setLoading(true);
-    try {
-      const urls = [];
-      for (const file of files) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage.from('productos').upload(fileName, file);
-        if (uploadError) throw uploadError;
-        const { data: { publicUrl } } = supabase.storage.from('productos').getPublicUrl(fileName);
-        urls.push(publicUrl);
-      }
-
-      if (type === 'gallery') {
-        setEditingProduct(prev => ({ 
-          ...prev, 
-          imagenes: [...(prev.imagenes || []), ...urls]
-        }));
-      } else {
-        setEditingProduct({ ...editingProduct, imagen: urls[0] });
-      }
-    } catch (err) {
-      alert('Error al subir imagen: ' + err.message);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const openNewProduct = () => {
@@ -225,29 +244,6 @@ const Inventario = () => {
     (m.nombre || '').toLowerCase().includes(searchDistributor.toLowerCase()) ||
     (m.region || '').toLowerCase().includes(searchDistributor.toLowerCase())
   );
-
-  const handleShareCatalog = () => {
-    const url = `${window.location.origin}/catalogo`;
-    navigator.clipboard.writeText(url);
-    alert('🔗 ¡Link del Catálogo Sync Pro copiado al portapapeles!');
-  };
-
-  const handleConsult = (p) => {
-    const text = `Hola Sync Pro! Estoy gestionando este activo: *${p.nombre}*\nID: ${p.codigo || 'N/A'}\nInversión: ${p.precio_venta} BS.`;
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
-  };
-
-  const handleSaveProduct = async () => {
-    if (!editingProduct?.nombre) return;
-    setLoading(true);
-    try {
-      const payload = { ...editingProduct, imagen: editingProduct.imagenes?.[0] || editingProduct.imagen };
-      await supabase.from('productos').upsert(payload);
-      await fetchData();
-      setIsModalOpen(false);
-    } catch (e) { alert(e.message); }
-    setLoading(false);
-  };
 
   const handleEntrega = async () => {
     if (!newEntrega.producto_id || !activeMayorista) return;
@@ -293,6 +289,35 @@ const Inventario = () => {
     setLoading(false);
   };
 
+  const handleImageUpload = async (e, type = 'main') => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    setLoading(true);
+    try {
+      const urls = [];
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('productos').upload(fileName, file);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('productos').getPublicUrl(fileName);
+        urls.push(publicUrl);
+      }
+      if (type === 'gallery') {
+        setEditingProduct(prev => ({ 
+          ...prev, 
+          imagenes: [...(prev.imagenes || []), ...urls]
+        }));
+      } else {
+        setEditingProduct({ ...editingProduct, imagen: urls[0] });
+      }
+    } catch (err) {
+      alert('Error al subir imagen: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full max-w-full w-full animate-in fade-in duration-500">
       {viewState === 'list' ? (
@@ -329,7 +354,7 @@ const Inventario = () => {
                        Nuevo Ingreso
                     </button>
                  </div>
-              </div></div>
+              </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                 {filteredProducts.map(p => (
@@ -338,7 +363,7 @@ const Inventario = () => {
                     p={p} 
                     onEdit={(prod) => { setEditingProduct(prod); setIsModalOpen(true); }}
                     onDelete={handleDeleteProduct}
-                    onSelect={setSelectedProduct}
+                    onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }}
                   />
                 ))}
               </div>
@@ -459,12 +484,12 @@ const Inventario = () => {
            <div className="max-w-[800px] w-full mx-auto">
               <div className="flex justify-between items-start border-b-4 border-black pb-12 mb-12">
                  <div className="flex-1">
-                   <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">{activeMayorista.marca || 'S/M'}</p>
-                   <h3 className="text-xl font-black text-black leading-tight uppercase line-clamp-1">{activeMayorista.nombre}</h3>
-                   <p className="text-[9px] font-bold text-neutral-500 mt-1 uppercase tracking-widest">SKU: {activeMayorista.sku || 'N/A'}</p>
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1">{activeMayorista.marca || 'S/M'}</p>
+                    <h3 className="text-xl font-black text-black leading-tight uppercase line-clamp-1">{activeMayorista.nombre}</h3>
+                    <p className="text-[9px] font-bold text-neutral-500 mt-1 uppercase tracking-widest">SKU: {activeMayorista.sku || 'N/A'}</p>
                  </div>
                  <div className="text-right font-mono text-sm font-black uppercase">
-                   <p>Reporte Fecha: {new Date().toLocaleDateString()}</p>
+                    <p>Reporte Fecha: {new Date().toLocaleDateString()}</p>
                  </div>
               </div>
               <div className="grid grid-cols-2 gap-12 mb-16 text-center">
@@ -499,7 +524,7 @@ const Inventario = () => {
         </div>
       )}
 
-      {/* MODAL PRODUCTO PRO */}
+      {/* MODAL PRODUCTO PRO (Edición) */}
       {isModalOpen && editingProduct && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
            <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-[1000px] rounded-[48px] p-10 shadow-2xl overflow-y-auto max-h-[95vh] mac-scrollbar">
@@ -510,7 +535,6 @@ const Inventario = () => {
 
               <div className="grid grid-cols-12 gap-10">
                  <div className="col-span-12 lg:col-span-4 space-y-6">
-                    {/* VISOR PRINCIPAL */}
                     <div className="aspect-square bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center relative overflow-hidden group">
                        {editingProduct?.imagenes?.length > 0 ? (
                           <img src={editingProduct.imagenes[0]} className="w-full h-full object-contain p-4" alt="Principal"/>
@@ -520,219 +544,73 @@ const Inventario = () => {
                              <p className="text-[8px] font-black uppercase text-neutral-600 tracking-widest">Sin Imagen</p>
                           </div>
                        )}
-                       <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-white">Catálogo Preview</p>
-                       </div>
                     </div>
-                    <p className="text-[9px] text-neutral-500 font-medium italic text-center">La primera imagen de la galería será la portada oficial.</p>
-
-                    {/* GALERÍA DE FOTOS */}
-                    <div className="space-y-4">
-                       <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest ml-4">Galería de Imágenes</label>
-                       <div className="flex flex-wrap gap-4">
-                           {editingProduct?.imagenes?.map((img, idx) => (
-                              <div key={idx} className="w-24 h-24 bg-white/5 rounded-xl border border-white/10 relative group overflow-hidden">
-                                 <img src={img} className="w-full h-full object-cover" />
-                                 <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
-                                    <div className="flex gap-2">
-                                       {idx > 0 && (
-                                          <button onClick={() => {
-                                             const newImgs = [...editingProduct.imagenes];
-                                             [newImgs[idx], newImgs[idx-1]] = [newImgs[idx-1], newImgs[idx]];
-                                             setEditingProduct({...editingProduct, imagenes: newImgs});
-                                          }} className="w-6 h-6 bg-blue-600 text-white rounded-md flex items-center justify-center hover:bg-blue-500"><ArrowLeft size={12} /></button>
-                                       )}
-                                       {idx < editingProduct.imagenes.length - 1 && (
-                                          <button onClick={() => {
-                                             const newImgs = [...editingProduct.imagenes];
-                                             [newImgs[idx], newImgs[idx+1]] = [newImgs[idx+1], newImgs[idx]];
-                                             setEditingProduct({...editingProduct, imagenes: newImgs});
-                                          }} className="w-6 h-6 bg-blue-600 text-white rounded-md flex items-center justify-center hover:bg-blue-500"><ChevronRight size={12} /></button>
-                                       )}
-                                    </div>
-                                    <button onClick={() => {
-                                       const newImgs = editingProduct.imagenes.filter((_, i) => i !== idx);
-                                       setEditingProduct({...editingProduct, imagenes: newImgs});
-                                    }} className="w-6 h-6 bg-red-600 text-white rounded-md flex items-center justify-center hover:bg-red-500"><Trash2 size={12} /></button>
-                                 </div>
-                                 {idx === 0 && <div className="absolute top-1 left-1 px-1 py-0.5 bg-blue-600 text-[6px] font-black text-white uppercase rounded-sm">Portada</div>}
-                              </div>
-                           ))}
-                           <label className="w-24 h-24 bg-white/5 border border-dashed border-white/20 rounded-xl flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all">
-                              <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => handleImageUpload(e, 'gallery')} />
-                              <Plus className="text-neutral-600" />
-                           </label>
-                        </div>
-                    </div>
-
-                    <div className="bg-white/5 p-8 rounded-[40px] border border-white/5 text-center text-white">
-                       <label className="text-[9px] font-bold text-neutral-600 uppercase mb-2 block tracking-widest">Stock Disponible</label>
-                       <input type="number" value={editingProduct.stock_actual} onChange={e => setEditingProduct({...editingProduct, stock_actual: parseInt(e.target.value) || 0})} className="bg-transparent text-5xl font-mono w-full outline-none font-black text-center tracking-tighter" />
-                    </div>
+                    <div className="flex flex-wrap gap-4">
+                        {editingProduct?.imagenes?.map((img, idx) => (
+                           <div key={idx} className="w-24 h-24 bg-white/5 rounded-xl border border-white/10 relative group overflow-hidden">
+                              <img src={img} className="w-full h-full object-cover" />
+                              <button onClick={() => {
+                                 const newImgs = editingProduct.imagenes.filter((_, i) => i !== idx);
+                                 setEditingProduct({...editingProduct, imagenes: newImgs});
+                              }} className="absolute inset-0 bg-red-600/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
+                           </div>
+                        ))}
+                        <label className="w-24 h-24 bg-white/5 border border-dashed border-white/20 rounded-xl flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all">
+                           <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => handleImageUpload(e, 'gallery')} />
+                           <Plus className="text-neutral-600" />
+                        </label>
+                     </div>
                  </div>
                  
                  <div className="col-span-12 lg:col-span-8 space-y-6">
-                    <div className="space-y-4">
-                       <label className="text-[9px] font-bold text-neutral-600 uppercase tracking-widest ml-4">Especificaciones Clave</label>
-                       <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                             <p className="text-[8px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Nombre del Producto</p>
-                             <input type="text" value={editingProduct.nombre || ''} onChange={(e) => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-transparent text-sm font-bold text-white outline-none" placeholder="Ej: iPhone 15 Pro" />
-                          </div>
-                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                             <p className="text-[8px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Marca</p>
-                             <input type="text" value={editingProduct.marca || ''} onChange={(e) => setEditingProduct({...editingProduct, marca: e.target.value})} className="w-full bg-transparent text-sm font-bold text-white outline-none" placeholder="Ej: Apple" />
-                          </div>
-                       </div>
+                    <div className="grid grid-cols-2 gap-4">
+                       <input type="text" value={editingProduct.nombre} onChange={e => setEditingProduct({...editingProduct, nombre: e.target.value})} className="bg-white/5 border border-white/10 p-6 rounded-2xl text-white outline-none" placeholder="Nombre..."/>
+                       <input type="text" value={editingProduct.marca} onChange={e => setEditingProduct({...editingProduct, marca: e.target.value})} className="bg-white/5 border border-white/10 p-6 rounded-2xl text-white outline-none" placeholder="Marca..."/>
                     </div>
-
-                    <div className="flex items-center justify-between bg-blue-600/10 p-6 rounded-3xl border border-blue-500/20">
-                       <div>
-                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Logística de Entrega</p>
-                          <p className="text-[9px] text-neutral-500 font-medium">Habilitar si el equipo está listo para envío inmediato</p>
-                       </div>
-                       <button 
-                         onClick={() => setEditingProduct({...editingProduct, entrega_habilitada: !editingProduct.entrega_habilitada})}
-                         className={`w-14 h-8 rounded-full p-1 transition-all duration-300 ${editingProduct.entrega_habilitada ? 'bg-emerald-500' : 'bg-neutral-800'}`}
-                       >
-                          <div className={`w-6 h-6 bg-white rounded-full shadow-lg transition-transform duration-300 ${editingProduct.entrega_habilitada ? 'translate-x-6' : 'translate-x-0'}`} />
-                       </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-6">
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Categoría</label>
-                          <select value={editingProduct.categoria} onChange={e => setEditingProduct({...editingProduct, categoria: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white font-bold outline-none">
-                             <option value="Computadoras">Computadoras</option>
-                             <option value="Celulares">Celulares</option>
-                             <option value="Accesorios">Accesorios</option>
-                             <option value="Servicios">Servicios</option>
-                          </select>
-                       </div>
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Código de Barras</label>
-                          <input type="text" value={editingProduct.codigo} onChange={e => setEditingProduct({...editingProduct, codigo: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white font-mono uppercase text-sm outline-none" placeholder="COD-000"/>
-                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">SKU Único</label>
-                          <input type="text" value={editingProduct.sku} onChange={e => setEditingProduct({...editingProduct, sku: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white font-mono uppercase text-sm outline-none" placeholder="SKU-PRO-000"/>
-                       </div>
-                       <div className="space-y-2">
-                          <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Garantía (Ej: 180 días)</label>
-                          <input type="text" value={editingProduct.garantia} onChange={e => setEditingProduct({...editingProduct, garantia: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 text-white text-sm outline-none" placeholder="Ej: 1 año / 180 días"/>
-                       </div>
-                    </div>
-
-
-                    <div className="grid grid-cols-2 gap-6 bg-white/[0.02] p-8 rounded-[40px] border border-white/5">
-                       <div className="space-y-2 border-r border-white/10 pr-6">
-                          <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2"><Scale size={14}/> Peso (Kg)</label>
-                          <input type="text" value={editingProduct.peso} onChange={e => setEditingProduct({...editingProduct, peso: e.target.value})} className="w-full bg-transparent text-white font-mono text-xl outline-none font-bold" placeholder="0.0 Kg"/>
-                       </div>
-                       <div className="space-y-2 pl-6">
-                          <label className="text-[10px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2"><BoxIcon size={14}/> Volumen (m³)</label>
-                          <input type="text" value={editingProduct.volumen} onChange={e => setEditingProduct({...editingProduct, volumen: e.target.value})} className="w-full bg-transparent text-white font-mono text-xl outline-none font-bold" placeholder="0.000 m³"/>
-                       </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-neutral-600 uppercase tracking-widest ml-6">Descripción & Ficha Técnica</label>
-                       <textarea value={editingProduct.ficha_tecnica} onChange={e => setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[40px] p-8 text-white outline-none h-44 resize-none italic leading-relaxed text-sm" placeholder="Detalla las especificaciones técnicas aquí..."/>
-                    </div>
+                    <textarea value={editingProduct.ficha_tecnica} onChange={e => setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[40px] p-8 text-white outline-none h-44" placeholder="Ficha técnica..."/>
                  </div>
               </div>
-              <button onClick={handleSaveProduct} disabled={loading} className="w-full mt-12 py-8 bg-white text-black font-black rounded-[40px] uppercase text-[11px] tracking-[0.4em] shadow-2xl hover:bg-neutral-200 transition-all flex items-center justify-center gap-4">
-                {loading ? 'Procesando...' : 'Guardar en Catálogo'} <Plus size={20}/>
-              </button>
+              <button onClick={handleSaveProduct} className="w-full mt-12 py-8 bg-white text-black font-black rounded-[40px] uppercase">Guardar Cambios</button>
            </div>
         </div>
       )}
 
-      {/* MODALES EXTRAS (MAYORISTA, ENTREGA, COBRO) */}
-      {isMayoristaModalOpen && editingMayorista && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4 text-white">
-           <div className="bg-[#0a0a0a] border border-white/20 w-full max-w-[500px] rounded-[32px] p-10 shadow-2xl">
-              <h3 className="text-2xl font-black tracking-tighter uppercase mb-8">Nuevo Socio</h3>
-              <div className="space-y-8">
-                 <input type="text" value={editingMayorista.nombre} onChange={e => setEditingMayorista({...editingMayorista, nombre: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-7 text-white font-black outline-none" placeholder="Nombre..."/>
-                 <input type="text" value={editingMayorista.contacto} onChange={e => setEditingMayorista({...editingMayorista, contacto: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-7 text-white font-mono" placeholder="WhatsApp..."/>
-                 <select value={editingMayorista.region} onChange={e=>setEditingMayorista({...editingMayorista, region: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-7 text-white font-bold outline-none">
-                    <option value="Santa Cruz">Santa Cruz</option>
-                    <option value="La Paz">La Paz</option>
-                    <option value="Cochabamba">Cochabamba</option>
-                 </select>
-              </div>
-              <button onClick={async () => {
-                setLoading(true);
-                try {
-                   await supabase.from('mayoristas').upsert(editingMayorista);
-                   await fetchData();
-                   setIsMayoristaModalOpen(false);
-                } catch(e) { alert(e.message); }
-                setLoading(false);
-              }} className="w-full mt-16 py-7 bg-white text-black font-black rounded-[36px] uppercase shadow-2xl">Confirmar</button>
-           </div>
-        </div>
-      )}
-
-      {isEntregaModalOpen && activeMayorista && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
-           <div className="bg-[#0a0a0a] border border-white/20 w-full max-w-[600px] rounded-[56px] p-16 shadow-2xl text-white">
-              <h3 className="text-3xl font-black tracking-tighter uppercase mb-10">Entrega</h3>
-              <div className="space-y-10">
-                 <select value={newEntrega.producto_id} onChange={e => {
-                    const p = productos.find(x => x.id === e.target.value);
-                    setNewEntrega({...newEntrega, producto_id: e.target.value, monto: (p?.precio_venta || 0) * newEntrega.cantidad});
-                 }} className="w-full bg-white/10 border border-white/10 rounded-[28px] p-7 text-white font-bold outline-none">
-                    <option value="">Producto...</option>
-                    {productos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-                 </select>
-                 <input type="text" value={newEntrega.serial_vinculado} onChange={e => setNewEntrega({...newEntrega, serial_vinculado: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-7 text-white font-mono text-center" placeholder="S/N..."/>
-                 <div className="grid grid-cols-2 gap-8">
-                    <input type="number" value={newEntrega.cantidad} onChange={e => {
-                      const c = parseInt(e.target.value) || 0;
-                      const p = productos.find(x => x.id === newEntrega.producto_id);
-                      setNewEntrega({...newEntrega, cantidad: c, monto: (p?.precio_venta || 0) * c});
-                    }} className="bg-white/5 border border-white/10 rounded-[28px] p-7 text-white" placeholder="Cant."/>
-                    <input type="number" value={newEntrega.monto} onChange={e => setNewEntrega({...newEntrega, monto: parseFloat(e.target.value) || 0})} className="bg-white/5 border border-white/10 rounded-[28px] p-7 text-white" placeholder="Total Bs."/>
-                 </div>
-              </div>
-              <button onClick={handleEntrega} className="w-full mt-16 py-7 bg-white text-black font-black rounded-[36px] uppercase shadow-2xl">Vincular</button>
-           </div>
-        </div>
-      )}
-
-      {isPagoModalOpen && activeMayorista && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
-           <div className="bg-[#0a0a0a] border border-white/20 w-full max-w-[500px] rounded-[56px] p-16 shadow-2xl">
-              <h3 className="text-3xl font-black text-white tracking-tighter uppercase mb-10 text-center">Cobrar</h3>
-              <input type="number" value={newPago.monto} onChange={e => setNewPago({monto: parseFloat(e.target.value) || 0})} className="w-full bg-white/5 border border-emerald-500/20 p-8 rounded-[32px] text-white font-mono text-5xl outline-none font-black text-center" placeholder="0.00" />
-              <button onClick={handlePago} className="w-full mt-16 py-7 bg-emerald-500 text-white font-black rounded-[40px] uppercase shadow-2xl">Confirmar</button>
-           </div>
-        </div>
-      )}
-
-      {/* MODAL DE DETALLE MAESTRO (Nexus Viewer Internal) */}
+      {/* MODAL DE DETALLE MAESTRO (Nexus Viewer Internal con Swipe) */}
       {selectedProduct && (
          <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-500">
             <div className="bg-[#121212] border border-white/10 w-full max-w-[1200px] rounded-[32px] md:rounded-[48px] overflow-hidden shadow-2xl relative max-h-[95vh] flex flex-col md:flex-row">
                <button 
                  onClick={() => setSelectedProduct(null)}
-                 className="absolute top-4 right-4 md:top-8 md:right-8 z-50 w-10 h-10 md:w-14 md:h-14 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
+                 className="absolute top-4 right-4 md:top-8 md:right-8 z-[130] w-10 h-10 md:w-14 md:h-14 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
                >
                   <X size={24}/>
                </button>
 
-               <div className="w-full md:w-1/2 bg-[#080808] p-6 md:p-16 flex items-center justify-center relative">
-                  <img src={selectedProduct.imagen} className="max-w-full max-h-[40vh] md:max-h-[70vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
-                  <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12">
-                     <span className="px-4 py-1 md:px-8 md:py-3 bg-blue-600 text-white text-[7px] md:text-xs font-black rounded-full uppercase tracking-widest shadow-2xl">
-                        {selectedProduct.categoria}
-                     </span>
+               <div 
+                 className="w-full md:w-1/2 bg-[#080808] p-6 md:p-16 flex items-center justify-center relative touch-pan-y group/carousel"
+                 onTouchStart={handleTouchStart}
+                 onTouchMove={handleTouchMove}
+                 onTouchEnd={handleTouchEnd}
+               >
+                  <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
+                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[40vh] md:max-h-[70vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
                   </div>
+
+                  {allImages.length > 1 && (
+                    <>
+                      <button onClick={prevImg} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 opacity-0 group-hover/carousel:opacity-100 hidden md:flex">
+                        <ChevronLeft size={24}/>
+                      </button>
+                      <button onClick={nextImg} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 opacity-0 group-hover/carousel:opacity-100 hidden md:flex">
+                        <ChevronRight size={24}/>
+                      </button>
+                      <div className="absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 flex gap-2">
+                        {allImages.map((_, idx) => (
+                          <div key={idx} onClick={() => setCurrentImgIndex(idx)} className={`w-2 h-2 rounded-full transition-all cursor-pointer ${idx === currentImgIndex ? 'bg-blue-500 w-6' : 'bg-white/20'}`} />
+                        ))}
+                      </div>
+                    </>
+                  )}
                </div>
 
                <div className="w-full md:w-1/2 p-6 md:p-16 overflow-y-auto mac-scrollbar bg-[#121212] flex flex-col">
@@ -741,7 +619,6 @@ const Inventario = () => {
                         <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.4em]">Sovereign ID: {selectedProduct.codigo || 'N/A'}</p>
                         <h2 className="text-2xl md:text-5xl font-black text-white leading-tight tracking-tighter uppercase">{selectedProduct.nombre}</h2>
                      </div>
-                     
                      <div className="bg-white/[0.03] border border-white/5 p-6 md:p-10 rounded-[2rem] shadow-inner">
                         <p className="text-[7px] md:text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2 md:mb-4">Valor de Mercado</p>
                         <p className="text-4xl md:text-8xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
@@ -749,46 +626,19 @@ const Inventario = () => {
                            <span className="text-lg md:text-3xl opacity-20 ml-3 md:ml-6 font-sans">BS.</span>
                         </p>
                      </div>
-
                      <div className="space-y-4 md:space-y-6">
                         <div className="flex items-center gap-3 border-b border-white/10 pb-3 md:pb-4">
                            <FileText size={16} className="text-blue-500"/>
                            <p className="text-[8px] md:text-[11px] font-black text-white uppercase tracking-widest">Ficha Técnica Logística</p>
                         </div>
-                        <div className="text-neutral-400 text-xs md:text-lg leading-relaxed italic whitespace-pre-wrap max-h-[200px] overflow-y-auto pr-4 mac-scrollbar">
+                        <div className="text-neutral-400 text-xs md:text-lg leading-relaxed italic whitespace-pre-wrap">
                            {selectedProduct.ficha_tecnica || 'No hay especificaciones registradas.'}
                         </div>
                      </div>
-
-                     <div className="grid grid-cols-3 gap-3 md:gap-4 text-center">
-                        <div className="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5">
-                           <p className="text-[6px] md:text-[8px] font-black text-neutral-600 uppercase tracking-widest mb-1">Stock</p>
-                           <p className="text-[10px] md:text-sm font-black text-white">{selectedProduct.stock_actual} Unid.</p>
-                        </div>
-                        <div className="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5">
-                           <p className="text-[6px] md:text-[8px] font-black text-neutral-600 uppercase tracking-widest mb-1">SKU</p>
-                           <p className="text-[10px] md:text-sm font-mono text-white truncate">{selectedProduct.sku || '---'}</p>
-                        </div>
-                        <div className="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5">
-                           <p className="text-[6px] md:text-[8px] font-black text-neutral-600 uppercase tracking-widest mb-1">Costo</p>
-                           <p className="text-[10px] md:text-sm font-black text-emerald-500">{parseFloat(selectedProduct.precio_costo || 0).toLocaleString()} Bs.</p>
-                        </div>
-                     </div>
                   </div>
-
                   <div className="mt-12 flex gap-4">
-                     <button 
-                       onClick={() => { setSelectedProduct(null); setEditingProduct(selectedProduct); setIsModalOpen(true); }}
-                       className="flex-1 py-4 md:py-8 bg-white/5 border border-white/10 text-white rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"
-                     >
-                        <Edit3 size={18}/> Editar Registro
-                     </button>
-                     <button 
-                       onClick={() => setSelectedProduct(null)}
-                       className="flex-1 py-4 md:py-8 bg-blue-600 text-white rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl"
-                     >
-                        Cerrar Visor
-                     </button>
+                     <button onClick={() => { setSelectedProduct(null); setEditingProduct(selectedProduct); setIsModalOpen(true); }} className="flex-1 py-4 md:py-8 bg-white/5 border border-white/10 text-white rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"><Edit3 size={18}/> Editar</button>
+                     <button onClick={() => handleConsult(selectedProduct)} className="flex-1 py-4 md:py-8 bg-blue-600 text-white rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl">Consultar</button>
                   </div>
                </div>
             </div>
@@ -798,11 +648,8 @@ const Inventario = () => {
       {/* VISOR DE IMAGEN FULL SCREEN */}
       {fullViewImage && (
         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-300" onClick={() => setFullViewImage(null)}>
-           <button className="absolute top-10 right-10 w-16 h-16 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10">
-              <X size={32}/>
-           </button>
+           <button className="absolute top-10 right-10 w-16 h-16 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10"><X size={32}/></button>
            <img src={fullViewImage} className="max-w-full max-h-[85vh] object-contain rounded-3xl shadow-[0_0_100px_rgba(255,255,255,0.1)]" />
-           <p className="mt-8 text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">Haz clic en cualquier lugar para cerrar</p>
         </div>
       )}
     </div>
