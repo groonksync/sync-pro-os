@@ -174,14 +174,35 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   };
 
   const saveMeeting = async () => {
+    if (!activeMeeting) return;
     setLoading(true);
     try {
-      const updatedMeeting = { ...activeMeeting, total_time: time, updated_at: new Date().toISOString() };
-      await supabase.from('reuniones').upsert(updatedMeeting);
+      // 1. Capturar el contenido final directamente del editor antes de guardar
+      const finalContent = editorRef.current ? editorRef.current.innerHTML : activeMeeting.contenido;
+      
+      const updatedMeeting = { 
+        ...activeMeeting, 
+        contenido: finalContent,
+        total_time: time, 
+        updated_at: new Date().toISOString() 
+      };
+
+      // 2. Guardar en Supabase (Upsert gestiona Insert/Update automáticamente por ID)
+      const { error } = await supabase.from('reuniones').upsert(updatedMeeting);
+      if (error) throw error;
+
+      // 3. Actualizar la lista local inmediatamente para que el usuario vea el cambio
+      await fetchMeetings(); 
+      
+      // 4. Limpiar estado y volver
       setViewState('client-profile'); 
       setActiveMeeting(null);
       setIsTimerRunning(false);
-    } catch (error) { alert(error.message); }
+      alert("Sesión guardada con éxito en la bóveda.");
+    } catch (error) { 
+      console.error("Error al guardar:", error);
+      alert("Error crítico al guardar: " + error.message); 
+    }
     setLoading(false);
   };
 
