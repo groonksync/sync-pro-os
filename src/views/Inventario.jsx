@@ -258,25 +258,25 @@ const Inventario = () => {
   const prevImg = () => setCurrentImgIndex(prev => (prev - 1 + allImages.length) % allImages.length);
 
   return (
-    <div className="flex flex-col h-full max-w-full w-full animate-in fade-in duration-500">
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
       <Toast show={toast.show} message={toast.message} onClose={() => setToast({ ...toast, show: false })} />
       
-      <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <header className="mb-10 md:mb-16 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
         <div>
-          <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none">Inventario <span className="text-blue-500">Pro</span></h2>
-          <p className="text-[8px] md:text-[10px] text-neutral-600 font-black uppercase tracking-[0.4em] flex items-center gap-2 mt-2"><Layout size={12}/> Global Active Hub</p>
+          <h2 className="text-4xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none">Inventario <span className="text-blue-500">Pro</span></h2>
+          <p className="text-[9px] md:text-[11px] text-neutral-600 font-black uppercase tracking-[0.5em] flex items-center gap-3 mt-4"><Layout size={14}/> Global Sovereign Assets Hub</p>
         </div>
-        <button onClick={openNewProduct} className="px-12 py-5 bg-white text-black rounded-2xl md:rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
-           <Plus size={18} strokeWidth={3}/> Nuevo Activo
+        <button onClick={openNewProduct} className="px-14 py-6 bg-white text-black rounded-2xl md:rounded-[2.5rem] font-black text-[11px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-4 active:scale-95">
+           <Plus size={20} strokeWidth={3}/> Nuevo Activo Maestro
         </button>
       </header>
 
-      <div className="relative mb-12">
-        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-700" size={18}/>
-        <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identificar activos maestros..." className="w-full bg-[#121212] border border-white/10 rounded-2xl md:rounded-[2rem] py-5 md:py-6 pl-16 pr-6 text-sm text-white outline-none focus:border-white/20 transition-all"/>
+      <div className="relative mb-14">
+        <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-700" size={20}/>
+        <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identificar activos en la red Sovereign..." className="w-full bg-[#121212] border border-white/10 rounded-2xl md:rounded-[2.5rem] py-6 md:py-8 pl-20 pr-8 text-base text-white outline-none focus:border-white/20 transition-all shadow-inner"/>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-8">
         {filteredProducts.map(p => (
           <ProductCard key={p.id} p={p} onEdit={handleEditProduct} onDelete={handleDeleteProduct} onSelect={setSelectedProduct} />
         ))}

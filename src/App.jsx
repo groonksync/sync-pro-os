@@ -242,9 +242,9 @@ const App = () => {
           }} 
         />
         
-        <main className={`flex-1 h-full overflow-y-auto mac-scrollbar relative bg-[#050505] transition-all duration-500 ${appSettings.isMobileMode ? 'w-full' : ''}`}>
+        <main className={`flex-1 h-full overflow-y-auto mac-scrollbar relative bg-[#050505] transition-all duration-700 ease-in-out`}>
           <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
-          <div className="w-full px-4 py-6 lg:px-12 lg:py-10 relative z-10 flex flex-col min-h-full">
+          <div className="w-full px-6 py-8 lg:px-16 lg:py-12 relative z-10 flex flex-col min-h-full max-w-[2000px] mx-auto">
             {renderSafeContent()}
           </div>
         </main>

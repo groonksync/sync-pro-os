@@ -147,7 +147,7 @@ const Prestamos = ({ data, setData, preSelectedId, onClearSelection }) => {
   const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
 
   return (
-    <div className="flex flex-col h-full max-w-[1400px] w-full animate-in fade-in duration-500">
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
       {prestamoView === 'list' ? (
         <div className="animate-in fade-in duration-300">
           <header className="mb-10 flex justify-between items-end">
