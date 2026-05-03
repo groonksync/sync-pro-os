@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Plus, Users, Video, PlayCircle, ArrowLeft, MessageSquare, Save, FileText, Eraser, 
   Hash, DollarSign, FolderOpen, ExternalLink, Quote, X, Trash2, Search, Mail, 
@@ -56,8 +56,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const [rates, setRates] = useState({ USDT_BOB: 10.80, USD_BOB: 6.96, BRL: 1.38 }); 
   
   const [calcDisplay, setCalcDisplay] = useState('0');
+
   const editorRef = useRef(null);
   const timerRef = useRef(null);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [tempNoteText, setTempNoteText] = useState('');
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
@@ -77,7 +80,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     try {
       const response = await fetch('https://open.er-api.com/v6/latest/USD');
       const data = await response.json();
-      if (data && data.rates && data.rates.BOB) {
+      if (data?.rates?.BOB) {
         setRates(prev => ({ ...prev, USDT_BOB: data.rates.BOB || 10.80, USD_BOB: 6.96, BRL: (data.rates.BOB / data.rates.BRL).toFixed(2) || 1.38 }));
       }
     } catch (e) { console.error(e); }
@@ -184,7 +187,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   };
 
   const createMeeting = async () => {
-    const sTitle = prompt('Descripción de la sesión (Ej: Edición de Video - Comercial):', 'Edición de Video');
+    const sTitle = prompt('Descripción de la sesión:', 'Edición de Video');
     if (sTitle === null) return;
     const newMeeting = { 
       id: crypto.randomUUID(), cliente_id: activeClient.id, cliente: activeClient.nombre, fecha: new Date().toISOString().split('T')[0], session_title: sTitle,
@@ -262,8 +265,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
               <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">Editor <span className="text-neutral-800">Pro</span></h2>
               <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em] mt-2">Executive Production Suite</p>
             </div>
-            <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-4 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-neutral-200 transition-all">
-              <Plus size={18} className="inline mr-2"/> Nuevo Cliente
+            <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-4 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-2xl flex items-center gap-3">
+              <Plus size={18}/> Nuevo Cliente
             </button>
           </header>
           <div className="relative">
@@ -273,7 +276,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {filteredClients.map(client => (
               <div key={client.id} onClick={() => openClientProfile(client)} className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 hover:bg-white/10 cursor-pointer transition-all flex flex-col items-center text-center group active:scale-95 shadow-2xl relative">
-                <div className="w-28 h-28 mb-8 rounded-[2rem] bg-white/5 flex items-center justify-center overflow-hidden border border-white/5 shadow-inner">
+                <div className="w-28 h-28 mb-8 rounded-[2rem] bg-white/5 flex items-center justify-center border border-white/5 shadow-inner">
                   {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={40} className="text-neutral-800" />}
                 </div>
                 <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{client.nombre}</h4>
@@ -313,7 +316,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
-      {/* VISTA: WAR ROOM / SESIÓN (RESTAURACIÓN TOTAL) */}
+      {/* VISTA: WAR ROOM / SESIÓN (RESTAURACIÓN TOTAL DE HERRAMIENTAS) */}
       {viewState === 'session' && activeMeeting && (
         <div className="flex-1 flex flex-col overflow-hidden bg-black animate-in fade-in duration-500">
           <header className="px-5 py-3 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between shrink-0">
@@ -329,6 +332,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
               </div>
             </div>
             <div className="flex items-center gap-3">
+               {!settings.isMobileMode && <button onClick={() => {
+                 const text = editorRef.current.innerText;
+                 navigator.clipboard.writeText(text);
+                 alert('Resumen copiado');
+               }} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase hover:bg-emerald-500/20 transition-all"><Copy size={12}/> Resumen</button>}
                <div className="flex items-center gap-3 bg-black border border-white/5 rounded-xl px-4 py-1.5">
                   <p className="text-sm font-mono font-black text-white">{formatTime(time)}</p>
                   <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isTimerRunning ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-white/5 text-white'}`}>
@@ -342,10 +350,10 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
           </header>
 
           <div className="flex-1 flex p-1.5 gap-1.5 overflow-hidden">
-            {/* IZQUIERDA: HERRAMIENTAS */}
+            {/* IZQUIERDA: HERRAMIENTAS (RESTAURADAS) */}
             <div className="w-[230px] h-full shrink-0 flex flex-col bg-[#050505] border-white/5 overflow-y-auto mac-scrollbar p-1.5 space-y-1.5">
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
-                  <p className="text-[10px] text-neutral-700 font-black uppercase mb-1.5 tracking-widest flex items-center gap-2"><Zap size={12}/> Prioridad</p>
+                  <p className="text-[10px] text-neutral-700 font-black uppercase mb-1.5 tracking-widest flex items-center gap-2"><Zap size={12}/> Prioridad & Mood</p>
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     {['Baja', 'Media', 'Alta', 'ASAP'].map(p => (
                       <button key={p} onClick={()=>setActiveMeeting({...activeMeeting, priority: p})} className={`px-2 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all ${activeMeeting.priority === p ? 'bg-white text-black' : 'bg-white/5 text-neutral-700'}`}>{p}</button>
@@ -355,19 +363,35 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                     <option value="">Mood del Video...</option>
                     <option value="Cinematic">Cinematic</option>
                     <option value="Fast-Paced">Fast-Paced</option>
+                    <option value="Corporate">Corporate</option>
+                    <option value="Minimalist">Minimalist</option>
                   </select>
                </div>
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
                   <div className="bg-black border border-white/5 rounded-lg p-1.5 text-right text-sm font-mono font-black text-white mb-1 shadow-inner">{calcDisplay}</div>
                   <div className="grid grid-cols-4 gap-1">
                     {['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'].map(btn => (
-                      <button key={btn} onClick={() => handleCalc(btn)} className="p-1.5 rounded-md text-[11px] font-black bg-white/5 text-neutral-500">{btn}</button>
+                      <button key={btn} onClick={() => handleCalc(btn)} className={`p-1.5 rounded-md text-[11px] font-black ${btn === '=' ? 'bg-amber-500 text-black' : 'bg-white/5 text-neutral-500'}`}>{btn}</button>
                     ))}
+                  </div>
+               </div>
+               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2.5">
+                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-2 flex items-center gap-2"><BrandIcon size={10}/> Assets & Kit</p>
+                  <div className="space-y-1.5">
+                    <input type="text" value={activeMeeting.brand_kit?.logo || ''} onChange={e=>setActiveMeeting({...activeMeeting, brand_kit: {...(activeMeeting.brand_kit || {}), logo: e.target.value}})} placeholder="Logo URL..." className="w-full bg-black border border-white/5 rounded-lg p-1.5 text-[7px] text-neutral-600 outline-none" />
                   </div>
                </div>
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
                   <p className="text-[10px] text-neutral-700 font-black uppercase mb-1.5 tracking-widest flex items-center gap-2"><Calendar size={12}/> Deadlines</p>
-                  <button onClick={() => setActiveMeeting({...activeMeeting, deadlines_multiple: [...(activeMeeting.deadlines_multiple || []), { id: Date.now(), label: 'Entrega', done: false }]})} className="w-full py-1.5 bg-white/5 rounded-lg text-[8px] font-black uppercase text-neutral-600 hover:text-white transition-all">+ Añadir Deadline</button>
+                  <div className="space-y-1">
+                    {(activeMeeting.deadlines_multiple || []).map(d => (
+                      <div key={d.id} className="flex items-center gap-1.5 bg-black/50 p-1 rounded-lg border border-white/5">
+                        <input type="text" value={d.label} onChange={e => setActiveMeeting({...activeMeeting, deadlines_multiple: activeMeeting.deadlines_multiple.map(item => item.id === d.id ? {...item, label: e.target.value} : item)})} className="bg-transparent text-[7px] font-bold text-white uppercase outline-none flex-1 truncate" />
+                        <button onClick={() => setActiveMeeting({...activeMeeting, deadlines_multiple: activeMeeting.deadlines_multiple.map(item => item.id === d.id ? {...item, done: !item.done} : item)})} className={`w-3 h-3 rounded flex items-center justify-center shrink-0 ${d.done ? 'bg-emerald-500 text-black' : 'bg-white/5 text-neutral-900'}`}>{d.done && <Check size={8} strokeWidth={4}/>}</button>
+                      </div>
+                    ))}
+                    <button onClick={() => setActiveMeeting({...activeMeeting, deadlines_multiple: [...(activeMeeting.deadlines_multiple || []), { id: Date.now(), label: 'Entrega', done: false }]})} className="w-full py-1.5 bg-white/5 rounded-lg text-[8px] font-black uppercase text-neutral-600 hover:text-white transition-all">+ Añadir</button>
+                  </div>
                </div>
             </div>
 
@@ -388,8 +412,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                  <div className="flex-1 w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-[24px] flex flex-col overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-500">
                       <div className="flex items-center gap-3 px-6 py-4 border-b border-white/5 bg-black/40 shrink-0">
                           <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
-                             <button onMouseDown={(e) => formatText('formatBlock', '<h1>', e)} className="px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-lg text-[9px] font-black uppercase transition-all">H1</button>
-                             <button onMouseDown={(e) => formatText('formatBlock', '<h2>', e)} className="px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-lg text-[9px] font-black uppercase transition-all">H2</button>
+                             <button onMouseDown={(e) => formatText('formatBlock', '<h1>', e)} className="px-5 py-3 bg-blue-600/10 hover:bg-blue-600 text-blue-500 hover:text-white rounded-xl text-[11px] font-black uppercase transition-all border border-blue-500/20 flex items-center gap-2 shadow-lg">H1</button>
+                             <button onMouseDown={(e) => formatText('formatBlock', '<h2>', e)} className="px-5 py-3 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white rounded-xl text-[11px] font-black uppercase transition-all border border-emerald-500/20 flex items-center gap-2 shadow-lg">H2</button>
                           </div>
                           <div className="flex items-center gap-1 px-2 border-r border-white/10 shrink-0">
                              <button onMouseDown={(e) => formatText('bold', null, e)} className="p-3 text-neutral-500 hover:text-white bg-white/5 rounded-xl"><Bold size={16}/></button>
@@ -430,7 +454,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                )}
             </div>
 
-            {/* PANEL DERECHO */}
+            {/* PANEL DERECHO (RESTAURADO) */}
             <div className="w-[260px] border-l shrink-0 bg-black border-white/5 flex flex-col p-1.5 space-y-1.5 overflow-y-auto mac-scrollbar">
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2 shadow-xl">
                   <p className="text-[7px] text-neutral-700 font-black uppercase mb-1.5 flex items-center gap-2"><Smartphone size={10}/> Platforms</p>
@@ -441,14 +465,43 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                   </div>
                </div>
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-3 shadow-xl flex flex-col flex-1 min-h-0 overflow-hidden">
-                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-2">Tasks</p>
-                  <GoogleTasks token={token} />
+                  <div className="flex bg-black rounded-lg p-0.5 mb-2.5 border border-white/5 shrink-0">
+                    <button onClick={() => setRightPanelTab('delivery')} className={`flex-1 py-1.5 rounded text-[7px] font-black uppercase transition-all ${rightPanelTab === 'delivery' ? 'bg-white text-black' : 'text-neutral-600'}`}>Delivery</button>
+                    <button onClick={() => setRightPanelTab('tasks')} className={`flex-1 py-1.5 rounded text-[7px] font-black uppercase transition-all ${rightPanelTab === 'tasks' ? 'bg-white text-black' : 'text-neutral-600'}`}>Tasks</button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto mac-scrollbar pr-1">
+                    {rightPanelTab === 'delivery' ? (
+                      <div className="space-y-1">
+                        {(activeMeeting.export_checklist || []).map(h => (
+                          <button key={h.id} onClick={() => setActiveMeeting({...activeMeeting, export_checklist: activeMeeting.export_checklist.map(item => item.id === h.id ? {...item, done: !item.done} : item)})} className={`w-full flex justify-between items-center p-1.5 rounded-lg border transition-all ${h.done ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-white/5 border-white/5 text-neutral-800'}`}>
+                             <span className="text-[8px] font-black uppercase">{h.label}</span>
+                             {h.done && <Check size={10} strokeWidth={4}/>}
+                          </button>
+                        ))}
+                      </div>
+                    ) : <GoogleTasks token={token} />}
+                  </div>
+               </div>
+               <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2 shadow-xl shrink-0">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <p className="text-[7px] text-neutral-700 font-black uppercase flex items-center gap-2"><Target size={10}/> Cobros</p>
+                    <button onClick={() => setActiveMeeting({...activeMeeting, hitos_pago: [...(activeMeeting.hitos_pago || []), { id: Date.now(), label: 'Hito', paid: false }]})} className="p-1 bg-white/5 rounded text-neutral-600 hover:text-white"><Plus size={10}/></button>
+                  </div>
+                  <div className="space-y-1.5">
+                    {(activeMeeting.hitos_pago || []).map(h => (
+                      <div key={h.id} className="flex gap-1.5 items-center">
+                        <input type="text" value={h.label} onChange={(e) => setActiveMeeting({...activeMeeting, hitos_pago: activeMeeting.hitos_pago.map(item => item.id === h.id ? {...item, label: e.target.value} : item)})} className={`flex-1 bg-transparent border border-white/5 rounded px-1.5 py-0.5 text-[8px] font-bold uppercase outline-none ${h.paid ? 'text-emerald-500' : 'text-neutral-700'}`} />
+                        <button onClick={() => setActiveMeeting({...activeMeeting, hitos_pago: activeMeeting.hitos_pago.map(item => item.id === h.id ? {...item, paid: !item.paid} : item)})} className={`w-5 h-5 rounded flex items-center justify-center transition-all border ${h.paid ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-white/5 border-white/5 text-neutral-900'}`}>{h.paid && <Check size={10} strokeWidth={4}/>}</button>
+                      </div>
+                    ))}
+                  </div>
                </div>
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2.5 shadow-xl shrink-0">
-                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-2">Pipeline Status</p>
+                  <p className="text-[7px] text-neutral-700 font-black uppercase mb-2 flex items-center gap-2"><Activity size={10}/> Pipeline Status</p>
                   <div className="grid grid-cols-2 gap-1">
                     {(activeMeeting.pipeline || []).map(step => (
                       <button key={step.id} onClick={() => setActiveMeeting({...activeMeeting, pipeline: activeMeeting.pipeline.map(s => s.id === step.id ? {...s, done: !s.done} : s)})} className={`flex items-center gap-1.5 p-1 rounded-lg border transition-all ${step.done ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-white/5 border-white/5 text-neutral-800'}`}>
+                        <div className={`w-3 h-3 rounded flex items-center justify-center shrink-0 ${step.done ? 'bg-emerald-500 text-black' : 'bg-white/5 border border-white/5'}`}>{step.done && <Check size={8} strokeWidth={4}/>}</div>
                         <span className="text-[6px] font-black uppercase truncate flex-1">{step.label}</span>
                       </button>
                     ))}
@@ -464,10 +517,10 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/90 backdrop-blur-xl p-8">
            <div className="bg-[#0a0a0a] border border-white/10 rounded-[40px] w-full max-w-xl p-10 space-y-6">
                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Nuevo Perfil</h3>
-                <input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Nombre del Cliente" className="w-full bg-black border border-white/5 rounded-2xl p-4 text-white outline-none" />
+                <input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Alias del Cliente" className="w-full bg-black border border-white/5 rounded-2xl p-4 text-white outline-none" />
                 <div className="flex gap-4 pt-6">
                    <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-4 text-neutral-600 font-black uppercase text-[10px]">Cerrar</button>
-                   <button onClick={handleCreateClient} className="flex-[2] py-4 bg-white text-black rounded-2xl font-black uppercase text-[10px]">Guardar</button>
+                   <button onClick={handleCreateClient} className="flex-[2] py-4 bg-white text-black rounded-2xl font-black uppercase text-[10px]">Sincronizar</button>
                 </div>
            </div>
         </div>
@@ -475,9 +528,9 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
       {showAIModal && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/90 backdrop-blur-xl p-8">
-          <div className="bg-[#0a0a0a] border border-white/10 rounded-[40px] p-16 w-full max-w-2xl shadow-2xl relative">
+          <div className="bg-[#0a0a0a] border border-white/10 rounded-[40px] p-16 w-full max-w-2xl shadow-2xl relative overflow-hidden">
             <h4 className="text-3xl font-black text-white mb-8 flex items-center gap-4 uppercase tracking-tighter"><Sparkles className="text-purple-500 animate-pulse" size={36}/> IA Magic v2</h4>
-            <textarea autoFocus value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="w-full bg-black border border-white/10 rounded-[30px] p-8 text-lg text-white outline-none h-48 resize-none mb-10 placeholder:text-neutral-800" placeholder="Ej: Genera un gancho viral de 3 segundos..." />
+            <textarea autoFocus value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="w-full bg-black border border-white/10 rounded-[30px] p-8 text-lg text-white outline-none h-48 resize-none mb-10 placeholder:text-neutral-800" placeholder="Ej: Mejora este guion..." />
             <div className="flex gap-8">
               <button onClick={() => setShowAIModal(false)} className="flex-1 py-6 text-neutral-600 font-black uppercase text-xs">Cerrar</button>
               <button onClick={handleAISuggestion} disabled={aiLoading || !aiPrompt} className="flex-[2] py-6 bg-purple-600 text-white font-black rounded-[28px] uppercase text-xs shadow-xl disabled:opacity-50 flex items-center justify-center gap-3">
