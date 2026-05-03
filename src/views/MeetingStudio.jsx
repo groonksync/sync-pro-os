@@ -231,13 +231,13 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const totalTimeWorked = useMemo(() => (meetingsList || []).reduce((acc, curr) => acc + (curr.total_time || 0), 0), [meetingsList]);
 
   const colors = {
-    bg: isLight ? 'bg-[#f8fafc]' : 'bg-[#020202]',
-    card: isLight ? 'bg-white border-slate-200 shadow-lg' : 'bg-[#080808] border-white/5 shadow-2xl',
+    bg: isLight ? 'bg-[#f8fafc]' : 'bg-[#0b0c0e]',
+    card: isLight ? 'bg-white border-slate-200 shadow-lg' : 'bg-[#121418] border-white/5 shadow-2xl',
     text: isLight ? 'text-slate-900' : 'text-white',
-    textMuted: isLight ? 'text-slate-500' : 'text-neutral-600',
+    textMuted: isLight ? 'text-slate-500' : 'text-neutral-500',
     border: isLight ? 'border-slate-200' : 'border-white/5',
-    input: isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-[#080808] border-white/5 text-white',
-    innerBg: isLight ? 'bg-slate-50' : 'bg-black'
+    input: isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-[#0d0f12] border-white/5 text-white',
+    innerBg: isLight ? 'bg-slate-50' : 'bg-[#080808]'
   };
 
   return (
