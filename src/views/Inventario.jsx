@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Package, Search, Plus, Save, Trash2, Edit3, X, Image as ImageIcon,
   Truck, DollarSign, Tag, Box as BoxIcon, Layout, ShieldCheck, 
-  CheckCircle, ChevronLeft, ChevronRight
+  CheckCircle, ChevronLeft, ChevronRight, Info
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -32,17 +32,19 @@ const Toast = ({ message, show, onClose }) => {
 };
 
 const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
+  const isAgotado = parseInt(p.stock_actual) === 0;
+
   return (
     <div 
       onClick={() => onSelect(p)}
       className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] overflow-hidden hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl h-full cursor-pointer"
     >
       {/* IMAGEN Y BOTONES FLOTANTES */}
-      <div className="aspect-square bg-[#080808] relative overflow-hidden flex items-center justify-center border-b border-white/5 shadow-inner">
+      <div className="aspect-square bg-[#080808] relative overflow-hidden flex items-center justify-center border-b border-white/5 shadow-inner rounded-t-2xl md:rounded-t-[32px]">
         {p.imagen ? (
           <img 
             src={p.imagen} 
-            className={`w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
+            className={`w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-110 ${isAgotado ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
@@ -52,10 +54,10 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
           </div>
         )}
 
-        {parseInt(p.stock_actual) === 0 && (
-           <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/40 backdrop-blur-md border-y border-white/5 py-1.5 md:py-2.5 w-[400%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
-                 <span className="text-white text-[8px] md:text-xs font-bold tracking-[0.4em] md:tracking-[0.8em] uppercase opacity-90">AGOTADO</span>
+        {isAgotado && (
+           <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center overflow-hidden rounded-[inherit]">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md border-y border-white/10 py-1.5 md:py-2.5 w-[400%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+                 <span className="text-white text-[8px] md:text-xs font-black tracking-[0.6em] md:tracking-[1em] uppercase opacity-90">AGOTADO</span>
               </div>
            </div>
         )}
@@ -83,7 +85,7 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
           </button>
         </div>
 
-        {/* INDICADOR DE STOCK (ESTILO FLOTANTE) */}
+        {/* INDICADOR DE STOCK */}
         <div className="absolute top-3 right-3 md:top-4 md:right-4 z-10">
           <p className="text-[8px] md:text-[10px] font-mono font-black px-2 py-1 md:px-3 md:py-1.5 rounded-lg backdrop-blur-md border border-white/10 bg-black/40 text-white shadow-2xl">
             {p.stock_actual} UDS
@@ -95,14 +97,21 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
       <div className="p-4 md:p-6 flex flex-col gap-2 md:gap-4">
         <div className="space-y-0.5">
            <h3 className="text-[10px] md:text-lg font-black text-white line-clamp-1 leading-tight tracking-tight uppercase">{p.nombre}</h3>
-           <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">{p.marca || 'Sovereign Core'}</p>
+           <div className="flex items-center justify-between">
+              <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">{p.marca || 'Sovereign Core'}</p>
+              {/* ETIQUETA DE ENVÍO */}
+              <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[5px] md:text-[7px] font-black uppercase tracking-widest ${p.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-white/5 border-white/10 text-neutral-500'}`}>
+                 <Truck size={8} />
+                 {p.tipo_envio === 'Envío Gratuito' ? 'Gratis' : 'Adic.'}
+              </div>
+           </div>
         </div>
         
         <div className="flex flex-col">
            <p className="text-[6px] md:text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-0.5">Venta Final</p>
            <p className="text-xl md:text-4xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
               {parseFloat(p.precio_venta || 0).toLocaleString()} 
-              <span className="text-[8px] md:text-xs opacity-20 ml-1 font-sans">BS.</span>
+              <span className="text-[8px] md:text-xs opacity-20 ml-1 font-sans font-black">BS.</span>
            </p>
         </div>
       </div>
