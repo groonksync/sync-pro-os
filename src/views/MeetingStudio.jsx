@@ -127,11 +127,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     } catch (e) { console.error(e); }
   };
 
-  const openClientProfile = (client) => { setActiveClient(client); fetchMeetings(client.id); setViewState('client-profile'); };
+  const openClientProfile = (client) => { setActiveClient(client); fetchMeetings(client.nombre); setViewState('client-profile'); };
 
-  const fetchMeetings = async (clientId) => {
+  const fetchMeetings = async (clientName) => {
     try {
-      const { data, error } = await supabase.from('reuniones').select('*').eq('cliente_id', clientId);
+      const { data, error } = await supabase
+        .from('reuniones')
+        .select('*')
+        .eq('cliente', clientName);
       if (error) throw error;
       setMeetingsList(data || []);
     } catch (e) { console.error(e); }
