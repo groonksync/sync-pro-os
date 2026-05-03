@@ -62,6 +62,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [time, setTime] = useState(0);
   const [calcDisplay, setCalcDisplay] = useState('0');
+  const [editorContent, setEditorContent] = useState('');
   const editorRef = useRef(null);
   const timerRef = useRef(null);
   const [showAIModal, setShowAIModal] = useState(false);
