@@ -230,7 +230,15 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     setEditorContent(e.currentTarget.innerHTML);
   };
 
-  const filteredClients = (clients || []).filter(c => normalizeText(c.nombre).includes(normalizeText(clientSearch)));
+  const uniqueClients = useMemo(() => {
+    const seen = new Set();
+    return (clients || []).filter(c => {
+      if (seen.has(c.nombre)) return false;
+      seen.add(c.nombre);
+      return true;
+    }).filter(c => normalizeText(c.nombre).includes(normalizeText(clientSearch)));
+  }, [clients, clientSearch]);
+
   const filteredMeetings = useMemo(() => (meetingsList || []).filter(m => normalizeText(m.session_title).includes(normalizeText(meetingSearch))), [meetingsList, meetingSearch]);
   const totalTimeWorked = useMemo(() => (meetingsList || []).reduce((acc, curr) => acc + (curr.total_time || 0), 0), [meetingsList]);
 
@@ -327,6 +335,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
             </header>
 
             {/* BUSCADOR */}
+      {/* BUSCADOR */}
             <div className="flex gap-6 items-center">
               <div className="relative group flex-1">
                 <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={24}/>
@@ -348,7 +357,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                     {filteredClients.map((client, idx) => (
+                     {uniqueClients.map((client, idx) => (
                        <tr key={client.id} onClick={() => openClientProfile(client)} className="group hover:bg-[#10b981]/[0.03] transition-all cursor-pointer">
                           <td className="px-10 py-8"><span className="text-sm font-mono text-neutral-800 font-black tracking-tighter">{(idx + 1).toString().padStart(2, '0')}</span></td>
                           <td className="px-10 py-8">
@@ -372,13 +381,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                                 {[...Array(5)].map((_, i) => <Star key={i} size={10} fill={i < (4 + idx%2) ? "#10b981" : "transparent"} className={i < (4 + idx%2) ? "text-[#10b981]" : "text-white/10"}/>)}
                              </div>
                           </td>
+                          <td className="px-10 py-8 text-right"><p className="text-base font-black text-white font-mono">$1,200.00</p></td>
                           <td className="px-10 py-8 text-right">
-                             <p className="text-lg font-black text-white font-mono tracking-tighter">$ {(2400 + idx*800).toLocaleString()}</p>
-                          </td>
-                          <td className="px-10 py-8">
-                             <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
-                                <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="w-11 h-11 bg-white text-black rounded-xl flex items-center justify-center hover:bg-[#10b981] hover:text-white transition-all shadow-xl"><Edit3 size={18}/></button>
-                                <button onClick={(e) => handleDeleteClient(client.id, e)} className="w-11 h-11 bg-white text-rose-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-xl"><Trash2 size={18}/></button>
+                             <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
+                                <button className="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-neutral-500 transition-all"><MoreVertical size={16}/></button>
+                                <button className="p-3 bg-white/5 hover:bg-[#10b981] rounded-xl text-white transition-all"><ArrowLeft className="rotate-180" size={16}/></button>
                              </div>
                           </td>
                        </tr>
@@ -390,9 +397,112 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
+      {/* VISTA: PERFIL CLIENTE */}
+      {viewState === 'client-profile' && activeClient && (
+        <div className={`h-full flex flex-col overflow-hidden ${colors.bg} animate-in slide-in-from-right duration-500`}>
+          {/* CABECERA EJECUTIVA DEL PERFIL */}
+          <header className={`px-10 py-6 ${colors.card} border-b border-white/5 flex items-center justify-between relative z-10 shrink-0 bg-black/20 backdrop-blur-3xl`}>
+            <div className="flex items-center gap-8">
+              <button onClick={() => setViewState('client-list')} className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-500 hover:text-[#10b981] transition-all border border-white/5`}><ArrowLeft size={24}/></button>
+              <div>
+                 <div className="flex items-center gap-4 mb-1">
+                    <h3 className={`text-3xl font-black ${colors.text} uppercase tracking-tighter`}>{activeClient.nombre}</h3>
+                    <span className="px-3 py-1 bg-[#10b981]/10 rounded-lg text-[9px] font-black text-[#10b981] uppercase tracking-widest border border-[#10b981]/20">Verified Client</span>
+                 </div>
+                 <p className={`text-[10px] ${colors.textMuted} font-black uppercase tracking-[0.4em]`}>{activeClient.empresa || 'Independent Production'}</p>
+              </div>
+            </div>
+            <button onClick={createMeeting} className="px-10 py-5 bg-white text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-4 hover:bg-[#10b981] hover:text-white transition-all shadow-[0_15px_30px_rgba(255,255,255,0.1)]">
+               <Video size={18} strokeWidth={3}/> Iniciar Nueva Producción
+            </button>
+          </header>
+          
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-10 space-y-10 max-w-[1500px] mx-auto w-full relative">
+               
+               {/* MÉTRICAS DE ALTO NIVEL */}
+               <div className="grid grid-cols-3 gap-6">
+                  <div className={`${colors.card} rounded-[2rem] p-8 border border-white/5 flex flex-col justify-between group hover:border-amber-500/30 transition-all`}>
+                     <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mb-4">Total Production Time</p>
+                     <div className="flex items-end justify-between">
+                        <h5 className={`text-4xl font-black ${colors.text} font-mono leading-none tracking-tighter`}>{formatTime(totalTimeWorked)}</h5>
+                        <Clock size={32} className="text-amber-500/20 group-hover:text-amber-500 transition-all"/>
+                     </div>
+                  </div>
+                  <div className="col-span-2 p-8 rounded-[2rem] bg-gradient-to-br from-[#10b981]/5 to-transparent border border-[#10b981]/10 flex items-center justify-between">
+                     <div>
+                        <p className="text-[10px] text-[#10b981] font-black uppercase tracking-[0.4em] mb-2">Project Capacity</p>
+                        <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Gestionando {meetingsList.length} Sesiones Activas</h4>
+                     </div>
+                     <div className="flex -space-x-4">
+                        {[...Array(4)].map((_,i) => <div key={i} className="w-12 h-12 rounded-full border-4 border-[#0b0c0e] bg-neutral-900 flex items-center justify-center text-[10px] font-black text-neutral-500 uppercase">S{i+1}</div>)}
+                     </div>
+                  </div>
+               </div>
+
+               {/* LISTADO DE SESIONES: "EXECUTIVE SLATE" DESIGN */}
+               <div className="space-y-4">
+                  <div className="flex items-center gap-4 mb-6 opacity-30">
+                     <span className="text-[10px] font-black text-white uppercase tracking-[1em]">Production Ledger</span>
+                     <div className="h-[1px] flex-1 bg-white"></div>
+                  </div>
+
+                  {filteredMeetings.length > 0 ? filteredMeetings.map(m => (
+                    <div key={m.id} className="group relative">
+                       {/* ELEGANT ROW DESIGN */}
+                       <div className={`${colors.card} rounded-[2rem] p-8 border border-white/5 flex items-center justify-between hover:bg-white/[0.01] hover:border-white/20 transition-all shadow-2xl relative z-10 overflow-hidden`}>
+                          
+                          <div className="flex items-center gap-10">
+                             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-neutral-900 to-neutral-800 flex items-center justify-center text-[#10b981] border border-white/5 shadow-inner group-hover:scale-110 transition-all">
+                                <FileVideo size={28} strokeWidth={1.5}/>
+                             </div>
+                             
+                             <div className="space-y-2">
+                                <div className="flex items-center gap-4">
+                                   <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{m.session_title || 'Untitled Session'}</h4>
+                                   <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-neutral-500 uppercase tracking-widest border border-white/5">{m.revision_version || 'V1.0'}</span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                   <div className="flex items-center gap-2 text-neutral-600">
+                                      <Calendar size={12}/>
+                                      <span className="text-[10px] font-bold uppercase tracking-widest">{m.fecha}</span>
+                                   </div>
+                                   <span className="w-1 h-1 rounded-full bg-neutral-800"></span>
+                                   <div className="flex items-center gap-2 text-[#10b981]">
+                                      <Activity size={12}/>
+                                      <span className="text-[10px] font-black uppercase tracking-widest">Active Draft</span>
+                                   </div>
+                                </div>
+                             </div>
+                          </div>
+
+                          <div className="flex items-center gap-12">
+                             <div className="text-right">
+                                <p className="text-[8px] text-neutral-700 font-black uppercase tracking-widest mb-1">Time Elapsed</p>
+                                <p className="text-2xl font-black text-white font-mono tracking-tighter">{formatTime(m.total_time || 0)}</p>
+                             </div>
+                             
+                             <button onClick={() => openMeeting(m)} className="px-10 py-5 bg-white/5 hover:bg-white text-neutral-500 hover:text-black font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl border border-white/10 transition-all flex items-center gap-4 group/btn">
+                                Continuar <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-all"/>
+                             </button>
+                          </div>
+
+                          {/* DECORACIÓN DE FONDO SUTIL */}
+                          <div className="absolute top-0 right-0 h-full w-40 bg-gradient-to-l from-[#10b981]/[0.02] to-transparent pointer-events-none"></div>
+                       </div>
+                    </div>
+                  )) : (
+                     <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
+                        <p className="text-neutral-600 font-black uppercase tracking-widest">No hay sesiones registradas en el Ledger</p>
+                     </div>
+                  )}
+               </div>
+          </div>
+        </div>
+      )}
+
       {/* VISTA: AGENCIA DE MARKETING HUB (SOVEREIGN PLATINUM DESIGN) */}
       {viewState === 'agency-hub' && (
-        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000 bg-[#020202]">
+        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000 bg-[#0b0c0e]">
            <div className="flex-1 overflow-y-auto mac-scrollbar p-12 space-y-16 max-w-[1900px] mx-auto w-full relative">
               
               {/* DECORACIÓN DE FONDO: LÍNEAS DE PRECISIÓN */}
@@ -415,7 +525,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                     <div className="flex gap-4 items-center bg-white/5 p-2 rounded-2xl border border-white/10">
                        <div className="px-6 py-2 border-r border-white/10 text-center">
                           <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">Cuentas</p>
-                          <p className="text-xl font-black text-white font-mono">{companies.length || 12}</p>
+                          <p className="text-xl font-black text-white font-mono">{uniqueClients.length || 12}</p>
                        </div>
                        <div className="px-6 py-2 text-center">
                           <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">Eficiencia</p>
@@ -453,9 +563,9 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
               {/* LISTADO DE PROYECTOS */}
               <div className="space-y-10 relative z-10">
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {((companies && companies.length > 0) ? companies : [...Array(6)]).map((company, i) => {
-                       const data = (company && company.nombre_empresa) ? company : { nombre_empresa: 'Global Dynamics', dueño: 'Marcus Aurelius', drive_url: '#', telefono: '+1 800 234 567' };
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 relative z-10">
+                    {uniqueClients.map((company, i) => {
+                       const data = (company && company.nombre) ? company : { nombre: 'Global Dynamics', dueño: 'Marcus Aurelius', drive_url: '#', telefono: '+1 800 234 567' };
                        return (
                           <div key={i} onClick={() => { setSelectedCompany(data); setViewState('agency-session'); }} className="group relative">
                              <div className="absolute -inset-2 bg-gradient-to-tr from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-all blur-2xl rounded-[3rem]"></div>
@@ -679,42 +789,101 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
-      {/* VISTA: PERFIL CLIENTE */}
-      {viewState === 'client-profile' && activeClient && (
-        <div className={`h-full flex flex-col overflow-hidden ${colors.bg} animate-in slide-in-from-right duration-500`}>
-          <header className={`px-10 py-5 ${colors.card} border-b flex items-center justify-between relative z-10 shrink-0`}>
-            <div className="flex items-center gap-6">
-              <button onClick={() => setViewState('client-list')} className={`w-10 h-10 ${isLight ? 'bg-slate-100' : 'bg-white/5'} rounded-xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all`}><ArrowLeft size={20}/></button>
-              <div><h3 className={`text-xl font-black ${colors.text} uppercase leading-none mb-1`}>{activeClient.nombre}</h3><p className={`text-[8px] ${colors.textMuted} font-black uppercase tracking-[0.2em]`}>{activeClient.pais || 'Global'}</p></div>
+          {/* CABECERA EJECUTIVA DEL PERFIL */}
+          <header className={`px-10 py-6 ${colors.card} border-b border-white/5 flex items-center justify-between relative z-10 shrink-0 bg-black/20 backdrop-blur-3xl`}>
+            <div className="flex items-center gap-8">
+              <button onClick={() => setViewState('client-list')} className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-500 hover:text-[#10b981] transition-all border border-white/5`}><ArrowLeft size={24}/></button>
+              <div>
+                 <div className="flex items-center gap-4 mb-1">
+                    <h3 className={`text-3xl font-black ${colors.text} uppercase tracking-tighter`}>{activeClient.nombre}</h3>
+                    <span className="px-3 py-1 bg-[#10b981]/10 rounded-lg text-[9px] font-black text-[#10b981] uppercase tracking-widest border border-[#10b981]/20">Verified Client</span>
+                 </div>
+                 <p className={`text-[10px] ${colors.textMuted} font-black uppercase tracking-[0.4em]`}>{activeClient.empresa || 'Independent Production'}</p>
+              </div>
             </div>
-            <button onClick={createMeeting} className="px-6 py-3 bg-[#10b981] text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3"><Plus size={16} strokeWidth={3}/> Nueva Sesión</button>
+            <button onClick={createMeeting} className="px-10 py-5 bg-white text-black rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-4 hover:bg-[#10b981] hover:text-white transition-all shadow-[0_15px_30px_rgba(255,255,255,0.1)]">
+               <Video size={18} strokeWidth={3}/> Iniciar Nueva Producción
+            </button>
           </header>
           
-          <div className="flex-1 overflow-y-auto mac-scrollbar p-6 space-y-6 max-w-[1700px] mx-auto w-full">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className={`${colors.card} rounded-2xl p-4 flex items-center gap-4 border-l-4 border-l-amber-500 shadow-lg`}><div className="w-10 h-10 rounded-xl bg-amber-500/5 flex items-center justify-center text-amber-500"><Clock size={20}/></div><div><p className={`text-[8px] ${colors.textMuted} font-black uppercase mb-0.5`}>Inversión</p><h5 className={`text-lg font-black ${colors.text} font-mono leading-none`}>{formatTime(totalTimeWorked)}</h5></div></div>
-                  <div className={`${colors.card} rounded-2xl p-4 flex items-center gap-4 border-l-4 border-l-blue-500 shadow-lg`}><div className="w-10 h-10 rounded-xl bg-blue-500/5 flex items-center justify-center text-blue-500"><Layers size={20}/></div><div><p className={`text-[8px] ${colors.textMuted} font-black uppercase mb-0.5`}>Sesiones</p><h5 className={`text-lg font-black ${colors.text} leading-none`}>{meetingsList.length} Proyectos</h5></div></div>
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-10 space-y-10 max-w-[1500px] mx-auto w-full relative">
+               
+               {/* MÉTRICAS DE ALTO NIVEL */}
+               <div className="grid grid-cols-3 gap-6">
+                  <div className={`${colors.card} rounded-[2rem] p-8 border border-white/5 flex flex-col justify-between group hover:border-amber-500/30 transition-all`}>
+                     <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mb-4">Total Production Time</p>
+                     <div className="flex items-end justify-between">
+                        <h5 className={`text-4xl font-black ${colors.text} font-mono leading-none tracking-tighter`}>{formatTime(totalTimeWorked)}</h5>
+                        <Clock size={32} className="text-amber-500/20 group-hover:text-amber-500 transition-all"/>
+                     </div>
+                  </div>
+                  <div className="col-span-2 p-8 rounded-[2rem] bg-gradient-to-br from-[#10b981]/5 to-transparent border border-[#10b981]/10 flex items-center justify-between">
+                     <div>
+                        <p className="text-[10px] text-[#10b981] font-black uppercase tracking-[0.4em] mb-2">Project Capacity</p>
+                        <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Gestionando {meetingsList.length} Sesiones Activas</h4>
+                     </div>
+                     <div className="flex -space-x-4">
+                        {[...Array(4)].map((_,i) => <div key={i} className="w-12 h-12 rounded-full border-4 border-[#0b0c0e] bg-neutral-900 flex items-center justify-center text-[10px] font-black text-neutral-500 uppercase">S{i+1}</div>)}
+                     </div>
+                  </div>
                </div>
 
-               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {filteredMeetings.map(m => (
-                    <div key={m.id} onClick={() => openMeeting(m)} className={`${colors.card} rounded-2xl p-4 hover:bg-white/[0.02] cursor-pointer transition-all flex items-center justify-between group active:scale-[0.98] border-r-2 border-r-transparent hover:border-r-[#10b981] shadow-xl`}>
-                       <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl ${isLight ? 'bg-slate-100' : 'bg-white/5'} flex items-center justify-center text-neutral-900 group-hover:text-[#10b981] transition-all`}><PlayCircle size={20}/></div>
-                          <div>
-                             <div className="flex items-center gap-3 mb-0.5">
-                                <p className={`text-sm font-black ${colors.text} uppercase tracking-tight`}>{m.session_title || 'Edición de Video'}</p>
-                                <span className="px-2 py-0.5 bg-[#10b981]/10 rounded-md text-[7px] font-black text-[#10b981] uppercase">{m.revision_version || 'V1'}</span>
+               {/* LISTADO DE SESIONES: "EXECUTIVE SLATE" DESIGN */}
+               <div className="space-y-4">
+                  <div className="flex items-center gap-4 mb-6 opacity-30">
+                     <span className="text-[10px] font-black text-white uppercase tracking-[1em]">Production Ledger</span>
+                     <div className="h-[1px] flex-1 bg-white"></div>
+                  </div>
+
+                  {filteredMeetings.length > 0 ? filteredMeetings.map(m => (
+                    <div key={m.id} className="group relative">
+                       {/* ELEGANT ROW DESIGN */}
+                       <div className={`${colors.card} rounded-[2rem] p-8 border border-white/5 flex items-center justify-between hover:bg-white/[0.01] hover:border-white/20 transition-all shadow-2xl relative z-10 overflow-hidden`}>
+                          
+                          <div className="flex items-center gap-10">
+                             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-neutral-900 to-neutral-800 flex items-center justify-center text-[#10b981] border border-white/5 shadow-inner group-hover:scale-110 transition-all">
+                                <FileVideo size={28} strokeWidth={1.5}/>
                              </div>
-                             <p className={`text-[9px] ${colors.textMuted} font-bold uppercase`}>{m.fecha}</p>
+                             
+                             <div className="space-y-2">
+                                <div className="flex items-center gap-4">
+                                   <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{m.session_title || 'Untitled Session'}</h4>
+                                   <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-neutral-500 uppercase tracking-widest border border-white/5">{m.revision_version || 'V1.0'}</span>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                   <div className="flex items-center gap-2 text-neutral-600">
+                                      <Calendar size={12}/>
+                                      <span className="text-[10px] font-bold uppercase tracking-widest">{m.fecha}</span>
+                                   </div>
+                                   <span className="w-1 h-1 rounded-full bg-neutral-800"></span>
+                                   <div className="flex items-center gap-2 text-[#10b981]">
+                                      <Activity size={12}/>
+                                      <span className="text-[10px] font-black uppercase tracking-widest">Active Draft</span>
+                                   </div>
+                                </div>
+                             </div>
                           </div>
-                       </div>
-                       <div className="flex items-center gap-6">
-                          <p className={`text-sm font-black ${colors.text} font-mono`}>{formatTime(m.total_time || 0)}</p>
-                          <ChevronRight size={16} className="text-neutral-800 group-hover:text-[#10b981]" />
+
+                          <div className="flex items-center gap-12">
+                             <div className="text-right">
+                                <p className="text-[8px] text-neutral-700 font-black uppercase tracking-widest mb-1">Time Elapsed</p>
+                                <p className="text-2xl font-black text-white font-mono tracking-tighter">{formatTime(m.total_time || 0)}</p>
+                             </div>
+                             
+                             <button onClick={() => openMeeting(m)} className="px-10 py-5 bg-white/5 hover:bg-white text-neutral-500 hover:text-black font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl border border-white/10 transition-all flex items-center gap-4 group/btn">
+                                Continuar <ChevronRight size={16} className="group-hover/btn:translate-x-1 transition-all"/>
+                             </button>
+                          </div>
+
+                          {/* DECORACIÓN DE FONDO SUTIL */}
+                          <div className="absolute top-0 right-0 h-full w-40 bg-gradient-to-l from-[#10b981]/[0.02] to-transparent pointer-events-none"></div>
                        </div>
                     </div>
-                  ))}
+                  )) : (
+                     <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[3rem]">
+                        <p className="text-neutral-600 font-black uppercase tracking-widest">No hay sesiones registradas en el Ledger</p>
+                     </div>
+                  )}
                </div>
           </div>
         </div>
