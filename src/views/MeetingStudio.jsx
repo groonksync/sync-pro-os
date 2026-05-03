@@ -131,7 +131,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
   const fetchMeetings = async (clientId) => {
     try {
-      const { data, error } = await supabase.from('reuniones').select('*').eq('cliente_id', clientId).order('created_at', { ascending: false });
+      const { data, error } = await supabase.from('reuniones').select('*').eq('cliente_id', clientId);
       if (error) throw error;
       setMeetingsList(data || []);
     } catch (e) { console.error(e); }
@@ -224,6 +224,10 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       setAiPrompt('');
     } catch (e) { alert(e.message); }
     setAiLoading(false);
+  };
+
+  const handleEditorInput = (e) => {
+    setEditorContent(e.currentTarget.innerHTML);
   };
 
   const filteredClients = (clients || []).filter(c => normalizeText(c.nombre).includes(normalizeText(clientSearch)));
