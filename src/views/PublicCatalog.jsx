@@ -21,11 +21,12 @@ const PublicProductCard = ({ p, onSelect }) => {
       onClick={() => onSelect(p)}
       className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] p-0 hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl overflow-hidden cursor-pointer h-full"
     >
+      {/* IMAGEN: AJUSTE PERFECTO */}
       <div className="aspect-square bg-[#080808] m-1.5 md:m-2.5 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center border border-white/5">
         {p.imagen ? (
           <img 
             src={p.imagen} 
-            className={`max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
+            className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
@@ -93,6 +94,14 @@ const PublicCatalog = () => {
 
   const WHATSAPP_NUMBER = "59169109766"; 
 
+  // FUNCIÓN DE NORMALIZACIÓN DE TEXTO (Para búsqueda profesional)
+  const normalizeText = (text) => {
+    return (text || '')
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""); // Remueve tildes y diacríticos
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -121,10 +130,13 @@ const PublicCatalog = () => {
       result = result.filter(p => p.categoria === activeCategory);
     }
     if (searchTerm) {
-      result = result.filter(p => 
-        p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (p.codigo || '').toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const normalizedSearch = normalizeText(searchTerm);
+      result = result.filter(p => {
+        const nameMatch = normalizeText(p.nombre).includes(normalizedSearch);
+        const codeMatch = normalizeText(p.codigo).includes(normalizedSearch);
+        const brandMatch = normalizeText(p.marca).includes(normalizedSearch);
+        return nameMatch || codeMatch || brandMatch;
+      });
     }
     setFilteredProducts(result);
   }, [searchTerm, activeCategory, productos]);
@@ -171,7 +183,7 @@ const PublicCatalog = () => {
                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-700" size={12} />
                <input 
                  type="text" 
-                 placeholder="Buscar..."
+                 placeholder="Buscar productos..."
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
                  className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-[9px] text-white outline-none focus:border-white/20 transition-all font-medium"
@@ -210,7 +222,8 @@ const PublicCatalog = () => {
 
       {selectedProduct && (
          <div className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-2xl flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-500">
-            <div className="bg-[#121212] border border-white/10 w-full max-w-[1100px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[98vh] md:max-h-[90vh] flex flex-col md:flex-row">
+            {/* MODAL MÁS COMPACTO: max-w-[950px] */}
+            <div className="bg-[#121212] border border-white/10 w-full max-w-[950px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[95vh] md:max-h-[85vh] flex flex-col md:flex-row">
                <button 
                  onClick={() => setSelectedProduct(null)}
                  className="absolute top-4 right-4 md:top-6 md:right-6 z-[130] w-10 h-10 md:w-12 md:h-12 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
@@ -218,21 +231,22 @@ const PublicCatalog = () => {
                   <X size={20}/>
                </button>
 
+               {/* CARRUSEL AJUSTADO */}
                <div 
-                 className="w-full md:w-[45%] bg-[#080808] p-4 md:p-12 flex items-center justify-center relative touch-pan-y group/carousel"
+                 className="w-full md:w-[42%] bg-[#080808] p-4 md:p-10 flex items-center justify-center relative touch-pan-y group/carousel"
                  onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
                >
                   <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
                      <img 
                        src={allImages[currentImgIndex]} 
-                       className="max-w-full max-h-[35vh] md:max-h-[60vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-3xl" 
+                       className="max-w-full max-h-[35vh] md:max-h-[55vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl" 
                      />
                   </div>
 
                   {allImages.length > 1 && (
                     <>
-                      <button onClick={prevImg} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-12 md:h-12 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 hidden md:flex"><ChevronLeft size={20}/></button>
-                      <button onClick={nextImg} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-12 md:h-12 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 hidden md:flex"><ChevronRight size={20}/></button>
+                      <button onClick={prevImg} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 hidden md:flex"><ChevronLeft size={18}/></button>
+                      <button onClick={nextImg} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 hidden md:flex"><ChevronRight size={18}/></button>
                       <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5">
                         {allImages.map((_, idx) => (
                           <div key={idx} onClick={() => setCurrentImgIndex(idx)} className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${idx === currentImgIndex ? 'bg-blue-500 w-4' : 'bg-white/20'}`} />
@@ -242,64 +256,65 @@ const PublicCatalog = () => {
                   )}
                </div>
 
-               <div className="w-full md:w-[55%] p-4 md:p-10 flex flex-col justify-between bg-[#121212]">
-                  <div className="space-y-4 md:space-y-6">
+               {/* INFO MÁS COMPACTA */}
+               <div className="w-full md:w-[58%] p-4 md:p-8 flex flex-col justify-between bg-[#121212]">
+                  <div className="space-y-3 md:space-y-5">
                      <div>
                         <span className="px-3 py-1 bg-blue-600/10 text-blue-500 text-[6px] md:text-[8px] font-black rounded-full uppercase tracking-widest border border-blue-500/20">
                            {selectedProduct.categoria}
                         </span>
-                        <h2 className="text-xl md:text-4xl font-black text-white leading-tight tracking-tighter uppercase mt-2">{selectedProduct.nombre}</h2>
+                        <h2 className="text-xl md:text-3xl font-black text-white leading-tight tracking-tighter uppercase mt-1.5">{selectedProduct.nombre}</h2>
                      </div>
                      
-                     <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1 bg-white/[0.03] border border-white/5 p-4 md:p-6 rounded-2xl md:rounded-3xl">
+                     <div className="flex items-center justify-between gap-3">
+                        <div className="flex-1 bg-white/[0.03] border border-white/5 p-3 md:p-5 rounded-2xl md:rounded-3xl">
                            <p className="text-[6px] md:text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-1">Inversión Final</p>
-                           <div className="flex items-baseline gap-2 md:gap-4">
-                              <p className="text-3xl md:text-6xl font-mono text-white font-black tracking-tighter leading-none">
+                           <div className="flex items-baseline gap-2 md:gap-3">
+                              <p className="text-2xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">
                                  {parseFloat(selectedProduct.precio_venta || 0).toLocaleString()} 
                               </p>
                               <div className="flex flex-col">
                                  {selectedProduct.precio_antes > selectedProduct.precio_venta && (
-                                    <p className="text-[10px] md:text-sm text-neutral-600 font-mono line-through opacity-50">
+                                    <p className="text-[9px] md:text-xs text-neutral-600 font-mono line-through opacity-50">
                                        {parseFloat(selectedProduct.precio_antes).toLocaleString()}
                                     </p>
                                  )}
-                                 <span className="text-[10px] md:text-sm font-black text-blue-500">BS.</span>
+                                 <span className="text-[9px] md:text-xs font-black text-blue-500">BS.</span>
                               </div>
                            </div>
                         </div>
 
-                        <div className={`px-4 py-6 md:px-8 md:py-8 rounded-2xl md:rounded-3xl border flex flex-col items-center justify-center text-center ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
-                           <Truck size={18} className="mb-2" />
-                           <p className="text-[8px] md:text-[10px] font-black uppercase leading-tight">
+                        <div className={`px-4 py-5 md:px-6 md:py-6 rounded-2xl md:rounded-3xl border flex flex-col items-center justify-center text-center ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
+                           <Truck size={16} className="mb-1.5" />
+                           <p className="text-[7px] md:text-[9px] font-black uppercase leading-tight">
                               {selectedProduct.tipo_envio || 'Cobro Adicional'}
                            </p>
                         </div>
                      </div>
 
-                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
-                           <div className="flex items-center gap-2 mb-1">
-                              {selectedProduct.garantia_unit === 'Sin Garantía' ? <ShieldAlert size={12} className="text-rose-500" /> : <ShieldCheck size={12} className="text-blue-500" />}
-                              <p className="text-[7px] md:text-[9px] font-black text-neutral-500 uppercase">Garantía</p>
+                     <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white/5 p-3 md:p-3.5 rounded-xl md:rounded-2xl border border-white/5">
+                           <div className="flex items-center gap-2 mb-0.5">
+                              {selectedProduct.garantia_unit === 'Sin Garantía' ? <ShieldAlert size={10} className="text-rose-500" /> : <ShieldCheck size={10} className="text-blue-500" />}
+                              <p className="text-[6px] md:text-[8px] font-black text-neutral-500 uppercase">Garantía</p>
                            </div>
-                           <p className="text-[10px] md:text-xs font-black text-white">{renderWarranty(selectedProduct)}</p>
+                           <p className="text-[9px] md:text-xs font-black text-white">{renderWarranty(selectedProduct)}</p>
                         </div>
-                        <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
-                           <div className="flex items-center gap-2 mb-1">
-                              <Zap size={12} className="text-emerald-500" />
-                              <p className="text-[7px] md:text-[9px] font-black text-neutral-500 uppercase">Disponibilidad</p>
+                        <div className="bg-white/5 p-3 md:p-3.5 rounded-xl md:rounded-2xl border border-white/5">
+                           <div className="flex items-center gap-2 mb-0.5">
+                              <Zap size={10} className="text-emerald-500" />
+                              <p className="text-[6px] md:text-[8px] font-black text-neutral-500 uppercase">Disponibilidad</p>
                            </div>
-                           <p className="text-[10px] md:text-xs font-black text-white">Stock Inmediato</p>
+                           <p className="text-[9px] md:text-xs font-black text-white">Stock Inmediato</p>
                         </div>
                      </div>
 
-                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                           <FileText size={14} className="text-blue-500"/>
-                           <p className="text-[8px] md:text-[10px] font-black text-white uppercase tracking-widest">Especificaciones</p>
+                     <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 border-b border-white/5 pb-1.5">
+                           <FileText size={12} className="text-blue-500"/>
+                           <p className="text-[7px] md:text-[9px] font-black text-white uppercase tracking-widest">Especificaciones</p>
                         </div>
-                        <p className="text-neutral-400 text-[10px] md:text-sm leading-relaxed italic line-clamp-3">
+                        <p className="text-neutral-400 text-[9px] md:text-sm leading-relaxed italic line-clamp-3">
                            {selectedProduct.ficha_tecnica || 'Calidad Sync Pro garantizada para uso profesional.'}
                         </p>
                      </div>
@@ -307,9 +322,9 @@ const PublicCatalog = () => {
 
                   <button 
                     onClick={() => handleConsult(selectedProduct)}
-                    className="w-full mt-4 py-4 md:py-8 bg-white text-black rounded-xl md:rounded-[2rem] font-black text-[10px] md:text-lg uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 border border-white/10"
+                    className="w-full mt-4 py-3.5 md:py-6 bg-white text-black rounded-xl md:rounded-[2rem] font-black text-[9px] md:text-base uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 border border-white/10"
                   >
-                     <WhatsAppIcon size={20} className="md:w-6 md:h-6" />
+                     <WhatsAppIcon size={18} className="md:w-5 md:h-5" />
                      Consultar por WhatsApp
                   </button>
                </div>
@@ -317,10 +332,10 @@ const PublicCatalog = () => {
          </div>
       )}
 
-      <footer className="bg-[#0a0a0a] border-t border-white/5 px-4 md:px-20 py-12 md:py-20 text-center">
-         <Zap size={24} className="mx-auto mb-4 text-white opacity-20" />
-         <p className="text-[8px] font-black uppercase tracking-[0.4em] text-blue-500 mb-2">Sync Pro Global</p>
-         <p className="text-neutral-500 text-[10px] font-medium max-w-xs mx-auto">Equipos de precisión para profesionales.</p>
+      <footer className="bg-[#0a0a0a] border-t border-white/5 px-4 md:px-20 py-12 md:py-16 text-center">
+         <Zap size={20} className="mx-auto mb-3 text-white opacity-20" />
+         <p className="text-[7px] font-black uppercase tracking-[0.4em] text-blue-500 mb-2">Sync Pro Global</p>
+         <p className="text-neutral-500 text-[9px] font-medium max-w-xs mx-auto">Equipos de precisión para profesionales.</p>
       </footer>
     </div>
   );
