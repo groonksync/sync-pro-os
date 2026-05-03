@@ -154,6 +154,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       mood_board: meeting.mood_board || [],
       brand_kit: meeting.brand_kit || { colors: [], logos: [] }
     }); 
+    setEditorContent(meeting.contenido || '<p><br></p>');
     setTime(meeting.total_time || 0);
     setViewState('session'); 
   };
@@ -676,23 +677,37 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       {/* VISTA: PERFIL CLIENTE */}
       {viewState === 'client-profile' && activeClient && (
         <div className="h-full flex flex-col overflow-hidden animate-in slide-in-from-right duration-500">
-          <header className={`px-10 py-6 ${colors.card} border-b flex items-center justify-between relative z-10`}>
+          <header className={`px-10 py-5 ${colors.card} border-b flex items-center justify-between relative z-10 shrink-0`}>
             <div className="flex items-center gap-6">
-              <button onClick={() => setViewState('client-list')} className={`w-12 h-12 ${isLight ? 'bg-slate-100' : 'bg-white/5'} rounded-2xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all`}><ArrowLeft size={24}/></button>
-              <div><h3 className={`text-3xl font-black ${colors.text} uppercase leading-none mb-1`}>{activeClient.nombre}</h3><p className={`text-[10px] ${colors.textMuted} font-black uppercase tracking-[0.2em]`}>{activeClient.pais || 'Global'}</p></div>
+              <button onClick={() => setViewState('client-list')} className={`w-10 h-10 ${isLight ? 'bg-slate-100' : 'bg-white/5'} rounded-xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all`}><ArrowLeft size={20}/></button>
+              <div><h3 className={`text-xl font-black ${colors.text} uppercase leading-none mb-1`}>{activeClient.nombre}</h3><p className={`text-[8px] ${colors.textMuted} font-black uppercase tracking-[0.2em]`}>{activeClient.pais || 'Global'}</p></div>
             </div>
-            <button onClick={createMeeting} className="px-8 py-4 bg-[#10b981] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3"><Plus size={18} strokeWidth={3}/> Nueva Sesión</button>
+            <button onClick={createMeeting} className="px-6 py-3 bg-[#10b981] text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3"><Plus size={16} strokeWidth={3}/> Nueva Sesión</button>
           </header>
-          <div className="flex-1 overflow-y-auto mac-scrollbar p-8 space-y-6 max-w-[1600px] mx-auto w-full">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className={`${colors.card} rounded-[2rem] p-6 flex items-center gap-6 border-l-4 border-l-amber-500`}><div className="w-14 h-14 rounded-2xl bg-amber-500/5 flex items-center justify-center text-amber-500"><Clock size={28}/></div><div><p className={`text-[10px] ${colors.textMuted} font-black mb-1`}>Inversión</p><h5 className={`text-2xl font-black ${colors.text} font-mono leading-none`}>{formatTime(totalTimeWorked)}</h5></div></div>
-                  <div className={`${colors.card} rounded-[2rem] p-6 flex items-center gap-6 border-l-4 border-l-blue-500`}><div className="w-14 h-14 rounded-2xl bg-blue-500/5 flex items-center justify-center text-blue-500"><Layers size={28}/></div><div><p className={`text-[10px] ${colors.textMuted} font-black mb-1`}>Sesiones</p><h5 className={`text-2xl font-black ${colors.text}`}>{meetingsList.length} Items</h5></div></div>
+          
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-6 space-y-6 max-w-[1700px] mx-auto w-full">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className={`${colors.card} rounded-2xl p-4 flex items-center gap-4 border-l-4 border-l-amber-500 shadow-lg`}><div className="w-10 h-10 rounded-xl bg-amber-500/5 flex items-center justify-center text-amber-500"><Clock size={20}/></div><div><p className={`text-[8px] ${colors.textMuted} font-black uppercase mb-0.5`}>Inversión</p><h5 className={`text-lg font-black ${colors.text} font-mono leading-none`}>{formatTime(totalTimeWorked)}</h5></div></div>
+                  <div className={`${colors.card} rounded-2xl p-4 flex items-center gap-4 border-l-4 border-l-blue-500 shadow-lg`}><div className="w-10 h-10 rounded-xl bg-blue-500/5 flex items-center justify-center text-blue-500"><Layers size={20}/></div><div><p className={`text-[8px] ${colors.textMuted} font-black uppercase mb-0.5`}>Sesiones</p><h5 className={`text-lg font-black ${colors.text} leading-none`}>{meetingsList.length} Proyectos</h5></div></div>
                </div>
-               <div className="grid gap-3">
+
+               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {filteredMeetings.map(m => (
-                    <div key={m.id} onClick={() => openMeeting(m)} className={`${colors.card} rounded-[2rem] p-6 hover:bg-white/[0.02] cursor-pointer transition-all flex items-center justify-between group active:scale-[0.99] border-r-4 border-r-transparent hover:border-r-[#10b981] shadow-xl`}>
-                       <div className="flex items-center gap-6"><div className={`w-12 h-12 rounded-2xl ${isLight ? 'bg-slate-100' : 'bg-white/5'} flex items-center justify-center text-neutral-900 group-hover:text-[#10b981] transition-all`}><PlayCircle size={24}/></div><div><div className="flex items-center gap-4 mb-0.5"><p className={`text-lg font-black ${colors.text} uppercase`}>{m.fecha}</p><span className="px-3 py-1 bg-[#10b981]/10 rounded-lg text-[8px] font-black text-[#10b981] uppercase">{m.revision_version || 'V1'}</span></div><p className={`text-[11px] ${colors.textMuted} font-bold uppercase`}>{m.session_title || 'Edición de Video'}</p></div></div>
-                       <div className="flex items-center gap-8"><p className={`text-xl font-black ${colors.text} font-mono`}>{formatTime(m.total_time || 0)}</p><ChevronRight size={20} className="text-neutral-800 group-hover:text-[#10b981]" /></div>
+                    <div key={m.id} onClick={() => openMeeting(m)} className={`${colors.card} rounded-2xl p-4 hover:bg-white/[0.02] cursor-pointer transition-all flex items-center justify-between group active:scale-[0.98] border-r-2 border-r-transparent hover:border-r-[#10b981] shadow-xl`}>
+                       <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl ${isLight ? 'bg-slate-100' : 'bg-white/5'} flex items-center justify-center text-neutral-900 group-hover:text-[#10b981] transition-all`}><PlayCircle size={20}/></div>
+                          <div>
+                             <div className="flex items-center gap-3 mb-0.5">
+                                <p className={`text-sm font-black ${colors.text} uppercase tracking-tight`}>{m.session_title || 'Edición de Video'}</p>
+                                <span className="px-2 py-0.5 bg-[#10b981]/10 rounded-md text-[7px] font-black text-[#10b981] uppercase">{m.revision_version || 'V1'}</span>
+                             </div>
+                             <p className={`text-[9px] ${colors.textMuted} font-bold uppercase`}>{m.fecha}</p>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-6">
+                          <p className={`text-sm font-black ${colors.text} font-mono`}>{formatTime(m.total_time || 0)}</p>
+                          <ChevronRight size={16} className="text-neutral-800 group-hover:text-[#10b981]" />
+                       </div>
                     </div>
                   ))}
                </div>
