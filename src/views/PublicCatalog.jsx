@@ -3,7 +3,7 @@ import {
   Package, Search, Filter, ChevronRight, ChevronLeft, X, 
   MessageCircle, Info, ShieldCheck, Truck, 
   CreditCard, Smartphone, Zap, Star, Eye, ShoppingCart, ArrowUpRight, FileText,
-  BadgePercent, Tag
+  BadgePercent, Tag, ShieldAlert
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -21,7 +21,7 @@ const PublicProductCard = ({ p, onSelect }) => {
       onClick={() => onSelect(p)}
       className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] p-0 hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl overflow-hidden cursor-pointer h-full"
     >
-      <div className="aspect-square bg-[#080808] m-1.5 md:m-2.5 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center">
+      <div className="aspect-square bg-[#080808] m-1.5 md:m-2.5 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center border border-white/5">
         {p.imagen ? (
           <img 
             src={p.imagen} 
@@ -148,11 +148,16 @@ const PublicCatalog = () => {
     if (touchStartX.current - touchEndX.current < -50) prevImg();
   };
 
+  const renderWarranty = (p) => {
+    if (p.garantia_unit === 'Sin Garantía') return 'Sin Garantía';
+    return `${p.garantia_num || 0} ${p.garantia_unit || 'Días'}`;
+  };
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500 selection:text-white">
       <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-3 md:py-6 px-4 md:px-20 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-12">
          <div className="flex items-center gap-3 md:gap-6">
-            <div className="w-8 h-8 md:w-12 md:h-12 bg-white text-black rounded-lg md:rounded-2xl flex items-center justify-center shadow-lg">
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-white text-black rounded-lg md:rounded-2xl flex items-center justify-center shadow-lg border border-white/10">
                <Zap size={16} className="md:w-6 md:h-6 fill-black" />
             </div>
             <div className="flex flex-col">
@@ -191,7 +196,7 @@ const PublicCatalog = () => {
          {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
                {[1,2,3,4,5,6,7,8,9,10].map(i => (
-                  <div key={i} className="aspect-[3/4] bg-white/[0.03] rounded-2xl md:rounded-[32px] animate-pulse" />
+                  <div key={i} className="aspect-[3/4] bg-white/[0.03] rounded-2xl md:rounded-[32px] animate-pulse border border-white/5" />
                ))}
             </div>
          ) : (
@@ -213,7 +218,6 @@ const PublicCatalog = () => {
                   <X size={20}/>
                </button>
 
-               {/* CARRUSEL COMPACTO */}
                <div 
                  className="w-full md:w-[45%] bg-[#080808] p-4 md:p-12 flex items-center justify-center relative touch-pan-y group/carousel"
                  onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
@@ -221,7 +225,7 @@ const PublicCatalog = () => {
                   <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
                      <img 
                        src={allImages[currentImgIndex]} 
-                       className="max-w-full max-h-[35vh] md:max-h-[60vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" 
+                       className="max-w-full max-h-[35vh] md:max-h-[60vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-3xl" 
                      />
                   </div>
 
@@ -238,7 +242,6 @@ const PublicCatalog = () => {
                   )}
                </div>
 
-               {/* INFO COMPACTA (ZERO SCROLL) */}
                <div className="w-full md:w-[55%] p-4 md:p-10 flex flex-col justify-between bg-[#121212]">
                   <div className="space-y-4 md:space-y-6">
                      <div>
@@ -266,7 +269,6 @@ const PublicCatalog = () => {
                            </div>
                         </div>
 
-                        {/* STATUS LOGÍSTICO */}
                         <div className={`px-4 py-6 md:px-8 md:py-8 rounded-2xl md:rounded-3xl border flex flex-col items-center justify-center text-center ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
                            <Truck size={18} className="mb-2" />
                            <p className="text-[8px] md:text-[10px] font-black uppercase leading-tight">
@@ -278,10 +280,10 @@ const PublicCatalog = () => {
                      <div className="grid grid-cols-2 gap-4">
                         <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
                            <div className="flex items-center gap-2 mb-1">
-                              <ShieldCheck size={12} className="text-blue-500" />
+                              {selectedProduct.garantia_unit === 'Sin Garantía' ? <ShieldAlert size={12} className="text-rose-500" /> : <ShieldCheck size={12} className="text-blue-500" />}
                               <p className="text-[7px] md:text-[9px] font-black text-neutral-500 uppercase">Garantía</p>
                            </div>
-                           <p className="text-[10px] md:text-xs font-black text-white">{selectedProduct.garantia || 'Sync Pro Oficial'}</p>
+                           <p className="text-[10px] md:text-xs font-black text-white">{renderWarranty(selectedProduct)}</p>
                         </div>
                         <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
                            <div className="flex items-center gap-2 mb-1">
@@ -305,7 +307,7 @@ const PublicCatalog = () => {
 
                   <button 
                     onClick={() => handleConsult(selectedProduct)}
-                    className="w-full mt-4 py-4 md:py-8 bg-white text-black rounded-xl md:rounded-[2rem] font-black text-[10px] md:text-lg uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95"
+                    className="w-full mt-4 py-4 md:py-8 bg-white text-black rounded-xl md:rounded-[2rem] font-black text-[10px] md:text-lg uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 border border-white/10"
                   >
                      <WhatsAppIcon size={20} className="md:w-6 md:h-6" />
                      Consultar por WhatsApp
@@ -315,7 +317,6 @@ const PublicCatalog = () => {
          </div>
       )}
 
-      {/* FOOTER COMPACTO */}
       <footer className="bg-[#0a0a0a] border-t border-white/5 px-4 md:px-20 py-12 md:py-20 text-center">
          <Zap size={24} className="mx-auto mb-4 text-white opacity-20" />
          <p className="text-[8px] font-black uppercase tracking-[0.4em] text-blue-500 mb-2">Sync Pro Global</p>

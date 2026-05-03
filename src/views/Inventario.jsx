@@ -535,9 +535,9 @@ const Inventario = () => {
 
               <div className="grid grid-cols-12 gap-10">
                  <div className="col-span-12 lg:col-span-4 space-y-6">
-                    <div className="aspect-square bg-white/5 rounded-3xl border border-white/10 flex items-center justify-center relative overflow-hidden group">
+                    <div className="aspect-square bg-white/5 rounded-[2.5rem] border border-white/10 flex items-center justify-center relative overflow-hidden group">
                        {editingProduct?.imagenes?.length > 0 ? (
-                          <img src={editingProduct.imagenes[0]} className="w-full h-full object-contain p-4" alt="Principal"/>
+                          <img src={editingProduct.imagenes[0]} className="w-full h-full object-contain p-4 transition-transform duration-700 group-hover:scale-110" alt="Principal"/>
                        ) : (
                           <div className="text-center">
                              <ImageIcon size={48} className="text-neutral-700 mx-auto mb-2" />
@@ -547,7 +547,7 @@ const Inventario = () => {
                     </div>
                     <div className="flex flex-wrap gap-4">
                         {editingProduct?.imagenes?.map((img, idx) => (
-                           <div key={idx} className="w-24 h-24 bg-white/5 rounded-xl border border-white/10 relative group overflow-hidden">
+                           <div key={idx} className="w-24 h-24 bg-white/5 rounded-2xl border border-white/10 relative group overflow-hidden">
                               <img src={img} className="w-full h-full object-cover" />
                               <button onClick={() => {
                                  const newImgs = editingProduct.imagenes.filter((_, i) => i !== idx);
@@ -555,7 +555,7 @@ const Inventario = () => {
                               }} className="absolute inset-0 bg-red-600/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={16} /></button>
                            </div>
                         ))}
-                        <label className="w-24 h-24 bg-white/5 border border-dashed border-white/20 rounded-xl flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all">
+                        <label className="w-24 h-24 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center cursor-pointer hover:border-blue-500 transition-all">
                            <input type="file" className="hidden" accept="image/*" multiple onChange={(e) => handleImageUpload(e, 'gallery')} />
                            <Plus className="text-neutral-600" />
                         </label>
@@ -569,14 +569,14 @@ const Inventario = () => {
                           <input type="text" value={editingProduct.nombre || ''} onChange={(e) => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-transparent text-xs md:text-sm font-bold text-white outline-none" placeholder="Ej: MacBook Pro M3" />
                        </div>
                        <div className="bg-white/5 p-3 md:p-4 rounded-2xl border border-white/5">
-                          <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1 tracking-widest">Marca / Fabricante</p>
-                          <input type="text" value={editingProduct.marca || ''} onChange={(e) => setEditingProduct({...editingProduct, marca: e.target.value})} className="w-full bg-transparent text-xs md:text-sm font-bold text-white outline-none" placeholder="Ej: Apple" />
+                          <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1 tracking-widest">Inversión de Compra (Costo)</p>
+                          <input type="number" value={editingProduct.precio_costo || 0} onChange={(e) => setEditingProduct({...editingProduct, precio_costo: parseFloat(e.target.value) || 0})} className="w-full bg-transparent text-xs md:text-sm font-mono font-black text-emerald-500 outline-none" placeholder="0.00" />
                        </div>
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
                        <div className="bg-blue-600/10 p-3 md:p-5 rounded-2xl border border-blue-500/20">
-                          <p className="text-[7px] md:text-[8px] font-black text-blue-500 uppercase mb-1 tracking-widest">Inversión Final (Ahora)</p>
+                          <p className="text-[7px] md:text-[8px] font-black text-blue-500 uppercase mb-1 tracking-widest">Venta Final (Ingreso)</p>
                           <input type="number" value={editingProduct.precio_venta || 0} onChange={(e) => setEditingProduct({...editingProduct, precio_venta: parseFloat(e.target.value) || 0})} className="w-full bg-transparent text-lg md:text-2xl font-mono font-black text-white outline-none" />
                        </div>
                        <div className="bg-white/5 p-3 md:p-5 rounded-2xl border border-white/10">
@@ -585,7 +585,7 @@ const Inventario = () => {
                        </div>
                        <div className="bg-white/5 p-3 md:p-5 rounded-2xl border border-white/10">
                           <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1 tracking-widest">Logística de Envío</p>
-                          <select value={editingProduct.tipo_envio || 'Envío Gratuito'} onChange={e => setEditingProduct({...editingProduct, tipo_envio: e.target.value})} className="w-full bg-transparent text-[9px] md:text-xs font-black text-white outline-none uppercase cursor-pointer">
+                          <select value={editingProduct.tipo_envio || 'Envío Gratuito'} onChange={e => setEditingProduct({...editingProduct, tipo_envio: e.target.value})} className="w-full bg-transparent text-[9px] md:text-xs font-black text-white uppercase cursor-pointer">
                              <option value="Envío Gratuito">Envío Gratuito</option>
                              <option value="Cobro Adicional">Cobro Adicional</option>
                           </select>
@@ -604,12 +604,39 @@ const Inventario = () => {
                        </div>
                        <div className="space-y-1">
                           <label className="text-[8px] font-black text-neutral-600 uppercase tracking-widest ml-4">Garantía Sync Pro</label>
-                          <input type="text" value={editingProduct.garantia || ''} onChange={e => setEditingProduct({...editingProduct, garantia: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 text-[9px] md:text-xs text-white font-black outline-none" placeholder="Ej: 1 Año"/>
+                          <div className="flex gap-2">
+                             <input 
+                               type="number" 
+                               value={editingProduct.garantia_num || 0} 
+                               onChange={e => setEditingProduct({...editingProduct, garantia_num: e.target.value})} 
+                               disabled={editingProduct.garantia_unit === 'Sin Garantía'}
+                               className="w-20 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 text-xs text-white font-black outline-none" 
+                             />
+                             <select 
+                               value={editingProduct.garantia_unit || 'Días'} 
+                               onChange={e => setEditingProduct({...editingProduct, garantia_unit: e.target.value})} 
+                               className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 text-[9px] md:text-xs text-white font-black outline-none uppercase"
+                             >
+                                <option value="Días">Días</option>
+                                <option value="Meses">Meses</option>
+                                <option value="Años">Años</option>
+                                <option value="Sin Garantía">Sin Garantía</option>
+                             </select>
+                          </div>
                        </div>
                     </div>
 
                     <div className="space-y-1">
-                       <label className="text-[8px] font-black text-neutral-600 uppercase tracking-widest ml-4">Ficha Técnica & Detalles</label>
+                       <div className="flex justify-between items-center px-4">
+                          <label className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">Ficha Técnica & Detalles</label>
+                          {editingProduct.precio_venta > 0 && editingProduct.precio_costo > 0 && (
+                             <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
+                                <span className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">
+                                   Margen: {(editingProduct.precio_venta - editingProduct.precio_costo).toLocaleString()} BS ({(( (editingProduct.precio_venta - editingProduct.precio_costo) / editingProduct.precio_venta ) * 100).toFixed(1)}%)
+                                </span>
+                             </div>
+                          )}
+                       </div>
                        <textarea value={editingProduct.ficha_tecnica} onChange={e => setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 md:p-8 text-[10px] md:text-xs text-white outline-none h-32 md:h-40 resize-none italic leading-relaxed" placeholder="Describe las características técnicas..."/>
                     </div>
                  </div>
