@@ -184,15 +184,25 @@ const App = () => {
             data={data} 
             servicios={servicios} 
             settings={appSettings}
+            isDark={isDarkMode}
             onNavigateToPrestamo={handleNavigateToPrestamo}
             onQuickPayment={handleQuickPayment} 
           />
         );
-        case 'editor': return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} settings={appSettings} token={googleToken} />;
-        case 'prestamos': return <Prestamos data={data} setData={setData} settings={appSettings} preSelectedId={selectedPrestamoId} onClearSelection={() => setSelectedPrestamoId(null)} />;
-        case 'notificaciones': return <Notifications data={data} />;
-        case 'pagos': return <Pagos />;
-        case 'inventario': return <Inventario settings={appSettings} />;
+        case 'editor': return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} settings={appSettings} isDark={isDarkMode} token={googleToken} />;
+        case 'prestamos': return (
+          <Prestamos 
+            data={data} 
+            setData={setData} 
+            settings={appSettings}
+            isDark={isDarkMode}
+            preSelectedId={selectedPrestamoId} 
+            onClearSelection={() => setSelectedPrestamoId(null)}
+          />
+        );
+        case 'notificaciones': return <Notifications data={data} isDark={isDarkMode} />;
+        case 'pagos': return <Pagos isDark={isDarkMode} />;
+        case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} />;
         case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} />;
         case 'recordatorios': return <Notifications data={data} />;
         case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} />;
