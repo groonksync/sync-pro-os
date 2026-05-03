@@ -21,22 +21,23 @@ const PublicProductCard = ({ p, onSelect }) => {
       onClick={() => onSelect(p)}
       className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] p-0 hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl overflow-hidden cursor-pointer h-full"
     >
-      <div className="aspect-square bg-[#080808] m-1.5 md:m-2.5 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center border border-white/5">
+      {/* IMAGEN: AJUSTE PERFECTO CON RECORTE REDONDEADO */}
+      <div className="aspect-square bg-[#080808] m-1.5 md:m-2 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center border border-white/5 shadow-inner">
         {p.imagen ? (
           <img 
             src={p.imagen} 
-            className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
+            className={`w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
           <Package size={24} strokeWidth={1} className="text-neutral-800" />
         )}
 
-        {/* BARRA AGOTADO: REDISEÑO ELEGANTE Y COMPLETO */}
+        {/* BARRA AGOTADO: REDISEÑO "INFINITO" QUE TAPA TODO EL ANCHO */}
         {parseInt(p.stock_actual) === 0 && (
-           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none overflow-hidden">
-              <div className="bg-black/80 backdrop-blur-md border-y border-white/10 py-2 md:py-4 w-[250%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,1)] flex items-center justify-center">
-                 <span className="text-white text-[9px] md:text-sm font-black tracking-[0.4em] md:tracking-[0.8em] uppercase drop-shadow-lg">AGOTADO</span>
+           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
+              <div className="bg-black/90 backdrop-blur-xl border-y border-white/10 py-2.5 md:py-5 w-[300%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,1)] flex items-center justify-center translate-x-[-10%]">
+                 <span className="text-white text-[10px] md:text-base font-black tracking-[0.5em] md:tracking-[1em] uppercase drop-shadow-2xl">AGOTADO</span>
               </div>
            </div>
         )}
@@ -70,7 +71,6 @@ const PublicProductCard = ({ p, onSelect }) => {
           </div>
         </div>
 
-        {/* BOTÓN COMPRAR: GRIS CARBONO ELEGANTE */}
         <button 
           className="w-full mt-3 md:mt-6 py-2.5 md:py-4.5 bg-[#1a1a1a] text-white rounded-lg md:rounded-2xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-2xl border border-white/5 group/btn"
         >
@@ -237,7 +237,7 @@ const PublicCatalog = () => {
                   <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
                      <img 
                        src={allImages[currentImgIndex]} 
-                       className="max-w-full max-h-[35vh] md:max-h-[55vh] object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl" 
+                       className="max-w-full max-h-[35vh] md:max-h-[55vh] object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-3xl" 
                      />
                   </div>
 

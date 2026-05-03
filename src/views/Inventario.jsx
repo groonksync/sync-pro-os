@@ -29,7 +29,7 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
         {p.imagen ? (
           <img 
             src={p.imagen} 
-            className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
+            className={`w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
@@ -39,10 +39,9 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
           </div>
         )}
 
-        {/* BARRA AGOTADO: REDISEÑO EDGE-TO-EDGE */}
         {parseInt(p.stock_actual) === 0 && (
            <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none overflow-hidden">
-              <div className="bg-black/80 backdrop-blur-md border-y border-white/10 py-2 md:py-3 w-[250%] -rotate-[15deg] shadow-2xl flex items-center justify-center">
+              <div className="bg-black/90 backdrop-blur-md border-y border-white/10 py-2 md:py-4 w-[300%] -rotate-[15deg] shadow-2xl flex items-center justify-center">
                  <span className="text-white text-[8px] md:text-xs font-black tracking-[0.4em] uppercase">AGOTADO</span>
               </div>
            </div>
@@ -338,7 +337,7 @@ const Inventario = () => {
                  <div className="col-span-12 lg:col-span-4 space-y-4">
                     <div className="aspect-square bg-white/5 rounded-[2rem] border border-white/10 flex items-center justify-center relative overflow-hidden group">
                        {editingProduct?.imagenes?.length > 0 ? (
-                          <img src={editingProduct.imagenes[0]} className="w-full h-full object-cover p-0 transition-transform duration-700 group-hover:scale-110" alt="Principal"/>
+                          <img src={editingProduct.imagenes[0]} className="w-full h-full object-cover rounded-[inherit] p-0 transition-transform duration-700 group-hover:scale-110" alt="Principal"/>
                        ) : (
                           <div className="text-center"><ImageIcon size={40} className="text-neutral-700 mx-auto mb-2" /><p className="text-[8px] font-black uppercase text-neutral-600 tracking-widest">Sin Imagen</p></div>
                        )}
@@ -346,7 +345,7 @@ const Inventario = () => {
                     <div className="flex flex-wrap gap-2">
                         {editingProduct?.imagenes?.map((img, idx) => (
                            <div key={idx} className="w-16 h-16 bg-white/5 rounded-xl border border-white/10 relative group overflow-hidden">
-                              <img src={img} className="w-full h-full object-cover" />
+                              <img src={img} className="w-full h-full object-cover rounded-[inherit]" />
                               <button onClick={() => {
                                  const newImgs = editingProduct.imagenes.filter((_, i) => i !== idx);
                                  setEditingProduct({...editingProduct, imagenes: newImgs});
