@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Package, Search, ChevronRight, ChevronLeft, X, 
   Truck, Zap, ShoppingCart, ShieldCheck, 
-  CheckCircle, DollarSign
+  CheckCircle, DollarSign, Sun, Moon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -12,16 +12,16 @@ const WhatsAppIcon = ({ size = 24, className = "" }) => (
   </svg>
 );
 
-const PublicProductCard = ({ p, onSelect }) => {
+const PublicProductCard = ({ p, onSelect, isDark }) => {
   const hasDiscount = p.precio_antes && p.precio_antes > p.precio_venta;
   const isAgotado = parseInt(p.stock_actual) === 0;
   
   return (
     <div 
       onClick={() => onSelect(p)}
-      className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[28px] p-0 hover:border-emerald-500/30 transition-all flex flex-col group relative shadow-2xl overflow-hidden cursor-pointer h-full"
+      className={`${isDark ? 'bg-[#121212] border-white/5' : 'bg-white border-neutral-200'} border rounded-2xl md:rounded-[28px] p-0 hover:border-emerald-500/30 transition-all flex flex-col group relative shadow-2xl overflow-hidden cursor-pointer h-full`}
     >
-      <div className="aspect-square bg-[#080808] m-1 md:m-1.5 rounded-xl md:rounded-[22px] relative overflow-hidden flex items-center justify-center border border-white/5">
+      <div className={`${isDark ? 'bg-[#080808] border-white/5' : 'bg-neutral-100 border-neutral-200'} aspect-square m-1 md:m-1.5 rounded-xl md:rounded-[22px] relative overflow-hidden flex items-center justify-center border`}>
         {p.imagen ? (
           <img 
             src={p.imagen} 
@@ -30,7 +30,7 @@ const PublicProductCard = ({ p, onSelect }) => {
             alt={p.nombre}
           />
         ) : (
-          <Package size={20} strokeWidth={1} className="text-neutral-800" />
+          <Package size={20} strokeWidth={1} className={isDark ? 'text-neutral-800' : 'text-neutral-300'} />
         )}
 
         {isAgotado ? (
@@ -49,22 +49,22 @@ const PublicProductCard = ({ p, onSelect }) => {
       <div className="px-3 pb-3 md:px-4 md:pb-4 pt-0.5 flex-1 flex flex-col justify-between">
         <div className="space-y-2">
           <div className="space-y-0.5">
-            <h3 className="text-[9px] md:text-[13px] font-black text-white leading-tight tracking-tight uppercase line-clamp-1">{p.nombre}</h3>
+            <h3 className={`text-[9px] md:text-[13px] font-black ${isDark ? 'text-white' : 'text-neutral-900'} leading-tight tracking-tight uppercase line-clamp-1`}>{p.nombre}</h3>
             <div className="flex items-center justify-between">
-               <p className="text-[6px] md:text-[8px] font-black text-neutral-600 uppercase tracking-widest">{p.marca || 'Sovereign'}</p>
-               <p className={`text-[6px] md:text-[8px] font-black uppercase tracking-widest ${parseInt(p.stock_actual) < 5 ? 'text-amber-500' : 'text-neutral-500'}`}>
+               <p className={`text-[6px] md:text-[8px] font-black ${isDark ? 'text-neutral-600' : 'text-neutral-400'} uppercase tracking-widest`}>{p.marca || 'Sovereign'}</p>
+               <p className={`text-[6px] md:text-[8px] font-black uppercase tracking-widest ${parseInt(p.stock_actual) < 5 ? 'text-amber-500' : isDark ? 'text-neutral-500' : 'text-neutral-400'}`}>
                   {p.stock_actual} UDS
                </p>
             </div>
           </div>
           <div className="flex flex-col min-h-[2.2em] justify-end">
-             {hasDiscount && <p className="text-[6px] md:text-[9px] text-neutral-700 font-mono line-through mb-[-2px]">{parseFloat(p.precio_antes).toLocaleString()} BS.</p>}
-             <p className="text-lg md:text-2xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
-                {parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-[7px] md:text-[10px] opacity-20 ml-1 font-sans font-black">BS.</span>
+             {hasDiscount && <p className={`text-[6px] md:text-[9px] ${isDark ? 'text-neutral-700' : 'text-neutral-300'} font-mono line-through mb-[-2px]`}>{parseFloat(p.precio_antes).toLocaleString()} BS.</p>}
+             <p className={`text-lg md:text-2xl font-mono ${isDark ? 'text-white' : 'text-neutral-900'} font-black tracking-tighter leading-none flex items-baseline`}>
+                {parseFloat(p.precio_venta || 0).toLocaleString()} <span className={`text-[7px] md:text-[10px] ${isDark ? 'opacity-20' : 'opacity-40'} ml-1 font-sans font-black`}>BS.</span>
              </p>
           </div>
         </div>
-        <button className="w-full mt-3 py-2 md:py-3 bg-emerald-500 text-black rounded-lg md:rounded-xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.1em] hover:bg-white transition-all flex items-center justify-center gap-1.5 shadow-lg">
+        <button className="w-full mt-3 py-2 md:py-3 bg-emerald-500 text-black rounded-lg md:rounded-xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.1em] hover:opacity-90 transition-all flex items-center justify-center gap-1.5 shadow-lg">
            <ShoppingCart size={10} className="md:w-3.5 md:h-3.5" /> COMPRAR
         </button>
       </div>
@@ -80,6 +80,7 @@ const PublicCatalog = () => {
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const [isDark, setIsDark] = useState(true);
   const touchStart = useRef(0);
   const touchEnd = useRef(0);
 
@@ -124,36 +125,57 @@ const PublicCatalog = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-emerald-500 selection:text-black">
-      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-3 md:py-5 px-4 md:px-12 flex flex-col md:flex-row justify-between items-center gap-3">
-         <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-black"><Zap size={18} className="fill-black" /></div>
-            <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter">Sync<span className="text-emerald-500">PRO</span></h1>
+    <div className={`min-h-screen ${isDark ? 'bg-black text-white' : 'bg-neutral-50 text-neutral-900'} font-sans selection:bg-emerald-500 selection:text-black transition-colors duration-500`}>
+      <header className={`sticky top-0 z-[60] ${isDark ? 'bg-black/80 border-white/5' : 'bg-white/80 border-neutral-200'} backdrop-blur-3xl border-b py-3 md:py-5 px-4 md:px-12 flex flex-col md:flex-row justify-between items-center gap-3`}>
+         <div className="flex items-center justify-between w-full md:w-auto">
+            <div className="flex items-center gap-2">
+               <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-black"><Zap size={18} className="fill-black" /></div>
+               <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter">Sync<span className="text-emerald-500">PRO</span></h1>
+            </div>
+            
+            {/* BOTÓN DE TEMA MÓVIL */}
+            <button onClick={() => setIsDark(!isDark)} className={`md:hidden p-2 rounded-xl border transition-all ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-neutral-100 border-neutral-200 text-neutral-900'}`}>
+               {isDark ? <Sun size={18}/> : <Moon size={18}/>}
+            </button>
          </div>
-         <div className="relative flex-1 max-w-[400px] w-full">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-700" size={14} />
-            <input type="text" placeholder="Buscar activos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-12 pr-6 text-[11px] text-white outline-none focus:border-white/20 transition-all"/>
+
+         <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="relative flex-1 md:w-[350px]">
+               <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? 'text-neutral-700' : 'text-neutral-300'}`} size={14} />
+               <input type="text" placeholder="Buscar activos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className={`w-full ${isDark ? 'bg-white/5 border-white/10' : 'bg-neutral-100 border-neutral-200'} border rounded-xl py-2.5 pl-12 pr-6 text-[11px] outline-none focus:border-emerald-500/30 transition-all`}/>
+            </div>
+            
+            {/* BOTÓN DE TEMA ESCRITORIO */}
+            <button onClick={() => setIsDark(!isDark)} className={`hidden md:flex items-center gap-2 px-4 py-2.5 rounded-xl border font-black text-[9px] uppercase tracking-widest transition-all ${isDark ? 'bg-white/5 border-white/10 text-white hover:bg-white/10' : 'bg-neutral-100 border-neutral-200 text-neutral-900 hover:bg-neutral-200'}`}>
+               {isDark ? <><Sun size={14}/> Día</> : <><Moon size={14}/> Noche</>}
+            </button>
          </div>
       </header>
 
       <main className="px-4 md:px-12 py-8">
          <div className="flex overflow-x-auto gap-2 mb-10 no-scrollbar pb-2">
             {categories.map(cat => (
-               <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'bg-white text-black' : 'bg-white/5 text-neutral-500 border border-white/5 hover:text-white'}`}>{cat}</button>
+               <button 
+                 key={cat} 
+                 onClick={() => setActiveCategory(cat)} 
+                 className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? (isDark ? 'bg-white text-black' : 'bg-neutral-900 text-white') : (isDark ? 'bg-white/5 text-neutral-500 border-white/5 hover:text-white' : 'bg-white text-neutral-400 border-neutral-200 hover:text-neutral-900 shadow-sm border')}`}
+               >
+                 {cat}
+               </button>
             ))}
          </div>
          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
-            {filteredProducts.map(p => <PublicProductCard key={p.id} p={p} onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }} />)}
+            {filteredProducts.map(p => <PublicProductCard key={p.id} p={p} isDark={isDark} onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }} />)}
          </div>
       </main>
 
       {selectedProduct && (
-         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-0 md:p-6 animate-in fade-in duration-300">
-            <div className="bg-[#121212] border border-white/10 w-full max-w-[850px] rounded-t-[32px] md:rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col md:flex-row h-full max-h-[100dvh] md:max-h-[90vh] overflow-y-auto scrollbar-hide">
-               <button onClick={() => setSelectedProduct(null)} className="fixed md:absolute top-4 right-4 z-[160] w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:text-white transition-all active:scale-90"><X size={18}/></button>
+         <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-3xl flex items-center justify-center p-0 md:p-6 animate-in fade-in duration-300">
+            <div className={`${isDark ? 'bg-[#121212] border-white/10' : 'bg-white border-neutral-200'} border w-full max-w-[850px] rounded-t-[32px] md:rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col md:flex-row h-full max-h-[100dvh] md:max-h-[90vh] overflow-y-auto scrollbar-hide`}>
+               <button onClick={() => setSelectedProduct(null)} className={`fixed md:absolute top-4 right-4 z-[160] w-10 h-10 ${isDark ? 'bg-white text-black' : 'bg-neutral-900 text-white'} rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:text-white transition-all active:scale-90`}><X size={18}/></button>
                
                <div 
-                 className="w-full md:w-[45%] bg-[#080808] p-4 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5 min-h-[35vh] md:min-h-auto group/carousel"
+                 className={`w-full md:w-[45%] ${isDark ? 'bg-[#080808] border-white/5' : 'bg-neutral-50 border-neutral-100'} p-4 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r min-h-[35vh] md:min-h-auto group/carousel`}
                  onTouchStart={handleTouchStart}
                  onTouchMove={handleTouchMove}
                  onTouchEnd={handleTouchEnd}
@@ -161,25 +183,15 @@ const PublicCatalog = () => {
                   <div className="w-full flex-1 flex items-center justify-center overflow-hidden" key={currentImgIndex}>
                      <img src={allImages[currentImgIndex]} className="max-w-full max-h-[30vh] md:max-h-[50vh] object-contain drop-shadow-2xl rounded-2xl select-none animate-in fade-in duration-200" />
                   </div>
-
-                  {/* CONTROLES DE ESCRITORIO (HOVER) */}
                   {allImages.length > 1 && (
                     <>
-                      <button onClick={(e) => { e.stopPropagation(); prevImg(); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 backdrop-blur-xl text-white rounded-full items-center justify-center border border-white/10 hover:bg-white hover:text-black transition-all hidden md:flex opacity-0 group-hover/carousel:opacity-100 z-20"><ChevronLeft size={20}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); nextImg(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 backdrop-blur-xl text-white rounded-full items-center justify-center border border-white/10 hover:bg-white hover:text-black transition-all hidden md:flex opacity-0 group-hover/carousel:opacity-100 z-20"><ChevronRight size={20}/></button>
+                      <button onClick={(e) => { e.stopPropagation(); prevImg(); }} className={`absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 ${isDark ? 'bg-black/40' : 'bg-white/60'} backdrop-blur-xl rounded-full items-center justify-center border transition-all hidden md:flex opacity-0 group-hover/carousel:opacity-100 z-20 ${isDark ? 'text-white border-white/10 hover:bg-white hover:text-black' : 'text-neutral-900 border-neutral-200 hover:bg-neutral-900 hover:text-white'}`}><ChevronLeft size={20}/></button>
+                      <button onClick={(e) => { e.stopPropagation(); nextImg(); }} className={`absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 ${isDark ? 'bg-black/40' : 'bg-white/60'} backdrop-blur-xl rounded-full items-center justify-center border transition-all hidden md:flex opacity-0 group-hover/carousel:opacity-100 z-20 ${isDark ? 'text-white border-white/10 hover:bg-white hover:text-black' : 'text-neutral-900 border-neutral-200 hover:bg-neutral-900 hover:text-white'}`}><ChevronRight size={20}/></button>
                     </>
                   )}
-
-                  {/* INDICADORES CLICABLES */}
                   {allImages.length > 1 && (
                     <div className="flex gap-2 mt-4 pb-2 z-20">
-                       {allImages.map((_, i) => (
-                         <button 
-                           key={i} 
-                           onClick={(e) => { e.stopPropagation(); setCurrentImgIndex(i); }} 
-                           className={`w-2 h-2 rounded-full transition-all ${currentImgIndex === i ? 'bg-emerald-500 w-6' : 'bg-white/20 hover:bg-white/40'}`} 
-                         />
-                       ))}
+                       {allImages.map((_, i) => <button key={i} onClick={(e) => { e.stopPropagation(); setCurrentImgIndex(i); }} className={`w-2 h-2 rounded-full transition-all ${currentImgIndex === i ? 'bg-emerald-500 w-6' : (isDark ? 'bg-white/20' : 'bg-neutral-300')}`} />)}
                     </div>
                   )}
                </div>
@@ -188,40 +200,40 @@ const PublicCatalog = () => {
                   <div className="space-y-6">
                      <div>
                         <span className="text-[7px] md:text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-1.5 block">DETALLES DEL ACTIVO</span>
-                        <h2 className="text-xl md:text-3xl font-black text-white tracking-tighter uppercase leading-tight">{selectedProduct.nombre}</h2>
-                        <p className="text-[10px] md:text-xs font-black text-white/40 uppercase tracking-[0.3em] mt-2">{selectedProduct.marca || 'Sovereign Core'}</p>
+                        <h2 className={`text-xl md:text-3xl font-black ${isDark ? 'text-white' : 'text-neutral-900'} tracking-tighter uppercase leading-tight`}>{selectedProduct.nombre}</h2>
+                        <p className={`text-[10px] md:text-xs font-black ${isDark ? 'text-white/40' : 'text-neutral-400'} uppercase tracking-[0.3em] mt-2`}>{selectedProduct.marca || 'Sovereign Core'}</p>
                      </div>
 
-                     <div className="bg-white/[0.03] border border-white/5 p-4 md:p-6 rounded-[2rem] shadow-inner relative overflow-hidden group">
-                        <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2">Inversión Final</p>
+                     <div className={`${isDark ? 'bg-white/[0.03] border-white/5' : 'bg-neutral-100 border-neutral-200'} border p-4 md:p-6 rounded-[2rem] shadow-inner relative overflow-hidden group`}>
+                        <p className={`text-[7px] md:text-[8px] font-black ${isDark ? 'text-neutral-500' : 'text-neutral-400'} uppercase tracking-widest mb-2`}>Inversión Final</p>
                         <div className="flex items-center justify-between gap-4">
                            <div className="flex items-baseline gap-2">
-                              <p className="text-3xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
+                              <p className={`text-3xl md:text-5xl font-mono ${isDark ? 'text-white' : 'text-neutral-900'} font-black tracking-tighter leading-none`}>{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
                               <span className="text-[10px] font-black text-emerald-500">BS.</span>
                            </div>
                            {selectedProduct.precio_antes > selectedProduct.precio_venta && (
                               <div className="flex flex-col items-end">
                                  <span className="text-[6px] font-black text-rose-500/50 uppercase tracking-widest">Antes</span>
-                                 <p className="text-xl md:text-3xl text-neutral-600 font-mono line-through font-black leading-none">{parseFloat(selectedProduct.precio_antes).toLocaleString()}</p>
+                                 <p className={`text-xl md:text-3xl ${isDark ? 'text-neutral-600' : 'text-neutral-300'} font-mono line-through font-black leading-none`}>{parseFloat(selectedProduct.precio_antes).toLocaleString()}</p>
                               </div>
                            )}
                         </div>
                      </div>
 
                      <div className="grid grid-cols-2 gap-3 pb-20 md:pb-0">
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-3">
+                        <div className={`${isDark ? 'bg-white/5 border-white/5' : 'bg-neutral-100 border-neutral-200'} p-4 rounded-2xl border flex items-center gap-3`}>
                            <ShieldCheck size={16} className="text-emerald-500" />
-                           <div><p className="text-[7px] font-black text-neutral-500 uppercase">Garantía</p><p className="text-[9px] font-black text-white">{selectedProduct.garantia || 'Consulte'}</p></div>
+                           <div><p className={`text-[7px] font-black ${isDark ? 'text-neutral-500' : 'text-neutral-400'} uppercase`}>Garantía</p><p className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-neutral-900'}`}>{selectedProduct.garantia || 'Consulte'}</p></div>
                         </div>
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-3">
+                        <div className={`${isDark ? 'bg-white/5 border-white/5' : 'bg-neutral-100 border-neutral-200'} p-4 rounded-2xl border flex items-center gap-3`}>
                            <Truck size={16} className="text-emerald-500" />
-                           <div><p className="text-[7px] font-black text-neutral-500 uppercase">Logística</p><p className="text-[9px] font-black text-white">{selectedProduct.tipo_envio || 'Estándar'}</p></div>
+                           <div><p className={`text-[7px] font-black ${isDark ? 'text-neutral-500' : 'text-neutral-400'} uppercase`}>Logística</p><p className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-neutral-900'}`}>{selectedProduct.tipo_envio || 'Estándar'}</p></div>
                         </div>
                      </div>
                   </div>
 
-                  <div className="fixed md:relative bottom-0 left-0 w-full p-6 md:p-0 bg-[#121212] md:bg-transparent border-t md:border-t-0 border-white/5">
-                     <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre}`, '_blank')} className="w-full py-5 md:py-8 bg-emerald-500 text-black rounded-[2.2rem] font-black uppercase text-[10px] md:text-xs tracking-[0.2em] hover:bg-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                  <div className={`fixed md:relative bottom-0 left-0 w-full p-6 md:p-0 ${isDark ? 'bg-[#121212] border-white/5' : 'bg-white border-neutral-200'} md:bg-transparent border-t md:border-t-0`}>
+                     <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre}`, '_blank')} className="w-full py-5 md:py-8 bg-emerald-500 text-black rounded-[2.2rem] font-black uppercase text-[10px] md:text-xs tracking-[0.2em] hover:opacity-90 transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
                         <WhatsAppIcon size={20} /> ORDENAR POR WHATSAPP
                      </button>
                   </div>
