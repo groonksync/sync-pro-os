@@ -384,49 +384,127 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
-      {/* VISTA: AGENCIA DE MARKETING HUB */}
+      {/* VISTA: AGENCIA DE MARKETING HUB (SOVEREIGN PLATINUM DESIGN) */}
       {viewState === 'agency-hub' && (
-        <div className="flex flex-col h-full overflow-hidden animate-in slide-in-from-right duration-1000">
-           <div className="flex-1 overflow-y-auto mac-scrollbar p-10 space-y-10 max-w-[1900px] mx-auto w-full">
-              <header className="space-y-8">
-                 <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-[10px] text-amber-500 font-black uppercase tracking-[0.8em] mb-3 flex items-center gap-3"><Sparkles size={14} className="animate-pulse"/> Sovereign Agency • Strategic Center</p>
-                      <h2 className="text-6xl font-black text-white tracking-tighter uppercase leading-none">Agencia de <br/><span className={isLight ? 'text-slate-200' : 'text-white/10'}>Marketing</span></h2>
+        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000 bg-[#020202]">
+           <div className="flex-1 overflow-y-auto mac-scrollbar p-12 space-y-16 max-w-[1900px] mx-auto w-full relative">
+              
+              {/* DECORACIÓN DE FONDO: LÍNEAS DE PRECISIÓN */}
+              <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.03]">
+                 <div className="absolute top-0 left-1/4 w-[1px] h-full bg-white"></div>
+                 <div className="absolute top-0 left-2/4 w-[1px] h-full bg-white"></div>
+                 <div className="absolute top-0 left-3/4 w-[1px] h-full bg-white"></div>
+              </div>
+
+              {/* CABECERA MINIMALISTA */}
+              <header className="relative z-10 flex justify-between items-end">
+                 <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                       <span className="w-12 h-[2px] bg-amber-500/50"></span>
+                       <p className="text-[10px] text-amber-500 font-black uppercase tracking-[1em]">Strategic Atelier</p>
                     </div>
-                    <button onClick={() => setIsCompanyModalOpen(true)} className="px-10 py-5 bg-amber-500 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest hover:scale-105 transition-all shadow-2xl flex items-center gap-4"><Plus size={20} strokeWidth={3}/> Nueva Empresa</button>
+                    <h2 className="text-7xl font-black text-white tracking-tighter uppercase leading-[0.8]">
+                       Agency <br/><span className="text-white/10 italic">Management</span>
+                    </h2>
                  </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {[
-                      { name: 'Básico', icon: <Shield size={24}/>, color: 'border-l-blue-500', desc: 'Gestión Esencial' },
-                      { name: 'Intermedio', icon: <Zap size={24}/>, color: 'border-l-emerald-500', desc: 'Crecimiento Activo' },
-                      { name: 'Avanzado', icon: <Crown size={24}/>, color: 'border-l-purple-500', desc: 'Dominio Total' },
-                      { name: 'Personalizado', icon: <Sparkles size={24}/>, color: 'border-l-amber-500', desc: 'Estrategia Élite' }
-                    ].map((p, i) => (
-                      <div key={i} onClick={() => setActiveAgencyPlan(p.name)} className={`${colors.card} rounded-[2.5rem] p-8 border-l-4 ${p.color} shadow-2xl hover:scale-105 transition-all cursor-pointer group ${activeAgencyPlan === p.name ? 'ring-2 ring-white/20' : ''}`}>
-                         <div className="flex justify-between items-start mb-6"><div className="text-3xl text-white/20 group-hover:text-white transition-all">{p.icon}</div><p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest">Plan {p.name}</p></div>
-                         <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">{p.name}</h4>
-                         <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">{p.desc}</p>
-                         <div className="mt-6 h-1 w-full bg-white/5 rounded-full overflow-hidden"><div className={`h-full ${p.color.replace('border-l-', 'bg-')}`} style={{ width: '45%' }}></div></div>
-                      </div>
-                    ))}
+                 
+                 <div className="flex flex-col items-end gap-6">
+                    <div className="flex gap-4 items-center bg-white/5 p-2 rounded-2xl border border-white/10">
+                       <div className="px-6 py-2 border-r border-white/10 text-center">
+                          <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">Active Accounts</p>
+                          <p className="text-xl font-black text-white font-mono">12</p>
+                       </div>
+                       <div className="px-6 py-2 text-center">
+                          <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">Efficiency</p>
+                          <p className="text-xl font-black text-[#10b981] font-mono">98.4%</p>
+                       </div>
+                    </div>
+                    <button onClick={() => setIsCompanyModalOpen(true)} className="px-12 py-5 bg-white text-black rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] hover:bg-amber-500 hover:text-white transition-all shadow-[0_20px_50px_rgba(255,255,255,0.1)] flex items-center gap-4 group">
+                       <Plus size={20} strokeWidth={3} className="group-hover:rotate-90 transition-transform"/> Onboard New Project
+                    </button>
                  </div>
               </header>
-              <div className="space-y-6">
-                 <div className="flex items-center gap-4 border-b border-white/5 pb-4"><div className="w-2 h-8 bg-amber-500 rounded-full"></div><h3 className="text-xl font-black text-white uppercase tracking-tighter">Cartera de Empresas <span className="text-neutral-700 ml-4">/ {activeAgencyPlan || 'Todas'}</span></h3></div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+
+              {/* MATRIZ DE PLANES: DASHBOARD HORIZONTAL ULTRA-FINO */}
+              <div className="grid grid-cols-4 gap-6 relative z-10">
+                 {[
+                   { name: 'Básico', icon: <Shield size={18}/>, color: '#3b82f6', count: 4 },
+                   { name: 'Intermedio', icon: <Zap size={18}/>, color: '#10b981', count: 3 },
+                   { name: 'Avanzado', icon: <Crown size={18}/>, color: '#a855f7', count: 5 },
+                   { name: 'Personalizado', icon: <Sparkles size={18}/>, color: '#f59e0b', count: 1 }
+                 ].map((p, i) => (
+                   <div key={i} onClick={() => setActiveAgencyPlan(p.name)} className={`group relative p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all cursor-pointer ${activeAgencyPlan === p.name ? 'bg-white/[0.05] border-white/20' : ''}`}>
+                      <div className="flex justify-between items-center mb-6">
+                         <div className="p-3 rounded-xl bg-white/5 text-neutral-500 group-hover:text-white transition-all">{p.icon}</div>
+                         <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full animate-pulse`} style={{ backgroundColor: p.color }}></span>
+                            <span className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{p.count} Active</span>
+                         </div>
+                      </div>
+                      <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-1">Tier: {p.name}</h4>
+                      <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest">Sovereign Service Level</p>
+                      
+                      {/* BARRA DE ESTADO SUTIL */}
+                      <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white/5 overflow-hidden">
+                         <div className="h-full transition-all duration-1000" style={{ width: activeAgencyPlan === p.name ? '100%' : '0%', backgroundColor: p.color }}></div>
+                      </div>
+                   </div>
+                 ))}
+              </div>
+
+              {/* LISTADO DE PROYECTOS (CASE STUDY LOOK) */}
+              <div className="space-y-10 relative z-10">
+                 <div className="flex items-center gap-6">
+                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Project Portfolio</h3>
+                    <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
+                    <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em]">Filtered by: {activeAgencyPlan || 'All Assets'}</p>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                     {[...Array(6)].map((_, i) => (
-                       <div key={i} onClick={() => { setSelectedCompany({id: i, nombre_empresa: 'Empresa XYZ', dueño: 'Carlos S.'}); setViewState('agency-session'); }} className={`${colors.card} rounded-[3rem] p-8 shadow-2xl border border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer group relative overflow-hidden`}>
-                          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-20 transition-all"><Briefcase size={80}/></div>
-                          <div className="flex items-center gap-5 mb-8"><div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-2xl"><Building2 size={32}/></div><div><h4 className="text-xl font-black text-white uppercase tracking-tighter leading-none mb-1">Empresa XYZ</h4><p className="text-[9px] text-amber-500 font-black uppercase tracking-widest">Plan Avanzado</p></div></div>
-                          <div className="space-y-4 mb-8">
-                             <div className="flex items-center gap-3 text-neutral-500"><UserIcon size={14}/><p className="text-[10px] font-bold uppercase tracking-widest">Dueño: Carlos S.</p></div>
-                             <div className="flex items-center gap-3 text-neutral-500"><MailIcon size={14}/><p className="text-[10px] font-bold uppercase tracking-widest">carlos@empresa.com</p></div>
-                             <div className="flex items-center gap-3 text-neutral-500"><Phone size={14}/><p className="text-[10px] font-bold uppercase tracking-widest">+1 800 234 567</p></div>
-                          </div>
-                          <div className="flex gap-3">
-                             <button onClick={(e) => e.stopPropagation()} className="flex-1 py-4 bg-white/5 hover:bg-amber-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"><FolderOpen size={14}/> Drive</button>
-                             <button onClick={(e) => e.stopPropagation()} className="w-14 h-14 bg-white/5 hover:bg-blue-500 text-white rounded-2xl flex items-center justify-center transition-all"><Edit3 size={18}/></button>
+                       <div key={i} onClick={() => { setSelectedCompany({id: i, nombre_empresa: 'Global Dynamics Corp', dueño: 'Marcus Aurelius'}); setViewState('agency-session'); }} className="group relative">
+                          {/* OVERLAY DE SOMBRA DINÁMICA */}
+                          <div className="absolute -inset-2 bg-gradient-to-tr from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-all blur-2xl rounded-[3rem]"></div>
+                          
+                          <div className="relative bg-[#080808] border border-white/5 rounded-[3rem] p-10 hover:border-white/20 transition-all">
+                             <div className="flex justify-between items-start mb-10">
+                                <div className="flex items-center gap-6">
+                                   <div className="w-20 h-20 bg-gradient-to-tr from-neutral-800 to-neutral-900 rounded-[1.8rem] flex items-center justify-center text-white border border-white/10 shadow-2xl group-hover:scale-110 transition-all">
+                                      <Building2 size={36} strokeWidth={1.5}/>
+                                   </div>
+                                   <div>
+                                      <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-2">Global Dynamics</h4>
+                                      <div className="flex items-center gap-3">
+                                         <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-neutral-400 uppercase tracking-widest border border-white/5">Portfolio #{204 + i}</span>
+                                         <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                                      </div>
+                                   </div>
+                                </div>
+                                <div className="text-right">
+                                   <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-1">Service Tier</p>
+                                   <p className="text-xs font-black text-amber-500 uppercase tracking-widest">Avanzado</p>
+                                </div>
+                             </div>
+
+                             <div className="grid grid-cols-2 gap-8 mb-10">
+                                <div className="space-y-1">
+                                   <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Lead Partner</p>
+                                   <p className="text-sm font-black text-neutral-200">Marcus Aurelius</p>
+                                </div>
+                                <div className="space-y-1">
+                                   <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Project Value</p>
+                                   <p className="text-sm font-black text-neutral-200 font-mono">$12,400.00</p>
+                                </div>
+                             </div>
+
+                             <div className="flex gap-4">
+                                <button onClick={(e) => e.stopPropagation()} className="flex-1 py-5 bg-white/5 hover:bg-white text-black font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all border border-white/10 flex items-center justify-center gap-3 group/btn">
+                                   <FolderOpen size={16} className="text-neutral-500 group-hover/btn:text-black"/> Data Archive
+                                </button>
+                                <button onClick={(e) => e.stopPropagation()} className="w-16 h-16 bg-white/5 hover:bg-amber-500 text-white rounded-2xl flex items-center justify-center transition-all border border-white/10">
+                                   <Phone size={20}/>
+                                </button>
+                             </div>
                           </div>
                        </div>
                     ))}
