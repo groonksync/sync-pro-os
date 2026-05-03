@@ -32,7 +32,6 @@ const PublicProductCard = ({ p, onSelect }) => {
           <Package size={24} strokeWidth={1} className="text-neutral-800" />
         )}
 
-        {/* BARRA AGOTADO: DISEÑO SUTIL (MENOS CARÁCTER, MÁS ELEGANCIA) */}
         {parseInt(p.stock_actual) === 0 && (
            <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/40 backdrop-blur-md border-y border-white/5 py-1.5 md:py-3 w-[400%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
@@ -159,11 +158,6 @@ const PublicCatalog = () => {
     if (touchStartX.current - touchEndX.current < -50) prevImg();
   };
 
-  const renderWarranty = (p) => {
-    if (p.garantia_unit === 'Sin Garantía') return 'Sin Garantía';
-    return `${p.garantia_num || 0} ${p.garantia_unit || 'Días'}`;
-  };
-
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500 selection:text-white">
       <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-3 md:py-6 px-4 md:px-20 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-12">
@@ -286,10 +280,10 @@ const PublicCatalog = () => {
                      <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white/5 p-3 md:p-3.5 rounded-xl md:rounded-2xl border border-white/5">
                            <div className="flex items-center gap-2 mb-0.5">
-                              {selectedProduct.garantia_unit === 'Sin Garantía' ? <ShieldAlert size={10} className="text-rose-500" /> : <ShieldCheck size={10} className="text-blue-500" />}
+                              {selectedProduct.garantia === 'Sin Garantía' ? <ShieldAlert size={10} className="text-rose-500" /> : <ShieldCheck size={10} className="text-blue-500" />}
                               <p className="text-[6px] md:text-[8px] font-black text-neutral-500 uppercase">Garantía</p>
                            </div>
-                           <p className="text-[9px] md:text-xs font-black text-white">{renderWarranty(selectedProduct)}</p>
+                           <p className="text-[9px] md:text-xs font-black text-white">{selectedProduct.garantia || 'Consultar'}</p>
                         </div>
                         <div className="bg-white/5 p-3 md:p-3.5 rounded-xl md:rounded-2xl border border-white/5">
                            <div className="flex items-center gap-2 mb-0.5">

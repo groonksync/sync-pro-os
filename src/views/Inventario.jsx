@@ -91,7 +91,6 @@ const Inventario = () => {
   const [viewState, setViewState] = useState('list');
   const [productos, setProductos] = useState([]);
   const [mayoristas, setMayoristas] = useState([]);
-  const [movimientos, setMovimientos] = useState([]);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('Todos');
@@ -177,9 +176,34 @@ const Inventario = () => {
     if (!editingProduct?.nombre) return;
     setLoading(true);
     try {
+      // PROCESAMIENTO DE GARANTÍA: Combinamos en un solo campo 'garantia' para compatibilidad con la DB
+      let garantiaString = '';
+      if (editingProduct.garantia_unit === 'Sin Garantía') {
+        garantiaString = 'Sin Garantía';
+      } else {
+        garantiaString = `${editingProduct.garantia_num || 0} ${editingProduct.garantia_unit || 'Días'}`;
+      }
+
       const payload = { 
-        ...editingProduct, 
+        id: editingProduct.id,
+        nombre: editingProduct.nombre,
+        marca: editingProduct.marca,
+        categoria: editingProduct.categoria,
+        precio_costo: editingProduct.precio_costo,
+        precio_venta: editingProduct.precio_venta,
+        precio_antes: editingProduct.precio_antes,
+        stock_actual: editingProduct.stock_actual,
+        stock_minimo: editingProduct.stock_minimo,
+        stock_vendido: editingProduct.stock_vendido,
+        ficha_tecnica: editingProduct.ficha_tecnica,
+        estado: editingProduct.estado,
         imagen: editingProduct.imagenes?.[0] || editingProduct.imagen,
+        codigo: editingProduct.codigo,
+        ubicacion: editingProduct.ubicacion,
+        serial: editingProduct.serial,
+        imagenes: editingProduct.imagenes,
+        garantia: garantiaString, // Usamos 'garantia' en lugar de num/unit
+        tipo_envio: editingProduct.tipo_envio,
         updated_at: new Date().toISOString()
       };
       
@@ -235,6 +259,26 @@ const Inventario = () => {
     setIsModalOpen(true);
   };
 
+  const handleEditProduct = (p) => {
+    // PARSEO DE GARANTÍA: Intentamos extraer num y unit de la cadena 'garantia'
+    let gNum = 0;
+    let gUnit = 'Días';
+    if (p.garantia === 'Sin Garantía') {
+      gUnit = 'Sin Garantía';
+    } else if (p.garantia) {
+      const parts = p.garantia.split(' ');
+      gNum = parseInt(parts[0]) || 0;
+      gUnit = parts[1] || 'Días';
+    }
+
+    setEditingProduct({
+      ...p,
+      garantia_num: gNum,
+      garantia_unit: gUnit
+    });
+    setIsModalOpen(true);
+  };
+
   const filteredProducts = (productos || []).filter(p => {
     const normalizedSearch = normalizeText(searchTerm);
     const matches = normalizeText(p.nombre).includes(normalizedSearch) || 
@@ -266,11 +310,6 @@ const Inventario = () => {
       }
     } catch (err) { alert('Error al subir imagen: ' + err.message); }
     finally { setLoading(false); }
-  };
-
-  const renderWarranty = (p) => {
-    if (p.garantia_unit === 'Sin Garantía') return 'Sin Garantía';
-    return `${p.garantia_num || 0} ${p.garantia_unit || 'Días'}`;
   };
 
   return (
@@ -313,7 +352,7 @@ const Inventario = () => {
             {filteredProducts.map(p => (
               <ProductCard 
                 key={p.id} p={p} 
-                onEdit={(prod) => { setEditingProduct(prod); setIsModalOpen(true); }}
+                onEdit={handleEditProduct}
                 onDelete={handleDeleteProduct}
                 onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }}
               />
@@ -330,7 +369,6 @@ const Inventario = () => {
         </div>
       )}
 
-      {/* MODAL PRODUCTO PRO: RECONSTRUCCIÓN COMPLETA PARA INTEGRIDAD DE DATOS */}
       {isModalOpen && editingProduct && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-2 md:p-6 overflow-y-auto">
            <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-[1000px] rounded-[32px] md:rounded-[48px] p-6 md:p-12 shadow-2xl relative my-auto">
@@ -343,7 +381,6 @@ const Inventario = () => {
               </div>
 
               <div className="grid grid-cols-12 gap-6 md:gap-12">
-                 {/* COLUMNA MEDIA */}
                  <div className="col-span-12 lg:col-span-4 space-y-6">
                     <div className="aspect-square bg-white/5 rounded-[2.5rem] border border-white/10 flex items-center justify-center relative overflow-hidden group shadow-inner">
                        {editingProduct?.imagenes?.length > 0 ? (
@@ -379,9 +416,7 @@ const Inventario = () => {
                     </div>
                  </div>
                  
-                 {/* COLUMNA DATOS */}
                  <div className="col-span-12 lg:col-span-8 space-y-8">
-                    {/* SECCIÓN 1: IDENTIDAD */}
                     <div className="space-y-4">
                        <div className="flex items-center gap-3 border-l-2 border-blue-500 pl-4 mb-4">
                           <Tag size={14} className="text-blue-500"/>
@@ -419,7 +454,6 @@ const Inventario = () => {
                        </div>
                     </div>
 
-                    {/* SECCIÓN 2: FINANZAS */}
                     <div className="space-y-4">
                        <div className="flex items-center gap-3 border-l-2 border-emerald-500 pl-4 mb-4">
                           <DollarSign size={14} className="text-emerald-500"/>
@@ -441,7 +475,6 @@ const Inventario = () => {
                        </div>
                     </div>
 
-                    {/* SECCIÓN 3: INVENTARIO & LOGISTICA */}
                     <div className="space-y-4">
                        <div className="flex items-center gap-3 border-l-2 border-amber-500 pl-4 mb-4">
                           <BoxIcon size={14} className="text-amber-500"/>
@@ -470,7 +503,6 @@ const Inventario = () => {
                        </div>
                     </div>
 
-                    {/* SECCIÓN 4: GARANTÍA & FICHA */}
                     <div className="space-y-4">
                        <div className="flex items-center gap-3 border-l-2 border-purple-500 pl-4 mb-4">
                           <ShieldCheck size={14} className="text-purple-500"/>
@@ -508,7 +540,6 @@ const Inventario = () => {
         </div>
       )}
 
-      {/* MODAL DE DETALLE MAESTRO (VISUALIZACIÓN) */}
       {selectedProduct && (
          <div className="fixed inset-0 z-[150] bg-black/98 backdrop-blur-2xl flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-500">
             <div className="bg-[#121212] border border-white/10 w-full max-w-[950px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[95vh] md:max-h-[85vh] flex flex-col md:flex-row">
@@ -543,7 +574,7 @@ const Inventario = () => {
                      <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white/5 p-3 rounded-xl md:rounded-2xl border border-white/5">
                            <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1">Garantía</p>
-                           <p className="text-[10px] md:text-xs font-black text-white">{renderWarranty(selectedProduct)}</p>
+                           <p className="text-[10px] md:text-xs font-black text-white">{selectedProduct.garantia || 'Consultar'}</p>
                         </div>
                         <div className={`p-3 rounded-xl md:rounded-2xl border flex items-center gap-2 ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
                            <Truck size={14} /><p className="text-[7px] md:text-[8px] font-black uppercase">{selectedProduct.tipo_envio || 'Cobro Adicional'}</p>
@@ -551,7 +582,7 @@ const Inventario = () => {
                      </div>
                   </div>
                   <div className="mt-6 flex gap-3 md:gap-4">
-                     <button onClick={() => { setSelectedProduct(null); setEditingProduct(selectedProduct); setIsModalOpen(true); }} className="flex-1 py-4 md:py-6 bg-[#1a1a1a] border border-white/5 text-white rounded-xl md:rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"><Edit3 size={16}/> Editar</button>
+                     <button onClick={() => handleEditProduct(selectedProduct)} className="flex-1 py-4 md:py-6 bg-[#1a1a1a] border border-white/5 text-white rounded-xl md:rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"><Edit3 size={16}/> Editar</button>
                      <button onClick={() => handleConsult(selectedProduct)} className="flex-1 py-4 md:py-6 bg-blue-600 text-white rounded-xl md:rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-blue-500 transition-all shadow-xl">Auditar vía WhatsApp</button>
                   </div>
                </div>
