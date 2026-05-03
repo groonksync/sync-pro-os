@@ -11,7 +11,7 @@ import {
   Upload, Download, Bold, Italic, Strikethrough, List, CheckSquare, Table2, Heading1, Heading2,
   Facebook, Smartphone as TiktokIcon, Cloud, Sparkles, Type, Highlighter, TrendingUp, BarChart3,
   AlignLeft, AlignCenter, AlignRight, ListOrdered, ClipboardList, Briefcase, Edit3, Mail as MailIcon,
-  Crown, Grid, LayoutGrid, Star, Gift, Shield
+  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2, Phone, FolderOpen
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
@@ -269,7 +269,118 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       {/* VISTA: CONTROL DE CLIENTES (FIDELIDAD & TRADING BOARD) */}
       {viewState === 'client-list' && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000 relative">
-          {/* ... contenido existente ... */}
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-10 space-y-10 max-w-[1900px] mx-auto w-full relative z-10">
+            {/* CABECERA: CONTROL DE CLIENTES */}
+            <header className={`${colors.card} rounded-[3rem] p-10 shadow-2xl border border-white/5 relative overflow-hidden group animate-in slide-in-from-top duration-1000`}>
+               <div className="absolute top-0 right-0 w-[40%] h-full bg-gradient-to-l from-[#10b981]/5 to-transparent pointer-events-none"></div>
+               <div className="flex justify-between items-start mb-12 relative z-10">
+                  <div className="space-y-3">
+                    <p className={`text-[10px] text-[#10b981] font-black uppercase tracking-[0.8em] flex items-center gap-3 animate-pulse`}>
+                       <Crown size={14}/> Operational Matrix • Elite Edition
+                    </p>
+                    <h2 className={`text-6xl font-black ${colors.text} tracking-tighter uppercase leading-[0.8]`}>
+                       Control de <br/><span className={isLight ? 'text-slate-200' : 'text-white/10'}>Clientes</span>
+                    </h2>
+                  </div>
+                  <div className="flex gap-8">
+                     <div className="bg-black/40 p-5 rounded-[2rem] border border-white/5 flex gap-6 items-center shadow-2xl">
+                        <div className="space-y-1">
+                           <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Global Pulse</p>
+                           <p className="text-xl font-black text-white font-mono">94.2%</p>
+                           <p className="text-[9px] text-[#10b981] font-bold">▲ 8.4%</p>
+                        </div>
+                        <div className="flex items-end gap-1.5 h-12">
+                           {[20, 45, 30, 60, 40, 75, 55].map((h, i) => (
+                              <div key={i} className="w-2 rounded-full bg-[#10b981]/20 relative group">
+                                 <div className="absolute bottom-0 w-full bg-[#10b981] rounded-full group-hover:shadow-[0_0_10px_#10b981] transition-all" style={{ height: `${h}%` }}></div>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
+                     <button onClick={() => setIsClientModalOpen(true)} className="px-12 py-5 bg-[#10b981] text-white rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_20px_50px_rgba(16,185,129,0.3)] flex items-center gap-4">
+                       <Plus size={20} strokeWidth={3}/> Nuevo Cliente
+                     </button>
+                  </div>
+               </div>
+               <div className="grid grid-cols-4 gap-8 relative z-10">
+                  {['Revenue Velocity', 'Client Seniority', 'Loyalty Flow', 'Retention Rate'].map((label, i) => (
+                     <div key={i} className="bg-white/[0.02] p-6 rounded-[2rem] border border-white/5 group hover:bg-[#10b981]/5 transition-all">
+                        <div className="flex justify-between items-center mb-4">
+                           <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest">{label}</p>
+                           <TrendingUp size={12} className="text-[#10b981]"/>
+                        </div>
+                        <div className="flex flex-col gap-1 w-full">
+                           <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                              <div className="h-full bg-[#10b981]" style={{ width: `${60 + i*10}%` }}></div>
+                           </div>
+                           <p className="text-xl font-black text-white font-mono tracking-tighter">{85 + i*3}%</p>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            </header>
+
+            {/* BUSCADOR */}
+            <div className="flex gap-6 items-center">
+              <div className="relative group flex-1">
+                <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={24}/>
+                <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Filtrar clientes en la matriz..." className={`w-full ${colors.input} rounded-[2.5rem] py-6 pl-20 pr-8 text-xl outline-none border border-white/5 focus:border-[#10b981]/30 transition-all font-bold shadow-2xl`} />
+              </div>
+            </div>
+
+            {/* TABLA DE CLIENTES */}
+            <div className={`${colors.card} rounded-[3.5rem] overflow-hidden shadow-2xl border border-white/5`}>
+               <table className="w-full text-left border-collapse">
+                  <thead>
+                     <tr className="border-b border-white/5 bg-white/[0.01]">
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">ID</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Cliente</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Modalidad</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em] text-center">Fidelidad</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em] text-right">Inversión</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em] text-right">Comandos</th>
+                     </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                     {filteredClients.map((client, idx) => (
+                       <tr key={client.id} onClick={() => openClientProfile(client)} className="group hover:bg-[#10b981]/[0.03] transition-all cursor-pointer">
+                          <td className="px-10 py-8"><span className="text-sm font-mono text-neutral-800 font-black tracking-tighter">{(idx + 1).toString().padStart(2, '0')}</span></td>
+                          <td className="px-10 py-8">
+                             <div className="flex items-center gap-6">
+                                <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 overflow-hidden shrink-0 shadow-xl">
+                                   {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={24} className="text-neutral-800 m-auto mt-4" />}
+                                </div>
+                                <div>
+                                   <p className={`text-base font-black ${colors.text} uppercase tracking-tighter leading-none mb-1.5`}>{client.nombre}</p>
+                                   <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-widest">{client.email || 'Global Partner'}</p>
+                                </div>
+                             </div>
+                          </td>
+                          <td className="px-10 py-8">
+                             <div className="flex items-center gap-3">
+                                {idx % 2 === 0 ? <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[8px] font-black text-amber-500 uppercase flex items-center gap-2"><Crown size={12}/> VIP Tier</div> : <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-[8px] font-black text-blue-500 uppercase flex items-center gap-2"><Zap size={12}/> High Growth</div>}
+                             </div>
+                          </td>
+                          <td className="px-10 py-8 text-center">
+                             <div className="flex justify-center gap-1">
+                                {[...Array(5)].map((_, i) => <Star key={i} size={10} fill={i < (4 + idx%2) ? "#10b981" : "transparent"} className={i < (4 + idx%2) ? "text-[#10b981]" : "text-white/10"}/>)}
+                             </div>
+                          </td>
+                          <td className="px-10 py-8 text-right">
+                             <p className="text-lg font-black text-white font-mono tracking-tighter">$ {(2400 + idx*800).toLocaleString()}</p>
+                          </td>
+                          <td className="px-10 py-8">
+                             <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all">
+                                <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="w-11 h-11 bg-white text-black rounded-xl flex items-center justify-center hover:bg-[#10b981] hover:text-white transition-all shadow-xl"><Edit3 size={18}/></button>
+                                <button onClick={(e) => handleDeleteClient(client.id, e)} className="w-11 h-11 bg-white text-rose-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-xl"><Trash2 size={18}/></button>
+                             </div>
+                          </td>
+                       </tr>
+                     ))}
+                  </tbody>
+               </table>
+            </div>
+          </div>
         </div>
       )}
 
@@ -277,21 +388,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       {viewState === 'agency-hub' && (
         <div className="flex flex-col h-full overflow-hidden animate-in slide-in-from-right duration-1000">
            <div className="flex-1 overflow-y-auto mac-scrollbar p-10 space-y-10 max-w-[1900px] mx-auto w-full">
-              
-              {/* CABECERA DE AGENCIA: LOS 4 PILARES */}
               <header className="space-y-8">
                  <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-[10px] text-amber-500 font-black uppercase tracking-[0.8em] mb-3 flex items-center gap-3">
-                         <Sparkles size={14} className="animate-pulse"/> Sovereign Agency • Strategic Center
-                      </p>
+                      <p className="text-[10px] text-amber-500 font-black uppercase tracking-[0.8em] mb-3 flex items-center gap-3"><Sparkles size={14} className="animate-pulse"/> Sovereign Agency • Strategic Center</p>
                       <h2 className="text-6xl font-black text-white tracking-tighter uppercase leading-none">Agencia de <br/><span className={isLight ? 'text-slate-200' : 'text-white/10'}>Marketing</span></h2>
                     </div>
-                    <button onClick={() => setIsCompanyModalOpen(true)} className="px-10 py-5 bg-amber-500 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest hover:scale-105 transition-all shadow-2xl flex items-center gap-4">
-                       <Plus size={20} strokeWidth={3}/> Nueva Empresa
-                    </button>
+                    <button onClick={() => setIsCompanyModalOpen(true)} className="px-10 py-5 bg-amber-500 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest hover:scale-105 transition-all shadow-2xl flex items-center gap-4"><Plus size={20} strokeWidth={3}/> Nueva Empresa</button>
                  </div>
-
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {[
                       { name: 'Básico', icon: <Shield size={24}/>, color: 'border-l-blue-500', desc: 'Gestión Esencial' },
@@ -300,70 +404,202 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                       { name: 'Personalizado', icon: <Sparkles size={24}/>, color: 'border-l-amber-500', desc: 'Estrategia Élite' }
                     ].map((p, i) => (
                       <div key={i} onClick={() => setActiveAgencyPlan(p.name)} className={`${colors.card} rounded-[2.5rem] p-8 border-l-4 ${p.color} shadow-2xl hover:scale-105 transition-all cursor-pointer group ${activeAgencyPlan === p.name ? 'ring-2 ring-white/20' : ''}`}>
-                         <div className="flex justify-between items-start mb-6">
-                            <div className="text-3xl text-white/20 group-hover:text-white transition-all">{p.icon}</div>
-                            <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest">Plan {p.name}</p>
-                         </div>
+                         <div className="flex justify-between items-start mb-6"><div className="text-3xl text-white/20 group-hover:text-white transition-all">{p.icon}</div><p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest">Plan {p.name}</p></div>
                          <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">{p.name}</h4>
                          <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">{p.desc}</p>
-                         <div className="mt-6 h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                            <div className={`h-full ${p.color.replace('border-l-', 'bg-')}`} style={{ width: '45%' }}></div>
-                         </div>
+                         <div className="mt-6 h-1 w-full bg-white/5 rounded-full overflow-hidden"><div className={`h-full ${p.color.replace('border-l-', 'bg-')}`} style={{ width: '45%' }}></div></div>
                       </div>
                     ))}
                  </div>
               </header>
-
-              {/* LISTADO DE EMPRESAS POR PLAN */}
               <div className="space-y-6">
-                 <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                    <div className="w-2 h-8 bg-amber-500 rounded-full"></div>
-                    <h3 className="text-xl font-black text-white uppercase tracking-tighter">Cartera de Empresas <span className="text-neutral-700 ml-4">/ {activeAgencyPlan || 'Todas'}</span></h3>
-                 </div>
-
+                 <div className="flex items-center gap-4 border-b border-white/5 pb-4"><div className="w-2 h-8 bg-amber-500 rounded-full"></div><h3 className="text-xl font-black text-white uppercase tracking-tighter">Cartera de Empresas <span className="text-neutral-700 ml-4">/ {activeAgencyPlan || 'Todas'}</span></h3></div>
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                    {/* SIMULACIÓN DE EMPRESA (Reemplazar con mapeo real de 'companies') */}
                     {[...Array(6)].map((_, i) => (
-                       <div key={i} onClick={() => setViewState('agency-session')} className={`${colors.card} rounded-[3rem] p-8 shadow-2xl border border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer group relative overflow-hidden`}>
+                       <div key={i} onClick={() => { setSelectedCompany({id: i, nombre_empresa: 'Empresa XYZ', dueño: 'Carlos S.'}); setViewState('agency-session'); }} className={`${colors.card} rounded-[3rem] p-8 shadow-2xl border border-white/5 hover:bg-white/[0.03] transition-all cursor-pointer group relative overflow-hidden`}>
                           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-20 transition-all"><Briefcase size={80}/></div>
-                          
-                          <div className="flex items-center gap-5 mb-8">
-                             <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-2xl">
-                                <Building2 size={32}/>
-                             </div>
-                             <div>
-                                <h4 className="text-xl font-black text-white uppercase tracking-tighter leading-none mb-1">Empresa XYZ</h4>
-                                <p className="text-[9px] text-amber-500 font-black uppercase tracking-widest">Plan Avanzado</p>
-                             </div>
-                          </div>
-
+                          <div className="flex items-center gap-5 mb-8"><div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-2xl"><Building2 size={32}/></div><div><h4 className="text-xl font-black text-white uppercase tracking-tighter leading-none mb-1">Empresa XYZ</h4><p className="text-[9px] text-amber-500 font-black uppercase tracking-widest">Plan Avanzado</p></div></div>
                           <div className="space-y-4 mb-8">
-                             <div className="flex items-center gap-3 text-neutral-500">
-                                <UserIcon size={14}/>
-                                <p className="text-[10px] font-bold uppercase tracking-widest">Dueño: Carlos S.</p>
-                             </div>
-                             <div className="flex items-center gap-3 text-neutral-500">
-                                <MailIcon size={14}/>
-                                <p className="text-[10px] font-bold uppercase tracking-widest">carlos@empresa.com</p>
-                             </div>
-                             <div className="flex items-center gap-3 text-neutral-500">
-                                <Phone size={14}/>
-                                <p className="text-[10px] font-bold uppercase tracking-widest">+1 800 234 567</p>
-                             </div>
+                             <div className="flex items-center gap-3 text-neutral-500"><UserIcon size={14}/><p className="text-[10px] font-bold uppercase tracking-widest">Dueño: Carlos S.</p></div>
+                             <div className="flex items-center gap-3 text-neutral-500"><MailIcon size={14}/><p className="text-[10px] font-bold uppercase tracking-widest">carlos@empresa.com</p></div>
+                             <div className="flex items-center gap-3 text-neutral-500"><Phone size={14}/><p className="text-[10px] font-bold uppercase tracking-widest">+1 800 234 567</p></div>
                           </div>
-
                           <div className="flex gap-3">
-                             <button onClick={(e) => e.stopPropagation()} className="flex-1 py-4 bg-white/5 hover:bg-amber-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                                <FolderOpen size={14}/> Drive
-                             </button>
-                             <button onClick={(e) => e.stopPropagation()} className="w-14 h-14 bg-white/5 hover:bg-blue-500 text-white rounded-2xl flex items-center justify-center transition-all">
-                                <Edit3 size={18}/>
-                             </button>
+                             <button onClick={(e) => e.stopPropagation()} className="flex-1 py-4 bg-white/5 hover:bg-amber-500 text-white rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"><FolderOpen size={14}/> Drive</button>
+                             <button onClick={(e) => e.stopPropagation()} className="w-14 h-14 bg-white/5 hover:bg-blue-500 text-white rounded-2xl flex items-center justify-center transition-all"><Edit3 size={18}/></button>
                           </div>
                        </div>
                     ))}
                  </div>
               </div>
+           </div>
+        </div>
+      )}
+
+      {/* VISTA: ESTRATEGIA DE AGENCIA (AGENCY SESSION) */}
+      {viewState === 'agency-session' && selectedCompany && (
+        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-500">
+           <header className="h-24 border-b border-white/5 px-10 flex items-center justify-between bg-black/40 backdrop-blur-3xl">
+              <div className="flex items-center gap-8">
+                 <button onClick={() => setViewState('agency-hub')} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-600 hover:text-amber-500 transition-all border border-white/10"><ArrowLeft size={24}/></button>
+                 <div>
+                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-1">{selectedCompany.nombre_empresa}</h3>
+                    <p className="text-[10px] text-amber-500 font-black uppercase tracking-[0.2em]">Strategic War Room • Plan Avanzado</p>
+                 </div>
+              </div>
+              <div className="flex gap-4">
+                 <button className="px-8 py-4 bg-white/5 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest border border-white/10 hover:bg-white/10 transition-all flex items-center gap-3"><FolderOpen size={18}/> Abrir Drive</button>
+                 <button className="px-8 py-4 bg-amber-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"><Save size={18}/> Guardar Estrategia</button>
+              </div>
+           </header>
+
+           <div className="flex-1 flex overflow-hidden">
+              {/* SIDEBAR DE DATOS EMPRESARIALES */}
+              <aside className="w-96 border-r border-white/5 p-10 space-y-10 overflow-y-auto mac-scrollbar bg-black/20">
+                 <div className="space-y-6">
+                    <h4 className="text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Métricas de Cuenta</h4>
+                    <div className="grid gap-4">
+                       {[
+                         { label: 'Growth Score', value: '88%', color: 'text-emerald-500' },
+                         { label: 'Budget Status', value: 'On Track', color: 'text-blue-500' },
+                         { label: 'Ad Performance', value: '+12.4%', color: 'text-emerald-500' }
+                       ].map((m, i) => (
+                         <div key={i} className={`${colors.card} p-5 rounded-2xl border border-white/5`}>
+                            <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-2">{m.label}</p>
+                            <p className={`text-2xl font-black font-mono ${m.color}`}>{m.value}</p>
+                         </div>
+                       ))}
+                    </div>
+                 </div>
+
+                 <div className="space-y-6">
+                    <h4 className="text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Información del Socio</h4>
+                    <div className="space-y-4">
+                       <div className="flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/5">
+                          <UserIcon size={20} className="text-amber-500"/>
+                          <div><p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Dueño</p><p className="text-sm font-black text-white">{selectedCompany.dueño}</p></div>
+                       </div>
+                       <div className="flex items-center gap-4 p-4 bg-white/[0.02] rounded-2xl border border-white/5">
+                          <Phone size={20} className="text-amber-500"/>
+                          <div><p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Contacto</p><p className="text-sm font-black text-white">+1 800 234 567</p></div>
+                       </div>
+                    </div>
+                 </div>
+              </aside>
+
+              {/* EDITOR ESTRATÉGICO CENTRAL */}
+              <main className="flex-1 flex flex-col p-10 overflow-hidden relative">
+                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-amber-500/50 to-transparent"></div>
+                 <div className="flex items-center justify-between mb-8">
+                    <div className="flex gap-4">
+                       {['Estrategia General', 'Calendario de Contenidos', 'Briefing de Campaña'].map((tab, i) => (
+                          <button key={i} className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${i === 0 ? 'bg-amber-500 text-white shadow-xl' : 'text-neutral-600 hover:text-white hover:bg-white/5'}`}>{tab}</button>
+                       ))}
+                    </div>
+                    <div className="flex gap-2">
+                       <button className="p-3 text-neutral-600 hover:text-white transition-all"><Bold size={18}/></button>
+                       <button className="p-3 text-neutral-600 hover:text-white transition-all"><List size={18}/></button>
+                       <button className="p-3 text-neutral-600 hover:text-white transition-all"><Type size={18}/></button>
+                    </div>
+                 </div>
+
+                 <div className={`${colors.card} flex-1 rounded-[3rem] p-12 overflow-y-auto mac-scrollbar border border-white/5 relative group`}>
+                    <textarea 
+                       className="w-full h-full bg-transparent outline-none resize-none text-xl font-bold text-neutral-200 placeholder:text-neutral-800 leading-relaxed font-mono"
+                       placeholder="Comienza a redactar la estrategia maestra para esta empresa..."
+                    ></textarea>
+                    <div className="absolute bottom-10 right-10 flex gap-4 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
+                       <div className="px-6 py-3 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-[9px] font-black uppercase text-amber-500">Autoguardado Activo</div>
+                    </div>
+                 </div>
+              </main>
+           </div>
+        </div>
+      )}
+
+      {/* VISTA: PERFIL CLIENTE (EDITOR PRO) */}
+      {viewState === 'client-profile' && activeClient && (
+        <div className="h-full flex flex-col overflow-hidden animate-in slide-in-from-right duration-500">
+          <header className={`px-10 py-6 ${colors.card} border-b flex items-center justify-between relative z-10`}>
+            <div className="flex items-center gap-6">
+              <button onClick={() => setViewState('client-list')} className={`w-12 h-12 ${isLight ? 'bg-slate-100' : 'bg-white/5'} rounded-2xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all`}><ArrowLeft size={24}/></button>
+              <div><h3 className={`text-3xl font-black ${colors.text} uppercase leading-none mb-1`}>{activeClient.nombre}</h3><p className={`text-[10px] ${colors.textMuted} font-black uppercase tracking-[0.2em]`}>{activeClient.pais || 'Global'}</p></div>
+            </div>
+            <button onClick={createMeeting} className="px-8 py-4 bg-[#10b981] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3"><Plus size={18} strokeWidth={3}/> Nueva Sesión</button>
+          </header>
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-8 space-y-6 max-w-[1600px] mx-auto w-full">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className={`${colors.card} rounded-[2rem] p-6 flex items-center gap-6 border-l-4 border-l-amber-500`}><div className="w-14 h-14 rounded-2xl bg-amber-500/5 flex items-center justify-center text-amber-500"><Clock size={28}/></div><div><p className={`text-[10px] ${colors.textMuted} font-black mb-1`}>Inversión</p><h5 className={`text-2xl font-black ${colors.text} font-mono leading-none`}>{formatTime(totalTimeWorked)}</h5></div></div>
+                  <div className={`${colors.card} rounded-[2rem] p-6 flex items-center gap-6 border-l-4 border-l-blue-500`}><div className="w-14 h-14 rounded-2xl bg-blue-500/5 flex items-center justify-center text-blue-500"><Layers size={28}/></div><div><p className={`text-[10px] ${colors.textMuted} font-black mb-1`}>Sesiones</p><h5 className={`text-2xl font-black ${colors.text}`}>{meetingsList.length} Items</h5></div></div>
+               </div>
+               <div className="grid gap-3">
+                  {filteredMeetings.map(m => (
+                    <div key={m.id} onClick={() => openMeeting(m)} className={`${colors.card} rounded-[2rem] p-6 hover:bg-white/[0.02] cursor-pointer transition-all flex items-center justify-between group active:scale-[0.99] border-r-4 border-r-transparent hover:border-r-[#10b981] shadow-xl`}>
+                       <div className="flex items-center gap-6"><div className={`w-12 h-12 rounded-2xl ${isLight ? 'bg-slate-100' : 'bg-white/5'} flex items-center justify-center text-neutral-900 group-hover:text-[#10b981] transition-all`}><PlayCircle size={24}/></div><div><div className="flex items-center gap-4 mb-0.5"><p className={`text-lg font-black ${colors.text} uppercase`}>{m.fecha}</p><span className="px-3 py-1 bg-[#10b981]/10 rounded-lg text-[8px] font-black text-[#10b981] uppercase">{m.revision_version || 'V1'}</span></div><p className={`text-[11px] ${colors.textMuted} font-bold uppercase`}>{m.session_title || 'Edición de Video'}</p></div></div>
+                       <div className="flex items-center gap-8"><p className={`text-xl font-black ${colors.text} font-mono`}>{formatTime(m.total_time || 0)}</p><ChevronRight size={20} className="text-neutral-800 group-hover:text-[#10b981]" /></div>
+                    </div>
+                  ))}
+               </div>
+          </div>
+        </div>
+      )}
+
+      {/* VISTA: WAR ROOM / EDITOR PRO (RESTAURACIÓN TOTAL) */}
+      {viewState === 'session' && activeMeeting && (
+        <div className={`flex-1 flex flex-col overflow-hidden ${colors.bg} animate-in fade-in duration-500`}>
+           <header className="h-24 border-b border-white/5 px-10 flex items-center justify-between bg-black/40 backdrop-blur-3xl">
+              <div className="flex items-center gap-8">
+                 <button onClick={() => setViewState('client-profile')} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all border border-white/10"><ArrowLeft size={24}/></button>
+                 <div>
+                    <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-1">{activeMeeting.session_title || 'Edición de Video'}</h3>
+                    <p className="text-[10px] text-[#10b981] font-black uppercase tracking-[0.2em]">{activeClient.nombre} • Versión {activeMeeting.revision_version || 'V1'}</p>
+                 </div>
+              </div>
+              <div className="flex items-center gap-8">
+                 <div className="flex flex-col items-end">
+                    <p className="text-[10px] text-neutral-700 font-black uppercase tracking-widest mb-1">Tiempo de Producción</p>
+                    <p className="text-3xl font-black text-white font-mono leading-none tracking-tighter">{formatTime(activeMeeting.total_time || 0)}</p>
+                 </div>
+                 <div className="h-10 w-[1px] bg-white/5"></div>
+                 <button onClick={saveMeeting} className="px-10 py-5 bg-[#10b981] text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all flex items-center gap-3"><Save size={20}/> Guardar Proyecto</button>
+              </div>
+           </header>
+           
+           <div className="flex-1 flex overflow-hidden">
+              <aside className="w-96 border-r border-white/5 p-10 space-y-10 overflow-y-auto mac-scrollbar bg-black/20">
+                 <div className="space-y-6">
+                    <h4 className="text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Herramientas de Edición</h4>
+                    <div className="grid grid-cols-2 gap-4">
+                       {EDITOR_TAGS.map((tag, i) => (
+                          <button key={i} onClick={(e) => insertTag(tag.name, tag.bg, tag.text, tag.border, e)} className="p-4 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/5 transition-all text-[9px] font-black uppercase tracking-widest text-neutral-500 hover:text-white flex flex-col items-center gap-2">
+                             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: tag.text }}></span>
+                             {tag.name}
+                          </button>
+                       ))}
+                    </div>
+                 </div>
+                 <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-white/10 space-y-6">
+                    <div className="flex items-center gap-4"><Sparkles className="text-purple-400" size={24}/><h5 className="text-xs font-black uppercase text-white">Sovereign IA</h5></div>
+                    <p className="text-[10px] text-neutral-500 font-bold leading-relaxed uppercase">Genera guiones, descripciones y copys optimizados para retención.</p>
+                    <button onClick={() => setShowAIModal(true)} className="w-full py-4 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-white/5">Invocar Inteligencia</button>
+                 </div>
+              </aside>
+
+              <main className="flex-1 flex flex-col p-10 overflow-hidden relative">
+                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#10b981]/50 to-transparent"></div>
+                 <div className={`${colors.card} flex-1 rounded-[3.5rem] p-12 overflow-y-auto mac-scrollbar border border-white/5 relative group`}>
+                    <div 
+                       ref={editorRef}
+                       contentEditable
+                       onInput={handleEditorInput}
+                       dangerouslySetInnerHTML={{ __html: editorContent }}
+                       className="w-full h-full outline-none text-xl font-bold text-neutral-200 placeholder:text-neutral-800 leading-relaxed min-h-[500px]"
+                    />
+                    <div className="absolute bottom-10 right-10 flex gap-4 opacity-0 group-hover:opacity-100 transition-all translate-y-4 group-hover:translate-y-0">
+                       <div className="px-6 py-3 bg-black/60 backdrop-blur-xl border border-white/10 rounded-2xl text-[9px] font-black uppercase text-[#10b981]">Terminal Activa</div>
+                    </div>
+                 </div>
+              </main>
            </div>
         </div>
       )}
