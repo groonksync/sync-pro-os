@@ -233,7 +233,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
           
           <div className="flex-1 overflow-y-auto mac-scrollbar p-8 space-y-8 max-w-[1900px] mx-auto w-full relative z-10">
             
-            {/* ATLAS HUD: SEGMENTACIÓN DE INTELIGENCIA */}
+            {/* ATLAS HUD: SEGMENTACIÓN DE INTELIGENCIA (RE-SYNC) */}
             <header className="space-y-8 animate-in slide-in-from-top duration-700">
                <div className="flex justify-between items-end">
                   <div>
@@ -242,7 +242,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                   </div>
                   <div className="text-right">
                      <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-1">Status Global</p>
-                     <p className="text-2xl font-black text-[#10b981] leading-none animate-pulse">SYSTEM LIVE</p>
+                     <p className="text-2xl font-black text-[#10b981] leading-none animate-pulse uppercase">Live Terminal</p>
                   </div>
                </div>
 
@@ -258,42 +258,40 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                         </div>
                      </div>
                   </div>
-                  {/* Otros clusters se mantienen... */}
-               </div>
-            </header>
 
-               {/* CLUSTER: FREQUENCY PULSE */}
-               <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-blue-500 shadow-2xl relative overflow-hidden group`}>
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all -rotate-12"><Zap size={64}/></div>
-                  <div className="relative z-10">
-                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">High Frequency</p>
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner"><Zap size={24}/></div>
-                        <div><p className="text-2xl font-black text-white leading-none">14</p><p className="text-[8px] text-blue-500/60 font-bold uppercase">Active Weekly</p></div>
+                  {/* CLUSTER: FREQUENCY PULSE */}
+                  <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-blue-500 shadow-2xl relative overflow-hidden group`}>
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all -rotate-12"><Zap size={64}/></div>
+                     <div className="relative z-10">
+                        <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">High Frequency</p>
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 shadow-inner"><Zap size={24}/></div>
+                           <div><p className="text-2xl font-black text-white leading-none">14</p><p className="text-[8px] text-blue-500/60 font-bold uppercase">Active Weekly</p></div>
+                        </div>
                      </div>
                   </div>
-               </div>
 
-               {/* CLUSTER: GLOBAL REACH */}
-               <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-emerald-500 shadow-2xl relative overflow-hidden group`}>
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all"><Globe size={64}/></div>
-                  <div className="relative z-10">
-                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Global Reach</p>
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner"><Globe size={24}/></div>
-                        <div><p className="text-2xl font-black text-white leading-none">12</p><p className="text-[8px] text-emerald-500/60 font-bold uppercase">Countries</p></div>
+                  {/* CLUSTER: GLOBAL REACH */}
+                  <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-emerald-500 shadow-2xl relative overflow-hidden group`}>
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all"><Globe size={64}/></div>
+                     <div className="relative z-10">
+                        <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Global Reach</p>
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shadow-inner"><Globe size={24}/></div>
+                           <div><p className="text-2xl font-black text-white leading-none">12</p><p className="text-[8px] text-emerald-500/60 font-bold uppercase">Countries</p></div>
+                        </div>
                      </div>
                   </div>
-               </div>
 
-               {/* CLUSTER: GROWTH MOMENTUM */}
-               <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-purple-500 shadow-2xl relative overflow-hidden group`}>
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all rotate-45"><TrendingUp size={64}/></div>
-                  <div className="relative z-10">
-                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Momentum</p>
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500 shadow-inner"><TrendingUp size={24}/></div>
-                        <div><p className="text-2xl font-black text-white leading-none">92%</p><p className="text-[8px] text-purple-500/60 font-bold uppercase">Efficiency</p></div>
+                  {/* CLUSTER: GROWTH MOMENTUM */}
+                  <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-purple-500 shadow-2xl relative overflow-hidden group`}>
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all rotate-45"><TrendingUp size={64}/></div>
+                     <div className="relative z-10">
+                        <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Momentum</p>
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500 shadow-inner"><TrendingUp size={24}/></div>
+                           <div><p className="text-2xl font-black text-white leading-none">92%</p><p className="text-[8px] text-purple-500/60 font-bold uppercase">Efficiency</p></div>
+                        </div>
                      </div>
                   </div>
                </div>
