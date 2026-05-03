@@ -9,7 +9,7 @@ import {
   Zap, Copy, Smartphone, Monitor, Info, HardDrive, Megaphone, Palette as BrandIcon,
   Building2, Globe as GlobeIcon, File, FileVideo, Image as ImageIcon, Folder, ChevronLeft,
   Upload, Download, Bold, Italic, Strikethrough, List, CheckSquare, Table2, Heading1, Heading2,
-  Facebook, Smartphone as TiktokIcon, Cloud, Sparkles, Type, Highlighter
+  Facebook, Smartphone as TiktokIcon, Cloud, Sparkles, Type, Highlighter, TrendingUp, BarChart3
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
@@ -26,7 +26,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   
   const [clients, setClients] = useState([]);
   const [clientSearch, setClientSearch] = useState('');
-  const [meetingSearch, setMeetingSearch] = useState('');
+  const [meetingSearch, setMeetingSearch] = useState(''); // BUSCADOR DE SESIONES
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   
@@ -163,6 +163,15 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     try { await supabase.from('reuniones').insert(newMeeting); await fetchMeetings(activeClient.id); openMeeting(newMeeting); } catch (error) { alert(error.message); }
   };
 
+  const deleteMeeting = async (id, e) => {
+    e.stopPropagation();
+    if (!confirm('¿Eliminar esta sesión permanentemente?')) return;
+    try {
+      await supabase.from('reuniones').delete().eq('id', id);
+      await fetchMeetings(activeClient.id);
+    } catch (error) { alert(error.message); }
+  };
+
   const saveMeeting = async () => {
     setLoading(true);
     try {
@@ -190,7 +199,6 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
   const formatText = (command, value = null, e) => { if (e) e.preventDefault(); document.execCommand(command, false, value); editorRef.current.focus(); };
   const applyHighlight = (colorHex, e) => { if (e) e.preventDefault(); document.execCommand('hiliteColor', false, colorHex); };
-  
   const insertTag = (e, tagName, colorBg, colorText, colorBorder) => {
     if (e) e.preventDefault();
     const html = `<span contenteditable="false" style="background-color: ${colorBg}; color: ${colorText}; border: 1px solid ${colorBorder}; padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: 900; text-transform: uppercase; margin: 0 4px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">${tagName}</span>&nbsp;`;
@@ -208,26 +216,20 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     { name: 'IA', bg: 'rgba(168, 85, 247, 0.1)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.3)' }
   ];
 
-  const handleAISuggestion = async () => {
-    if (!aiPrompt) return;
-    setAiLoading(true);
-    try {
-      const suggestion = await aiService.generateScript(aiPrompt, editorRef.current.innerHTML, activeMeeting.mood || 'Profesional');
-      document.execCommand('insertHTML', false, suggestion.replace(/\n/g, '<br>') + '<br>');
-      setShowAIModal(false);
-      setAiPrompt('');
-    } catch (e) { alert(e.message); }
-    setAiLoading(false);
-  };
-
-  const togglePlatform = (p) => {
-    const current = activeMeeting.platforms || [];
-    const next = current.includes(p) ? current.filter(x => x !== p) : [...current, p];
-    setActiveMeeting({...activeMeeting, platforms: next});
-  };
-
   const filteredClients = (clients || []).filter(c => normalizeText(c.nombre).includes(normalizeText(clientSearch)) || normalizeText(c.empresa).includes(normalizeText(clientSearch)));
-  const filteredMeetings = (meetingsList || []).filter(m => m.cliente_id === activeClient?.id);
+  
+  // FILTRO AVANZADO DE SESIONES
+  const filteredMeetings = useMemo(() => {
+    return (meetingsList || []).filter(m => 
+       normalizeText(m.fecha).includes(normalizeText(meetingSearch)) || 
+       normalizeText(m.session_title).includes(normalizeText(meetingSearch)) ||
+       normalizeText(m.revision_version).includes(normalizeText(meetingSearch))
+    );
+  }, [meetingsList, meetingSearch]);
+
+  const totalTimeWorked = useMemo(() => {
+    return (meetingsList || []).reduce((acc, curr) => acc + (curr.total_time || 0), 0);
+  }, [meetingsList]);
 
   return (
     <div className="flex flex-col h-screen w-full bg-black text-white overflow-hidden animate-in fade-in duration-500 font-sans">
@@ -240,8 +242,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
               <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">Editor <span className="text-neutral-800">Pro</span></h2>
               <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em] mt-2">Executive Production Suite</p>
             </div>
-            <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-4 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-neutral-200 transition-all flex items-center gap-3 shadow-2xl">
-              <Plus size={18}/> Nuevo Cliente
+            <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-4 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-2xl">
+              <Plus size={18} className="inline mr-2"/> Nuevo Cliente
             </button>
           </header>
           <div className="relative">
@@ -251,7 +253,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {filteredClients.map(client => (
               <div key={client.id} onClick={() => openClientProfile(client)} className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 hover:bg-white/10 cursor-pointer transition-all flex flex-col items-center text-center group active:scale-95 shadow-2xl relative">
-                <div className="w-28 h-28 mb-8 rounded-[2rem] bg-white/5 flex items-center justify-center border border-white/5 shadow-inner">
+                <div className="w-28 h-28 mb-8 rounded-[2rem] bg-white/5 flex items-center justify-center border border-white/5 shadow-inner overflow-hidden">
                   {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={40} className="text-neutral-800" />}
                 </div>
                 <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{client.nombre}</h4>
@@ -262,36 +264,104 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
-      {/* VISTA: PERFIL CLIENTE */}
+      {/* VISTA: PERFIL CLIENTE (MEJORADA CON DASHBOARD DE CONTROL) */}
       {viewState === 'client-profile' && activeClient && (
-        <div className="h-full flex flex-col overflow-hidden bg-black">
-          <header className="px-6 py-4 bg-[#0a0a0a] border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-6">
-              <button onClick={() => setViewState('client-list')} className="w-10 h-10 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-600 hover:text-white transition-all"><ArrowLeft size={20}/></button>
-              <h3 className="text-xl font-black text-white uppercase tracking-tighter leading-none">{activeClient.nombre}</h3>
+        <div className="h-full flex flex-col overflow-hidden bg-black animate-in slide-in-from-right duration-500">
+          <header className="px-8 py-6 bg-[#0a0a0a] border-b border-white/5 flex items-center justify-between shadow-2xl relative z-10">
+            <div className="flex items-center gap-8">
+              <button onClick={() => setViewState('client-list')} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-600 hover:text-white hover:bg-white/10 transition-all"><ArrowLeft size={24}/></button>
+              <div>
+                <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-2">{activeClient.nombre}</h3>
+                <div className="flex items-center gap-4 text-neutral-600 font-black uppercase text-[9px] tracking-widest">
+                  <span className="flex items-center gap-1.5"><Globe size={12}/> {activeClient.pais || 'Global'}</span>
+                  <span className="w-1 h-1 bg-neutral-800 rounded-full"></span>
+                  <span className="flex items-center gap-1.5"><Building2 size={12}/> {activeClient.empresa || 'Independiente'}</span>
+                </div>
+              </div>
             </div>
-            <button onClick={createMeeting} className="px-8 py-3 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-2xl"><Plus size={16}/> Nueva Sesión</button>
+            <button onClick={createMeeting} className="px-10 py-4 bg-white text-black rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-neutral-200 transition-all flex items-center gap-3 shadow-2xl shadow-white/5 active:scale-95">
+              <Plus size={18}/> Nueva Sesión
+            </button>
           </header>
-          <div className="flex-1 p-8 overflow-y-auto mac-scrollbar bg-black">
-               <div className="max-w-4xl mx-auto space-y-3">
-                  {filteredMeetings.map(m => (
-                    <div key={m.id} onClick={() => openMeeting(m)} className="bg-[#0a0a0a] border border-white/5 rounded-3xl p-6 hover:bg-white/10 cursor-pointer transition-all flex items-center justify-between group">
-                       <div className="flex items-center gap-6">
-                          <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-neutral-800 group-hover:text-amber-500 transition-all border border-white/5 shadow-2xl"><PlayCircle size={24}/></div>
-                          <div>
-                            <p className="text-base font-black text-white uppercase tracking-tighter">{m.fecha}</p>
-                            <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mt-1">{m.session_title || 'Edición de Video'} • {m.revision_version || 'V1'}</p>
-                          </div>
-                       </div>
-                       <p className="text-xl font-black text-white font-mono">{formatTime(m.total_time || 0)}</p>
+
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-8 space-y-8 bg-black">
+               {/* DASHBOARD DE ESTADÍSTICAS */}
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 flex items-center gap-6 shadow-2xl group hover:border-white/10 transition-all">
+                     <div className="w-16 h-16 rounded-3xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform"><Clock size={32}/></div>
+                     <div>
+                        <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mb-1">Inversión Temporal</p>
+                        <h5 className="text-2xl font-black text-white font-mono">{formatTime(totalTimeWorked)}</h5>
+                     </div>
+                  </div>
+                  <div className="bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 flex items-center gap-6 shadow-2xl group hover:border-white/10 transition-all">
+                     <div className="w-16 h-16 rounded-3xl bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform"><Layers size={32}/></div>
+                     <div>
+                        <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mb-1">Volumen de Trabajo</p>
+                        <h5 className="text-2xl font-black text-white uppercase tracking-tighter">{meetingsList.length} <span className="text-neutral-800">Sesiones</span></h5>
+                     </div>
+                  </div>
+                  <div className="bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 flex items-center gap-6 shadow-2xl group hover:border-white/10 transition-all">
+                     <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform"><TrendingUp size={32}/></div>
+                     <div>
+                        <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mb-1">Última Edición</p>
+                        <h5 className="text-2xl font-black text-white uppercase tracking-tighter">{meetingsList[0]?.fecha || 'N/A'}</h5>
+                     </div>
+                  </div>
+               </div>
+
+               {/* BUSCADOR DE SESIONES */}
+               <div className="relative group">
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-white transition-colors" size={20}/>
+                  <input 
+                    type="text" 
+                    value={meetingSearch} 
+                    onChange={e=>setMeetingSearch(e.target.value)} 
+                    placeholder="Filtrar por fecha, descripción o versión (V1, V2...)" 
+                    className="w-full bg-[#0a0a0a] border border-white/5 rounded-3xl py-6 pl-16 pr-8 text-sm text-white font-bold outline-none focus:border-white/20 focus:bg-white/[0.02] transition-all shadow-2xl" 
+                  />
+                  {meetingSearch && <button onClick={() => setMeetingSearch('')} className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-white"><X size={20}/></button>}
+               </div>
+
+               {/* LISTA DE SESIONES */}
+               <div className="space-y-4">
+                  <p className="text-[10px] text-neutral-800 font-black uppercase tracking-[0.4em] mb-6 pl-2">Historial de Producción</p>
+                  {filteredMeetings.length > 0 ? (
+                    filteredMeetings.map(m => (
+                      <div key={m.id} onClick={() => openMeeting(m)} className="bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 hover:bg-white/5 cursor-pointer transition-all flex items-center justify-between group shadow-2xl relative overflow-hidden active:scale-[0.99]">
+                         <div className="flex items-center gap-8">
+                            <div className="w-16 h-16 rounded-[1.5rem] bg-white/5 flex items-center justify-center text-neutral-800 group-hover:text-amber-500 transition-all border border-white/5 shadow-inner"><PlayCircle size={32}/></div>
+                            <div>
+                              <div className="flex items-center gap-3 mb-1">
+                                <p className="text-xl font-black text-white uppercase tracking-tighter">{m.fecha}</p>
+                                <span className="px-3 py-1 bg-white/5 rounded-lg text-[9px] font-black text-emerald-500 uppercase border border-emerald-500/10">{m.revision_version || 'V1'}</span>
+                                {m.total_time > 0 && <span className="text-[9px] text-neutral-600 font-black uppercase flex items-center gap-1"><History size={10}/> {formatTime(m.total_time)}</span>}
+                              </div>
+                              <p className="text-xs text-neutral-500 font-bold uppercase tracking-widest">{m.session_title || 'Sin descripción'}</p>
+                            </div>
+                         </div>
+                         <div className="flex items-center gap-6">
+                            <div className="text-right hidden sm:block">
+                               <p className="text-2xl font-black text-white font-mono leading-none mb-1">{formatTime(m.total_time || 0)}</p>
+                               <p className="text-[8px] text-neutral-700 font-black uppercase tracking-widest">Tiempo de sesión</p>
+                            </div>
+                            <button onClick={(e) => deleteMeeting(m.id, e)} className="p-4 text-neutral-800 hover:text-rose-500 hover:bg-rose-500/5 rounded-2xl transition-all opacity-0 group-hover:opacity-100"><Trash2 size={20}/></button>
+                            <ChevronRight size={24} className="text-neutral-900 group-hover:text-white group-hover:translate-x-2 transition-all" />
+                         </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-20 text-center bg-[#0a0a0a] border border-white/5 rounded-[3rem] border-dashed">
+                       <BarChart3 size={48} className="m-auto text-neutral-900 mb-4" />
+                       <p className="text-neutral-700 font-black uppercase text-xs tracking-widest">No se encontraron sesiones que coincidan</p>
                     </div>
-                  ))}
+                  )}
                </div>
           </div>
         </div>
       )}
 
-      {/* VISTA: WAR ROOM / SESIÓN (EXPANDIDA CON COLORES Y ETIQUETAS) */}
+      {/* VISTA: WAR ROOM / SESIÓN */}
       {viewState === 'session' && activeMeeting && (
         <div className="flex-1 flex flex-col overflow-hidden bg-black animate-in fade-in duration-500">
           <header className="px-5 py-3 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between shrink-0">
@@ -375,7 +445,6 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                              <button onMouseDown={(e) => formatText('strikethrough', null, e)} className="p-3 text-neutral-500 hover:text-white bg-white/5 rounded-xl"><Strikethrough size={16}/></button>
                           </div>
                           <div className="flex items-center gap-2.5 px-4 border-r border-white/10 shrink-0">
-                             {/* RESALTADORES SOLICITADOS */}
                              <button onMouseDown={(e) => applyHighlight('#ef4444', e)} className="w-8 h-8 rounded-full bg-red-500 border-2 border-white/20 hover:scale-110 transition-all shadow-[0_0_15px_rgba(239,68,68,0.4)]"></button>
                              <button onMouseDown={(e) => applyHighlight('#3b82f6', e)} className="w-8 h-8 rounded-full bg-blue-500 border-2 border-white/20 hover:scale-110 transition-all shadow-[0_0_15px_rgba(59,130,246,0.4)]"></button>
                              <button onMouseDown={(e) => applyHighlight('#eab308', e)} className="w-8 h-8 rounded-full bg-yellow-500 border-2 border-white/20 hover:scale-110 transition-all shadow-[0_0_15px_rgba(234,179,8,0.4)]"></button>
