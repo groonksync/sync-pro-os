@@ -153,7 +153,7 @@ const PublicCatalog = () => {
                <button onClick={() => setSelectedProduct(null)} className="fixed md:absolute top-4 right-4 z-[160] w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:text-white transition-all active:scale-90"><X size={18}/></button>
                
                <div 
-                 className="w-full md:w-[45%] bg-[#080808] p-4 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5 min-h-[35vh] md:min-h-auto"
+                 className="w-full md:w-[45%] bg-[#080808] p-4 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5 min-h-[35vh] md:min-h-auto group/carousel"
                  onTouchStart={handleTouchStart}
                  onTouchMove={handleTouchMove}
                  onTouchEnd={handleTouchEnd}
@@ -161,9 +161,25 @@ const PublicCatalog = () => {
                   <div className="w-full flex-1 flex items-center justify-center overflow-hidden" key={currentImgIndex}>
                      <img src={allImages[currentImgIndex]} className="max-w-full max-h-[30vh] md:max-h-[50vh] object-contain drop-shadow-2xl rounded-2xl select-none animate-in fade-in duration-200" />
                   </div>
+
+                  {/* CONTROLES DE ESCRITORIO (HOVER) */}
                   {allImages.length > 1 && (
-                    <div className="flex gap-2 mt-4 pb-2">
-                       {allImages.map((_, i) => <button key={i} onClick={(e) => { e.stopPropagation(); setCurrentImgIndex(i); }} className={`w-2 h-2 rounded-full transition-all ${currentImgIndex === i ? 'bg-emerald-500 w-6' : 'bg-white/20'}`} />)}
+                    <>
+                      <button onClick={(e) => { e.stopPropagation(); prevImg(); }} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 backdrop-blur-xl text-white rounded-full items-center justify-center border border-white/10 hover:bg-white hover:text-black transition-all hidden md:flex opacity-0 group-hover/carousel:opacity-100 z-20"><ChevronLeft size={20}/></button>
+                      <button onClick={(e) => { e.stopPropagation(); nextImg(); }} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/40 backdrop-blur-xl text-white rounded-full items-center justify-center border border-white/10 hover:bg-white hover:text-black transition-all hidden md:flex opacity-0 group-hover/carousel:opacity-100 z-20"><ChevronRight size={20}/></button>
+                    </>
+                  )}
+
+                  {/* INDICADORES CLICABLES */}
+                  {allImages.length > 1 && (
+                    <div className="flex gap-2 mt-4 pb-2 z-20">
+                       {allImages.map((_, i) => (
+                         <button 
+                           key={i} 
+                           onClick={(e) => { e.stopPropagation(); setCurrentImgIndex(i); }} 
+                           className={`w-2 h-2 rounded-full transition-all ${currentImgIndex === i ? 'bg-emerald-500 w-6' : 'bg-white/20 hover:bg-white/40'}`} 
+                         />
+                       ))}
                     </div>
                   )}
                </div>
