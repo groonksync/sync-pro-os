@@ -244,15 +244,23 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
   const filteredMeetings = useMemo(() => {
     let list = (meetingsList || []);
-    // Si estamos viendo a un cliente específico, filtramos solo sus reuniones
+    // Si estamos viendo a un cliente específico, aplicamos el filtro de identidad unificada
     if (activeClient) {
-      list = list.filter(m => 
-        m.cliente === activeClient.nombre || 
-        m.cliente_id === activeClient.id
-      );
+      // 1. Obtenemos todos los IDs que coinciden con este nombre para rescatar sesiones de duplicados
+      const activeName = normalizeText(activeClient.nombre);
+      const associatedIds = clients
+        .filter(c => normalizeText(c.nombre) === activeName)
+        .map(c => c.id);
+
+      list = list.filter(m => {
+        const meetingClientName = normalizeText(m.cliente);
+        const isNameMatch = meetingClientName === activeName;
+        const isIdMatch = associatedIds.includes(m.cliente_id);
+        return isNameMatch || isIdMatch;
+      });
     }
     return list.filter(m => normalizeText(m.session_title).includes(normalizeText(meetingSearch)));
-  }, [meetingsList, meetingSearch, activeClient]);
+  }, [meetingsList, meetingSearch, activeClient, clients]);
   const totalTimeWorked = useMemo(() => (meetingsList || []).reduce((acc, curr) => acc + (curr.total_time || 0), 0), [meetingsList]);
 
   const colors = {
@@ -444,10 +452,17 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                   <div className="col-span-2 p-8 rounded-[2rem] bg-gradient-to-br from-[#10b981]/5 to-transparent border border-[#10b981]/10 flex items-center justify-between">
                      <div>
                         <p className="text-[10px] text-[#10b981] font-black uppercase tracking-[0.4em] mb-2">Project Capacity</p>
-                        <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Gestionando {meetingsList.length} Sesiones Activas</h4>
+                        <h4 className="text-2xl font-black text-white uppercase tracking-tighter">Gestionando {filteredMeetings.length} Sesiones Activas</h4>
                      </div>
                      <div className="flex -space-x-4">
-                        {[...Array(4)].map((_,i) => <div key={i} className="w-12 h-12 rounded-full border-4 border-[#0b0c0e] bg-neutral-900 flex items-center justify-center text-[10px] font-black text-neutral-500 uppercase">S{i+1}</div>)}
+                        {[...Array(4)].map((_,i) => {
+                          const isActive = i < filteredMeetings.length;
+                          return (
+                            <div key={i} className={`w-12 h-12 rounded-full border-4 border-[#0b0c0e] flex items-center justify-center text-[10px] font-black uppercase transition-all ${isActive ? 'bg-[#10b981] text-black shadow-[0_0_15px_#10b981]' : 'bg-neutral-900 text-neutral-500'}`}>
+                              S{i+1}
+                            </div>
+                          );
+                        })}
                      </div>
                   </div>
                </div>
