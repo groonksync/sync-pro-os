@@ -183,15 +183,16 @@ const App = () => {
             meetingsList={meetingsList} 
             data={data} 
             servicios={servicios} 
+            settings={appSettings}
             onNavigateToPrestamo={handleNavigateToPrestamo}
             onQuickPayment={handleQuickPayment} 
           />
         );
         case 'editor': return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} settings={appSettings} token={googleToken} />;
-        case 'prestamos': return <Prestamos data={data} setData={setData} preSelectedId={selectedPrestamoId} onClearSelection={() => setSelectedPrestamoId(null)} />;
+        case 'prestamos': return <Prestamos data={data} setData={setData} settings={appSettings} preSelectedId={selectedPrestamoId} onClearSelection={() => setSelectedPrestamoId(null)} />;
         case 'notificaciones': return <Notifications data={data} />;
         case 'pagos': return <Pagos />;
-        case 'inventario': return <Inventario />;
+        case 'inventario': return <Inventario settings={appSettings} />;
         case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} />;
         case 'recordatorios': return <Notifications data={data} />;
         case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} />;
@@ -224,10 +225,16 @@ const App = () => {
   };
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  // EFECTO DE TEMA GLOBAL
+  useEffect(() => {
+    document.body.style.backgroundColor = isDarkMode ? '#050505' : '#f8f9fa';
+  }, [isDarkMode]);
 
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
-      <div className={`flex h-screen w-full bg-[#050505] text-white font-sans selection:bg-white selection:text-black overflow-hidden ${appSettings.interfaceDensity}`}>
+      <div className={`flex h-screen w-full ${isDarkMode ? 'bg-[#050505] text-white' : 'bg-neutral-50 text-neutral-900'} font-sans selection:bg-emerald-500 selection:text-black overflow-hidden transition-colors duration-500 ${appSettings.interfaceDensity}`}>
         <Sidebar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 
@@ -235,6 +242,8 @@ const App = () => {
           googleUser={googleUser}
           isCollapsed={isSidebarCollapsed}
           setIsCollapsed={setIsSidebarCollapsed}
+          isDark={isDarkMode}
+          setIsDark={setIsDarkMode}
           counts={{ 
             meetings: Array.isArray(meetingsList) ? meetingsList.length : 0, 
             prestamos: Array.isArray(data?.prestamos) ? data.prestamos.length : 0,
@@ -242,9 +251,9 @@ const App = () => {
           }} 
         />
         
-        <main className={`flex-1 h-full overflow-y-auto mac-scrollbar relative bg-[#050505] transition-all duration-700 ease-in-out`}>
-          <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
-          <div className="w-full px-6 py-8 lg:px-16 lg:py-12 relative z-10 flex flex-col min-h-full max-w-[2000px] mx-auto">
+        <main className={`flex-1 h-full overflow-y-auto mac-scrollbar relative transition-all duration-700 ease-in-out ${appSettings.isMobileMode ? 'pb-24' : ''}`}>
+          <div className={`absolute top-0 inset-x-0 h-64 bg-gradient-to-b ${isDarkMode ? 'from-white/[0.02]' : 'from-black/[0.02]'} to-transparent pointer-events-none`}></div>
+          <div className={`w-full relative z-10 flex flex-col min-h-full max-w-[2000px] mx-auto transition-all ${appSettings.isMobileMode ? 'px-4 py-4' : 'px-6 py-8 lg:px-16 lg:py-12'}`}>
             {renderSafeContent()}
           </div>
         </main>

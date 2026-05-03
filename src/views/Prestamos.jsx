@@ -146,106 +146,122 @@ const Prestamos = ({ data, setData, preSelectedId, onClearSelection }) => {
 
   const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
 
+  const isMobile = settings?.isMobileMode;
+
   return (
-    <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
+    <div className={`flex flex-col h-full w-full animate-in fade-in duration-500 ${isMobile ? 'pb-20' : ''}`}>
       {prestamoView === 'list' ? (
         <div className="animate-in fade-in duration-300">
-          <header className="mb-10 flex justify-between items-end">
-            <div>
-              <h2 className="text-4xl font-light text-white tracking-tight">Cartera de <span className="text-neutral-400 font-medium">Préstamos</span></h2>
-              <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-[0.3em] mt-2 flex items-center gap-2">
+          <header className={`mb-10 flex ${isMobile ? 'flex-col gap-6 text-center' : 'justify-between items-end'}`}>
+            <div className={isMobile ? 'w-full' : ''}>
+              <h2 className={`${isMobile ? 'text-3xl' : 'text-4xl'} font-black tracking-tighter uppercase`}>Cartera de Préstamos</h2>
+              <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.4em] mt-2 flex items-center justify-center md:justify-start gap-2">
                 <ShieldCheck size={14} /> Gestión de Capital Asegurado
               </p>
             </div>
-            <button onClick={createPrestamo} className="px-8 py-4 bg-white text-black text-xs font-black rounded-2xl hover:bg-neutral-200 transition-all flex items-center gap-3 shadow-xl active:scale-95 uppercase tracking-widest">
-              <Plus size={18} strokeWidth={4} /> Nuevo Registro
+            <button onClick={createPrestamo} className={`bg-blue-600 text-white text-[11px] font-black rounded-2xl md:rounded-[2rem] hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95 uppercase tracking-widest ${isMobile ? 'w-full py-6' : 'px-8 py-4'}`}>
+              <Plus size={18} strokeWidth={4} /> Nuevo Registro Maestro
             </button>
           </header>
 
-          <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-[28px] overflow-hidden shadow-2xl">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-black/60 border-b border-white/[0.05]">
-                  <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Acreditado</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Capital Invertido</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Interés (Monto)</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {prestamosList.map(p => (
-                  <tr key={p.id} onClick={() => openPrestamo(p)} className="border-b border-white/[0.02] hover:bg-white/[0.04] transition-all cursor-pointer group">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-neutral-400 group-hover:bg-white group-hover:text-black transition-all">
-                          <User size={18} />
-                        </div>
-                        <div>
-                          <p className="text-sm text-white font-bold">{p.nombre || 'Sin Nombre'}</p>
-                          <p className="text-[10px] text-neutral-500 mt-1 uppercase font-bold tracking-widest">{p.estado}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-base font-mono text-white font-black">{parseFloat(p.capital).toLocaleString()} <span className="text-[10px] opacity-40 font-sans">{p.moneda}</span></p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-base font-mono text-emerald-500 font-black">
-                        {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span className="text-[10px] opacity-40 font-sans">{p.moneda}</span>
-                      </p>
-                      <p className="text-[9px] text-emerald-900 font-black uppercase mt-1">Interés al {p.interes}%</p>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                       <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button className="p-3 bg-white/5 rounded-xl text-neutral-500 hover:text-white transition-all"><ChevronRight size={18} /></button>
-                       </div>
-                    </td>
+          <div className={`${isMobile ? 'space-y-4' : 'bg-black/20 border border-white/5 rounded-[28px] overflow-hidden shadow-2xl'}`}>
+            {!isMobile ? (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-black/60 border-b border-white/[0.05]">
+                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Acreditado</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Capital Invertido</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Interés (Monto)</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest text-right">Acciones</th>
                   </tr>
+                </thead>
+                <tbody>
+                  {prestamosList.map(p => (
+                    <tr key={p.id} onClick={() => openPrestamo(p)} className="border-b border-white/[0.02] hover:bg-white/[0.04] transition-all cursor-pointer group">
+                      <td className="px-8 py-5">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-neutral-400 group-hover:bg-white group-hover:text-black transition-all">
+                            <User size={18} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black uppercase tracking-tight">{p.nombre || 'Sin Nombre'}</p>
+                            <p className="text-[10px] text-neutral-500 mt-1 uppercase font-black tracking-widest">{p.estado}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5">
+                        <p className="text-base font-mono font-black">{parseFloat(p.capital).toLocaleString()} <span className="text-[10px] opacity-40 font-sans">{p.moneda}</span></p>
+                      </td>
+                      <td className="px-8 py-5">
+                        <p className="text-base font-mono text-emerald-500 font-black">
+                          {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span className="text-[10px] opacity-40 font-sans">{p.moneda}</span>
+                        </p>
+                      </td>
+                      <td className="px-8 py-5 text-right">
+                         <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button className="p-3 bg-white/5 rounded-xl text-neutral-500 hover:text-white transition-all"><ChevronRight size={18} /></button>
+                         </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="grid grid-cols-1 gap-4">
+                {prestamosList.map(p => (
+                  <div key={p.id} onClick={() => openPrestamo(p)} className="bg-black/20 border border-white/5 p-6 rounded-[2rem] flex justify-between items-center active:scale-95 transition-all">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-neutral-400"><User size={24}/></div>
+                      <div>
+                        <p className="text-sm font-black uppercase tracking-tight">{p.nombre}</p>
+                        <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest mt-1">{(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} {p.moneda}</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={20} className="text-neutral-700"/>
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
         </div>
       ) : (
         <div className="animate-in slide-in-from-right-8 duration-500">
-          <div className="flex items-center gap-2 mb-10 text-xs text-neutral-500 cursor-pointer hover:text-white w-max transition-colors group font-bold uppercase tracking-widest" onClick={closePrestamo}>
+          <div className="flex items-center gap-2 mb-10 text-[10px] text-neutral-500 cursor-pointer hover:text-white w-max transition-colors group font-black uppercase tracking-[0.3em]" onClick={closePrestamo}>
             <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Volver a la Cartera
           </div>
           
-          <header className="mb-12 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 rounded-3xl bg-white/5 flex items-center justify-center text-white shadow-2xl border border-white/5">
-                <User size={40} />
+          <header className={`mb-12 flex ${isMobile ? 'flex-col gap-8' : 'flex-row justify-between items-center gap-8'}`}>
+            <div className={`flex ${isMobile ? 'flex-col items-center text-center gap-6' : 'items-center gap-6'}`}>
+              <div className={`rounded-3xl bg-white/5 flex items-center justify-center shadow-2xl border border-white/5 ${isMobile ? 'w-24 h-24' : 'w-20 h-20'}`}>
+                <User size={isMobile ? 48 : 40} />
               </div>
-              <div>
+              <div className={isMobile ? 'w-full' : ''}>
                 <input 
                   type="text" 
                   value={activePrestamo.nombre} 
                   onChange={e=>setActivePrestamo({...activePrestamo, nombre: e.target.value})} 
-                  className="text-4xl font-black text-white bg-transparent outline-none w-full border-b-2 border-transparent focus:border-white/10 transition-colors tracking-tight" 
-                  placeholder="Nombre del Cliente" 
+                  className={`${isMobile ? 'text-2xl text-center' : 'text-4xl'} font-black text-white bg-transparent outline-none w-full border-b-2 border-transparent focus:border-white/10 transition-colors tracking-tighter uppercase`} 
+                  placeholder="Nombre Cliente" 
                 />
-                <div className="flex items-center gap-4 mt-3">
+                <div className={`flex items-center gap-4 mt-4 ${isMobile ? 'justify-center flex-wrap' : ''}`}>
                   <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
                     <FileSignature size={14} className="text-neutral-500" />
-                    <input type="text" value={activePrestamo.ci} onChange={e=>setActivePrestamo({...activePrestamo, ci: e.target.value})} className="bg-transparent outline-none w-28 text-xs text-white font-bold" placeholder="CÉDULA CI..."/>
+                    <input type="text" value={activePrestamo.ci} onChange={e=>setActivePrestamo({...activePrestamo, ci: e.target.value})} className="bg-transparent outline-none w-24 text-[10px] text-white font-black" placeholder="CÉDULA CI..."/>
                   </div>
                   <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-xl border border-white/5">
                     <Smartphone size={14} className="text-neutral-500" />
-                    <input type="text" value={activePrestamo.telefono} onChange={e=>setActivePrestamo({...activePrestamo, telefono: e.target.value})} className="bg-transparent outline-none w-28 text-xs text-white font-bold" placeholder="WHATSAPP..."/>
+                    <input type="text" value={activePrestamo.telefono} onChange={e=>setActivePrestamo({...activePrestamo, telefono: e.target.value})} className="bg-transparent outline-none w-24 text-[10px] text-white font-black" placeholder="WHATSAPP..."/>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="flex gap-4">
-              <button onClick={closePrestamo} className="px-8 py-4 bg-white text-black text-xs font-black rounded-2xl hover:bg-neutral-200 transition-all flex items-center gap-3 shadow-2xl active:scale-95 uppercase tracking-widest">
-                <Save size={20}/> Guardar Cambios
-              </button>
-            </div>
+            <button onClick={closePrestamo} className={`bg-white text-black text-[11px] font-black rounded-2xl md:rounded-[2rem] hover:bg-neutral-200 transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95 uppercase tracking-widest ${isMobile ? 'w-full py-6' : 'px-8 py-4'}`}>
+              <Save size={20}/> Guardar Cambios
+            </button>
           </header>
 
-          <div className="grid grid-cols-12 gap-6">
-            <div className="col-span-12 lg:col-span-8 space-y-6">
+          <div className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`}>
+            <div className={`${isMobile ? '' : 'col-span-8'} space-y-8`}>
               {/* Timeline de Pagos */}
               <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-[28px] p-8 shadow-2xl">
                 <div className="flex justify-between items-center mb-8">
