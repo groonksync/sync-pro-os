@@ -131,10 +131,25 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
   const fetchMeetings = async (clientName) => {
     try {
-      const { data, error } = await supabase
-        .from('reuniones')
-        .select('*')
-        .eq('cliente', clientName);
+      // 1. Obtener todos los IDs posibles para este nombre (por si hay duplicados antiguos)
+      const { data: allClients } = await supabase
+        .from('clientes_editor')
+        .select('id')
+        .eq('nombre', clientName);
+      
+      const clientIds = allClients?.map(c => c.id) || [];
+      
+      // 2. Buscar reuniones por nombre O por cualquiera de esos IDs
+      let query = supabase.from('reuniones').select('*');
+      
+      if (clientIds.length > 0) {
+        query = query.or(`cliente.eq."${clientName}",cliente_id.in.(${clientIds.map(id => `"${id}"`).join(',')})`);
+      } else {
+        query = query.eq('cliente', clientName);
+      }
+
+      const { data, error } = await query.order('fecha', { ascending: false });
+      
       if (error) throw error;
       setMeetingsList(data || []);
     } catch (e) { console.error(e); }
