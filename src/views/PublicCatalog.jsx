@@ -21,7 +21,6 @@ const PublicProductCard = ({ p, onSelect }) => {
       onClick={() => onSelect(p)}
       className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] p-0 hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl overflow-hidden cursor-pointer h-full"
     >
-      {/* IMAGEN: AJUSTE PERFECTO CON RECORTE REDONDEADO */}
       <div className="aspect-square bg-[#080808] m-1.5 md:m-2 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center border border-white/5 shadow-inner">
         {p.imagen ? (
           <img 
@@ -33,11 +32,11 @@ const PublicProductCard = ({ p, onSelect }) => {
           <Package size={24} strokeWidth={1} className="text-neutral-800" />
         )}
 
-        {/* BARRA AGOTADO: REDISEÑO "INFINITO" QUE TAPA TODO EL ANCHO */}
+        {/* BARRA AGOTADO: DISEÑO CRISTALIZADO E INFINITO */}
         {parseInt(p.stock_actual) === 0 && (
-           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none">
-              <div className="bg-black/90 backdrop-blur-xl border-y border-white/10 py-2.5 md:py-5 w-[300%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,1)] flex items-center justify-center translate-x-[-10%]">
-                 <span className="text-white text-[10px] md:text-base font-black tracking-[0.5em] md:tracking-[1em] uppercase drop-shadow-2xl">AGOTADO</span>
+           <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-xl border-y border-white/10 py-3 md:py-6 w-[400%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex items-center justify-center">
+                 <span className="text-white text-[11px] md:text-xl font-black tracking-[0.6em] md:tracking-[1.2em] uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">AGOTADO</span>
               </div>
            </div>
         )}

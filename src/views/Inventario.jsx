@@ -25,7 +25,7 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
       onClick={() => onSelect(p)}
       className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] overflow-hidden hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl h-full cursor-pointer"
     >
-      <div className="aspect-square bg-[#080808] relative overflow-hidden flex items-center justify-center border-b border-white/5">
+      <div className="aspect-square bg-[#080808] relative overflow-hidden flex items-center justify-center border-b border-white/5 shadow-inner">
         {p.imagen ? (
           <img 
             src={p.imagen} 
@@ -39,10 +39,11 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
           </div>
         )}
 
+        {/* BARRA AGOTADO: DISEÑO CRISTALIZADO E INFINITO (INVENTARIO) */}
         {parseInt(p.stock_actual) === 0 && (
-           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none overflow-hidden">
-              <div className="bg-black/90 backdrop-blur-md border-y border-white/10 py-2 md:py-4 w-[300%] -rotate-[15deg] shadow-2xl flex items-center justify-center">
-                 <span className="text-white text-[8px] md:text-xs font-black tracking-[0.4em] uppercase">AGOTADO</span>
+           <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-xl border-y border-white/10 py-3 md:py-4 w-[400%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex items-center justify-center">
+                 <span className="text-white text-[9px] md:text-xs font-black tracking-[0.5em] md:tracking-[0.8em] uppercase">AGOTADO</span>
               </div>
            </div>
         )}
@@ -335,7 +336,7 @@ const Inventario = () => {
 
               <div className="grid grid-cols-12 gap-8">
                  <div className="col-span-12 lg:col-span-4 space-y-4">
-                    <div className="aspect-square bg-white/5 rounded-[2rem] border border-white/10 flex items-center justify-center relative overflow-hidden group">
+                    <div className="aspect-square bg-white/5 rounded-[2rem] border border-white/10 flex items-center justify-center relative overflow-hidden group shadow-inner">
                        {editingProduct?.imagenes?.length > 0 ? (
                           <img src={editingProduct.imagenes[0]} className="w-full h-full object-cover rounded-[inherit] p-0 transition-transform duration-700 group-hover:scale-110" alt="Principal"/>
                        ) : (
