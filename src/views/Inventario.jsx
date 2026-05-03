@@ -6,7 +6,7 @@ import {
   Percent, ShoppingCart, Truck, X, Image as ImageIcon,
   FileText, Smartphone, MessageCircle, MoreVertical, 
   History, ArrowUpRight, ArrowDownLeft, User as UserIcon,
-  Cpu, Info, Hash, MapPin, Tag, BarChart3, Globe,
+  Cpu, Info, Hash, MapPin, Tag, BarChart3, Globe, Layout,
   ShieldAlert, Trophy, Wallet, Printer, ClipboardList, Scale, Box as BoxIcon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
