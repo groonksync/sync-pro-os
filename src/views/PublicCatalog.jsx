@@ -14,6 +14,8 @@ const WhatsAppIcon = ({ size = 24, className = "" }) => (
 );
 
 const PublicProductCard = ({ p, onSelect }) => {
+  const hasDiscount = p.precio_antes && p.precio_antes > p.precio_venta;
+  
   return (
     <div 
       onClick={() => onSelect(p)}
@@ -42,6 +44,11 @@ const PublicProductCard = ({ p, onSelect }) => {
            <span className="px-2 py-0.5 bg-blue-600/80 backdrop-blur-md text-white text-[5px] md:text-[7px] font-black rounded-full uppercase tracking-widest">
               {p.categoria || 'SYNC'}
            </span>
+           {p.tipo_envio === 'Envío Gratuito' && (
+             <span className="px-2 py-0.5 bg-emerald-500/80 backdrop-blur-md text-white text-[5px] md:text-[7px] font-black rounded-full uppercase tracking-widest flex items-center gap-1">
+                <Truck size={6} className="md:w-2 md:h-2" /> Envío Gratis
+             </span>
+           )}
         </div>
       </div>
 
@@ -50,6 +57,11 @@ const PublicProductCard = ({ p, onSelect }) => {
           <h3 className="text-[10px] md:text-base font-black text-white leading-tight tracking-tight uppercase line-clamp-2 min-h-[2.5em]">{p.nombre}</h3>
           
           <div className="flex flex-col">
+             {hasDiscount && (
+               <p className="text-[7px] md:text-[10px] text-neutral-600 font-mono line-through mb-[-4px] md:mb-[-8px]">
+                  {parseFloat(p.precio_antes).toLocaleString()} BS.
+               </p>
+             )}
              <p className="text-xl md:text-4xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
                 {parseFloat(p.precio_venta || 0).toLocaleString()} 
                 <span className="text-[8px] md:text-xs opacity-30 ml-1 font-sans">BS.</span>
@@ -74,6 +86,7 @@ const PublicCatalog = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
   const WHATSAPP_NUMBER = "59169109766"; 
 
@@ -127,12 +140,16 @@ const PublicCatalog = () => {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
+  const allImages = selectedProduct ? [selectedProduct.imagen, ...(selectedProduct.imagenes || [])].filter(Boolean) : [];
+  const nextImg = () => setCurrentImgIndex(prev => (prev + 1) % allImages.length);
+  const prevImg = () => setCurrentImgIndex(prev => (prev - 1 + allImages.length) % allImages.length);
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500">
       <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-4 md:py-6 px-4 md:px-20 flex justify-between items-center">
          <div className="flex items-center gap-3">
             <Zap size={24} className="text-blue-500 fill-blue-500" />
-            <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter">Sync<span className="text-blue-500">PRO</span></h1>
+            <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter text-white">Sync<span className="text-blue-500">PRO</span></h1>
          </div>
          <div className="relative flex-1 max-w-[400px] ml-6">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-700" size={14} />
@@ -161,35 +178,50 @@ const PublicCatalog = () => {
 
          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
             {filteredProducts.map(p => (
-               <PublicProductCard key={p.id} p={p} onSelect={setSelectedProduct} />
+               <PublicProductCard key={p.id} p={p} onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }} />
             ))}
          </div>
       </main>
 
       {selectedProduct && (
-         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4">
-            <div className="bg-[#121212] border border-white/10 w-full max-w-[800px] rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col md:flex-row">
-               <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-[130] p-2 bg-white text-black rounded-full"><X size={20}/></button>
-               <div className="w-full md:w-[45%] bg-[#080808] p-8 flex items-center justify-center">
-                  <img src={selectedProduct.imagen} className="max-w-full max-h-[40vh] md:max-h-[60vh] object-contain rounded-2xl shadow-2xl" />
+         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-500">
+            <div className="bg-[#121212] border border-white/10 w-full max-w-[950px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[95vh] flex flex-col md:flex-row">
+               <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-[130] w-12 h-12 bg-white text-black rounded-full flex items-center justify-center shadow-2xl"><X size={20}/></button>
+               <div className="w-full md:w-[42%] bg-[#080808] p-4 md:p-10 flex items-center justify-center relative group/carousel">
+                  <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
+                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[55vh] object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl" />
+                  </div>
+                  {allImages.length > 1 && (
+                    <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
+                       <button onClick={prevImg} className="w-10 h-10 bg-white/5 text-white rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md border border-white/10"><ChevronLeft size={18}/></button>
+                       <button onClick={nextImg} className="w-10 h-10 bg-white/5 text-white rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md border border-white/10"><ChevronRight size={18}/></button>
+                    </div>
+                  )}
                </div>
-               <div className="w-full md:w-[55%] p-8 flex flex-col justify-center gap-6">
-                  <div>
-                     <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.4em] mb-2">{selectedProduct.categoria}</p>
-                     <h2 className="text-2xl md:text-4xl font-black text-white leading-tight tracking-tighter uppercase">{selectedProduct.nombre}</h2>
-                  </div>
-                  <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5">
-                     <p className="text-[8px] font-black text-neutral-500 uppercase mb-2">Precio de Venta</p>
-                     <p className="text-4xl md:text-6xl font-mono text-white font-black tracking-tighter">{parseFloat(selectedProduct.precio_venta).toLocaleString()} <span className="text-xs text-blue-500">BS.</span></p>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <p className="text-[7px] font-black text-neutral-500 uppercase mb-1">Garantía</p>
-                        <p className="text-xs font-black text-white">{selectedProduct.garantia || 'Consultar'}</p>
+               <div className="w-full md:w-[58%] p-4 md:p-8 flex flex-col justify-between bg-[#121212]">
+                  <div className="space-y-4">
+                     <div>
+                        <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.4em] mb-1">{selectedProduct.categoria}</p>
+                        <h2 className="text-xl md:text-3xl font-black text-white tracking-tighter uppercase">{selectedProduct.nombre}</h2>
                      </div>
-                     <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <p className="text-[7px] font-black text-neutral-500 uppercase mb-1">Estado</p>
-                        <p className="text-xs font-black text-white">Stock Inmediato</p>
+                     <div className="bg-white/[0.03] border border-white/5 p-5 rounded-3xl">
+                        <p className="text-[6px] md:text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-1">Inversión Final</p>
+                        <div className="flex items-baseline gap-3">
+                           <p className="text-3xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
+                           <div className="flex flex-col">
+                              {selectedProduct.precio_antes > selectedProduct.precio_venta && <p className="text-[9px] md:text-xs text-neutral-600 font-mono line-through opacity-50">{parseFloat(selectedProduct.precio_antes).toLocaleString()}</p>}
+                              <span className="text-[9px] md:text-xs font-black text-blue-500">BS.</span>
+                           </div>
+                        </div>
+                     </div>
+                     <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white/5 p-3 rounded-2xl border border-white/5">
+                           <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1">Garantía</p>
+                           <p className="text-[10px] md:text-xs font-black text-white">{selectedProduct.garantia || 'Consultar'}</p>
+                        </div>
+                        <div className={`p-3 rounded-2xl border flex items-center gap-2 ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
+                           <Truck size={14} /><p className="text-[7px] md:text-[8px] font-black uppercase">{selectedProduct.tipo_envio || 'Cobro Adicional'}</p>
+                        </div>
                      </div>
                   </div>
                   <button onClick={() => handleConsult(selectedProduct)} className="w-full py-5 bg-white text-black rounded-[2rem] font-black uppercase text-xs tracking-widest hover:bg-blue-600 hover:text-white transition-all">WhatsApp Compra</button>
