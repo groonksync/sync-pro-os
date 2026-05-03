@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Package, Search, Plus, Save, Trash2, Edit3, X, Image as ImageIcon,
   Truck, Tag, Box as BoxIcon, Layout, CheckCircle, ChevronLeft, ChevronRight,
-  Briefcase, ShoppingBag
+  Briefcase, ShoppingBag, DollarSign, Hash, MapPin, ShieldCheck, FileText, Info
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -45,20 +45,17 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect, isDark }) => {
            </div>
         )}
 
-        {/* ETIQUETA CATEGORÍA */}
         <div className="absolute top-4 left-4 z-10">
           <span className="text-[7px] text-white font-black uppercase tracking-widest bg-emerald-600/90 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 shadow-2xl">
             {p.categoria || 'Accesorio'}
           </span>
         </div>
 
-        {/* BOTONES ACCIÓN */}
         <div className="absolute bottom-4 right-4 z-20 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
           <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-10 h-10 bg-rose-500/80 backdrop-blur-md text-white rounded-xl flex items-center justify-center hover:bg-rose-600 transition-all border border-white/10 shadow-2xl active:scale-90"><Trash2 size={14} /></button>
           <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-10 h-10 bg-white/80 backdrop-blur-md text-black rounded-xl flex items-center justify-center hover:bg-white transition-all border border-white/10 shadow-2xl active:scale-90"><Edit3 size={14} /></button>
         </div>
 
-        {/* INDICADOR STOCK */}
         {!isAgotado && (
           <div className="absolute top-4 right-4 z-10">
             <p className="text-[9px] font-mono font-black px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/10 bg-black/40 text-emerald-400 shadow-2xl">
@@ -68,7 +65,6 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect, isDark }) => {
         )}
       </div>
 
-      {/* INFORMACIÓN DETALLADA */}
       <div className="p-6 flex flex-col gap-4">
         <div className="space-y-1">
            <h3 className={`text-sm md:text-base font-black ${isDark ? 'text-white' : 'text-neutral-900'} line-clamp-2 leading-tight tracking-tight uppercase`}>{p.nombre}</h3>
@@ -190,19 +186,20 @@ const Inventario = ({ settings, isDark }) => {
         <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identificar activos..." className={`w-full ${isDark ? 'bg-black/20 border-white/10 text-white' : 'bg-white border-neutral-200 text-neutral-900'} border rounded-[2.5rem] py-6 md:py-8 pl-20 pr-8 text-base outline-none focus:border-emerald-500/50 transition-all shadow-inner`} />
       </div>
 
-      {/* REJILLA AJUSTADA A 6 COLUMNAS MÁXIMO PARA MAYOR TAMAÑO */}
       <div className={`grid gap-4 md:gap-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6'}`}>
         {filteredProducts.map(p => ( <ProductCard key={p.id} p={p} isDark={isDark} onEdit={handleEditProduct} onDelete={handleDeleteProduct} onSelect={setSelectedProduct} /> ))}
       </div>
 
       {isModalOpen && editingProduct && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-2 md:p-6 overflow-y-auto">
-           <div className={`${isDark ? 'bg-[#0a0a0a] border-white/10' : 'bg-white border-neutral-200'} border w-full max-w-[1000px] rounded-[48px] p-6 md:p-12 shadow-2xl relative my-auto`}>
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-2 md:p-6 overflow-y-auto mac-scrollbar">
+           <div className={`${isDark ? 'bg-[#0a0a0a] border-white/10' : 'bg-white border-neutral-200'} border w-full max-w-[1100px] rounded-[48px] p-6 md:p-12 shadow-2xl relative my-auto`}>
               <div className="flex justify-between items-center mb-10">
                  <h3 className={`text-2xl md:text-4xl font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-tighter`}>Editor Maestre</h3>
                  <button onClick={() => setIsModalOpen(false)} className="text-neutral-500 hover:text-rose-500 p-3 bg-white/5 rounded-full"><X size={24}/></button>
               </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+                 {/* COLUMNA IZQUIERDA: MEDIA & ASSETS */}
                  <div className="col-span-12 md:col-span-4 space-y-6">
                     <div className="aspect-square bg-white/5 rounded-[2.5rem] border border-white/10 flex items-center justify-center relative overflow-hidden group">
                        {editingProduct.imagen ? <img src={editingProduct.imagen} className="w-full h-full object-cover rounded-[inherit]" alt="Main"/> : <ImageIcon size={48} className="text-neutral-800" />}
@@ -211,26 +208,102 @@ const Inventario = ({ settings, isDark }) => {
                           <Plus className="text-white" size={32} />
                        </label>
                     </div>
+                    
+                    <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 space-y-4">
+                       <p className="text-[9px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2"><Truck size={12}/> Logística de Envío</p>
+                       <select value={editingProduct.tipo_envio || ''} onChange={e=>setEditingProduct({...editingProduct, tipo_envio: e.target.value})} className={`w-full bg-black/40 border border-white/5 rounded-xl p-4 text-[10px] font-black uppercase ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`}>
+                          <option value="Envío Gratuito">Envío Gratuito</option>
+                          <option value="Costo de Envío Adicional">Envío con Costo</option>
+                       </select>
+                    </div>
+
+                    <div className="bg-white/5 p-6 rounded-[2rem] border border-white/5 space-y-4">
+                       <p className="text-[9px] font-black text-neutral-500 uppercase tracking-widest flex items-center gap-2"><ShieldCheck size={12}/> Garantía Sovereign</p>
+                       <div className="flex gap-2">
+                          <input type="number" value={editingProduct.garantia_num} onChange={e=>setEditingProduct({...editingProduct, garantia_num: e.target.value})} className="w-16 bg-black/40 border border-white/5 rounded-xl p-3 text-center text-xs font-black text-emerald-500 outline-none" />
+                          <select value={editingProduct.garantia_unit} onChange={e=>setEditingProduct({...editingProduct, garantia_unit: e.target.value})} className={`flex-1 bg-black/40 border border-white/5 rounded-xl p-3 text-[10px] font-black uppercase ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`}>
+                             <option value="Días">Días</option>
+                             <option value="Meses">Meses</option>
+                             <option value="Años">Años</option>
+                             <option value="Sin Garantía">Sin Garantía</option>
+                          </select>
+                       </div>
+                    </div>
                  </div>
-                 <div className="col-span-12 md:col-span-8 space-y-8">
+
+                 {/* COLUMNA DERECHA: DATA & SPECS */}
+                 <div className="col-span-12 md:col-span-8 space-y-10">
+                    {/* SECCIÓN: IDENTIFICACIÓN */}
                     <div className="space-y-4">
-                       <div className="flex items-center gap-3 border-l-2 border-emerald-500 pl-4 mb-4">
+                       <div className="flex items-center gap-3 border-l-2 border-emerald-500 pl-4">
                           <Tag size={14} className="text-emerald-500"/>
-                          <p className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-widest`}>Identificación</p>
+                          <p className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-widest`}>Identificación & Identidad</p>
                        </div>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Nombre del Producto</p><input type="text" value={editingProduct.nombre || ''} onChange={(e) => setEditingProduct({...editingProduct, nombre: e.target.value})} className={`w-full bg-transparent text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`} /></div>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                             <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Categoría</p>
+                             <select value={editingProduct.categoria || ''} onChange={e=>setEditingProduct({...editingProduct, categoria: e.target.value})} className={`w-full bg-transparent text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`}>
+                                <option value="Computadoras">Computadoras</option>
+                                <option value="Accesorios">Accesorios</option>
+                                <option value="Audio">Audio</option>
+                                <option value="Video">Video</option>
+                             </select>
+                          </div>
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Marca</p><input type="text" value={editingProduct.marca || ''} onChange={(e) => setEditingProduct({...editingProduct, marca: e.target.value})} className="w-full bg-transparent text-sm font-black text-emerald-500 outline-none" /></div>
-                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5 col-span-2"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Distribuidor / Proveedor Maestro</p><div className="flex items-center gap-3"><Briefcase size={14} className="text-neutral-700" /><input type="text" value={editingProduct.distribuidor || ''} onChange={(e) => setEditingProduct({...editingProduct, distribuidor: e.target.value})} className={`w-full bg-transparent text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`} placeholder="Nombre del proveedor..."/></div></div>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Código / SKU</p><input type="text" value={editingProduct.codigo || ''} onChange={(e) => setEditingProduct({...editingProduct, codigo: e.target.value})} className={`w-full bg-transparent text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`} /></div>
                        </div>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                       <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2">Venta</p><input type="number" value={editingProduct.precio_venta} onChange={e=>setEditingProduct({...editingProduct, precio_venta: e.target.value})} className="w-full bg-transparent text-xl font-mono font-black text-emerald-500 outline-none" /></div>
-                       <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2">Stock</p><input type="number" value={editingProduct.stock_actual} onChange={e=>setEditingProduct({...editingProduct, stock_actual: e.target.value})} className="w-full bg-transparent text-xl font-mono font-black text-amber-500 outline-none" /></div>
+
+                    {/* SECCIÓN: LOGÍSTICA & DISTRIBUCIÓN */}
+                    <div className="space-y-4">
+                       <div className="flex items-center gap-3 border-l-2 border-amber-500 pl-4">
+                          <Briefcase size={14} className="text-amber-500"/>
+                          <p className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-widest`}>Logística & Origen</p>
+                       </div>
+                       <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
+                          <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Distribuidor / Proveedor Maestro</p>
+                          <input type="text" value={editingProduct.distribuidor || ''} onChange={(e) => setEditingProduct({...editingProduct, distribuidor: e.target.value})} className={`w-full bg-transparent text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`} placeholder="Nombre del proveedor..."/>
+                       </div>
+                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2">Ubicación</p><div className="flex items-center gap-2 text-neutral-700"><MapPin size={12}/><input type="text" value={editingProduct.ubicacion || ''} onChange={e=>setEditingProduct({...editingProduct, ubicacion: e.target.value})} className={`w-full bg-transparent text-xs font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`} /></div></div>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2">Serial / IMEI</p><input type="text" value={editingProduct.serial || ''} onChange={e=>setEditingProduct({...editingProduct, serial: e.target.value})} className={`w-full bg-transparent text-xs font-black ${isDark ? 'text-white' : 'text-neutral-900'} outline-none`} /></div>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2">Stock Mínimo</p><input type="number" value={editingProduct.stock_minimo} onChange={e=>setEditingProduct({...editingProduct, stock_minimo: e.target.value})} className="w-full bg-transparent text-sm font-mono font-black text-rose-500 outline-none" /></div>
+                       </div>
+                    </div>
+
+                    {/* SECCIÓN: FINANZAS */}
+                    <div className="space-y-4">
+                       <div className="flex items-center gap-3 border-l-2 border-emerald-500 pl-4">
+                          <DollarSign size={14} className="text-emerald-500"/>
+                          <p className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-widest`}>Arquitectura Financiera</p>
+                       </div>
+                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Costo Adquisición</p><input type="number" value={editingProduct.precio_costo} onChange={e=>setEditingProduct({...editingProduct, precio_costo: e.target.value})} className="w-full bg-transparent text-xl font-mono font-black text-neutral-500 outline-none" /></div>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Venta Final</p><input type="number" value={editingProduct.precio_venta} onChange={e=>setEditingProduct({...editingProduct, precio_venta: e.target.value})} className="w-full bg-transparent text-xl font-mono font-black text-emerald-500 outline-none" /></div>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Precio Antes</p><input type="number" value={editingProduct.precio_antes} onChange={e=>setEditingProduct({...editingProduct, precio_antes: e.target.value})} className="w-full bg-transparent text-xl font-mono font-black text-rose-500/50 line-through outline-none" /></div>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5"><p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Stock Actual</p><input type="number" value={editingProduct.stock_actual} onChange={e=>setEditingProduct({...editingProduct, stock_actual: e.target.value})} className="w-full bg-transparent text-xl font-mono font-black text-amber-500 outline-none" /></div>
+                       </div>
+                    </div>
+
+                    {/* SECCIÓN: DESCRIPCIÓN TÉCNICA */}
+                    <div className="space-y-4">
+                       <div className="flex items-center gap-3 border-l-2 border-white pl-4">
+                          <FileText size={14} className="text-white"/>
+                          <p className={`text-[9px] font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-widest`}>Ficha Técnica Maestra</p>
+                       </div>
+                       <textarea value={editingProduct.ficha_tecnica || ''} onChange={e=>setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} placeholder="Especificaciones técnicas, dimensiones, potencia..." className={`w-full bg-white/5 border border-white/5 rounded-3xl p-6 text-xs font-medium leading-relaxed ${isDark ? 'text-neutral-300' : 'text-neutral-700'} outline-none focus:border-emerald-500/30 transition-all h-32 resize-none`}></textarea>
                     </div>
                  </div>
               </div>
-              <div className="mt-10 flex gap-4"><button onClick={() => setIsModalOpen(false)} className="flex-1 py-6 bg-white/5 text-neutral-500 rounded-[2rem] font-black text-[10px] uppercase">Cancelar</button><button onClick={handleSaveProduct} className="flex-[2] py-6 bg-emerald-600 text-white rounded-[2rem] font-black text-[10px] uppercase shadow-2xl">Sincronizar Cambios</button></div>
+
+              {/* ACCIONES FINALES */}
+              <div className="mt-12 flex flex-col md:flex-row gap-4">
+                 <button onClick={() => setIsModalOpen(false)} className="flex-1 py-6 bg-white/5 text-neutral-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-500/10 hover:text-rose-500 transition-all">Cancelar Operación</button>
+                 <button onClick={handleSaveProduct} className="flex-[2] py-6 bg-emerald-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-500 transition-all active:scale-95 flex items-center justify-center gap-4">
+                    <Save size={18} strokeWidth={3}/> Sincronizar Cambios Maestros
+                 </button>
+              </div>
            </div>
         </div>
       )}
