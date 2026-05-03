@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Package, TrendingUp, Users, Plus, Search, Filter, Share2, ExternalLink,
-  ChevronRight, ChevronLeft, ArrowLeft, Save, Trash2, Edit3, 
-  AlertTriangle, CheckCircle2, Box, DollarSign, 
-  Percent, ShoppingCart, Truck, X, Image as ImageIcon,
-  FileText, Smartphone, MessageCircle, MoreVertical, 
-  History, ArrowUpRight, ArrowDownLeft, User as UserIcon,
-  Cpu, Info, Hash, MapPin, Tag, BarChart3, Globe, Layout,
-  ShieldAlert, Trophy, Wallet, Printer, ClipboardList, Scale, Box as BoxIcon,
-  Settings, Layers, ShieldCheck, List, CheckCircle
+  Package, Search, Plus, Save, Trash2, Edit3, X, Image as ImageIcon,
+  Truck, DollarSign, Tag, Box as BoxIcon, Layout, ShieldCheck, 
+  CheckCircle, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -43,6 +37,7 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
       onClick={() => onSelect(p)}
       className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] overflow-hidden hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl h-full cursor-pointer"
     >
+      {/* IMAGEN Y BOTONES FLOTANTES */}
       <div className="aspect-square bg-[#080808] relative overflow-hidden flex items-center justify-center border-b border-white/5 shadow-inner">
         {p.imagen ? (
           <img 
@@ -65,12 +60,30 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
            </div>
         )}
 
-        <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10 flex flex-col gap-1.5">
+        {/* ETIQUETA CATEGORÍA */}
+        <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
           <span className="text-[6px] md:text-[8px] text-white font-black uppercase tracking-widest bg-blue-600/90 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/10 shadow-2xl">
             {p.categoria || 'Standard'}
           </span>
         </div>
-        
+
+        {/* BOTONES FLOTANTES DE ACCIÓN */}
+        <div className="absolute bottom-3 right-3 md:bottom-4 md:right-4 z-20 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
+          <button 
+            onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} 
+            className="w-8 h-8 md:w-10 md:h-10 bg-rose-500/80 backdrop-blur-md text-white rounded-xl flex items-center justify-center hover:bg-rose-600 transition-all border border-white/10 shadow-2xl active:scale-90"
+          >
+            <Trash2 size={14} />
+          </button>
+          <button 
+            onClick={(e) => { e.stopPropagation(); onEdit(p); }} 
+            className="w-8 h-8 md:w-10 md:h-10 bg-white/80 backdrop-blur-md text-black rounded-xl flex items-center justify-center hover:bg-white transition-all border border-white/10 shadow-2xl active:scale-90"
+          >
+            <Edit3 size={14} />
+          </button>
+        </div>
+
+        {/* INDICADOR DE STOCK (ESTILO FLOTANTE) */}
         <div className="absolute top-3 right-3 md:top-4 md:right-4 z-10">
           <p className="text-[8px] md:text-[10px] font-mono font-black px-2 py-1 md:px-3 md:py-1.5 rounded-lg backdrop-blur-md border border-white/10 bg-black/40 text-white shadow-2xl">
             {p.stock_actual} UDS
@@ -78,25 +91,19 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
         </div>
       </div>
 
-      <div className="p-3 md:p-6 flex-1 flex flex-col justify-between">
-        <div className="space-y-2 md:space-y-4">
-          <div className="space-y-0.5">
-             <h3 className="text-[10px] md:text-lg font-black text-white line-clamp-1 leading-tight tracking-tight uppercase">{p.nombre}</h3>
-             <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">{p.marca || 'Sovereign Core'}</p>
-          </div>
-          
-          <div className="flex flex-col">
-             <p className="text-[6px] md:text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-0.5">Venta Final</p>
-             <p className="text-lg md:text-3xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
-                {parseFloat(p.precio_venta || 0).toLocaleString()} 
-                <span className="text-[8px] md:text-xs opacity-20 ml-1 font-sans">BS.</span>
-             </p>
-          </div>
+      {/* INFORMACIÓN COMPACTA */}
+      <div className="p-4 md:p-6 flex flex-col gap-2 md:gap-4">
+        <div className="space-y-0.5">
+           <h3 className="text-[10px] md:text-lg font-black text-white line-clamp-1 leading-tight tracking-tight uppercase">{p.nombre}</h3>
+           <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">{p.marca || 'Sovereign Core'}</p>
         </div>
-
-        <div className="pt-3 md:pt-6 mt-2 md:mt-4 border-t border-white/5 flex justify-end gap-1.5 md:gap-2">
-          <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-7 h-7 md:w-10 md:h-10 bg-rose-500/10 text-rose-500 rounded-lg md:rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10"><Trash2 size={14}/></button>
-          <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-7 h-7 md:w-10 md:h-10 bg-[#1a1a1a] text-white rounded-lg md:rounded-xl flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all shadow-xl border border-white/5"><Edit3 size={14}/></button>
+        
+        <div className="flex flex-col">
+           <p className="text-[6px] md:text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-0.5">Venta Final</p>
+           <p className="text-xl md:text-4xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
+              {parseFloat(p.precio_venta || 0).toLocaleString()} 
+              <span className="text-[8px] md:text-xs opacity-20 ml-1 font-sans">BS.</span>
+           </p>
         </div>
       </div>
     </div>
@@ -104,7 +111,6 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
 };
 
 const Inventario = () => {
-  const [activeSubTab, setActiveSubTab] = useState('productos');
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -133,15 +139,15 @@ const Inventario = () => {
       setLoading(true);
       const from = page * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
-      const { data: prodData, error: prodError } = await supabase
+      const { data, error } = await supabase
         .from('productos')
         .select('*')
         .range(from, to)
         .order('created_at', { ascending: false });
-      if (prodError) throw prodError;
-      if (page === 0) setProductos(prodData || []);
-      else setProductos(prev => [...prev, ...prodData]);
-      setHasMore(prodData.length === ITEMS_PER_PAGE);
+      if (error) throw error;
+      if (page === 0) setProductos(data || []);
+      else setProductos(prev => [...prev, ...data]);
+      setHasMore(data.length === ITEMS_PER_PAGE);
     } catch (e) {
       console.error(e);
     } finally {
@@ -158,42 +164,28 @@ const Inventario = () => {
         : `${editingProduct.garantia_num || 0} ${editingProduct.garantia_unit || 'Días'}`;
 
       const payload = { 
-        id: editingProduct.id,
-        nombre: editingProduct.nombre,
-        marca: editingProduct.marca,
-        categoria: editingProduct.categoria,
-        precio_costo: parseFloat(editingProduct.precio_costo) || 0,
-        precio_venta: parseFloat(editingProduct.precio_venta) || 0,
-        precio_antes: parseFloat(editingProduct.precio_antes) || 0,
-        stock_actual: parseInt(editingProduct.stock_actual) || 0,
-        stock_minimo: parseInt(editingProduct.stock_minimo) || 5,
-        stock_vendido: parseInt(editingProduct.stock_vendido) || 0,
-        ficha_tecnica: editingProduct.ficha_tecnica,
-        estado: editingProduct.estado || 'Stock',
-        imagen: editingProduct.imagen,
-        codigo: editingProduct.codigo,
-        ubicacion: editingProduct.ubicacion,
-        serial: editingProduct.serial,
+        ...editingProduct,
         garantia: garantiaString,
-        tipo_envio: editingProduct.tipo_envio,
-        imagenes: editingProduct.imagenes,
         updated_at: new Date().toISOString()
       };
       
+      delete payload.garantia_num;
+      delete payload.garantia_unit;
+
       const { error } = await supabase.from('productos').upsert(payload);
       if (error) throw error;
       
       await fetchData();
       setIsModalOpen(false);
       setEditingProduct(null);
-      setToast({ show: true, message: 'SINCRONIZADO' }); // NOTIFICACIÓN DE UNA PALABRA
+      setToast({ show: true, message: 'SINCRONIZADO' });
     } catch (e) { 
       alert('Error: ' + e.message); 
     }
     setLoading(false);
   };
 
-  const handleDeleteProduct = async (id, imageUrl) => {
+  const handleDeleteProduct = async (id) => {
      if (!confirm('¿Eliminar producto?')) return;
      setLoading(true);
      try {
@@ -263,12 +255,10 @@ const Inventario = () => {
       <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
           <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tighter leading-none">Inventario <span className="text-blue-500">Pro</span></h2>
-          <div className="flex items-center gap-3">
-            <p className="text-[8px] md:text-[10px] text-neutral-600 font-black uppercase tracking-[0.4em] flex items-center gap-2"><Layout size={12}/> Asset Intelligence</p>
-          </div>
+          <p className="text-[8px] md:text-[10px] text-neutral-600 font-black uppercase tracking-[0.4em] flex items-center gap-2 mt-2"><Layout size={12}/> Global Active Hub</p>
         </div>
         <button onClick={openNewProduct} className="px-12 py-5 bg-white text-black rounded-2xl md:rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
-           <Plus size={18} strokeWidth={3}/> Nuevo Registro
+           <Plus size={18} strokeWidth={3}/> Nuevo Activo
         </button>
       </header>
 
@@ -283,12 +273,18 @@ const Inventario = () => {
         ))}
       </div>
 
+      {hasMore && (
+        <div className="flex justify-center py-20">
+           <button onClick={() => setPage(p => p + 1)} className="px-10 py-4 bg-white/5 border border-white/10 rounded-full text-[10px] font-black text-neutral-500 hover:text-white hover:bg-white/10 transition-all uppercase tracking-widest">Cargar más activos</button>
+        </div>
+      )}
+
       {isModalOpen && editingProduct && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[200] flex items-center justify-center p-2 md:p-6 overflow-y-auto">
            <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-[1000px] rounded-[32px] md:rounded-[48px] p-6 md:p-12 shadow-2xl relative my-auto">
               <div className="flex justify-between items-center mb-10 md:mb-14">
                  <div className="space-y-1">
-                    <h3 className="text-2xl md:text-4xl font-black text-white tracking-tighter uppercase">Editor de Activos</h3>
+                    <h3 className="text-2xl md:text-4xl font-black text-white tracking-tighter uppercase">Editor Maestre</h3>
                     <p className="text-[7px] md:text-[9px] font-black text-neutral-500 uppercase tracking-[0.4em]">Sovereign Synchronizer System</p>
                  </div>
                  <button onClick={() => setIsModalOpen(false)} className="text-neutral-700 hover:text-white p-3 bg-white/5 rounded-full border border-white/5"><X size={24}/></button>
@@ -346,32 +342,12 @@ const Inventario = () => {
                              <input type="text" value={editingProduct.marca || ''} onChange={(e) => setEditingProduct({...editingProduct, marca: e.target.value})} className="w-full bg-transparent text-sm font-black text-white outline-none" />
                           </div>
                        </div>
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                             <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Categoría</p>
-                             <select value={editingProduct.categoria || ''} onChange={(e) => setEditingProduct({...editingProduct, categoria: e.target.value})} className="w-full bg-transparent text-xs font-black text-white outline-none uppercase cursor-pointer">
-                                <option value="Computadoras">Computadoras</option>
-                                <option value="Accesorios">Accesorios</option>
-                                <option value="Audio">Audio</option>
-                                <option value="Cámaras">Cámaras</option>
-                                <option value="Smartphones">Smartphones</option>
-                             </select>
-                          </div>
-                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                             <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Código Maestro</p>
-                             <input type="text" value={editingProduct.codigo || ''} onChange={(e) => setEditingProduct({...editingProduct, codigo: e.target.value})} className="w-full bg-transparent text-xs font-mono font-black text-blue-500 outline-none" />
-                          </div>
-                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                             <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Serial Único</p>
-                             <input type="text" value={editingProduct.serial || ''} onChange={(e) => setEditingProduct({...editingProduct, serial: e.target.value})} className="w-full bg-transparent text-xs font-mono font-black text-emerald-500 outline-none" />
-                          </div>
-                       </div>
                     </div>
 
                     <div className="space-y-4">
                        <div className="flex items-center gap-3 border-l-2 border-emerald-500 pl-4 mb-4">
                           <DollarSign size={14} className="text-emerald-500"/>
-                          <p className="text-[9px] font-black text-white uppercase tracking-widest">Precios & Rentabilidad</p>
+                          <p className="text-[9px] font-black text-white uppercase tracking-widest">Estructura de Precios</p>
                        </div>
                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
@@ -400,19 +376,19 @@ const Inventario = () => {
                              <input type="number" value={editingProduct.stock_actual || 0} onChange={(e) => setEditingProduct({...editingProduct, stock_actual: e.target.value})} className="w-full bg-transparent text-lg font-mono font-black text-white outline-none" />
                           </div>
                           <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                             <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Mínimo</p>
-                             <input type="number" value={editingProduct.stock_minimo || 5} onChange={(e) => setEditingProduct({...editingProduct, stock_minimo: e.target.value})} className="w-full bg-transparent text-lg font-mono font-black text-amber-500 outline-none" />
-                          </div>
-                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
                              <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Ubicación</p>
                              <input type="text" value={editingProduct.ubicacion || ''} onChange={(e) => setEditingProduct({...editingProduct, ubicacion: e.target.value})} className="w-full bg-transparent text-[10px] font-black text-white outline-none uppercase" />
                           </div>
-                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                             <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Logística</p>
-                             <select value={editingProduct.tipo_envio || 'Envío Gratuito'} onChange={e => setEditingProduct({...editingProduct, tipo_envio: e.target.value})} className="w-full bg-transparent text-[9px] font-black text-white outline-none uppercase">
-                                <option value="Envío Gratuito">Envío Gratis</option>
-                                <option value="Cobro Adicional">Cobro Adic.</option>
-                             </select>
+                          <div className="bg-white/5 p-4 rounded-2xl border border-white/5 col-span-2">
+                             <p className="text-[7px] font-black text-neutral-500 uppercase mb-2 tracking-widest">Garantía</p>
+                             <div className="flex items-center gap-2">
+                                <input type="number" value={editingProduct.garantia_num || 0} onChange={(e) => setEditingProduct({...editingProduct, garantia_num: e.target.value})} className="w-full bg-transparent text-lg font-mono font-black text-white outline-none" />
+                                <select value={editingProduct.garantia_unit || 'Días'} onChange={(e) => setEditingProduct({...editingProduct, garantia_unit: e.target.value})} className="bg-white/10 text-[9px] font-black px-2 py-1 rounded-lg outline-none uppercase">
+                                   <option value="Días">Días</option>
+                                   <option value="Años">Años</option>
+                                   <option value="Sin Garantía">N/A</option>
+                                </select>
+                             </div>
                           </div>
                        </div>
                     </div>
@@ -423,7 +399,7 @@ const Inventario = () => {
                  <button onClick={() => { setIsModalOpen(false); setEditingProduct(null); }} className="flex-1 py-6 bg-white/5 text-neutral-500 rounded-[2.5rem] font-black text-[10px] uppercase tracking-[0.3em] hover:text-white transition-all border border-white/5">Cancelar</button>
                  <button onClick={handleSaveProduct} disabled={loading} className="flex-[2] py-6 bg-white text-black font-black rounded-[2.5rem] uppercase text-[10px] tracking-[0.4em] hover:bg-blue-600 hover:text-white transition-all shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex items-center justify-center gap-3 active:scale-95">
                     {loading ? <div className="w-5 h-5 border-2 border-black border-t-transparent animate-spin rounded-full"/> : <Save size={18}/>}
-                    {loading ? 'SINCRONIZANDO...' : 'SINCRONIZAR AHORA'}
+                    {loading ? 'SINCRONIZANDO...' : 'GUARDAR CAMBIOS'}
                  </button>
               </div>
            </div>
@@ -461,19 +437,10 @@ const Inventario = () => {
                            </div>
                         </div>
                      </div>
-                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                           <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1">Garantía</p>
-                           <p className="text-[10px] md:text-xs font-black text-white">{selectedProduct.garantia || 'Consultar'}</p>
-                        </div>
-                        <div className={`p-4 rounded-2xl border flex items-center gap-2 ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
-                           <Truck size={14} /><p className="text-[7px] md:text-[8px] font-black uppercase tracking-widest">{selectedProduct.tipo_envio || 'Cobro Adicional'}</p>
-                        </div>
-                     </div>
                   </div>
                   <div className="mt-6 flex gap-4">
                      <button onClick={() => handleEditProduct(selectedProduct)} className="flex-1 py-5 bg-[#1a1a1a] border border-white/5 text-white rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"><Edit3 size={16}/> Editar</button>
-                     <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre}`, '_blank')} className="flex-[1.5] py-5 bg-blue-600 text-white rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-blue-500 transition-all shadow-xl flex items-center justify-center gap-3"><WhatsAppIcon size={18}/> WhatsApp</button>
+                     <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre}`, '_blank')} className="flex-[1.5] py-5 bg-blue-600 text-white rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-blue-500 transition-all shadow-xl flex items-center justify-center gap-3">WhatsApp</button>
                   </div>
                </div>
             </div>
