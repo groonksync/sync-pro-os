@@ -396,55 +396,48 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                  <div className="absolute top-0 left-3/4 w-[1px] h-full bg-white"></div>
               </div>
 
-              {/* CABECERA MINIMALISTA */}
-              <header className="relative z-10 flex justify-between items-end">
-                 <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                       <span className="w-12 h-[2px] bg-amber-500/50"></span>
-                       <p className="text-[10px] text-amber-500 font-black uppercase tracking-[1em]">Strategic Atelier</p>
-                    </div>
-                    <h2 className="text-7xl font-black text-white tracking-tighter uppercase leading-[0.8]">
-                       Agency <br/><span className="text-white/10 italic">Management</span>
+              {/* CABECERA SIMPLIFICADA */}
+              <header className="relative z-10 flex justify-between items-center">
+                 <div className="flex items-center gap-6">
+                    <div className="w-2 h-10 bg-amber-500 rounded-full"></div>
+                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase">
+                       Agencia
                     </h2>
                  </div>
                  
-                 <div className="flex flex-col items-end gap-6">
+                 <div className="flex items-center gap-8">
                     <div className="flex gap-4 items-center bg-white/5 p-2 rounded-2xl border border-white/10">
                        <div className="px-6 py-2 border-r border-white/10 text-center">
-                          <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">Active Accounts</p>
-                          <p className="text-xl font-black text-white font-mono">12</p>
+                          <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">Cuentas</p>
+                          <p className="text-xl font-black text-white font-mono">{companies.length || 12}</p>
                        </div>
                        <div className="px-6 py-2 text-center">
-                          <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">Efficiency</p>
-                          <p className="text-xl font-black text-[#10b981] font-mono">98.4%</p>
+                          <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">Eficiencia</p>
+                          <p className="text-xl font-black text-[#10b981] font-mono">98%</p>
                        </div>
                     </div>
-                    <button onClick={() => setIsCompanyModalOpen(true)} className="px-12 py-5 bg-white text-black rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] hover:bg-amber-500 hover:text-white transition-all shadow-[0_20px_50px_rgba(255,255,255,0.1)] flex items-center gap-4 group">
-                       <Plus size={20} strokeWidth={3} className="group-hover:rotate-90 transition-transform"/> Onboard New Project
+                    <button onClick={() => setIsCompanyModalOpen(true)} className="px-10 py-4 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all flex items-center gap-4 group">
+                       <Plus size={18} strokeWidth={3}/> Nuevo Proyecto
                     </button>
                  </div>
               </header>
 
-              {/* MATRIZ DE PLANES: DASHBOARD HORIZONTAL ULTRA-FINO */}
+              {/* MATRIZ DE PLANES */}
               <div className="grid grid-cols-4 gap-6 relative z-10">
                  {[
-                   { name: 'Básico', icon: <Shield size={18}/>, color: '#3b82f6', count: 4 },
-                   { name: 'Intermedio', icon: <Zap size={18}/>, color: '#10b981', count: 3 },
-                   { name: 'Avanzado', icon: <Crown size={18}/>, color: '#a855f7', count: 5 },
-                   { name: 'Personalizado', icon: <Sparkles size={18}/>, color: '#f59e0b', count: 1 }
+                   { name: 'Básico', icon: <Shield size={18}/>, color: '#3b82f6' },
+                   { name: 'Intermedio', icon: <Zap size={18}/>, color: '#10b981' },
+                   { name: 'Avanzado', icon: <Crown size={18}/>, color: '#a855f7' },
+                   { name: 'Personalizado', icon: <Sparkles size={18}/>, color: '#f59e0b' }
                  ].map((p, i) => (
-                   <div key={i} onClick={() => setActiveAgencyPlan(p.name)} className={`group relative p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all cursor-pointer ${activeAgencyPlan === p.name ? 'bg-white/[0.05] border-white/20' : ''}`}>
-                      <div className="flex justify-between items-center mb-6">
-                         <div className="p-3 rounded-xl bg-white/5 text-neutral-500 group-hover:text-white transition-all">{p.icon}</div>
-                         <div className="flex items-center gap-2">
-                            <span className={`w-2 h-2 rounded-full animate-pulse`} style={{ backgroundColor: p.color }}></span>
-                            <span className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{p.count} Active</span>
+                   <div key={i} onClick={() => setActiveAgencyPlan(p.name)} className={`group relative p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all cursor-pointer ${activeAgencyPlan === p.name ? 'bg-white/[0.05] border-white/20' : ''}`}>
+                      <div className="flex justify-between items-center">
+                         <div className="flex items-center gap-4">
+                            <div className="text-neutral-500 group-hover:text-white transition-all">{p.icon}</div>
+                            <h4 className="text-sm font-black text-white uppercase tracking-widest">{p.name}</h4>
                          </div>
+                         <div className={`w-1.5 h-1.5 rounded-full`} style={{ backgroundColor: p.color }}></div>
                       </div>
-                      <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-1">Tier: {p.name}</h4>
-                      <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest">Sovereign Service Level</p>
-                      
-                      {/* BARRA DE ESTADO SUTIL */}
                       <div className="absolute bottom-0 left-0 w-full h-[2px] bg-white/5 overflow-hidden">
                          <div className="h-full transition-all duration-1000" style={{ width: activeAgencyPlan === p.name ? '100%' : '0%', backgroundColor: p.color }}></div>
                       </div>
@@ -452,62 +445,60 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                  ))}
               </div>
 
-              {/* LISTADO DE PROYECTOS (CASE STUDY LOOK) */}
+              {/* LISTADO DE PROYECTOS */}
               <div className="space-y-10 relative z-10">
-                 <div className="flex items-center gap-6">
-                    <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Project Portfolio</h3>
-                    <div className="h-[1px] flex-1 bg-gradient-to-r from-white/10 to-transparent"></div>
-                    <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em]">Filtered by: {activeAgencyPlan || 'All Assets'}</p>
-                 </div>
-
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                    {[...Array(6)].map((_, i) => (
-                       <div key={i} onClick={() => { setSelectedCompany({id: i, nombre_empresa: 'Global Dynamics Corp', dueño: 'Marcus Aurelius'}); setViewState('agency-session'); }} className="group relative">
-                          {/* OVERLAY DE SOMBRA DINÁMICA */}
-                          <div className="absolute -inset-2 bg-gradient-to-tr from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-all blur-2xl rounded-[3rem]"></div>
-                          
-                          <div className="relative bg-[#080808] border border-white/5 rounded-[3rem] p-10 hover:border-white/20 transition-all">
-                             <div className="flex justify-between items-start mb-10">
-                                <div className="flex items-center gap-6">
-                                   <div className="w-20 h-20 bg-gradient-to-tr from-neutral-800 to-neutral-900 rounded-[1.8rem] flex items-center justify-center text-white border border-white/10 shadow-2xl group-hover:scale-110 transition-all">
-                                      <Building2 size={36} strokeWidth={1.5}/>
-                                   </div>
-                                   <div>
-                                      <h4 className="text-2xl font-black text-white uppercase tracking-tighter leading-none mb-2">Global Dynamics</h4>
-                                      <div className="flex items-center gap-3">
-                                         <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-neutral-400 uppercase tracking-widest border border-white/5">Portfolio #{204 + i}</span>
-                                         <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]"></span>
+                    {(companies.length > 0 ? companies : [...Array(6)]).map((company, i) => {
+                       const data = company.nombre_empresa ? company : { nombre_empresa: 'Global Dynamics', dueño: 'Marcus Aurelius', drive_url: '#', telefono: '+1 800 234 567' };
+                       return (
+                          <div key={i} onClick={() => { setSelectedCompany(data); setViewState('agency-session'); }} className="group relative">
+                             <div className="absolute -inset-2 bg-gradient-to-tr from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-all blur-2xl rounded-[3rem]"></div>
+                             
+                             <div className="relative bg-[#080808] border border-white/5 rounded-[3rem] p-10 hover:border-white/20 transition-all cursor-pointer">
+                                <div className="flex justify-between items-start mb-10">
+                                   <div className="flex items-center gap-6">
+                                      <div className="w-16 h-16 bg-neutral-900 rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-2xl group-hover:scale-110 transition-all">
+                                         <Building2 size={28} strokeWidth={1.5}/>
+                                      </div>
+                                      <div>
+                                         <h4 className="text-xl font-black text-white uppercase tracking-tighter leading-none mb-2">{data.nombre_empresa}</h4>
+                                         <div className="flex items-center gap-3">
+                                            <span className="text-[8px] font-black text-neutral-600 uppercase tracking-widest">ID: PRJ-{204 + i}</span>
+                                            <span className="w-1 h-1 rounded-full bg-[#10b981]"></span>
+                                         </div>
                                       </div>
                                    </div>
                                 </div>
-                                <div className="text-right">
-                                   <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-1">Service Tier</p>
-                                   <p className="text-xs font-black text-amber-500 uppercase tracking-widest">Avanzado</p>
-                                </div>
-                             </div>
 
-                             <div className="grid grid-cols-2 gap-8 mb-10">
-                                <div className="space-y-1">
-                                   <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Lead Partner</p>
-                                   <p className="text-sm font-black text-neutral-200">Marcus Aurelius</p>
+                                <div className="grid grid-cols-2 gap-8 mb-10">
+                                   <div className="space-y-1">
+                                      <p className="text-[8px] text-neutral-700 font-black uppercase tracking-widest">Lead Partner</p>
+                                      <p className="text-xs font-black text-neutral-400">{data.dueño}</p>
+                                   </div>
+                                   <div className="space-y-1 text-right">
+                                      <p className="text-[8px] text-neutral-700 font-black uppercase tracking-widest">Status</p>
+                                      <p className="text-[9px] font-black text-amber-500 uppercase tracking-widest">In Progress</p>
+                                   </div>
                                 </div>
-                                <div className="space-y-1">
-                                   <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Project Value</p>
-                                   <p className="text-sm font-black text-neutral-200 font-mono">$12,400.00</p>
-                                </div>
-                             </div>
 
-                             <div className="flex gap-4">
-                                <button onClick={(e) => e.stopPropagation()} className="flex-1 py-5 bg-white/5 hover:bg-white text-black font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all border border-white/10 flex items-center justify-center gap-3 group/btn">
-                                   <FolderOpen size={16} className="text-neutral-500 group-hover/btn:text-black"/> Data Archive
-                                </button>
-                                <button onClick={(e) => e.stopPropagation()} className="w-16 h-16 bg-white/5 hover:bg-amber-500 text-white rounded-2xl flex items-center justify-center transition-all border border-white/10">
-                                   <Phone size={20}/>
-                                </button>
+                                <div className="flex gap-4">
+                                   <button 
+                                      onClick={(e) => { e.stopPropagation(); window.open(data.drive_url, '_blank'); }} 
+                                      className="flex-1 py-4 bg-white/5 hover:bg-white text-neutral-500 hover:text-black font-black text-[9px] uppercase tracking-widest rounded-xl transition-all border border-white/10 flex items-center justify-center gap-3"
+                                   >
+                                      <FolderOpen size={14}/> Drive Archive
+                                   </button>
+                                   <button 
+                                      onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(data.telefono); alert('Copiado: ' + data.telefono); }} 
+                                      className="w-14 h-14 bg-white/5 hover:bg-amber-500 text-white rounded-xl flex items-center justify-center transition-all border border-white/10"
+                                   >
+                                      <Phone size={18}/>
+                                   </button>
+                                </div>
                              </div>
                           </div>
-                       </div>
-                    ))}
+                       );
+                    })}
                  </div>
               </div>
            </div>
