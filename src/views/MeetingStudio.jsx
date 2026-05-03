@@ -245,30 +245,74 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   return (
     <div className="flex flex-col h-screen w-full bg-[#020202] text-white overflow-hidden font-sans tracking-tight">
       
-      {/* VISTAS PRINCIPALES */}
+      {/* VISTA: LISTA DE CLIENTES (HIGH DENSITY REORG) */}
       {viewState === 'client-list' && (
-        <div className="p-8 space-y-8 overflow-y-auto mac-scrollbar h-full max-w-[1600px] mx-auto w-full">
-           <header className="flex justify-between items-center pb-8 border-b border-white/5">
+        <div className="p-10 space-y-10 overflow-y-auto mac-scrollbar h-full max-w-[1700px] mx-auto w-full animate-in fade-in duration-700">
+          <header className="flex justify-between items-end pb-8 border-b border-white/5">
             <div>
-              <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.4em] mb-2">Sovereign OS • Intelligence</p>
-              <h2 className="text-5xl font-black text-white tracking-tighter uppercase leading-none">Editor <span className="text-neutral-900">Pro</span></h2>
+              <p className="text-[10px] text-[#10b981] font-black uppercase tracking-[0.5em] mb-3 flex items-center gap-2">
+                <Sparkles size={12}/> Sovereign OS • Intelligence Terminal
+              </p>
+              <h2 className="text-6xl font-black text-white tracking-tighter uppercase leading-none">Identificar <span className="text-neutral-900">Talento</span></h2>
             </div>
-            <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-3.5 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-[#10b981] hover:text-white transition-all flex items-center gap-3 shadow-xl">
-              <Plus size={16} strokeWidth={3}/> Nuevo Cliente
-            </button>
+            <div className="flex items-center gap-6">
+              <div className="text-right pr-6 border-r border-white/5">
+                <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-1">Base de Datos</p>
+                <p className="text-2xl font-black text-white leading-none">{clients.length} <span className="text-[#10b981] text-xs">Entidades</span></p>
+              </div>
+              <button onClick={() => setIsClientModalOpen(true)} className="px-10 py-5 bg-[#10b981] text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center gap-3 shadow-[0_15px_40px_rgba(16,185,129,0.2)] active:scale-95">
+                <Plus size={18} strokeWidth={3}/> Reclutar Talento
+              </button>
+            </div>
           </header>
+
           <div className="relative group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={20}/>
-            <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Identificar talento..." className="w-full bg-[#080808] border border-white/5 rounded-2xl py-5 pl-16 pr-6 text-base text-white outline-none focus:border-[#10b981]/30 transition-all font-medium" />
+            <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={24}/>
+            <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Escanear base de datos por nombre, empresa o país..." className="w-full bg-[#080808] border border-white/5 rounded-[2.5rem] py-7 pl-20 pr-8 text-xl text-white outline-none focus:border-[#10b981]/30 transition-all shadow-2xl font-bold placeholder:text-neutral-900" />
           </div>
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 2xl:grid-cols-6">
             {filteredClients.map(client => (
-              <div key={client.id} onClick={() => openClientProfile(client)} className="bg-[#080808] border border-white/5 rounded-[2.5rem] p-8 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col items-center group active:scale-95 border-b-2 border-b-transparent hover:border-b-[#10b981]">
-                <div className="w-24 h-24 mb-6 rounded-3xl bg-white/5 flex items-center justify-center border border-white/5 shadow-inner overflow-hidden">
-                  {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={36} className="text-neutral-900" />}
+              <div key={client.id} onClick={() => openClientProfile(client)} className="bg-[#080808] border border-white/5 rounded-[2.5rem] p-6 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col group active:scale-95 shadow-2xl relative overflow-hidden border-b-2 border-b-transparent hover:border-b-[#10b981] hover:-translate-y-1">
+                
+                {/* INDICADOR DE STATUS */}
+                <div className="absolute top-6 right-6 w-2 h-2 rounded-full bg-[#10b981] shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 shadow-inner overflow-hidden shrink-0 group-hover:border-[#10b981]/30 transition-all">
+                    {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={24} className="text-neutral-900" />}
+                  </div>
+                  <div className="overflow-hidden">
+                    <h4 className="text-base font-black text-white uppercase tracking-tighter truncate leading-none mb-1.5">{client.nombre}</h4>
+                    <p className="text-[8px] text-neutral-600 font-black uppercase tracking-[0.2em] flex items-center gap-1.5"><Globe size={10}/> {client.pais || 'Global'}</p>
+                  </div>
                 </div>
-                <h4 className="text-lg font-black text-white uppercase tracking-tighter mb-1 leading-none">{client.nombre}</h4>
-                <p className="text-[9px] text-neutral-600 font-black uppercase tracking-[0.2em]">{client.pais || 'Global'}</p>
+
+                {/* REDES SOCIALES (ICONOS MINI) */}
+                <div className="flex gap-2 mb-6">
+                  {client.redes_sociales?.instagram && <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-neutral-800 group-hover:text-pink-500 transition-all"><Instagram size={12}/></div>}
+                  {client.redes_sociales?.youtube && <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-neutral-800 group-hover:text-red-500 transition-all"><Youtube size={12}/></div>}
+                  {client.redes_sociales?.tiktok && <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-neutral-800 group-hover:text-cyan-400 transition-all"><TiktokIcon size={12}/></div>}
+                  <div className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-neutral-900"><MoreVertical size={12}/></div>
+                </div>
+
+                {/* STATS RÁPIDAS */}
+                <div className="grid grid-cols-2 gap-2 mt-auto">
+                   <div className="bg-black/40 rounded-xl p-2 border border-white/5">
+                      <p className="text-[7px] text-neutral-700 font-black uppercase tracking-widest mb-1">Sesiones</p>
+                      <p className="text-xs font-black text-white">Activa <span className="text-[8px] text-neutral-800">OS</span></p>
+                   </div>
+                   <div className="bg-black/40 rounded-xl p-2 border border-white/5">
+                      <p className="text-[7px] text-neutral-700 font-black uppercase tracking-widest mb-1">Inversión</p>
+                      <p className="text-xs font-black text-[#10b981]">Nexus</p>
+                   </div>
+                </div>
+
+                {/* TAG DE ESTILO */}
+                <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+                   <span className="px-2 py-1 bg-white/5 rounded-md text-[7px] font-black text-neutral-600 uppercase tracking-widest">Creator Pro</span>
+                   <ChevronRight size={14} className="text-neutral-900 group-hover:text-[#10b981] transition-all" />
+                </div>
               </div>
             ))}
           </div>
