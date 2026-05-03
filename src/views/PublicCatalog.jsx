@@ -95,7 +95,7 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
              <p className="text-[8px] md:text-[10px] text-rose-500 font-mono line-through opacity-30">
                 {oldPrice.toLocaleString()} BS.
              </p>
-             <p className="text-xl md:text-4xl font-mono text-white font-black tracking-tighter leading-none">
+             <p className="text-2xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">
                 {parseFloat(p.precio_venta || 0).toLocaleString()} 
                 <span className="text-[10px] md:text-xs opacity-20 ml-1 md:ml-2 font-sans tracking-widest uppercase">BS.</span>
              </p>
@@ -104,9 +104,9 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
 
         <button 
           onClick={() => onConsult(p)}
-          className="w-full mt-4 md:mt-10 py-3 md:py-6 bg-white text-black rounded-[1rem] md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-blue-600 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-2 md:gap-4 active:scale-95"
+          className="w-full mt-2 md:mt-10 py-2.5 md:py-5 bg-white text-black rounded-xl md:rounded-[2rem] font-black text-[8px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-blue-600 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-2 md:gap-4 active:scale-95"
         >
-           <WhatsAppIcon size={16} className="md:w-6 md:h-6" />
+           <WhatsAppIcon size={14} className="md:w-5 md:h-5" />
            Consultar
         </button>
       </div>
@@ -245,19 +245,19 @@ const PublicCatalog = () => {
          </div>
       </footer>
 
-      {/* BOTONES FLOTANTES HUD (Compacto & WhatsApp Real) */}
+      {/* BOTONES FLOTANTES HUD (Unificados Glassmorphism & Iconos Blancos) */}
       <div className="fixed bottom-6 right-6 md:bottom-12 md:right-10 z-[100] flex flex-col gap-4 md:gap-6 animate-in slide-in-from-right duration-700">
          <button 
            onClick={() => alert('Logística Sync Pro: Seguimiento en tiempo real y envíos asegurados.')}
-           className="w-12 h-12 md:w-16 md:h-16 bg-white/5 backdrop-blur-3xl border border-white/10 text-amber-500 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-white hover:text-black transition-all group"
+           className="w-12 h-12 md:w-16 md:h-16 bg-white/5 backdrop-blur-3xl border border-white/10 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-white hover:text-black transition-all group"
          >
             <Truck size={20} className="md:w-7 md:h-7 group-hover:animate-bounce" />
          </button>
          <button 
            onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')}
-           className="w-14 h-14 md:w-20 md:h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-[0_10px_40px_rgba(16,185,129,0.4)] hover:scale-110 active:scale-95 transition-all relative overflow-hidden group"
+           className="w-12 h-12 md:w-16 md:h-16 bg-white/5 backdrop-blur-3xl border border-white/10 text-white rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-white hover:text-black transition-all relative overflow-hidden group"
          >
-            <WhatsAppIcon size={28} className="md:w-10 md:h-10" />
+            <WhatsAppIcon size={24} className="md:w-8 md:h-8" />
          </button>
       </div>
 
