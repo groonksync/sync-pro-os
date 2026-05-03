@@ -148,7 +148,7 @@ const PublicCatalog = () => {
       </main>
 
       {selectedProduct && (
-         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-0 md:p-6 animate-in fade-in duration-300">
+         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-0 md:p-6 animate-in fade-in duration-300">
             <div className="bg-[#121212] border border-white/10 w-full max-w-[850px] rounded-t-[32px] md:rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col md:flex-row h-full max-h-[100dvh] md:max-h-[90vh] overflow-y-auto scrollbar-hide">
                <button onClick={() => setSelectedProduct(null)} className="fixed md:absolute top-4 right-4 z-[160] w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:text-white transition-all active:scale-90"><X size={18}/></button>
                
@@ -159,10 +159,7 @@ const PublicCatalog = () => {
                  onTouchEnd={handleTouchEnd}
                >
                   <div className="w-full flex-1 flex items-center justify-center overflow-hidden" key={currentImgIndex}>
-                     <img 
-                       src={allImages[currentImgIndex]} 
-                       className="max-w-full max-h-[30vh] md:max-h-[50vh] object-contain drop-shadow-2xl rounded-2xl select-none animate-in fade-in duration-200" 
-                     />
+                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[30vh] md:max-h-[50vh] object-contain drop-shadow-2xl rounded-2xl select-none animate-in fade-in duration-200" />
                   </div>
                   {allImages.length > 1 && (
                     <div className="flex gap-2 mt-4 pb-2">
@@ -176,38 +173,33 @@ const PublicCatalog = () => {
                      <div>
                         <span className="text-[7px] md:text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-1.5 block">DETALLES DEL ACTIVO</span>
                         <h2 className="text-xl md:text-3xl font-black text-white tracking-tighter uppercase leading-tight">{selectedProduct.nombre}</h2>
-                        <p className="text-[10px] md:text-sm font-black text-white/40 uppercase tracking-[0.3em] mt-2">{selectedProduct.marca || 'Sovereign Core'}</p>
+                        <p className="text-[10px] md:text-xs font-black text-white/40 uppercase tracking-[0.3em] mt-2">{selectedProduct.marca || 'Sovereign Core'}</p>
                      </div>
 
-                     <div className="bg-white/[0.03] border border-white/5 p-6 md:p-8 rounded-[2.5rem] shadow-inner relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><DollarSign size={40} className="text-white" /></div>
-                        <p className="text-[7px] md:text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1">Precio de Adquisición</p>
-                        <div className="flex items-baseline gap-3">
-                           <p className="text-4xl md:text-6xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
-                           <span className="text-[10px] md:text-xs font-black text-emerald-500">BS.</span>
-                        </div>
-                        {selectedProduct.precio_antes > selectedProduct.precio_venta && (
-                           <div className="mt-4 flex items-center gap-3 bg-rose-500/5 p-3 rounded-2xl border border-rose-500/10">
-                              <span className="text-[8px] md:text-[10px] font-black text-rose-500 uppercase tracking-widest">Normal:</span>
-                              <p className="text-base md:text-2xl text-neutral-500 font-mono line-through font-black leading-none">{parseFloat(selectedProduct.precio_antes).toLocaleString()} BS.</p>
+                     <div className="bg-white/[0.03] border border-white/5 p-4 md:p-6 rounded-[2rem] shadow-inner relative overflow-hidden group">
+                        <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2">Inversión Final</p>
+                        <div className="flex items-center justify-between gap-4">
+                           <div className="flex items-baseline gap-2">
+                              <p className="text-3xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
+                              <span className="text-[10px] font-black text-emerald-500">BS.</span>
                            </div>
-                        )}
+                           {selectedProduct.precio_antes > selectedProduct.precio_venta && (
+                              <div className="flex flex-col items-end">
+                                 <span className="text-[6px] font-black text-rose-500/50 uppercase tracking-widest">Antes</span>
+                                 <p className="text-xl md:text-3xl text-neutral-600 font-mono line-through font-black leading-none">{parseFloat(selectedProduct.precio_antes).toLocaleString()}</p>
+                              </div>
+                           )}
+                        </div>
                      </div>
 
                      <div className="grid grid-cols-2 gap-3 pb-20 md:pb-0">
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-3">
                            <ShieldCheck size={16} className="text-emerald-500" />
-                           <div>
-                              <p className="text-[7px] font-black text-neutral-500 uppercase">Garantía</p>
-                              <p className="text-[9px] font-black text-white">{selectedProduct.garantia || 'Consulte'}</p>
-                           </div>
+                           <div><p className="text-[7px] font-black text-neutral-500 uppercase">Garantía</p><p className="text-[9px] font-black text-white">{selectedProduct.garantia || 'Consulte'}</p></div>
                         </div>
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-3">
                            <Truck size={16} className="text-emerald-500" />
-                           <div>
-                              <p className="text-[7px] font-black text-neutral-500 uppercase">Logística</p>
-                              <p className="text-[9px] font-black text-white">{selectedProduct.tipo_envio || 'Estándar'}</p>
-                           </div>
+                           <div><p className="text-[7px] font-black text-neutral-500 uppercase">Logística</p><p className="text-[9px] font-black text-white">{selectedProduct.tipo_envio || 'Estándar'}</p></div>
                         </div>
                      </div>
                   </div>
