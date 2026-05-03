@@ -32,11 +32,11 @@ const PublicProductCard = ({ p, onSelect }) => {
           <Package size={24} strokeWidth={1} className="text-neutral-800" />
         )}
 
-        {/* BARRA AGOTADO: DISEÑO CRISTALIZADO E INFINITO */}
+        {/* BARRA AGOTADO: DISEÑO SUTIL (MENOS CARÁCTER, MÁS ELEGANCIA) */}
         {parseInt(p.stock_actual) === 0 && (
            <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-xl border-y border-white/10 py-3 md:py-6 w-[400%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex items-center justify-center">
-                 <span className="text-white text-[11px] md:text-xl font-black tracking-[0.6em] md:tracking-[1.2em] uppercase drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">AGOTADO</span>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/40 backdrop-blur-md border-y border-white/5 py-1.5 md:py-3 w-[400%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+                 <span className="text-white text-[9px] md:text-sm font-bold tracking-[0.4em] md:tracking-[0.8em] uppercase opacity-90">AGOTADO</span>
               </div>
            </div>
         )}

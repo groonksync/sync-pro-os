@@ -39,11 +39,11 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
           </div>
         )}
 
-        {/* BARRA AGOTADO: DISEÑO CRISTALIZADO E INFINITO (INVENTARIO) */}
+        {/* BARRA AGOTADO: DISEÑO SUTIL (INVENTARIO) */}
         {parseInt(p.stock_actual) === 0 && (
            <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-xl border-y border-white/10 py-3 md:py-4 w-[400%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,0.8)] flex items-center justify-center">
-                 <span className="text-white text-[9px] md:text-xs font-black tracking-[0.5em] md:tracking-[0.8em] uppercase">AGOTADO</span>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/40 backdrop-blur-md border-y border-white/5 py-1.5 md:py-2.5 w-[400%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
+                 <span className="text-white text-[8px] md:text-xs font-bold tracking-[0.4em] md:tracking-[0.8em] uppercase opacity-90">AGOTADO</span>
               </div>
            </div>
         )}
