@@ -294,14 +294,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {[
-                      { name: 'Básico', icon: <🛡️ size={24}/>, color: 'border-l-blue-500', desc: 'Gestión Esencial' },
-                      { name: 'Intermedio', icon: <⚔️ size={24}/>, color: 'border-l-emerald-500', desc: 'Crecimiento Activo' },
-                      { name: 'Avanzado', icon: <👑 size={24}/>, color: 'border-l-purple-500', desc: 'Dominio Total' },
-                      { name: 'Personalizado', icon: <🌌 size={24}/>, color: 'border-l-amber-500', desc: 'Estrategia Élite' }
+                      { name: 'Básico', icon: <Shield size={24}/>, color: 'border-l-blue-500', desc: 'Gestión Esencial' },
+                      { name: 'Intermedio', icon: <Zap size={24}/>, color: 'border-l-emerald-500', desc: 'Crecimiento Activo' },
+                      { name: 'Avanzado', icon: <Crown size={24}/>, color: 'border-l-purple-500', desc: 'Dominio Total' },
+                      { name: 'Personalizado', icon: <Sparkles size={24}/>, color: 'border-l-amber-500', desc: 'Estrategia Élite' }
                     ].map((p, i) => (
                       <div key={i} onClick={() => setActiveAgencyPlan(p.name)} className={`${colors.card} rounded-[2.5rem] p-8 border-l-4 ${p.color} shadow-2xl hover:scale-105 transition-all cursor-pointer group ${activeAgencyPlan === p.name ? 'ring-2 ring-white/20' : ''}`}>
                          <div className="flex justify-between items-start mb-6">
-                            <div className="text-3xl">{p.name === 'Básico' ? <Shield size={32} className="text-blue-500"/> : p.name === 'Intermedio' ? <Zap size={32} className="text-emerald-500"/> : p.name === 'Avanzado' ? <Crown size={32} className="text-purple-500"/> : <Sparkles size={32} className="text-amber-500"/>}</div>
+                            <div className="text-3xl text-white/20 group-hover:text-white transition-all">{p.icon}</div>
                             <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest">Plan {p.name}</p>
                          </div>
                          <h4 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">{p.name}</h4>
