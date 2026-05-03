@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Package, Search, Filter, ChevronRight, ChevronLeft, X, 
-  MessageCircle, Info, ShieldCheck, Truck, 
-  CreditCard, Smartphone, Zap, Star, Eye, ShoppingCart, ArrowUpRight, FileText,
-  BadgePercent, Tag, ShieldAlert
+  Package, Search, ChevronRight, ChevronLeft, X, 
+  Truck, Zap, ShoppingCart, Info, ShieldCheck, 
+  FileText, ShieldAlert, CheckCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -15,6 +14,7 @@ const WhatsAppIcon = ({ size = 24, className = "" }) => (
 
 const PublicProductCard = ({ p, onSelect }) => {
   const hasDiscount = p.precio_antes && p.precio_antes > p.precio_venta;
+  const isAgotado = parseInt(p.stock_actual) === 0;
   
   return (
     <div 
@@ -25,14 +25,14 @@ const PublicProductCard = ({ p, onSelect }) => {
         {p.imagen ? (
           <img 
             src={p.imagen} 
-            className={`w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
+            className={`w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-110 ${isAgotado ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
           <Package size={24} strokeWidth={1} className="text-neutral-800" />
         )}
 
-        {parseInt(p.stock_actual) === 0 && (
+        {isAgotado && (
            <div className="absolute inset-0 z-40 pointer-events-none flex items-center justify-center">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/40 backdrop-blur-md border-y border-white/5 py-1.5 md:py-3 w-[400%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,0.5)] flex items-center justify-center">
                  <span className="text-white text-[9px] md:text-sm font-bold tracking-[0.4em] md:tracking-[0.8em] uppercase opacity-90">AGOTADO</span>
@@ -53,12 +53,21 @@ const PublicProductCard = ({ p, onSelect }) => {
       </div>
 
       <div className="px-3 pb-3 md:px-5 md:pb-6 pt-1 flex-1 flex flex-col justify-between">
-        <div className="space-y-1 md:space-y-2">
-          <h3 className="text-[10px] md:text-base font-black text-white leading-tight tracking-tight uppercase line-clamp-2 min-h-[2.5em]">{p.nombre}</h3>
+        <div className="space-y-3 md:space-y-4">
+          <div className="space-y-0.5">
+            <h3 className="text-[10px] md:text-base font-black text-white leading-tight tracking-tight uppercase line-clamp-2 min-h-[2.5em]">{p.nombre}</h3>
+            <div className="flex items-center gap-2">
+               <p className="text-[6px] md:text-[8px] font-black text-neutral-600 uppercase tracking-widest">{p.marca || 'Sovereign'}</p>
+               <span className="w-1 h-1 bg-neutral-800 rounded-full" />
+               <p className={`text-[6px] md:text-[8px] font-black uppercase tracking-widest ${parseInt(p.stock_actual) < 5 ? 'text-amber-500' : 'text-neutral-500'}`}>
+                  {p.stock_actual} UNIDADES
+               </p>
+            </div>
+          </div>
           
-          <div className="flex flex-col">
+          <div className="flex flex-col min-h-[3em] justify-end">
              {hasDiscount && (
-               <p className="text-[7px] md:text-[10px] text-neutral-600 font-mono line-through mb-[-4px] md:mb-[-8px]">
+               <p className="text-[7px] md:text-[10px] text-neutral-600 font-mono line-through mb-[-2px] md:mb-[-4px]">
                   {parseFloat(p.precio_antes).toLocaleString()} BS.
                </p>
              )}
@@ -70,9 +79,10 @@ const PublicProductCard = ({ p, onSelect }) => {
         </div>
 
         <button 
-          className="w-full mt-3 md:mt-6 py-2.5 md:py-4.5 bg-[#1a1a1a] text-white rounded-lg md:rounded-2xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
+          className="w-full mt-4 md:mt-6 py-2.5 md:py-4.5 bg-emerald-500 text-black rounded-lg md:rounded-2xl font-black text-[8px] md:text-[11px] uppercase tracking-[0.2em] hover:bg-white hover:scale-[1.02] transition-all flex items-center justify-center gap-2 active:scale-95 shadow-[0_10px_30px_rgba(16,185,129,0.2)]"
         >
-           COMPRAR
+           <ShoppingCart size={12} className="md:w-4 md:h-4" />
+           COMPRAR AHORA
         </button>
       </div>
     </div>
@@ -145,38 +155,40 @@ const PublicCatalog = () => {
   const prevImg = () => setCurrentImgIndex(prev => (prev - 1 + allImages.length) % allImages.length);
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500">
-      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-4 md:py-6 px-4 md:px-20 flex justify-between items-center">
+    <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500 selection:text-white">
+      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-4 md:py-8 px-4 md:px-20 flex flex-col md:flex-row justify-between items-center gap-4">
          <div className="flex items-center gap-3">
-            <Zap size={24} className="text-blue-500 fill-blue-500" />
-            <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter text-white">Sync<span className="text-blue-500">PRO</span></h1>
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-black">
+               <Zap size={22} className="fill-black" />
+            </div>
+            <h1 className="text-xl md:text-3xl font-black uppercase tracking-tighter">Sync<span className="text-blue-500">PRO</span></h1>
          </div>
-         <div className="relative flex-1 max-w-[400px] ml-6">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-700" size={14} />
+         <div className="relative flex-1 max-w-[500px] w-full">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-neutral-700" size={16} />
             <input 
               type="text" 
-              placeholder="Buscar..."
+              placeholder="Buscar productos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-[10px] text-white outline-none"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-14 pr-6 text-sm text-white outline-none focus:border-white/20 transition-all"
             />
          </div>
       </header>
 
-      <main className="px-4 md:px-20 py-8">
-         <div className="flex overflow-x-auto gap-2 mb-8 no-scrollbar pb-2">
+      <main className="px-4 md:px-20 py-10 md:py-16">
+         <div className="flex overflow-x-auto gap-3 mb-12 no-scrollbar pb-2">
             {categories.map(cat => (
                <button 
                  key={cat}
                  onClick={() => setActiveCategory(cat)}
-                 className={`whitespace-nowrap px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'bg-white text-black' : 'bg-white/5 text-neutral-500 border border-white/5'}`}
+                 className={`whitespace-nowrap px-8 py-3.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeCategory === cat ? 'bg-white text-black shadow-2xl' : 'bg-white/5 text-neutral-500 border border-white/5 hover:text-white'}`}
                >
                   {cat}
                </button>
             ))}
          </div>
 
-         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-4">
+         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-6">
             {filteredProducts.map(p => (
                <PublicProductCard key={p.id} p={p} onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }} />
             ))}
@@ -184,47 +196,50 @@ const PublicCatalog = () => {
       </main>
 
       {selectedProduct && (
-         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-500">
-            <div className="bg-[#121212] border border-white/10 w-full max-w-[950px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[95vh] flex flex-col md:flex-row">
-               <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-[130] w-12 h-12 bg-white text-black rounded-full flex items-center justify-center shadow-2xl"><X size={20}/></button>
+         <div className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-2xl flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-500">
+            <div className="bg-[#121212] border border-white/10 w-full max-w-[950px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[95vh] flex flex-col md:flex-row shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
+               <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-[160] w-12 h-12 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:text-white transition-all"><X size={20}/></button>
                <div className="w-full md:w-[42%] bg-[#080808] p-4 md:p-10 flex items-center justify-center relative group/carousel">
                   <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
-                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[55vh] object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl" />
+                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[55vh] object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-3xl" />
                   </div>
                   {allImages.length > 1 && (
-                    <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none">
-                       <button onClick={prevImg} className="w-10 h-10 bg-white/5 text-white rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md border border-white/10"><ChevronLeft size={18}/></button>
-                       <button onClick={nextImg} className="w-10 h-10 bg-white/5 text-white rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md border border-white/10"><ChevronRight size={18}/></button>
+                    <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between pointer-events-none px-4">
+                       <button onClick={prevImg} className="w-10 h-10 bg-white/5 text-white rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md border border-white/10 hover:bg-white hover:text-black transition-all"><ChevronLeft size={18}/></button>
+                       <button onClick={nextImg} className="w-10 h-10 bg-white/5 text-white rounded-full flex items-center justify-center pointer-events-auto backdrop-blur-md border border-white/10 hover:bg-white hover:text-black transition-all"><ChevronRight size={18}/></button>
                     </div>
                   )}
                </div>
-               <div className="w-full md:w-[58%] p-4 md:p-8 flex flex-col justify-between bg-[#121212]">
-                  <div className="space-y-4">
+               <div className="w-full md:w-[58%] p-6 md:p-12 flex flex-col justify-between bg-[#121212]">
+                  <div className="space-y-6">
                      <div>
-                        <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.4em] mb-1">{selectedProduct.categoria}</p>
-                        <h2 className="text-xl md:text-3xl font-black text-white tracking-tighter uppercase">{selectedProduct.nombre}</h2>
+                        <p className="text-[8px] md:text-[10px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-2">{selectedProduct.categoria}</p>
+                        <h2 className="text-2xl md:text-4xl font-black text-white tracking-tighter uppercase leading-tight">{selectedProduct.nombre}</h2>
                      </div>
-                     <div className="bg-white/[0.03] border border-white/5 p-5 rounded-3xl">
-                        <p className="text-[6px] md:text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-1">Inversión Final</p>
-                        <div className="flex items-baseline gap-3">
-                           <p className="text-3xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
+                     <div className="bg-white/[0.03] border border-white/5 p-6 md:p-8 rounded-[2.5rem] shadow-inner">
+                        <p className="text-[7px] md:text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-2">Precio de Adquisición</p>
+                        <div className="flex items-baseline gap-4">
+                           <p className="text-4xl md:text-6xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
                            <div className="flex flex-col">
-                              {selectedProduct.precio_antes > selectedProduct.precio_venta && <p className="text-[9px] md:text-xs text-neutral-600 font-mono line-through opacity-50">{parseFloat(selectedProduct.precio_antes).toLocaleString()}</p>}
-                              <span className="text-[9px] md:text-xs font-black text-blue-500">BS.</span>
+                              {selectedProduct.precio_antes > selectedProduct.precio_venta && <p className="text-xs md:text-base text-neutral-600 font-mono line-through opacity-50">{parseFloat(selectedProduct.precio_antes).toLocaleString()}</p>}
+                              <span className="text-xs md:text-base font-black text-emerald-500 uppercase">Bolivianos</span>
                            </div>
                         </div>
                      </div>
-                     <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white/5 p-3 rounded-2xl border border-white/5">
-                           <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1">Garantía</p>
-                           <p className="text-[10px] md:text-xs font-black text-white">{selectedProduct.garantia || 'Consultar'}</p>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white/5 p-5 rounded-3xl border border-white/5">
+                           <p className="text-[8px] font-black text-neutral-500 uppercase mb-1">Garantía</p>
+                           <p className="text-xs md:text-sm font-black text-white uppercase">{selectedProduct.garantia || 'Consultar'}</p>
                         </div>
-                        <div className={`p-3 rounded-2xl border flex items-center gap-2 ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
-                           <Truck size={14} /><p className="text-[7px] md:text-[8px] font-black uppercase">{selectedProduct.tipo_envio || 'Cobro Adicional'}</p>
+                        <div className={`p-5 rounded-3xl border flex items-center gap-3 ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
+                           <Truck size={18} /><p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest leading-none">{selectedProduct.tipo_envio || 'Cobro Adicional'}</p>
                         </div>
                      </div>
                   </div>
-                  <button onClick={() => handleConsult(selectedProduct)} className="w-full py-5 bg-white text-black rounded-[2rem] font-black uppercase text-xs tracking-widest hover:bg-blue-600 hover:text-white transition-all">WhatsApp Compra</button>
+                  <button onClick={() => handleConsult(selectedProduct)} className="w-full py-6 md:py-8 bg-emerald-500 text-black rounded-[2.5rem] font-black uppercase text-xs md:text-base tracking-[0.3em] hover:bg-white hover:scale-[1.02] transition-all shadow-[0_20px_60px_rgba(16,185,129,0.3)] flex items-center justify-center gap-4 active:scale-95">
+                     <WhatsAppIcon size={24} />
+                     COMPRAR POR WHATSAPP
+                  </button>
                </div>
             </div>
          </div>
