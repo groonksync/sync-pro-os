@@ -48,11 +48,13 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
           </div>
         )}
 
-        {/* SELLO AGOTADO INFINITE BAND (Compact Mobile) */}
+        {/* SELLO AGOTADO INFINITE BAND (Estilo Black Noir de la Imagen) */}
         {parseInt(p.stock_actual) === 0 && (
            <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none overflow-hidden">
-              <div className="bg-rose-600/90 backdrop-blur-3xl border-y border-white/10 py-2 md:py-6 w-[180%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center relative">
-                 <span className="text-white text-lg md:text-3xl font-black tracking-[0.3em] md:tracking-[0.6em] uppercase drop-shadow-2xl">AGOTADO</span>
+              <div className="bg-black/90 backdrop-blur-3xl border-y border-white/10 py-4 md:py-8 w-[180%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center relative">
+                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                 <span className="text-white text-xl md:text-4xl font-black tracking-[0.5em] md:tracking-[0.8em] uppercase drop-shadow-2xl">AGOTADO</span>
+                 <span className="text-white/40 text-[6px] md:text-[8px] font-black uppercase tracking-[0.4em] md:tracking-[0.6em] mt-1 md:mt-2">Sovereign Reserve</span>
               </div>
            </div>
         )}
