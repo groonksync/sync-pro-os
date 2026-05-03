@@ -11,26 +11,16 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
-  const [imgIndex, setImgIndex] = useState(0);
-  const allImages = [p.imagen, ...(p.imagenes || [])].filter(Boolean);
-
-  const nextImg = (e) => {
-    e.stopPropagation();
-    setImgIndex((prev) => (prev + 1) % allImages.length);
-  };
-
-  const prevImg = (e) => {
-    e.stopPropagation();
-    setImgIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
-  };
-
+const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
   return (
-    <div className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] overflow-hidden hover:border-white/20 transition-all flex flex-col group relative shadow-2xl h-full">
-      <div className="aspect-square bg-[#080808] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
-        {allImages.length > 0 ? (
+    <div 
+      onClick={() => onSelect(p)}
+      className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] overflow-hidden hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl h-full cursor-pointer"
+    >
+      <div className="aspect-square bg-[#080808] relative overflow-hidden flex items-center justify-center">
+        {p.imagen ? (
           <img 
-            src={allImages[imgIndex]} 
+            src={p.imagen} 
             className="max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110"
             alt={p.nombre}
           />
@@ -45,11 +35,6 @@ const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
           <span className="text-[6px] md:text-[8px] text-white font-black uppercase tracking-widest bg-blue-600/90 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/10 shadow-2xl">
             {p.categoria || 'Standard'}
           </span>
-          {p.stock_actual <= (p.stock_minimo || 5) && (
-            <span className="text-[6px] md:text-[8px] text-white font-black uppercase tracking-widest bg-rose-500/90 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/10 shadow-2xl animate-pulse">
-              Bajo Stock
-            </span>
-          )}
         </div>
         
         <div className="absolute top-3 right-3 md:top-4 md:right-4 z-10">
@@ -60,28 +45,24 @@ const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
       </div>
 
       <div className="p-3 md:p-6 flex-1 flex flex-col justify-between">
-        <div className="space-y-2 md:space-y-3">
+        <div className="space-y-2 md:space-y-4">
           <div className="space-y-0.5">
-             <h3 className="text-xs md:text-lg font-black text-white line-clamp-1 leading-tight tracking-tight uppercase">{p.nombre}</h3>
+             <h3 className="text-[10px] md:text-lg font-black text-white line-clamp-1 leading-tight tracking-tight uppercase">{p.nombre}</h3>
              <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">{p.marca || 'Sovereign Core'}</p>
           </div>
           
-          <div className="flex flex-wrap gap-1.5">
-            {p.sku && <div className="px-2 py-0.5 bg-white/5 rounded-md text-[6px] md:text-[8px] font-mono text-neutral-500 border border-white/5 uppercase tracking-tighter">SKU: {p.sku}</div>}
+          <div className="flex flex-col">
+             <p className="text-[6px] md:text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-0.5">Inversión Unit.</p>
+             <p className="text-lg md:text-3xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
+                {parseFloat(p.precio_venta || 0).toLocaleString()} 
+                <span className="text-[8px] md:text-xs opacity-20 ml-1 font-sans">BS.</span>
+             </p>
           </div>
         </div>
 
-        <div className="pt-3 md:pt-6 mt-2 md:mt-4 border-t border-white/5 flex justify-between items-center">
-          <div>
-            <p className="text-lg md:text-2xl font-mono text-white font-black tracking-tighter leading-none">
-              {parseFloat(p.precio_venta || 0).toLocaleString()} 
-              <span className="text-[8px] md:text-xs opacity-20 ml-1 font-sans">BS.</span>
-            </p>
-          </div>
-          <div className="flex gap-1.5 md:gap-2">
-            <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-7 h-7 md:w-10 md:h-10 bg-rose-500/10 text-rose-500 rounded-lg md:rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10"><Trash2 size={14}/></button>
-            <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-7 h-7 md:w-10 md:h-10 bg-white text-black rounded-lg md:rounded-xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-xl"><Edit3 size={14}/></button>
-          </div>
+        <div className="pt-3 md:pt-6 mt-2 md:mt-4 border-t border-white/5 flex justify-end gap-1.5 md:gap-2">
+          <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-7 h-7 md:w-10 md:h-10 bg-rose-500/10 text-rose-500 rounded-lg md:rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10"><Trash2 size={14}/></button>
+          <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-7 h-7 md:w-10 md:h-10 bg-white text-black rounded-lg md:rounded-xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-xl"><Edit3 size={14}/></button>
         </div>
       </div>
     </div>
@@ -116,6 +97,7 @@ const Inventario = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const ITEMS_PER_PAGE = 24;
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -343,7 +325,7 @@ const Inventario = () => {
                     p={p} 
                     onEdit={(prod) => { setEditingProduct(prod); setIsModalOpen(true); }}
                     onDelete={handleDeleteProduct}
-                    onViewImage={setFullViewImage}
+                    onSelect={setSelectedProduct}
                   />
                 ))}
               </div>
@@ -718,6 +700,86 @@ const Inventario = () => {
               <button onClick={handlePago} className="w-full mt-16 py-7 bg-emerald-500 text-white font-black rounded-[40px] uppercase shadow-2xl">Confirmar</button>
            </div>
         </div>
+      )}
+
+      {/* MODAL DE DETALLE MAESTRO (Nexus Viewer Internal) */}
+      {selectedProduct && (
+         <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-500">
+            <div className="bg-[#121212] border border-white/10 w-full max-w-[1200px] rounded-[32px] md:rounded-[48px] overflow-hidden shadow-2xl relative max-h-[95vh] flex flex-col md:flex-row">
+               <button 
+                 onClick={() => setSelectedProduct(null)}
+                 className="absolute top-4 right-4 md:top-8 md:right-8 z-50 w-10 h-10 md:w-14 md:h-14 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
+               >
+                  <X size={24}/>
+               </button>
+
+               <div className="w-full md:w-1/2 bg-[#080808] p-6 md:p-16 flex items-center justify-center relative">
+                  <img src={selectedProduct.imagen} className="max-w-full max-h-[40vh] md:max-h-[70vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
+                  <div className="absolute bottom-6 left-6 md:bottom-12 md:left-12">
+                     <span className="px-4 py-1 md:px-8 md:py-3 bg-blue-600 text-white text-[7px] md:text-xs font-black rounded-full uppercase tracking-widest shadow-2xl">
+                        {selectedProduct.categoria}
+                     </span>
+                  </div>
+               </div>
+
+               <div className="w-full md:w-1/2 p-6 md:p-16 overflow-y-auto mac-scrollbar bg-[#121212] flex flex-col">
+                  <div className="flex-1 space-y-8 md:space-y-12">
+                     <div className="space-y-2 md:space-y-4">
+                        <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.4em]">Sovereign ID: {selectedProduct.codigo || 'N/A'}</p>
+                        <h2 className="text-2xl md:text-5xl font-black text-white leading-tight tracking-tighter uppercase">{selectedProduct.nombre}</h2>
+                     </div>
+                     
+                     <div className="bg-white/[0.03] border border-white/5 p-6 md:p-10 rounded-[2rem] shadow-inner">
+                        <p className="text-[7px] md:text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2 md:mb-4">Valor de Mercado</p>
+                        <p className="text-4xl md:text-8xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
+                           {parseFloat(selectedProduct.precio_venta || 0).toLocaleString()} 
+                           <span className="text-lg md:text-3xl opacity-20 ml-3 md:ml-6 font-sans">BS.</span>
+                        </p>
+                     </div>
+
+                     <div className="space-y-4 md:space-y-6">
+                        <div className="flex items-center gap-3 border-b border-white/10 pb-3 md:pb-4">
+                           <FileText size={16} className="text-blue-500"/>
+                           <p className="text-[8px] md:text-[11px] font-black text-white uppercase tracking-widest">Ficha Técnica Logística</p>
+                        </div>
+                        <div className="text-neutral-400 text-xs md:text-lg leading-relaxed italic whitespace-pre-wrap max-h-[200px] overflow-y-auto pr-4 mac-scrollbar">
+                           {selectedProduct.ficha_tecnica || 'No hay especificaciones registradas.'}
+                        </div>
+                     </div>
+
+                     <div className="grid grid-cols-3 gap-3 md:gap-4 text-center">
+                        <div className="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5">
+                           <p className="text-[6px] md:text-[8px] font-black text-neutral-600 uppercase tracking-widest mb-1">Stock</p>
+                           <p className="text-[10px] md:text-sm font-black text-white">{selectedProduct.stock_actual} Unid.</p>
+                        </div>
+                        <div className="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5">
+                           <p className="text-[6px] md:text-[8px] font-black text-neutral-600 uppercase tracking-widest mb-1">SKU</p>
+                           <p className="text-[10px] md:text-sm font-mono text-white truncate">{selectedProduct.sku || '---'}</p>
+                        </div>
+                        <div className="bg-white/5 p-4 md:p-6 rounded-2xl border border-white/5">
+                           <p className="text-[6px] md:text-[8px] font-black text-neutral-600 uppercase tracking-widest mb-1">Costo</p>
+                           <p className="text-[10px] md:text-sm font-black text-emerald-500">{parseFloat(selectedProduct.precio_costo || 0).toLocaleString()} Bs.</p>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="mt-12 flex gap-4">
+                     <button 
+                       onClick={() => { setSelectedProduct(null); setEditingProduct(selectedProduct); setIsModalOpen(true); }}
+                       className="flex-1 py-4 md:py-8 bg-white/5 border border-white/10 text-white rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"
+                     >
+                        <Edit3 size={18}/> Editar Registro
+                     </button>
+                     <button 
+                       onClick={() => setSelectedProduct(null)}
+                       className="flex-1 py-4 md:py-8 bg-blue-600 text-white rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl"
+                     >
+                        Cerrar Visor
+                     </button>
+                  </div>
+               </div>
+            </div>
+         </div>
       )}
 
       {/* VISOR DE IMAGEN FULL SCREEN */}
