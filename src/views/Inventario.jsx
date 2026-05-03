@@ -29,7 +29,7 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
         {p.imagen ? (
           <img 
             src={p.imagen} 
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+            className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
@@ -37,6 +37,15 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
             <Package size={30} strokeWidth={1} className="text-neutral-800" />
             <span className="text-[6px] font-black text-neutral-800 uppercase tracking-widest">Sin Media</span>
           </div>
+        )}
+
+        {/* BARRA AGOTADO: REDISEÑO EDGE-TO-EDGE */}
+        {parseInt(p.stock_actual) === 0 && (
+           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none overflow-hidden">
+              <div className="bg-black/80 backdrop-blur-md border-y border-white/10 py-2 md:py-3 w-[250%] -rotate-[15deg] shadow-2xl flex items-center justify-center">
+                 <span className="text-white text-[8px] md:text-xs font-black tracking-[0.4em] uppercase">AGOTADO</span>
+              </div>
+           </div>
         )}
 
         <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10 flex flex-col gap-1.5">
@@ -70,7 +79,7 @@ const ProductCard = ({ p, onEdit, onDelete, onSelect }) => {
 
         <div className="pt-3 md:pt-6 mt-2 md:mt-4 border-t border-white/5 flex justify-end gap-1.5 md:gap-2">
           <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-7 h-7 md:w-10 md:h-10 bg-rose-500/10 text-rose-500 rounded-lg md:rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10"><Trash2 size={14}/></button>
-          <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-7 h-7 md:w-10 md:h-10 bg-white text-black rounded-lg md:rounded-xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-xl"><Edit3 size={14}/></button>
+          <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-7 h-7 md:w-10 md:h-10 bg-[#1a1a1a] text-white rounded-lg md:rounded-xl flex items-center justify-center hover:bg-amber-500 hover:text-black transition-all shadow-xl border border-white/5"><Edit3 size={14}/></button>
         </div>
       </div>
     </div>
@@ -109,7 +118,6 @@ const Inventario = () => {
   const touchStartX = useRef(0);
   const touchEndX = useRef(0);
 
-  // FUNCIÓN DE NORMALIZACIÓN (Anti-Tildes)
   const normalizeText = (text) => {
     return (text || '')
       .toLowerCase()
@@ -280,7 +288,7 @@ const Inventario = () => {
               <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
                 <div className="relative flex-1 group">
                   <Search className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 text-neutral-700" size={18}/>
-                  <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identificar activos (con o sin tildes)..." className="w-full bg-[#121212] border border-white/10 rounded-2xl md:rounded-[2rem] py-4 md:py-6 pl-14 md:pl-18 pr-6 text-xs md:text-sm text-white outline-none focus:border-white/20 transition-all"/>
+                  <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identificar activos..." className="w-full bg-[#121212] border border-white/10 rounded-2xl md:rounded-[2rem] py-4 md:py-6 pl-14 md:pl-18 pr-6 text-xs md:text-sm text-white outline-none focus:border-white/20 transition-all"/>
                 </div>
                  <div className="flex gap-3 md:gap-4 w-full lg:w-auto">
                     <button onClick={handleShareCatalog} className="flex-1 lg:flex-none px-6 md:px-10 py-4 md:py-6 bg-blue-600/10 text-blue-500 rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-500/20 flex items-center justify-center gap-2 md:gap-3">
@@ -317,7 +325,7 @@ const Inventario = () => {
         </>
       ) : null}
 
-      {/* MODAL PRODUCTO PRO (Edición) */}
+      {/* MODAL PRODUCTO PRO */}
       {isModalOpen && editingProduct && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
            <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-[950px] rounded-[32px] p-8 shadow-2xl overflow-y-auto max-h-[95vh] mac-scrollbar">
@@ -389,7 +397,7 @@ const Inventario = () => {
         </div>
       )}
 
-      {/* MODAL DE DETALLE MAESTRO (Nexus Viewer Internal Compact) */}
+      {/* MODAL DE DETALLE MAESTRO */}
       {selectedProduct && (
          <div className="fixed inset-0 z-[120] bg-black/98 backdrop-blur-2xl flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-500">
             <div className="bg-[#121212] border border-white/10 w-full max-w-[950px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[95vh] md:max-h-[85vh] flex flex-col md:flex-row">
@@ -432,7 +440,7 @@ const Inventario = () => {
                      </div>
                   </div>
                   <div className="mt-6 flex gap-3 md:gap-4">
-                     <button onClick={() => { setSelectedProduct(null); setEditingProduct(selectedProduct); setIsModalOpen(true); }} className="flex-1 py-4 md:py-6 bg-white/5 border border-white/10 text-white rounded-xl md:rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"><Edit3 size={16}/> Editar</button>
+                     <button onClick={() => { setSelectedProduct(null); setEditingProduct(selectedProduct); setIsModalOpen(true); }} className="flex-1 py-4 md:py-6 bg-[#1a1a1a] border border-white/5 text-white rounded-xl md:rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"><Edit3 size={16}/> Editar</button>
                      <button onClick={() => handleConsult(selectedProduct)} className="flex-1 py-4 md:py-6 bg-blue-600 text-white rounded-xl md:rounded-[2rem] font-black text-[9px] md:text-xs uppercase hover:bg-blue-500 transition-all shadow-xl">Auditar vía WhatsApp</button>
                   </div>
                </div>

@@ -21,7 +21,6 @@ const PublicProductCard = ({ p, onSelect }) => {
       onClick={() => onSelect(p)}
       className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] p-0 hover:border-blue-500/30 transition-all flex flex-col group relative shadow-2xl overflow-hidden cursor-pointer h-full"
     >
-      {/* IMAGEN: AJUSTE PERFECTO */}
       <div className="aspect-square bg-[#080808] m-1.5 md:m-2.5 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center border border-white/5">
         {p.imagen ? (
           <img 
@@ -33,10 +32,11 @@ const PublicProductCard = ({ p, onSelect }) => {
           <Package size={24} strokeWidth={1} className="text-neutral-800" />
         )}
 
+        {/* BARRA AGOTADO: REDISEÑO ELEGANTE Y COMPLETO */}
         {parseInt(p.stock_actual) === 0 && (
            <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none overflow-hidden">
-              <div className="bg-black/90 backdrop-blur-md border-y border-white/10 py-1.5 md:py-3 w-[200%] -rotate-[15deg] shadow-2xl flex flex-col items-center justify-center">
-                 <span className="text-white text-[8px] md:text-sm font-black tracking-[0.2em] md:tracking-[0.4em] uppercase">AGOTADO</span>
+              <div className="bg-black/80 backdrop-blur-md border-y border-white/10 py-2 md:py-4 w-[250%] -rotate-[15deg] shadow-[0_0_50px_rgba(0,0,0,1)] flex items-center justify-center">
+                 <span className="text-white text-[9px] md:text-sm font-black tracking-[0.4em] md:tracking-[0.8em] uppercase drop-shadow-lg">AGOTADO</span>
               </div>
            </div>
         )}
@@ -70,11 +70,12 @@ const PublicProductCard = ({ p, onSelect }) => {
           </div>
         </div>
 
+        {/* BOTÓN COMPRAR: GRIS CARBONO ELEGANTE */}
         <button 
-          className="w-full mt-3 md:mt-6 py-2 md:py-4 bg-white text-black rounded-lg md:rounded-2xl font-black text-[7px] md:text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-lg border border-transparent"
+          className="w-full mt-3 md:mt-6 py-2.5 md:py-4.5 bg-[#1a1a1a] text-white rounded-lg md:rounded-2xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all flex items-center justify-center gap-2 active:scale-95 shadow-2xl border border-white/5 group/btn"
         >
-           <WhatsAppIcon size={12} className="md:w-4 md:h-4" />
-           Ver Detalles
+           <ShoppingCart size={12} className="md:w-4 md:h-4 text-neutral-500 group-hover/btn:text-white transition-colors" />
+           COMPRAR
         </button>
       </div>
     </div>
@@ -94,12 +95,11 @@ const PublicCatalog = () => {
 
   const WHATSAPP_NUMBER = "59169109766"; 
 
-  // FUNCIÓN DE NORMALIZACIÓN DE TEXTO (Para búsqueda profesional)
   const normalizeText = (text) => {
     return (text || '')
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, ""); // Remueve tildes y diacríticos
+      .replace(/[\u0300-\u036f]/g, "");
   };
 
   useEffect(() => {
@@ -222,7 +222,6 @@ const PublicCatalog = () => {
 
       {selectedProduct && (
          <div className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-2xl flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-500">
-            {/* MODAL MÁS COMPACTO: max-w-[950px] */}
             <div className="bg-[#121212] border border-white/10 w-full max-w-[950px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[95vh] md:max-h-[85vh] flex flex-col md:flex-row">
                <button 
                  onClick={() => setSelectedProduct(null)}
@@ -231,7 +230,6 @@ const PublicCatalog = () => {
                   <X size={20}/>
                </button>
 
-               {/* CARRUSEL AJUSTADO */}
                <div 
                  className="w-full md:w-[42%] bg-[#080808] p-4 md:p-10 flex items-center justify-center relative touch-pan-y group/carousel"
                  onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
@@ -239,7 +237,7 @@ const PublicCatalog = () => {
                   <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
                      <img 
                        src={allImages[currentImgIndex]} 
-                       className="max-w-full max-h-[35vh] md:max-h-[55vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl" 
+                       className="max-w-full max-h-[35vh] md:max-h-[55vh] object-cover drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-2xl" 
                      />
                   </div>
 
@@ -247,16 +245,10 @@ const PublicCatalog = () => {
                     <>
                       <button onClick={prevImg} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 hidden md:flex"><ChevronLeft size={18}/></button>
                       <button onClick={nextImg} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 hidden md:flex"><ChevronRight size={18}/></button>
-                      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5">
-                        {allImages.map((_, idx) => (
-                          <div key={idx} onClick={() => setCurrentImgIndex(idx)} className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${idx === currentImgIndex ? 'bg-blue-500 w-4' : 'bg-white/20'}`} />
-                        ))}
-                      </div>
                     </>
                   )}
                </div>
 
-               {/* INFO MÁS COMPACTA */}
                <div className="w-full md:w-[58%] p-4 md:p-8 flex flex-col justify-between bg-[#121212]">
                   <div className="space-y-3 md:space-y-5">
                      <div>
@@ -325,7 +317,7 @@ const PublicCatalog = () => {
                     className="w-full mt-4 py-3.5 md:py-6 bg-white text-black rounded-xl md:rounded-[2rem] font-black text-[9px] md:text-base uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 border border-white/10"
                   >
                      <WhatsAppIcon size={18} className="md:w-5 md:h-5" />
-                     Consultar por WhatsApp
+                     COMPRAR AHORA
                   </button>
                </div>
             </div>
