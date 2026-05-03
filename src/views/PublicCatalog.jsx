@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Package, Search, Filter, ChevronRight, X, 
   MessageCircle, Info, ShieldCheck, Truck, 
-  CreditCard, Smartphone, Zap, Star
+  CreditCard, Smartphone, Zap, Star, Eye, ShoppingCart, ArrowUpRight
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
