@@ -22,7 +22,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const [viewState, setViewState] = useState('client-list'); 
   const [activeClient, setActiveClient] = useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null);
-  const [sessionTab, setSessionTab] = useState('editor');
+  const [sessionTab, setSessionTab] = useState('editor'); // 'editor', 'drive', 'calendar'
   
   const [clients, setClients] = useState([]);
   const [clientSearch, setClientSearch] = useState('');
@@ -209,26 +209,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     { name: 'IA', bg: 'rgba(168, 85, 247, 0.05)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.2)' }
   ];
 
-  const handleAISuggestion = async () => {
-    if (!aiPrompt) return;
-    setAiLoading(true);
-    try {
-      const suggestion = await aiService.generateScript(aiPrompt, editorRef.current.innerHTML, activeMeeting.mood || 'Profesional');
-      document.execCommand('insertHTML', false, suggestion.replace(/\n/g, '<br>') + '<br>');
-      setShowAIModal(false);
-      setAiPrompt('');
-    } catch (e) { alert(e.message); }
-    setAiLoading(false);
-  };
-
   const filteredClients = (clients || []).filter(c => normalizeText(c.nombre).includes(normalizeText(clientSearch)) || normalizeText(c.empresa).includes(normalizeText(clientSearch)));
   const filteredMeetings = useMemo(() => (meetingsList || []).filter(m => normalizeText(m.fecha).includes(normalizeText(meetingSearch)) || normalizeText(m.session_title).includes(normalizeText(meetingSearch))), [meetingsList, meetingSearch]);
   const totalTimeWorked = useMemo(() => (meetingsList || []).reduce((acc, curr) => acc + (curr.total_time || 0), 0), [meetingsList]);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-[#030303] text-white overflow-hidden animate-in fade-in duration-500 font-sans tracking-tight">
+    <div className="flex flex-col h-screen w-full bg-[#020202] text-white overflow-hidden animate-in fade-in duration-500 font-sans tracking-tight">
       
-      {/* VISTA: LISTA DE CLIENTES (COMPACTO) */}
+      {/* VISTA: LISTA DE CLIENTES */}
       {viewState === 'client-list' && (
         <div className="p-8 space-y-8 overflow-y-auto mac-scrollbar h-full max-w-[1600px] mx-auto w-full">
           <header className="flex justify-between items-center pb-8 border-b border-white/5">
@@ -236,17 +224,17 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
               <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.4em] mb-2">Sovereign OS • Intelligence</p>
               <h2 className="text-5xl font-black text-white tracking-tighter uppercase leading-none">Editor <span className="text-neutral-900">Pro</span></h2>
             </div>
-            <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-3.5 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-neutral-200 transition-all flex items-center gap-3">
+            <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-3.5 bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-[#10b981] hover:text-white transition-all flex items-center gap-3">
               <Plus size={16} strokeWidth={3}/> Nuevo Cliente
             </button>
           </header>
           <div className="relative group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-white transition-colors" size={20}/>
-            <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Identificar talento..." className="w-full bg-[#080808] border border-white/5 rounded-2xl py-5 pl-16 pr-6 text-base text-white outline-none focus:border-white/10 transition-all shadow-2xl font-medium" />
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={20}/>
+            <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Identificar talento..." className="w-full bg-[#080808] border border-white/5 rounded-2xl py-5 pl-16 pr-6 text-base text-white outline-none focus:border-[#10b981]/30 transition-all shadow-2xl font-medium" />
           </div>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
             {filteredClients.map(client => (
-              <div key={client.id} onClick={() => openClientProfile(client)} className="bg-[#080808] border border-white/5 rounded-[2.5rem] p-8 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col items-center text-center group active:scale-95 shadow-2xl relative">
+              <div key={client.id} onClick={() => openClientProfile(client)} className="bg-[#080808] border border-white/5 rounded-[2.5rem] p-8 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col items-center text-center group active:scale-95 shadow-2xl relative border-b-2 border-b-transparent hover:border-b-[#10b981]">
                 <div className="w-24 h-24 mb-6 rounded-3xl bg-white/5 flex items-center justify-center border border-white/5 shadow-inner overflow-hidden">
                   {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={36} className="text-neutral-900" />}
                 </div>
@@ -258,12 +246,12 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
-      {/* VISTA: PERFIL CLIENTE (COMPACTO) */}
+      {/* VISTA: PERFIL CLIENTE */}
       {viewState === 'client-profile' && activeClient && (
         <div className="h-full flex flex-col overflow-hidden bg-black animate-in slide-in-from-right duration-500">
           <header className="px-10 py-6 bg-[#080808] border-b border-white/5 flex items-center justify-between relative z-10 shadow-2xl">
             <div className="flex items-center gap-6">
-              <button onClick={() => setViewState('client-list')} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-600 hover:text-white transition-all"><ArrowLeft size={24}/></button>
+              <button onClick={() => setViewState('client-list')} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all"><ArrowLeft size={24}/></button>
               <div>
                 <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-1">{activeClient.nombre}</h3>
                 <div className="flex items-center gap-4 text-neutral-600 font-black uppercase text-[10px] tracking-[0.2em]">
@@ -271,7 +259,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                 </div>
               </div>
             </div>
-            <button onClick={createMeeting} className="px-8 py-4 bg-white text-black rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-neutral-200 transition-all flex items-center gap-3 active:scale-95">
+            <button onClick={createMeeting} className="px-8 py-4 bg-white text-black rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-[#10b981] hover:text-white transition-all flex items-center gap-3 active:scale-95">
               <Plus size={18} strokeWidth={3}/> Nueva Sesión
             </button>
           </header>
@@ -292,8 +280,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                         <h5 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{meetingsList.length} <span className="text-neutral-800 font-bold">Items</span></h5>
                      </div>
                   </div>
-                  <div className="bg-[#080808] border border-white/5 rounded-[2rem] p-6 flex items-center gap-6 shadow-xl border-l-2 border-l-emerald-500/20">
-                     <div className="w-14 h-14 rounded-2xl bg-emerald-500/5 flex items-center justify-center text-emerald-500"><TrendingUp size={28}/></div>
+                  <div className="bg-[#080808] border border-white/5 rounded-[2rem] p-6 flex items-center gap-6 shadow-xl border-l-2 border-l-[#10b981]/20">
+                     <div className="w-14 h-14 rounded-2xl bg-[#10b981]/5 flex items-center justify-center text-[#10b981]"><TrendingUp size={28}/></div>
                      <div>
                         <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mb-1">Actividad</p>
                         <h5 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{meetingsList[0]?.fecha || 'N/A'}</h5>
@@ -303,18 +291,18 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
                <div className="relative">
                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800" size={20}/>
-                  <input type="text" value={meetingSearch} onChange={e=>setMeetingSearch(e.target.value)} placeholder="Filtrar sesiones..." className="w-full bg-[#080808] border border-white/5 rounded-2xl py-4 pl-16 pr-6 text-base text-white font-medium outline-none focus:border-white/10 transition-all shadow-xl" />
+                  <input type="text" value={meetingSearch} onChange={e=>setMeetingSearch(e.target.value)} placeholder="Filtrar sesiones..." className="w-full bg-[#080808] border border-white/5 rounded-2xl py-4 pl-16 pr-6 text-base text-white font-medium outline-none focus:border-[#10b981]/30 transition-all shadow-xl" />
                </div>
 
                <div className="grid gap-3">
                   {filteredMeetings.map(m => (
-                    <div key={m.id} onClick={() => openMeeting(m)} className="bg-[#080808] border border-white/5 rounded-[2rem] p-6 hover:bg-white/[0.02] cursor-pointer transition-all flex items-center justify-between group shadow-xl active:scale-[0.99]">
+                    <div key={m.id} onClick={() => openMeeting(m)} className="bg-[#080808] border border-white/5 rounded-[2rem] p-6 hover:bg-white/[0.02] cursor-pointer transition-all flex items-center justify-between group shadow-xl active:scale-[0.99] border-r-2 border-r-transparent hover:border-r-[#10b981]">
                        <div className="flex items-center gap-6">
-                          <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-neutral-900 group-hover:text-amber-500 transition-all border border-white/5 shadow-inner"><PlayCircle size={24}/></div>
+                          <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-neutral-900 group-hover:text-[#10b981] transition-all border border-white/5 shadow-inner"><PlayCircle size={24}/></div>
                           <div>
                             <div className="flex items-center gap-4 mb-0.5">
                                <p className="text-lg font-black text-white uppercase tracking-tighter">{m.fecha}</p>
-                               <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-emerald-500 uppercase tracking-widest border border-emerald-500/10">{m.revision_version || 'V1'}</span>
+                               <span className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-black text-[#10b981] uppercase tracking-widest border border-[#10b981]/10">{m.revision_version || 'V1'}</span>
                             </div>
                             <p className="text-[11px] text-neutral-600 font-bold uppercase tracking-widest">{m.session_title || 'Edición de Video'}</p>
                           </div>
@@ -334,34 +322,35 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
-      {/* VISTA: WAR ROOM / EDITOR PROFESIONAL (COMPACTO DE ALTA DENSIDAD) */}
+      {/* VISTA: WAR ROOM / EDITOR (REDESIGN ESMERALDA + TABS RESTAURADAS) */}
       {viewState === 'session' && activeMeeting && (
-        <div className="flex-1 flex flex-col overflow-hidden bg-[#030303] animate-in fade-in duration-500">
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#020202] animate-in fade-in duration-500">
           <header className="px-6 py-4 border-b border-white/5 bg-[#080808] flex items-center justify-between shrink-0 relative z-50 shadow-2xl">
             <div className="flex items-center gap-6">
-              <button onClick={saveMeeting} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-neutral-600 hover:text-white transition-all"><ArrowLeft size={20}/></button>
+              <button onClick={saveMeeting} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all shadow-inner"><ArrowLeft size={20}/></button>
               <div>
                 <div className="flex items-center gap-3">
                    <h3 className="text-lg font-black text-white uppercase tracking-tighter leading-none">{activeClient?.nombre}</h3>
                    <span className="text-neutral-800 text-xl font-thin">/</span>
-                   <input type="text" value={activeMeeting.session_title} onChange={e=>setActiveMeeting({...activeMeeting, session_title: e.target.value})} className="bg-transparent text-lg font-black text-emerald-500 uppercase tracking-tighter outline-none w-auto min-w-[150px]" />
-                   <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 ml-2">
+                   <input type="text" value={activeMeeting.session_title} onChange={e=>setActiveMeeting({...activeMeeting, session_title: e.target.value})} className="bg-transparent text-lg font-black text-[#10b981] uppercase tracking-tighter outline-none w-auto min-w-[150px]" />
+                   <div className="flex bg-white/5 rounded-lg p-0.5 border border-white/10 ml-2 shadow-inner">
                      {['V1','V2','V3','FINAL'].map(v => (
-                        <button key={v} onClick={()=>setActiveMeeting({...activeMeeting, revision_version: v})} className={`px-3 py-1 rounded text-[8px] font-black uppercase transition-all ${activeMeeting.revision_version === v ? 'bg-white text-black' : 'text-neutral-700'}`}>{v}</button>
+                        <button key={v} onClick={()=>setActiveMeeting({...activeMeeting, revision_version: v})} className={`px-3 py-1 rounded text-[8px] font-black uppercase transition-all ${activeMeeting.revision_version === v ? 'bg-[#10b981] text-white shadow-lg' : 'text-neutral-700'}`}>{v}</button>
                      ))}
                    </div>
                 </div>
-                <p className="text-[8px] text-neutral-700 font-black uppercase tracking-[0.4em] mt-1">War Room • High Density Display</p>
+                <p className="text-[8px] text-neutral-700 font-black uppercase tracking-[0.4em] mt-1">Sovereign Obsidian • Professional Edition</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-               <div className="flex items-center gap-4 bg-black border border-white/5 rounded-xl px-5 py-2">
-                  <p className="text-xl font-mono font-black text-white leading-none">{formatTime(time)}</p>
-                  <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isTimerRunning ? 'bg-rose-500 text-white' : 'bg-white text-black'}`}>
+               <div className="flex items-center gap-4 bg-black border border-white/5 rounded-xl px-5 py-2 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-[#10b981]/5 opacity-0 group-hover:opacity-100 transition-all pointer-events-none"></div>
+                  <p className="text-xl font-mono font-black text-white leading-none z-10">{formatTime(time)}</p>
+                  <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all z-10 ${isTimerRunning ? 'bg-[#10b981] text-white shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'bg-white text-black'}`}>
                     {isTimerRunning ? <Pause size={14} strokeWidth={3}/> : <Play size={14} strokeWidth={3} fill="currentColor"/>}
                   </button>
                </div>
-               <button onClick={saveMeeting} className="px-6 py-3 bg-white text-black text-[10px] font-black rounded-xl uppercase tracking-widest flex items-center gap-3 active:scale-95 transition-all shadow-xl">
+               <button onClick={saveMeeting} className="px-6 py-3 bg-white text-black text-[10px] font-black rounded-xl uppercase tracking-widest flex items-center gap-3 active:scale-95 transition-all shadow-xl hover:bg-[#10b981] hover:text-white">
                 <Save size={16} strokeWidth={3}/> Guardar
               </button>
             </div>
@@ -369,29 +358,30 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
           <div className="flex-1 flex p-4 gap-4 overflow-hidden max-w-[1700px] mx-auto w-full">
             
-            {/* IZQUIERDA: HERRAMIENTAS (COMPACTO) */}
+            {/* IZQUIERDA: HERRAMIENTAS (OBSIDIAN STYLE) */}
             <div className="w-[300px] h-full shrink-0 flex flex-col space-y-4 overflow-y-auto mac-scrollbar pr-2">
                
-               {/* CALCULADORA (COMPACTO) */}
-               <div className="bg-[#080808] border border-white/5 rounded-[1.5rem] p-5 shadow-xl">
-                  <div className="flex items-center justify-between mb-4">
-                    <p className="text-[10px] text-neutral-700 font-black uppercase tracking-[0.2em] flex items-center gap-2"><CalcIcon size={14}/> Calculator</p>
+               {/* CALCULADORA (REDESIGN ESMERALDA) */}
+               <div className="bg-[#080808] border border-white/5 rounded-[1.5rem] p-5 shadow-2xl relative overflow-hidden group">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-[#10b981]/5 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                  <div className="flex items-center justify-between mb-4 relative z-10">
+                    <p className="text-[10px] text-neutral-700 font-black uppercase tracking-[0.2em] flex items-center gap-2"><CalcIcon size={14} className="text-[#10b981]"/> Calculator</p>
                     <button onClick={()=>setCalcDisplay('0')} className="text-neutral-800 hover:text-white transition-all"><RefreshCw size={12}/></button>
                   </div>
-                  <div className="bg-black border border-white/5 rounded-xl p-4 text-right text-3xl font-mono font-black text-white mb-4 shadow-inner truncate">
+                  <div className="bg-black border border-white/5 rounded-xl p-4 text-right text-3xl font-mono font-black text-white mb-4 shadow-inner truncate relative z-10">
                     {calcDisplay}
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-4 gap-2 relative z-10">
                     {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','=','+'].slice(0,19).map(btn => (
-                      <button key={btn} onClick={() => handleCalc(btn === 'C' ? 'C' : btn)} className={`h-11 rounded-lg text-[11px] font-black transition-all ${btn === '=' ? 'bg-amber-500 text-black col-span-2' : 'bg-white/5 text-neutral-600 hover:bg-white/10 hover:text-white'}`}>{btn}</button>
+                      <button key={btn} onClick={() => handleCalc(btn === 'C' ? 'C' : btn)} className={`h-11 rounded-lg text-[11px] font-black transition-all ${btn === '=' ? 'bg-[#10b981] text-white col-span-2' : 'bg-white/5 text-neutral-600 hover:bg-white/10 hover:text-white'}`}>{btn}</button>
                     ))}
-                    <button onClick={()=>handleCalc('=')} className="h-11 rounded-lg text-[11px] font-black bg-white text-black transition-all col-span-2">=</button>
+                    <button onClick={()=>handleCalc('=')} className="h-11 rounded-lg text-[11px] font-black bg-[#10b981] text-white transition-all col-span-2 shadow-[0_5px_15px_rgba(16,185,129,0.3)]">=</button>
                   </div>
                </div>
 
                {/* OBJETIVOS (COMPACTO) */}
-               <div className="bg-[#080808] border border-white/5 rounded-[1.5rem] p-5 shadow-xl flex-1 flex flex-col min-h-[150px]">
-                  <p className="text-[10px] text-neutral-700 font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Target size={14}/> Objectives</p>
+               <div className="bg-[#080808] border border-white/5 rounded-[1.5rem] p-5 shadow-2xl flex-1 flex flex-col min-h-[150px]">
+                  <p className="text-[10px] text-neutral-700 font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Target size={14} className="text-[#10b981]"/> Objectives</p>
                   <textarea 
                     value={activeMeeting.session_objective || ''} 
                     onChange={e=>setActiveMeeting({...activeMeeting, session_objective: e.target.value})} 
@@ -401,65 +391,112 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                </div>
 
                {/* PRIORIDAD (COMPACTO) */}
-               <div className="bg-[#080808] border border-white/5 rounded-[1.5rem] p-4 shadow-xl">
+               <div className="bg-[#080808] border border-white/5 rounded-[1.5rem] p-4 shadow-2xl">
                   <div className="grid grid-cols-2 gap-2">
                     {['Baja', 'Media', 'Alta', 'URGENTE'].map(p => (
-                      <button key={p} onClick={()=>setActiveMeeting({...activeMeeting, priority: p})} className={`py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeMeeting.priority === p ? 'bg-white text-black' : 'bg-white/5 text-neutral-700'}`}>{p}</button>
+                      <button key={p} onClick={()=>setActiveMeeting({...activeMeeting, priority: p})} className={`py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeMeeting.priority === p ? 'bg-[#10b981] text-white shadow-lg' : 'bg-white/5 text-neutral-700'}`}>{p}</button>
                     ))}
                   </div>
                </div>
 
             </div>
 
-            {/* DERECHA: EDITOR (ALTA DENSIDAD / APPLE NOTES STYLE) */}
-            <div className="flex-1 flex flex-col bg-black border border-white/5 rounded-[2rem] overflow-hidden shadow-2xl relative">
+            {/* CENTRO: EDITOR / DRIVE / CALENDAR (TABS RESTAURADAS) */}
+            <div className="flex-1 flex flex-col bg-black border border-white/5 rounded-[2rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] relative">
                
-               {/* TOOLBAR COMPACTO */}
-               <div className="flex items-center justify-between px-8 py-4 bg-[#080808] border-b border-white/5 shrink-0">
+               {/* TOOLBAR & TABS SEGMENTED CONTROL */}
+               <div className="flex items-center justify-between px-8 py-4 bg-[#080808] border-b border-white/5 shrink-0 shadow-2xl">
                   <div className="flex items-center gap-4">
                      <div className="flex items-center gap-1 pr-4 border-r border-white/10">
-                        <button onMouseDown={(e) => formatText('formatBlock', '<h1>', e)} className="p-2 text-neutral-600 hover:text-white rounded-lg transition-all"><Heading1 size={18}/></button>
-                        <button onMouseDown={(e) => formatText('formatBlock', '<h2>', e)} className="p-2 text-neutral-600 hover:text-white rounded-lg transition-all"><Heading2 size={18}/></button>
-                        <button onMouseDown={(e) => formatText('bold', null, e)} className="p-2 text-neutral-600 hover:text-white rounded-lg transition-all"><Bold size={16}/></button>
-                        <button onMouseDown={(e) => formatText('italic', null, e)} className="p-2 text-neutral-600 hover:text-white rounded-lg transition-all"><Italic size={16}/></button>
-                        <button onMouseDown={(e) => formatText('insertUnorderedList', null, e)} className="p-2 text-neutral-600 hover:text-white rounded-lg transition-all"><List size={16}/></button>
-                        <button onMouseDown={(e) => { e.preventDefault(); document.execCommand('insertHTML', false, '<div style="display:flex; align-items:center; gap:8px; margin: 4px 0;"><input type="checkbox" style="width:16px; height:16px; cursor:pointer;" /> <span contenteditable="true" style="outline:none;">Tarea...</span></div>'); }} className="p-2 text-neutral-600 hover:text-white rounded-lg transition-all"><CheckSquare size={16}/></button>
+                        <button onMouseDown={(e) => formatText('formatBlock', '<h1>', e)} className="p-2 text-neutral-600 hover:text-[#10b981] rounded-lg transition-all"><Heading1 size={18}/></button>
+                        <button onMouseDown={(e) => formatText('formatBlock', '<h2>', e)} className="p-2 text-neutral-600 hover:text-[#10b981] rounded-lg transition-all"><Heading2 size={18}/></button>
+                        <button onMouseDown={(e) => formatText('bold', null, e)} className="p-2 text-neutral-600 hover:text-[#10b981] rounded-lg transition-all"><Bold size={16}/></button>
+                        <button onMouseDown={(e) => formatText('italic', null, e)} className="p-2 text-neutral-600 hover:text-[#10b981] rounded-lg transition-all"><Italic size={16}/></button>
+                        <button onMouseDown={(e) => formatText('insertUnorderedList', null, e)} className="p-2 text-neutral-600 hover:text-[#10b981] rounded-lg transition-all"><List size={16}/></button>
+                        <button onMouseDown={(e) => { e.preventDefault(); document.execCommand('insertHTML', false, '<div style="display:flex; align-items:center; gap:8px; margin: 4px 0;"><input type="checkbox" style="width:16px; height:16px; cursor:pointer;" /> <span contenteditable="true" style="outline:none;">Tarea...</span></div>'); }} className="p-2 text-neutral-600 hover:text-[#10b981] rounded-lg transition-all"><CheckSquare size={16}/></button>
                      </div>
                      <div className="flex items-center gap-3 px-2">
-                        <button onMouseDown={(e) => applyHighlight('#ef4444', e)} className="w-6 h-6 rounded-full bg-red-500 border-2 border-white/10"></button>
-                        <button onMouseDown={(e) => applyHighlight('#3b82f6', e)} className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white/10"></button>
-                        <button onMouseDown={(e) => applyHighlight('#eab308', e)} className="w-6 h-6 rounded-full bg-yellow-500 border-2 border-white/10"></button>
+                        <button onMouseDown={(e) => applyHighlight('#ef4444', e)} className="w-6 h-6 rounded-full bg-red-500 border-2 border-white/10 shadow-[0_0_10px_rgba(239,68,68,0.3)]"></button>
+                        <button onMouseDown={(e) => applyHighlight('#3b82f6', e)} className="w-6 h-6 rounded-full bg-blue-500 border-2 border-white/10 shadow-[0_0_10px_rgba(59,130,246,0.3)]"></button>
+                        <button onMouseDown={(e) => applyHighlight('#fbbf24', e)} className="w-6 h-6 rounded-full bg-amber-400 border-2 border-white/10 shadow-[0_0_10px_rgba(251,191,36,0.3)]"></button>
                         <button onMouseDown={(e) => applyHighlight('transparent', e)} className="p-2 text-neutral-800 hover:text-white"><Eraser size={14}/></button>
                      </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                     <button onClick={()=>setSessionTab('editor')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${sessionTab === 'editor' ? 'bg-white text-black' : 'text-neutral-700'}`}>Editor</button>
-                     <button onClick={()=>setSessionTab('drive')} className={`px-5 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${sessionTab === 'drive' ? 'bg-white text-black' : 'text-neutral-700'}`}>Drive</button>
+
+                  {/* NAVEGACIÓN DE PESTAÑAS (RESTAURADA) */}
+                  <div className="flex bg-black/50 rounded-xl p-1 border border-white/5 shadow-inner">
+                     <button onClick={()=>setSessionTab('editor')} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${sessionTab === 'editor' ? 'bg-white text-black shadow-lg' : 'text-neutral-700 hover:text-white'}`}>
+                       <FileText size={12}/> Editor
+                     </button>
+                     <button onClick={()=>setSessionTab('drive')} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${sessionTab === 'drive' ? 'bg-white text-black shadow-lg' : 'text-neutral-700 hover:text-white'}`}>
+                       <HardDrive size={12}/> Drive
+                     </button>
+                     <button onClick={()=>setSessionTab('calendar')} className={`px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${sessionTab === 'calendar' ? 'bg-white text-black shadow-lg' : 'text-neutral-700 hover:text-white'}`}>
+                       <Calendar size={12}/> Agenda
+                     </button>
                   </div>
                </div>
 
-               {/* TAGS (DENSOS) */}
+               {/* TAGS (DENSOS CON ESMERALDA ACCENT) */}
                <div className="px-8 py-3 flex items-center gap-2 overflow-x-auto no-scrollbar bg-black/40 border-b border-white/5">
+                  <p className="text-[8px] text-neutral-800 font-black uppercase tracking-[0.4em] mr-2 shrink-0">Tags Rápidos</p>
                   {EDITOR_TAGS.map(tag => (
-                     <button key={tag.name} onMouseDown={(e) => insertTag(e, tag.name, tag.bg, tag.text, tag.border)} className="px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest shrink-0 transition-all hover:scale-105 border border-white/5" style={{ backgroundColor: tag.bg, color: tag.text, border: `1px solid ${tag.border}` }}>{tag.name}</button>
+                     <button key={tag.name} onMouseDown={(e) => insertTag(e, tag.name, tag.bg, tag.text, tag.border)} className="px-3 py-1.5 rounded-xl text-[8px] font-black uppercase tracking-widest shrink-0 transition-all hover:scale-105 border border-white/5 shadow-lg" style={{ backgroundColor: tag.bg, color: tag.text, border: `1px solid ${tag.border}` }}>{tag.name}</button>
                   ))}
                </div>
 
-               {/* ÁREA DE TEXTO (ALTA DENSIDAD / APPLE NOTES STYLE) */}
-               <div className="flex-1 relative overflow-hidden bg-black/40">
-                  <div 
-                    ref={editorRef} 
-                    contentEditable="true" 
-                    suppressContentEditableWarning={true} 
-                    className="w-full h-full p-12 text-white font-medium text-lg leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto max-w-[1100px] mx-auto" 
-                    dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} 
-                    onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})} 
-                  />
+               {/* CONTENIDO SEGÚN PESTAÑA SELECCIONADA */}
+               <div className="flex-1 relative overflow-hidden bg-[#050505]">
                   
-                  {/* IA MAGIC (BOTÓN COMPACTO) */}
-                  <button onMouseDown={(e) => { e.preventDefault(); setShowAIModal(true); }} className="absolute bottom-8 right-8 w-14 h-14 bg-purple-600 hover:bg-purple-500 text-white rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 active:scale-95 group">
-                     <Sparkles size={24} className="group-hover:animate-pulse" />
-                  </button>
+                  {sessionTab === 'editor' && (
+                    <div className="w-full h-full relative animate-in fade-in duration-500">
+                        <div 
+                          ref={editorRef} 
+                          contentEditable="true" 
+                          suppressContentEditableWarning={true} 
+                          className="w-full h-full p-12 text-white font-medium text-lg leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto max-w-[1100px] mx-auto selection:bg-[#10b981]/30" 
+                          dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} 
+                          onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})} 
+                        />
+                        <button onMouseDown={(e) => { e.preventDefault(); setShowAIModal(true); }} className="absolute bottom-8 right-8 w-14 h-14 bg-[#10b981] hover:bg-[#0d9668] text-white rounded-full shadow-[0_10px_30px_rgba(16,185,129,0.3)] flex items-center justify-center transition-all hover:scale-110 active:scale-95 group">
+                           <Sparkles size={24} className="group-hover:animate-pulse" />
+                        </button>
+                    </div>
+                  )}
+
+                  {sessionTab === 'drive' && (
+                    <div className="w-full h-full p-8 overflow-y-auto mac-scrollbar animate-in fade-in duration-500">
+                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                          {driveLoading ? <div className="col-span-full py-20 text-center"><RefreshCw className="animate-spin m-auto text-[#10b981]" /></div> : 
+                            driveFiles.map(file => (
+                              <div key={file.id} onClick={()=>window.open(file.webViewLink,'_blank')} className="bg-white/5 border border-white/5 rounded-2xl p-4 hover:bg-white/10 cursor-pointer transition-all flex flex-col items-center gap-3 text-center group">
+                                 {file.mimeType?.includes('folder') ? <Folder size={32} className="text-amber-500"/> : <FileVideo size={32} className="text-[#10b981]"/>}
+                                 <span className="text-[10px] font-bold text-white truncate w-full">{file.name}</span>
+                              </div>
+                            ))
+                          }
+                       </div>
+                    </div>
+                  )}
+
+                  {sessionTab === 'calendar' && (
+                    <div className="w-full h-full p-4 overflow-y-auto mac-scrollbar animate-in fade-in duration-500 flex flex-col">
+                        <div className="grid grid-cols-7 border-b border-white/5 bg-black/50">
+                          {['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'].map(d => (
+                            <div key={d} className="py-2 text-center text-[9px] font-black text-neutral-600 uppercase tracking-widest">{d}</div>
+                          ))}
+                        </div>
+                        <div className="flex-1 grid grid-cols-7 border-l border-white/5">
+                           {calendarLoading ? <div className="col-span-full py-20 text-center"><RefreshCw className="animate-spin m-auto text-[#10b981]" /></div> : 
+                             Array.from({ length: 35 }).map((_, i) => (
+                               <div key={i} className="h-20 border-b border-r border-white/5 p-2 hover:bg-[#10b981]/5 transition-all text-[9px] font-bold text-neutral-800 hover:text-white">
+                                  {i + 1}
+                               </div>
+                             ))
+                           }
+                        </div>
+                    </div>
+                  )}
                </div>
 
             </div>
@@ -468,15 +505,15 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
-      {/* MODALES COMPACTOS */}
+      {/* MODALES RE-ESTILIZADOS */}
       {isClientModalOpen && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/90 backdrop-blur-xl p-8">
-           <div className="bg-[#080808] border border-white/10 rounded-[3rem] w-full max-w-xl p-12 space-y-8 shadow-2xl">
-                <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">Nuevo Perfil</h3>
-                <input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Nombre completo..." className="w-full bg-black border border-white/5 rounded-2xl p-6 text-lg text-white outline-none focus:border-white/10 transition-all" />
+           <div className="bg-[#080808] border border-white/10 rounded-[3rem] w-full max-w-xl p-12 space-y-8 shadow-[0_50px_100px_rgba(0,0,0,0.5)] border-t-[#10b981] border-t-2">
+                <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none">Sovereign <span className="text-[#10b981]">ID</span></h3>
+                <input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Nombre completo..." className="w-full bg-black border border-white/5 rounded-2xl p-6 text-lg text-white outline-none focus:border-[#10b981]/50 transition-all shadow-inner" />
                 <div className="flex gap-4">
-                   <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-6 text-neutral-600 font-black uppercase text-[10px] tracking-widest">Cerrar</button>
-                   <button onClick={handleCreateClient} className="flex-[2] py-6 bg-white text-black rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all">Guardar</button>
+                   <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-6 text-neutral-600 font-black uppercase text-[10px] tracking-widest hover:text-white">Cerrar</button>
+                   <button onClick={handleCreateClient} className="flex-[2] py-6 bg-[#10b981] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-[0_10px_30px_rgba(16,185,129,0.3)] active:scale-95 transition-all">Guardar Perfil</button>
                 </div>
            </div>
         </div>
@@ -484,12 +521,12 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
       {showAIModal && (
         <div className="fixed inset-0 z-[700] flex items-center justify-center bg-black/90 backdrop-blur-xl p-8">
-          <div className="bg-[#080808] border border-white/10 rounded-[4rem] p-16 w-full max-w-3xl shadow-2xl relative overflow-hidden">
-            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-4"><Sparkles className="text-purple-500" size={28}/> IA Oracle</h4>
-            <textarea autoFocus value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="w-full bg-black border border-white/10 rounded-[2.5rem] p-8 text-lg text-white outline-none h-48 resize-none mb-8 placeholder:text-neutral-900 leading-normal" placeholder="Pide una mejora creativa..." />
+          <div className="bg-[#080808] border border-white/10 rounded-[4rem] p-16 w-full max-w-3xl shadow-2xl relative overflow-hidden border-t-[#10b981] border-t-2">
+            <h4 className="text-3xl font-black text-white uppercase tracking-tighter mb-8 flex items-center gap-4"><Sparkles className="text-[#10b981]" size={28}/> IA Oracle v3</h4>
+            <textarea autoFocus value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} className="w-full bg-black border border-white/10 rounded-[2.5rem] p-8 text-lg text-white outline-none h-48 resize-none mb-8 placeholder:text-neutral-900 leading-normal shadow-inner" placeholder="Pide una mejora creativa o guion viral..." />
             <div className="flex gap-8">
               <button onClick={() => setShowAIModal(false)} className="flex-1 py-6 text-neutral-600 font-black uppercase text-[10px] tracking-widest">Cerrar</button>
-              <button onClick={handleAISuggestion} disabled={aiLoading || !aiPrompt} className="flex-[2] py-6 bg-purple-600 text-white font-black rounded-[2.5rem] uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all">
+              <button onClick={handleAISuggestion} disabled={aiLoading || !aiPrompt} className="flex-[2] py-6 bg-[#10b981] text-white font-black rounded-[2.5rem] uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-[0_10px_30px_rgba(16,185,129,0.3)]">
                 {aiLoading ? <RefreshCw className="animate-spin" size={16}/> : <Sparkles size={16}/>} {aiLoading ? 'Procesando...' : 'Ejecutar'}
               </button>
             </div>
