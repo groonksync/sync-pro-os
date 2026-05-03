@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   Package, Search, ChevronRight, ChevronLeft, X, 
   Truck, Zap, ShoppingCart, ShieldCheck, 
@@ -25,7 +25,8 @@ const PublicProductCard = ({ p, onSelect }) => {
         {p.imagen ? (
           <img 
             src={p.imagen} 
-            className={`w-full h-full object-cover rounded-[inherit] transition-transform duration-1000 group-hover:scale-110 ${isAgotado ? 'grayscale opacity-30 blur-[2px]' : ''}`}
+            loading="lazy"
+            className={`w-full h-full object-cover rounded-[inherit] transition-transform duration-700 group-hover:scale-110 ${isAgotado ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
@@ -43,12 +44,6 @@ const PublicProductCard = ({ p, onSelect }) => {
               </span>
            </div>
         )}
-
-        <div className="absolute top-2 left-2 md:top-3 md:left-3 z-20">
-           <span className="px-1.5 py-0.5 bg-black/50 backdrop-blur-md text-white/50 text-[5px] md:text-[7px] font-black rounded-md uppercase tracking-widest border border-white/5">
-              {p.categoria || 'SYNC'}
-           </span>
-        </div>
       </div>
 
       <div className="px-3 pb-3 md:px-4 md:pb-4 pt-0.5 flex-1 flex flex-col justify-between">
@@ -62,25 +57,15 @@ const PublicProductCard = ({ p, onSelect }) => {
                </p>
             </div>
           </div>
-          
           <div className="flex flex-col min-h-[2.2em] justify-end">
-             {hasDiscount && (
-               <p className="text-[6px] md:text-[9px] text-neutral-700 font-mono line-through mb-[-2px]">
-                  {parseFloat(p.precio_antes).toLocaleString()} BS.
-               </p>
-             )}
+             {hasDiscount && <p className="text-[6px] md:text-[9px] text-neutral-700 font-mono line-through mb-[-2px]">{parseFloat(p.precio_antes).toLocaleString()} BS.</p>}
              <p className="text-lg md:text-2xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
-                {parseFloat(p.precio_venta || 0).toLocaleString()} 
-                <span className="text-[7px] md:text-[10px] opacity-20 ml-1 font-sans font-black">BS.</span>
+                {parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-[7px] md:text-[10px] opacity-20 ml-1 font-sans font-black">BS.</span>
              </p>
           </div>
         </div>
-
-        <button 
-          className="w-full mt-3 py-2 md:py-3 bg-emerald-500 text-black rounded-lg md:rounded-xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.1em] hover:bg-white transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-lg"
-        >
-           <ShoppingCart size={10} className="md:w-3.5 md:h-3.5" />
-           COMPRAR
+        <button className="w-full mt-3 py-2 md:py-3 bg-emerald-500 text-black rounded-lg md:rounded-xl font-black text-[8px] md:text-[10px] uppercase tracking-[0.1em] hover:bg-white transition-all flex items-center justify-center gap-1.5 shadow-lg">
+           <ShoppingCart size={10} className="md:w-3.5 md:h-3.5" /> COMPRAR
         </button>
       </div>
     </div>
@@ -100,163 +85,116 @@ const PublicCatalog = () => {
 
   const WHATSAPP_NUMBER = "59169109766"; 
 
-  const normalizeText = (text) => {
-    return (text || '')
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-  };
+  const normalizeText = (text) => (text || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useEffect(() => { fetchProducts(); }, []);
 
   const fetchProducts = async () => {
-    setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('productos')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+      const { data, error } = await supabase.from('productos').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       setProductos(data || []);
       setFilteredProducts(data || []);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
   };
 
   useEffect(() => {
     let result = productos;
-    if (activeCategory !== 'Todos') {
-      result = result.filter(p => p.categoria === activeCategory);
-    }
+    if (activeCategory !== 'Todos') result = result.filter(p => p.categoria === activeCategory);
     if (searchTerm) {
       const normalizedSearch = normalizeText(searchTerm);
-      result = result.filter(p => {
-        return normalizeText(p.nombre).includes(normalizedSearch) || normalizeText(p.codigo).includes(normalizedSearch);
-      });
+      result = result.filter(p => normalizeText(p.nombre).includes(normalizedSearch) || normalizeText(p.codigo).includes(normalizedSearch));
     }
     setFilteredProducts(result);
   }, [searchTerm, activeCategory, productos]);
 
-  const categories = ['Todos', ...new Set(productos.map(p => p.categoria).filter(Boolean))];
+  const categories = useMemo(() => ['Todos', ...new Set(productos.map(p => p.categoria).filter(Boolean))], [productos]);
 
-  const handleConsult = (p) => {
-    const text = `Hola! Me interesa: *${p.nombre}* (${p.precio_venta} BS.)`;
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
-  };
+  const allImages = useMemo(() => selectedProduct ? [selectedProduct.imagen, ...(selectedProduct.imagenes || [])].filter(Boolean) : [], [selectedProduct]);
 
-  const allImages = selectedProduct ? [selectedProduct.imagen, ...(selectedProduct.imagenes || [])].filter(Boolean) : [];
   const nextImg = () => setCurrentImgIndex(prev => (prev + 1) % allImages.length);
   const prevImg = () => setCurrentImgIndex(prev => (prev - 1 + allImages.length) % allImages.length);
 
-  const handleTouchStart = (e) => {
-    touchStart.current = e.targetTouches[0].clientX;
-  };
-  const handleTouchMove = (e) => {
-    touchEnd.current = e.targetTouches[0].clientX;
-  };
+  const handleTouchStart = (e) => { touchStart.current = e.targetTouches[0].clientX; };
+  const handleTouchMove = (e) => { touchEnd.current = e.targetTouches[0].clientX; };
   const handleTouchEnd = () => {
-    if (touchStart.current - touchEnd.current > 70) nextImg();
-    if (touchStart.current - touchEnd.current < -70) prevImg();
+    if (touchStart.current - touchEnd.current > 50) nextImg();
+    if (touchStart.current - touchEnd.current < -50) prevImg();
   };
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-emerald-500 selection:text-black">
       <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-3 md:py-5 px-4 md:px-12 flex flex-col md:flex-row justify-between items-center gap-3">
          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-black">
-               <Zap size={18} className="fill-black" />
-            </div>
+            <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-black"><Zap size={18} className="fill-black" /></div>
             <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter">Sync<span className="text-emerald-500">PRO</span></h1>
          </div>
          <div className="relative flex-1 max-w-[400px] w-full">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-700" size={14} />
-            <input 
-              type="text" 
-              placeholder="Buscar activos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-12 pr-6 text-[11px] text-white outline-none focus:border-white/20 transition-all"
-            />
+            <input type="text" placeholder="Buscar activos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-12 pr-6 text-[11px] text-white outline-none focus:border-white/20 transition-all"/>
          </div>
       </header>
 
       <main className="px-4 md:px-12 py-8">
          <div className="flex overflow-x-auto gap-2 mb-10 no-scrollbar pb-2">
             {categories.map(cat => (
-               <button 
-                 key={cat}
-                 onClick={() => setActiveCategory(cat)}
-                 className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'bg-white text-black' : 'bg-white/5 text-neutral-500 border border-white/5 hover:text-white'}`}
-               >
-                  {cat}
-               </button>
+               <button key={cat} onClick={() => setActiveCategory(cat)} className={`whitespace-nowrap px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${activeCategory === cat ? 'bg-white text-black' : 'bg-white/5 text-neutral-500 border border-white/5 hover:text-white'}`}>{cat}</button>
             ))}
          </div>
-
          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-4">
-            {filteredProducts.map(p => (
-               <PublicProductCard key={p.id} p={p} onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }} />
-            ))}
+            {filteredProducts.map(p => <PublicProductCard key={p.id} p={p} onSelect={(prod) => { setSelectedProduct(prod); setCurrentImgIndex(0); }} />)}
          </div>
       </main>
 
       {selectedProduct && (
-         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-2 md:p-6 animate-in fade-in duration-300">
-            <div className="bg-[#121212] border border-white/10 w-full max-w-[850px] rounded-[32px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative flex flex-col md:flex-row max-h-[95vh] overflow-y-auto">
-               <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-[160] w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:text-white transition-all active:scale-90"><X size={18}/></button>
+         <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex items-center justify-center p-0 md:p-6 animate-in fade-in duration-300">
+            <div className="bg-[#121212] border border-white/10 w-full max-w-[850px] rounded-t-[32px] md:rounded-[32px] overflow-hidden shadow-2xl relative flex flex-col md:flex-row h-full max-h-[100dvh] md:max-h-[90vh] overflow-y-auto scrollbar-hide">
+               <button onClick={() => setSelectedProduct(null)} className="fixed md:absolute top-4 right-4 z-[160] w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:text-white transition-all active:scale-90"><X size={18}/></button>
                
                <div 
-                 className="w-full md:w-[45%] bg-[#080808] p-4 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5 min-h-[40vh]"
+                 className="w-full md:w-[45%] bg-[#080808] p-4 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5 min-h-[35vh] md:min-h-auto"
                  onTouchStart={handleTouchStart}
                  onTouchMove={handleTouchMove}
                  onTouchEnd={handleTouchEnd}
                >
                   <div className="w-full flex-1 flex items-center justify-center overflow-hidden" key={currentImgIndex}>
-                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[40vh] md:max-h-[50vh] object-contain drop-shadow-2xl rounded-2xl select-none" />
+                     <img 
+                       src={allImages[currentImgIndex]} 
+                       className="max-w-full max-h-[30vh] md:max-h-[50vh] object-contain drop-shadow-2xl rounded-2xl select-none animate-in fade-in duration-200" 
+                     />
                   </div>
                   {allImages.length > 1 && (
                     <div className="flex gap-2 mt-4 pb-2">
-                       {allImages.map((img, i) => (
-                          <button key={i} onClick={(e) => { e.stopPropagation(); setCurrentImgIndex(i); }} className={`w-2 h-2 rounded-full transition-all ${currentImgIndex === i ? 'bg-emerald-500 w-6' : 'bg-white/20'}`} />
-                       ))}
+                       {allImages.map((_, i) => <button key={i} onClick={(e) => { e.stopPropagation(); setCurrentImgIndex(i); }} className={`w-2 h-2 rounded-full transition-all ${currentImgIndex === i ? 'bg-emerald-500 w-6' : 'bg-white/20'}`} />)}
                     </div>
                   )}
                </div>
 
-               <div className="w-full md:w-[55%] p-6 md:p-10 flex flex-col justify-between overflow-y-visible">
+               <div className="w-full md:w-[55%] p-6 md:p-10 flex flex-col justify-between">
                   <div className="space-y-6">
                      <div>
                         <span className="text-[7px] md:text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-1.5 block">DETALLES DEL ACTIVO</span>
-                        <h2 className="text-2xl md:text-4xl font-black text-white tracking-tighter uppercase leading-tight">{selectedProduct.nombre}</h2>
-                        <p className="text-[10px] md:text-xs font-black text-white/40 uppercase tracking-[0.3em] mt-2">{selectedProduct.marca || 'Sovereign Core'}</p>
+                        <h2 className="text-xl md:text-3xl font-black text-white tracking-tighter uppercase leading-tight">{selectedProduct.nombre}</h2>
+                        <p className="text-[10px] md:text-sm font-black text-white/40 uppercase tracking-[0.3em] mt-2">{selectedProduct.marca || 'Sovereign Core'}</p>
                      </div>
 
                      <div className="bg-white/[0.03] border border-white/5 p-6 md:p-8 rounded-[2.5rem] shadow-inner relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                           <DollarSign size={40} className="text-white" />
-                        </div>
+                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><DollarSign size={40} className="text-white" /></div>
                         <p className="text-[7px] md:text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1">Precio de Adquisición</p>
                         <div className="flex items-baseline gap-3">
                            <p className="text-4xl md:text-6xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
                            <span className="text-[10px] md:text-xs font-black text-emerald-500">BS.</span>
                         </div>
                         {selectedProduct.precio_antes > selectedProduct.precio_venta && (
-                           <div className="mt-2 flex items-center gap-2">
-                              <span className="text-[8px] md:text-[10px] font-black text-rose-500/50 uppercase tracking-widest">Normal:</span>
-                              <p className="text-sm md:text-xl text-neutral-500 font-mono line-through font-black">
-                                 {parseFloat(selectedProduct.precio_antes).toLocaleString()} BS.
-                              </p>
+                           <div className="mt-4 flex items-center gap-3 bg-rose-500/5 p-3 rounded-2xl border border-rose-500/10">
+                              <span className="text-[8px] md:text-[10px] font-black text-rose-500 uppercase tracking-widest">Normal:</span>
+                              <p className="text-base md:text-2xl text-neutral-500 font-mono line-through font-black leading-none">{parseFloat(selectedProduct.precio_antes).toLocaleString()} BS.</p>
                            </div>
                         )}
                      </div>
 
-                     <div className="grid grid-cols-2 gap-3">
+                     <div className="grid grid-cols-2 gap-3 pb-20 md:pb-0">
                         <div className="bg-white/5 p-4 rounded-2xl border border-white/5 flex items-center gap-3">
                            <ShieldCheck size={16} className="text-emerald-500" />
                            <div>
@@ -274,10 +212,11 @@ const PublicCatalog = () => {
                      </div>
                   </div>
 
-                  <button onClick={() => handleConsult(selectedProduct)} className="w-full mt-10 py-6 md:py-8 bg-emerald-500 text-black rounded-[2.2rem] font-black uppercase text-[10px] md:text-xs tracking-[0.2em] hover:bg-white hover:scale-[1.02] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
-                     <WhatsAppIcon size={20} />
-                     ORDENAR POR WHATSAPP
-                  </button>
+                  <div className="fixed md:relative bottom-0 left-0 w-full p-6 md:p-0 bg-[#121212] md:bg-transparent border-t md:border-t-0 border-white/5">
+                     <button onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre}`, '_blank')} className="w-full py-5 md:py-8 bg-emerald-500 text-black rounded-[2.2rem] font-black uppercase text-[10px] md:text-xs tracking-[0.2em] hover:bg-white transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                        <WhatsAppIcon size={20} /> ORDENAR POR WHATSAPP
+                     </button>
+                  </div>
                </div>
             </div>
          </div>
