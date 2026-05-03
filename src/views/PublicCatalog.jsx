@@ -15,98 +15,62 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
     setImgIndex((prev) => (prev + 1) % allImages.length);
   };
 
-  const prevImg = (e) => {
-    e.stopPropagation();
-    setImgIndex((prev) => (prev - 1 + allImages.length) % allImages.length);
-  };
-
   const isLowStock = parseInt(p.stock_actual) <= (p.stock_minimo || 3) && parseInt(p.stock_actual) > 0;
   const oldPrice = p.precio_anterior || (parseFloat(p.precio_venta || 0) * 1.25);
-  const [viewers] = useState(Math.floor(Math.random() * 8) + 3);
 
   return (
-    <div className="bg-[#0a0a0a] border border-white/5 rounded-[24px] md:rounded-[48px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
-      {/* SOCIAL PROOF BADGE (Compact Mobile) */}
-      <div className="absolute top-3 right-3 md:top-8 md:right-8 z-30 pointer-events-none">
-         <div className="px-2 py-1 md:px-4 md:py-2 bg-black/60 backdrop-blur-xl rounded-full border border-white/10 flex items-center gap-1.5 md:gap-3">
-            <div className="w-1 h-1 md:w-1.5 md:h-1.5 bg-rose-500 rounded-full animate-ping" />
-            <span className="text-[6px] md:text-[7px] font-black text-white uppercase tracking-[0.2em] md:tracking-[0.3em]">{viewers} EN LÍNEA</span>
-         </div>
-      </div>
-
-      {/* IMAGEN CON SLIDER (Compact Mobile) */}
-      <div className="aspect-square bg-[#050505] m-2 md:m-4 rounded-[20px] md:rounded-[40px] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
+    <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl md:rounded-[32px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
+      {/* IMAGEN ULTRA-COMPACTA */}
+      <div className="aspect-square bg-[#050505] m-1.5 md:m-2.5 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
-            className={`max-w-[85%] max-h-[85%] object-contain transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px] md:blur-[4px]' : ''}`}
+            className={`max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-neutral-900">
-             <Package size={30} strokeWidth={1} className="text-neutral-800" />
-          </div>
+          <Package size={24} strokeWidth={1} className="text-neutral-800" />
         )}
 
-        {/* SELLO AGOTADO INFINITE BAND (Estilo Black Noir de la Imagen) */}
+        {/* SELLO AGOTADO (Compacto) */}
         {parseInt(p.stock_actual) === 0 && (
            <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none overflow-hidden">
-              <div className="bg-black/90 backdrop-blur-3xl border-y border-white/10 py-5 md:py-12 w-[200%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center relative">
-                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                 <span className="text-white text-[10px] md:text-4xl font-black tracking-[0.3em] md:tracking-[0.8em] uppercase drop-shadow-2xl">AGOTADO</span>
-                 <span className="text-white/40 text-[5px] md:text-[8px] font-black uppercase tracking-[0.2em] md:tracking-[0.6em] mt-0.5 md:mt-2">Sovereign Reserve</span>
+              <div className="bg-black/90 backdrop-blur-md border-y border-white/10 py-1.5 md:py-3 w-[200%] -rotate-[15deg] shadow-2xl flex flex-col items-center justify-center">
+                 <span className="text-white text-[8px] md:text-sm font-black tracking-[0.2em] md:tracking-[0.4em] uppercase">AGOTADO</span>
               </div>
            </div>
         )}
 
-        {/* INSIGNIAS DE VENTA (Compact Mobile) */}
-        <div className="absolute top-3 left-3 md:top-8 md:left-8 flex flex-col gap-1 md:gap-3 z-20">
-           <span className="px-2 py-1 md:px-4 md:py-1.5 bg-blue-600 text-white text-[6px] md:text-[8px] font-black rounded-full uppercase tracking-widest shadow-2xl">
-              {p.categoria || 'SYNC PRO'}
+        {/* INSIGNIA CATEGORÍA (Mini) */}
+        <div className="absolute top-2 left-2 md:top-4 md:left-4 z-20">
+           <span className="px-2 py-0.5 bg-blue-600/80 backdrop-blur-md text-white text-[5px] md:text-[7px] font-black rounded-full uppercase tracking-widest">
+              {p.categoria || 'SYNC'}
            </span>
-           {isLowStock && (
-              <span className="px-2 py-1 md:px-4 md:py-1.5 bg-orange-600 text-white text-[6px] md:text-[8px] font-black rounded-full uppercase tracking-widest shadow-2xl animate-pulse">
-                 ÚLTIMOS {p.stock_actual}
-              </span>
-           )}
         </div>
-
-        {/* CONTROLES SLIDER (Only Desktop/Large) */}
-        {allImages.length > 1 && (
-          <div className="hidden md:block">
-            <button onClick={prevImg} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all border border-white/10 hover:bg-white hover:text-black">
-              <ChevronRight className="rotate-180" size={20}/>
-            </button>
-            <button onClick={nextImg} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all border border-white/10 hover:bg-white hover:text-black">
-              <ChevronRight size={20}/>
-            </button>
-          </div>
-        )}
       </div>
 
-      <div className="p-4 md:p-10 pt-2 md:pt-4 flex-1 flex flex-col justify-between">
-        <div className="space-y-2 md:space-y-4">
-          <div className="space-y-0.5 md:space-y-2">
-             <h3 className="text-sm md:text-2xl font-black text-white leading-tight tracking-tighter uppercase line-clamp-2">{p.nombre}</h3>
-             <p className="text-[8px] md:text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] md:tracking-[0.4em]">{p.marca || 'Sovereign Selection'}</p>
-          </div>
+      <div className="px-3 pb-3 md:px-5 md:pb-5 pt-1 flex-1 flex flex-col justify-between">
+        <div className="space-y-1">
+          <h3 className="text-[10px] md:text-sm font-bold text-white leading-tight tracking-tight uppercase line-clamp-1">{p.nombre}</h3>
           
-          <div className="flex flex-col gap-0.5 md:gap-1">
-             <p className="text-[8px] md:text-[10px] text-rose-500 font-mono line-through opacity-30">
-                {oldPrice.toLocaleString()} BS.
-             </p>
-             <p className="text-2xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">
+          <div className="flex items-baseline gap-1.5">
+             <p className="text-[11px] md:text-lg font-mono text-white font-black">
                 {parseFloat(p.precio_venta || 0).toLocaleString()} 
-                <span className="text-[10px] md:text-xs opacity-20 ml-1 md:ml-2 font-sans tracking-widest uppercase">BS.</span>
              </p>
+             <span className="text-[6px] md:text-[8px] opacity-20 font-sans tracking-widest uppercase font-black">BS</span>
+             {p.precio_anterior && (
+               <span className="text-[7px] md:text-[9px] text-rose-500/40 line-through font-mono ml-auto">
+                 {parseFloat(p.precio_anterior).toLocaleString()}
+               </span>
+             )}
           </div>
         </div>
 
         <button 
           onClick={() => onConsult(p)}
-          className="w-full mt-2 md:mt-10 py-2.5 md:py-5 bg-white text-black rounded-xl md:rounded-[2rem] font-black text-[8px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-blue-600 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-2 md:gap-4 active:scale-95"
+          className="w-full mt-2.5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl font-black text-[7px] md:text-[9px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-lg"
         >
-           <WhatsAppIcon size={14} className="md:w-5 md:h-5" />
+           <WhatsAppIcon size={10} className="md:w-3.5 md:h-3.5" />
            Consultar
         </button>
       </div>
@@ -164,30 +128,27 @@ const PublicCatalog = () => {
 
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500 selection:text-white">
-      {/* HEADER COMPACTO (Mobile Focused) */}
-      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-4 md:py-8 px-5 md:px-20 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-12">
-         <div className="flex items-center gap-4 md:gap-6">
-            <div className="w-10 h-10 md:w-14 md:h-14 bg-white text-black rounded-[1rem] md:rounded-[1.5rem] flex items-center justify-center shadow-[0_0_30px_rgba(255,255,255,0.1)]">
-               <Zap size={20} className="md:w-7 md:h-7 fill-black" />
+      {/* HEADER ULTRA-COMPACTO */}
+      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-3 md:py-6 px-4 md:px-20 flex flex-col md:flex-row justify-between items-center gap-3 md:gap-12">
+         <div className="flex items-center gap-3 md:gap-6">
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-white text-black rounded-lg md:rounded-2xl flex items-center justify-center shadow-lg">
+               <Zap size={16} className="md:w-6 md:h-6 fill-black" />
             </div>
             <div className="flex flex-col">
-               <h1 className="text-xl md:text-3xl font-black tracking-tighter leading-none text-white uppercase">Sync<span className="text-blue-500">PRO</span></h1>
-               <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[7px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.5em] text-neutral-500">MERCADO DE ACTIVOS DIGITALES</p>
-                  <ShieldCheck size={10} className="text-blue-500" />
-               </div>
+               <h1 className="text-lg md:text-2xl font-black tracking-tighter leading-none text-white uppercase">Sync<span className="text-blue-500">PRO</span></h1>
+               <p className="text-[6px] md:text-[8px] font-black uppercase tracking-[0.3em] text-neutral-500 mt-0.5">MARCADO DE ACTIVOS</p>
             </div>
          </div>
 
-         <div className="flex items-center gap-6 w-full md:w-auto">
-            <div className="relative flex-1 md:w-[400px] group">
-               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-700 group-focus-within:text-white transition-colors" size={16} />
+         <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="relative flex-1 md:w-[350px] group">
+               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-700" size={12} />
                <input 
                  type="text" 
-                 placeholder="Buscar modelo o serie..."
+                 placeholder="Buscar..."
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
-                 className="w-full bg-white/[0.03] border border-white/10 rounded-[1.5rem] py-4 pl-14 pr-8 text-[10px] text-white outline-none focus:border-white/20 transition-all placeholder:text-neutral-800 font-medium"
+                 className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-[9px] text-white outline-none focus:border-white/20 transition-all font-medium"
                />
             </div>
          </div>
@@ -211,15 +172,15 @@ const PublicCatalog = () => {
             ))}
          </div>
 
-         {/* GRID COMPACTO (2 Columnas en Móvil) */}
+         {/* GRID DE ALTA DENSIDAD (Sorpresa: 5 columnas en Desktop, 2 en Móvil Compacto) */}
          {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-12">
-               {[1,2,3,4].map(i => (
-                  <div key={i} className="aspect-[4/5] bg-white/[0.03] rounded-[24px] md:rounded-[48px] animate-pulse relative overflow-hidden" />
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
+               {[1,2,3,4,5,6,7,8,9,10].map(i => (
+                  <div key={i} className="aspect-[3/4] bg-white/[0.03] rounded-2xl md:rounded-[32px] animate-pulse relative overflow-hidden" />
                ))}
             </div>
          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-12">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-4">
                {filteredProducts.map(p => (
                   <PublicProductCard 
                     key={p.id} 
