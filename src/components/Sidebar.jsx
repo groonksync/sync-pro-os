@@ -17,10 +17,15 @@ import {
   Cloud,
   Landmark,
   ListTodo,
-  Trash2
+  Trash2,
+  ShoppingBag,
+  ExternalLink
 } from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser }) => {
+  const handleOpenCatalog = () => {
+    window.open(window.location.origin + '/catalogo', '_blank');
+  };
   const menuItems = [
     { id: 'resumen', label: 'Centro de Control', icon: Activity },
     { id: 'prestamos', label: 'Cartera Préstamos', icon: Landmark, count: counts?.prestamos },
@@ -60,6 +65,14 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser }) => {
             </div>
           </button>
         ))}
+        <button 
+          onClick={handleOpenCatalog}
+          className="flex flex-col items-center gap-1 p-2 opacity-40 hover:opacity-100 transition-all"
+        >
+           <div className="p-2 rounded-xl bg-blue-500/10 text-blue-500">
+             <ShoppingBag size={20} />
+           </div>
+        </button>
         <button 
           onClick={() => setActiveTab('configuracion')}
           className={`flex flex-col items-center gap-1 p-2 transition-all ${activeTab === 'configuracion' ? 'scale-110' : 'opacity-40 grayscale'}`}
@@ -111,6 +124,19 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser }) => {
           </button>
         ))}
       </nav>
+
+      <div className="py-4">
+        <button 
+          onClick={handleOpenCatalog}
+          className="w-full flex items-center justify-between px-4 py-3 bg-blue-600/10 border border-blue-500/20 rounded-2xl text-blue-500 hover:bg-blue-600 hover:text-white transition-all group shadow-lg shadow-blue-500/5"
+        >
+          <div className="flex items-center gap-3">
+            <ShoppingBag size={18} />
+            <span className="text-[11px] font-black uppercase tracking-widest">Ver Catálogo</span>
+          </div>
+          <ExternalLink size={12} className="opacity-40 group-hover:opacity-100 transition-opacity" />
+        </button>
+      </div>
 
       {/* PERFIL DE GOOGLE (SI ESTÁ LOGUEADO) */}
       {googleUser && (
