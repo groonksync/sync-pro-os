@@ -104,6 +104,15 @@ const App = () => {
 
   useEffect(() => {
     fetchData();
+    // DETECCIÓN AUTOMÁTICA DE DISPOSITIVOS MÓVILES
+    const checkMobile = () => {
+      if (window.innerWidth < 1024) {
+        setAppSettings(prev => ({ ...prev, isMobileMode: true }));
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   if (isCatalog) return <PublicCatalog />;

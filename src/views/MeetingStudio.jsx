@@ -635,11 +635,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
               className="w-full bg-[#0a0a0a] border border-white/5 rounded-xl py-4 pl-14 pr-6 text-sm text-white outline-none focus:border-white/10"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className={`grid gap-6 ${settings.isMobileMode ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
             {clients.filter(c => 
-              c.nombre?.toLowerCase().includes(clientSearch.toLowerCase()) ||
-              c.empresa?.toLowerCase().includes(clientSearch.toLowerCase()) ||
-              c.pais?.toLowerCase().includes(clientSearch.toLowerCase())
+              normalizeText(c.nombre).includes(normalizeText(clientSearch)) ||
+              normalizeText(c.empresa).includes(normalizeText(clientSearch)) ||
+              normalizeText(c.pais).includes(normalizeText(clientSearch))
             ).map(client => (
               <div 
                 key={client.id} 
@@ -731,9 +731,9 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
             <button onClick={createMeeting} className="px-8 py-3 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-neutral-200 transition-all flex items-center gap-2 shadow-xl shadow-white/5"><Plus size={16}/> Nueva Sesión</button>
           </header>
 
-          <div className="flex-1 flex overflow-hidden">
+          <div className={`flex-1 flex ${settings.isMobileMode ? 'flex-col' : 'flex-row'} overflow-hidden`}>
             {/* BARRA LATERAL DE INFORMACIÓN */}
-            <div className="w-[320px] bg-[#050505] border-r border-white/5 p-6 space-y-8 overflow-y-auto mac-scrollbar">
+            <div className={`${settings.isMobileMode ? 'w-full h-auto border-b' : 'w-[320px] h-full border-r'} bg-[#050505] border-white/5 p-6 space-y-8 overflow-y-auto mac-scrollbar`}>
               <section>
                 <h4 className="text-[10px] font-black text-neutral-700 uppercase tracking-[0.3em] mb-6">Datos de Contacto</h4>
                 <div className="space-y-4">
@@ -843,32 +843,31 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       {/* VISTA: WAR ROOM (MASTER EXECUTIVE EDITION) */}
       {viewState === 'session' && activeMeeting && (
         <div className="flex-1 flex flex-col overflow-hidden bg-black animate-in fade-in duration-500">
-          <header className="px-5 py-2 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between shrink-0">
+          <header className={`px-5 py-3 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between shrink-0 ${settings.isMobileMode ? 'flex-wrap gap-4' : ''}`}>
             <div className="flex items-center gap-4">
-              <button onClick={saveMeeting} className="w-8 h-8 bg-white/5 rounded-lg flex items-center justify-center text-neutral-600 hover:text-white transition-all"><ArrowLeft size={16}/></button>
+              <button onClick={saveMeeting} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-neutral-600 hover:text-white transition-all"><ArrowLeft size={20}/></button>
               <div>
-                <h3 className="text-[11px] font-black text-white uppercase tracking-tighter leading-none">{activeClient?.nombre} <span className="text-neutral-800">/</span> {activeMeeting.fecha}</h3>
-                <p className="text-[7px] text-neutral-600 font-bold uppercase tracking-widest mt-1">Sovereign OS Pro • Creative Session</p>
+                <h3 className="text-[12px] font-black text-white uppercase tracking-tighter leading-none">{activeClient?.nombre} <span className="text-neutral-800">/</span> {activeMeeting.fecha}</h3>
+                <p className="text-[8px] text-neutral-600 font-bold uppercase tracking-widest mt-1">Sovereign Pro • Session</p>
               </div>
-              <div className={`px-2 py-0.5 rounded-md text-[7px] font-black uppercase ${activeMeeting.priority === 'ASAP' ? 'bg-rose-500 text-black' : 'bg-white/5 text-neutral-600'}`}>{activeMeeting.priority}</div>
             </div>
             <div className="flex items-center gap-3">
-               <button onClick={copyBillingSummary} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase hover:bg-emerald-500/20 transition-all"><Copy size={12}/> Resumen</button>
-               <div className="flex items-center gap-3 bg-black border border-white/5 rounded-xl px-3 py-1">
+               {!settings.isMobileMode && <button onClick={copyBillingSummary} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase hover:bg-emerald-500/20 transition-all"><Copy size={12}/> Resumen</button>}
+               <div className="flex items-center gap-3 bg-black border border-white/5 rounded-xl px-4 py-1.5">
                   <p className="text-sm font-mono font-black text-white">{formatTime(time)}</p>
-                  <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`w-6 h-6 rounded-lg flex items-center justify-center transition-all ${isTimerRunning ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-white/5 text-white'}`}>
-                    {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
+                  <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isTimerRunning ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-white/5 text-white'}`}>
+                    {isTimerRunning ? <Pause size={14}/> : <Play size={14}/>}
                   </button>
                </div>
-               <button onClick={saveMeeting} className="px-5 py-1.5 bg-white text-black text-[9px] font-black rounded-lg uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-white/5">
-                <Save size={14}/> Finalizar
+               <button onClick={saveMeeting} className="px-6 py-2.5 bg-white text-black text-[10px] font-black rounded-xl uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-white/5">
+                <Save size={16}/> Finalizar
               </button>
             </div>
           </header>
 
           <div className={`flex-1 flex p-1.5 gap-1.5 ${settings.isMobileMode ? 'flex-col overflow-y-auto' : 'flex-row overflow-hidden'}`}>
-            {/* IZQUIERDA: HERRAMIENTAS (Versión Compacta) */}
-            <div className={`w-[230px] shrink-0 flex flex-col bg-[#050505] border-r border-white/5 overflow-y-auto mac-scrollbar p-1.5 space-y-1.5`}>
+            {/* IZQUIERDA: HERRAMIENTAS */}
+            <div className={`${settings.isMobileMode ? 'w-full h-auto' : 'w-[230px] h-full'} shrink-0 flex flex-col bg-[#050505] border-white/5 overflow-y-auto mac-scrollbar p-1.5 space-y-1.5`}>
                
                {/* PRIORIDAD & VIBRA */}
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
@@ -955,36 +954,28 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
                {sessionTab === 'editor' && (
                  <div className="flex-1 w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-[24px] flex flex-col overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-500">
-                     {/* BARRA DE HERRAMIENTAS RESTAURADA (MASTER EXECUTIVE) */}
-                     <div className="flex items-center gap-2 px-6 py-4 border-b border-white/5 bg-black/40 shrink-0 overflow-x-auto no-scrollbar">
+                     {/* BARRA DE HERRAMIENTAS ADAPTATIVA */}
+                     <div className={`flex items-center gap-3 px-6 py-4 border-b border-white/5 bg-black/40 shrink-0 ${settings.isMobileMode ? 'overflow-x-auto no-scrollbar' : ''}`}>
                           <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
-                             <button onMouseDown={(e) => formatText('formatBlock', '<h1>', e)} title="Título Principal (H1)" className="px-5 py-2.5 bg-blue-600/10 hover:bg-blue-600 hover:text-white rounded-xl text-blue-500 text-[11px] font-black uppercase transition-all border border-blue-500/20 flex items-center gap-2 shadow-lg">H1</button>
-                             <button onMouseDown={(e) => formatText('formatBlock', '<h2>', e)} title="Subtítulo (H2)" className="px-5 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 hover:text-white rounded-xl text-emerald-500 text-[11px] font-black uppercase transition-all border border-emerald-500/20 flex items-center gap-2 shadow-lg">H2</button>
+                             <button onMouseDown={(e) => formatText('formatBlock', '<h1>', e)} className="px-5 py-3 bg-blue-600/10 hover:bg-blue-600 hover:text-white rounded-xl text-blue-500 text-[11px] font-black uppercase transition-all border border-blue-500/20 flex items-center gap-2 shadow-lg">H1</button>
+                             <button onMouseDown={(e) => formatText('formatBlock', '<h2>', e)} className="px-5 py-3 bg-emerald-500/10 hover:bg-emerald-500 hover:text-white rounded-xl text-emerald-500 text-[11px] font-black uppercase transition-all border border-emerald-500/20 flex items-center gap-2 shadow-lg">H2</button>
                           </div>
 
-                          <div className="flex items-center gap-0.5 px-2 border-r border-white/10 shrink-0">
-                             <button onMouseDown={(e) => formatText('bold', null, e)} title="Negrita" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Bold size={14}/></button>
-                             <button onMouseDown={(e) => formatText('italic', null, e)} title="Itálica" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Italic size={14}/></button>
+                          <div className="flex items-center gap-1 px-2 border-r border-white/10 shrink-0">
+                             <button onMouseDown={(e) => formatText('bold', null, e)} className="p-3 text-neutral-500 hover:text-white bg-white/5 rounded-xl"><Bold size={16}/></button>
+                             <button onMouseDown={(e) => formatText('italic', null, e)} className="p-3 text-neutral-500 hover:text-white bg-white/5 rounded-xl"><Italic size={16}/></button>
                           </div>
                           
-                          <div className="flex items-center gap-1.5 px-2 border-r border-white/10 shrink-0">
-                             <button onMouseDown={(e) => applyHighlight('#ef4444', e)} title="Resaltado Rojo" className="w-8 h-8 rounded-full bg-red-500 border-2 border-white/20 hover:scale-125 transition-all shadow-[0_0_15px_rgba(239,68,68,0.5)] active:scale-95"></button>
-                             <button onMouseDown={(e) => applyHighlight('#fbbf24', e)} title="Resaltado Amarillo" className="w-8 h-8 rounded-full bg-amber-400 border-2 border-white/20 hover:scale-125 transition-all shadow-[0_0_15px_rgba(251,191,36,0.5)] active:scale-95"></button>
-                             <button onMouseDown={(e) => applyHighlight('#3b82f6', e)} title="Resaltado Azul" className="w-8 h-8 rounded-full bg-blue-500 border-2 border-white/20 hover:scale-125 transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)] active:scale-95"></button>
-                             <button onMouseDown={(e) => clearHighlight(e)} title="Quitar Resaltado" className="p-2 text-neutral-500 hover:text-white rounded-md transition-colors"><Eraser size={18}/></button>
+                          <div className="flex items-center gap-2.5 px-2 border-r border-white/10 shrink-0">
+                             <button onMouseDown={(e) => applyHighlight('#ef4444', e)} className="w-10 h-10 rounded-2xl bg-red-500 border-2 border-white/20 shadow-lg"></button>
+                             <button onMouseDown={(e) => applyHighlight('#fbbf24', e)} className="w-10 h-10 rounded-2xl bg-amber-400 border-2 border-white/20 shadow-lg"></button>
                           </div>
 
-                          <div className="flex items-center gap-0.5 px-2 border-r border-white/10 shrink-0">
-                             <button onMouseDown={insertChecklist} title="Checklist" className="p-1.5 text-emerald-500 hover:text-emerald-400 rounded-md transition-colors"><CheckSquare size={14}/></button>
-                             <button onMouseDown={initNoteAddition} title="Añadir Nota" className="p-1.5 text-purple-400 hover:text-purple-300 rounded-md transition-colors"><MessageSquare size={14}/></button>
-                             <button onMouseDown={insertTable} title="Tabla" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Table2 size={14}/></button>
+                          <div className="flex-1 flex items-center gap-2 px-2 overflow-x-auto no-scrollbar">
+                             {EDITOR_TAGS.slice(0, settings.isMobileMode ? 6 : 15).map(tag => (
+                               <button key={tag.name} onMouseDown={(e) => insertTag(e, tag.name, tag.bg, tag.text, tag.border)} className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shrink-0 transition-transform hover:scale-105" style={{ backgroundColor: tag.bg, color: tag.text, border: `1px solid ${tag.border}` }}>{tag.name}</button>
+                             ))}
                           </div>
-
-                         <div className="flex-1 flex items-center gap-1 px-2 overflow-x-auto no-scrollbar">
-                            {EDITOR_TAGS.map(tag => (
-                              <button key={tag.name} onMouseDown={(e) => insertTag(e, tag.name, tag.bg, tag.text, tag.border)} className="px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shrink-0 transition-transform hover:scale-105" style={{ backgroundColor: tag.bg, color: tag.text, border: `1px solid ${tag.border}` }}>{tag.name}</button>
-                            ))}
-                         </div>
                      </div>
 
                      <div 
@@ -1194,8 +1185,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                </div>
             </div>
 
-            {/* PANEL DERECHO: PRODUCTION HUB (BLINDADO) */}
-            <div className={`${settings.isMobileMode ? 'w-full' : 'w-[260px] shrink-0 border-l'} bg-black border-white/5 flex flex-col p-1.5 space-y-1.5 overflow-y-auto mac-scrollbar`}>
+            {/* PANEL DERECHO: PRODUCTION HUB */}
+            <div className={`${settings.isMobileMode ? 'w-full border-t pt-4' : 'w-[260px] border-l'} shrink-0 bg-black border-white/5 flex flex-col p-1.5 space-y-1.5 overflow-y-auto mac-scrollbar`}>
                
                {/* PLATAFORMAS (Compacto) */}
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2 shadow-xl shrink-0">
