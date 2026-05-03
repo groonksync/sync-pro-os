@@ -127,29 +127,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     } catch (e) { console.error(e); }
   };
 
-  const openClientProfile = (client) => { setActiveClient(client); fetchMeetings(client.nombre); setViewState('client-profile'); };
+  const openClientProfile = (client) => { setActiveClient(client); fetchMeetings(); setViewState('client-profile'); };
 
-  const fetchMeetings = async (clientName) => {
+  const fetchMeetings = async () => {
     try {
-      // 1. Obtener todos los IDs posibles para este nombre (por si hay duplicados antiguos)
-      const { data: allClients } = await supabase
-        .from('clientes_editor')
-        .select('id')
-        .eq('nombre', clientName);
-      
-      const clientIds = allClients?.map(c => c.id) || [];
-      
-      // 2. Buscar reuniones por nombre O por cualquiera de esos IDs
-      let query = supabase.from('reuniones').select('*');
-      
-      if (clientIds.length > 0) {
-        query = query.or(`cliente.eq."${clientName}",cliente_id.in.(${clientIds.map(id => `"${id}"`).join(',')})`);
-      } else {
-        query = query.eq('cliente', clientName);
-      }
-
-      const { data, error } = await query.order('fecha', { ascending: false });
-      
+      const { data, error } = await supabase
+        .from('reuniones')
+        .select('*')
+        .order('fecha', { ascending: false });
       if (error) throw error;
       setMeetingsList(data || []);
     } catch (e) { console.error(e); }
@@ -257,7 +242,17 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     }).filter(c => normalizeText(c.nombre).includes(normalizeText(clientSearch)));
   }, [clients, clientSearch]);
 
-  const filteredMeetings = useMemo(() => (meetingsList || []).filter(m => normalizeText(m.session_title).includes(normalizeText(meetingSearch))), [meetingsList, meetingSearch]);
+  const filteredMeetings = useMemo(() => {
+    let list = (meetingsList || []);
+    // Si estamos viendo a un cliente específico, filtramos solo sus reuniones
+    if (activeClient) {
+      list = list.filter(m => 
+        m.cliente === activeClient.nombre || 
+        m.cliente_id === activeClient.id
+      );
+    }
+    return list.filter(m => normalizeText(m.session_title).includes(normalizeText(meetingSearch)));
+  }, [meetingsList, meetingSearch, activeClient]);
   const totalTimeWorked = useMemo(() => (meetingsList || []).reduce((acc, curr) => acc + (curr.total_time || 0), 0), [meetingsList]);
 
   const colors = {
