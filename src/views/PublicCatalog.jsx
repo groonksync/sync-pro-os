@@ -25,52 +25,48 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
   const [viewers] = useState(Math.floor(Math.random() * 8) + 3);
 
   return (
-    <div className="bg-[#0d0d0d] border border-white/5 rounded-[40px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="bg-[#0a0a0a] border border-white/5 rounded-[48px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
       {/* SOCIAL PROOF BADGE */}
-      <div className="absolute top-6 right-6 z-30 pointer-events-none">
-         <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
+      <div className="absolute top-8 right-8 z-30 pointer-events-none">
+         <div className="px-4 py-2 bg-black/60 backdrop-blur-xl rounded-full border border-white/10 flex items-center gap-3">
             <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-ping" />
-            <span className="text-[8px] font-black text-white/70 uppercase tracking-widest">{viewers} viendo ahora</span>
+            <span className="text-[7px] font-black text-white uppercase tracking-[0.3em]">{viewers} GUESTS VIEWING</span>
          </div>
       </div>
 
-      {/* IMAGEN CON SLIDER */}
-      <div className="aspect-square bg-[#050505] m-3 rounded-[32px] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
+      {/* IMAGEN CON SLIDER (Executive Padding) */}
+      <div className="aspect-square bg-[#050505] m-4 rounded-[40px] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
-            className={`max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[2px]' : ''}`}
+            className={`max-w-[80%] max-h-[80%] object-contain transition-transform duration-1000 group-hover:scale-110 ${parseInt(p.stock_actual) === 0 ? 'grayscale opacity-30 blur-[4px]' : ''}`}
             alt={p.nombre}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-neutral-900">
-             <Package size={30} className="text-neutral-800" />
+             <Package size={40} strokeWidth={1} className="text-neutral-800" />
           </div>
         )}
 
-        {/* SELLO AGOTADO INFINITE BAND */}
+        {/* SELLO AGOTADO INFINITE BAND (Improved Aesthetics) */}
         {parseInt(p.stock_actual) === 0 && (
-           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none group-hover:scale-110 transition-transform duration-1000 overflow-hidden">
-              <div className="bg-black/60 backdrop-blur-3xl border-y border-white/20 py-4 md:py-8 w-[160%] -rotate-[45deg] shadow-[0_0_100px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center relative">
-                 {/* Efecto Shimmer interno */}
-                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite]" />
-                 
-                 <span className="text-white text-lg md:text-4xl font-black tracking-[0.8em] md:tracking-[1em] uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">
-                    Agotado
-                 </span>
-                 <div className="h-[1px] w-full bg-rose-600/50 mt-4 shadow-[0_0_30px_rgba(225,29,72,1)]" />
+           <div className="absolute inset-0 flex items-center justify-center z-40 pointer-events-none overflow-hidden">
+              <div className="bg-black/80 backdrop-blur-3xl border-y border-white/10 py-6 w-[180%] -rotate-[15deg] shadow-[0_0_100px_rgba(0,0,0,0.9)] flex flex-col items-center justify-center relative">
+                 <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer" />
+                 <span className="text-white text-3xl font-black tracking-[0.6em] uppercase drop-shadow-2xl">SOLDOUT</span>
+                 <span className="text-white/40 text-[8px] font-black uppercase tracking-[0.5em] mt-2">Sovereign Reserve</span>
               </div>
            </div>
         )}
 
         {/* INSIGNIAS DE VENTA */}
-        <div className="absolute top-3 left-3 md:top-6 md:left-6 flex flex-col gap-1 md:gap-2 z-20">
-           <span className="px-2 py-1 md:px-4 md:py-2 bg-blue-600 text-white text-[7px] md:text-[9px] font-black rounded-full uppercase tracking-widest shadow-2xl backdrop-blur-md">
-              {p.categoria || 'Sync Pro'}
+        <div className="absolute top-8 left-8 flex flex-col gap-3 z-20">
+           <span className="px-4 py-1.5 bg-blue-600 text-white text-[8px] font-black rounded-full uppercase tracking-widest shadow-2xl">
+              {p.categoria || 'SYNC PRO'}
            </span>
            {isLowStock && (
-              <span className="px-2 py-1 md:px-4 md:py-2 bg-orange-600 text-white text-[7px] md:text-[9px] font-black rounded-full uppercase tracking-widest shadow-2xl animate-pulse">
-                 {p.stock_actual} disp.
+              <span className="px-4 py-1.5 bg-orange-600 text-white text-[8px] font-black rounded-full uppercase tracking-widest shadow-2xl animate-pulse">
+                 {p.stock_actual} LEFT
               </span>
            )}
         </div>
@@ -78,57 +74,43 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
         {/* CONTROLES SLIDER */}
         {allImages.length > 1 && (
           <>
-            <button onClick={prevImg} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black">
-              <ChevronRight className="rotate-180" size={16}/>
+            <button onClick={prevImg} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all border border-white/10 hover:bg-white hover:text-black">
+              <ChevronRight className="rotate-180" size={20}/>
             </button>
-            <button onClick={nextImg} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-white hover:text-black">
-              <ChevronRight size={16}/>
+            <button onClick={nextImg} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-xl text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all border border-white/10 hover:bg-white hover:text-black">
+              <ChevronRight size={20}/>
             </button>
           </>
         )}
       </div>
 
-        <div className="flex-1 space-y-2 md:space-y-3 mb-4 md:mb-6">
-          <div className="flex items-center gap-2 mb-2">
-             <span className="px-3 py-1 bg-blue-600/10 text-blue-500 text-[8px] font-black rounded-full uppercase tracking-[0.2em] border border-blue-500/10">
-                {p.categoria || 'Sync Pro'}
-             </span>
-             {isLowStock && (
-                <span className="px-2 py-1 bg-orange-600 text-white text-[7px] font-black rounded-full uppercase tracking-widest animate-pulse">
-                   {p.stock_actual} disp.
-                </span>
-             )}
+      <div className="p-10 pt-4 flex-1 flex flex-col justify-between">
+        <div className="space-y-4">
+          <div className="space-y-2">
+             <h3 className="text-2xl font-black text-white leading-tight tracking-tighter uppercase line-clamp-2">{p.nombre}</h3>
+             <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.4em]">{p.marca || 'Sovereign Selection'}</p>
           </div>
-          <h3 className="text-sm md:text-xl font-black text-white leading-tight tracking-tight group-hover:text-blue-400 transition-colors line-clamp-2 uppercase">{p.nombre}</h3>
-          {p.marca && (
-            <p className="text-[10px] md:text-xs font-bold text-blue-500/80 uppercase tracking-widest">{p.marca}</p>
-          )}
+          
+          <div className="flex flex-col gap-1">
+             <p className="text-[10px] text-rose-500 font-mono line-through opacity-30">
+                {oldPrice.toLocaleString()} BS.
+             </p>
+             <p className="text-4xl font-mono text-white font-black tracking-tighter leading-none">
+                {parseFloat(p.precio_venta || 0).toLocaleString()} 
+                <span className="text-xs opacity-20 ml-2 font-sans tracking-widest uppercase">BS.</span>
+             </p>
+          </div>
         </div>
 
-        <div className="pt-4 md:pt-6 border-t border-white/5 flex flex-col gap-4">
-           <div className="flex flex-col">
-              <p className="text-[10px] md:text-xs text-rose-500 font-mono line-through opacity-50 mb-1">
-                 {oldPrice.toLocaleString()} Bs.
-              </p>
-              <div className="flex justify-between items-end">
-                 <div>
-                    <p className="text-2xl md:text-4xl font-mono text-white font-black tracking-tighter leading-none">
-                       {parseFloat(p.precio_venta || 0).toLocaleString()} 
-                       <span className="text-[10px] md:text-sm opacity-20 ml-2 font-sans tracking-widest uppercase">Bs.</span>
-                    </p>
-                 </div>
-              </div>
-           </div>
-
-           <button 
-             onClick={() => onConsult(p)}
-             className="w-full py-3 md:py-5 bg-white text-black rounded-xl md:rounded-2xl font-black text-[8px] md:text-[11px] uppercase tracking-[0.2em] md:tracking-[0.3em] hover:bg-blue-500 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-2 md:gap-3 group/btn"
-           >
-              <MessageCircle size={14} className="md:w-[18px] md:h-[18px] group-hover/btn:animate-bounce"/>
-              Consultar
-           </button>
-        </div>
+        <button 
+          onClick={() => onConsult(p)}
+          className="w-full mt-10 py-6 bg-white text-black rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] hover:bg-blue-600 hover:text-white transition-all shadow-2xl flex items-center justify-center gap-4 active:scale-95"
+        >
+           <MessageCircle size={20} strokeWidth={2.5}/>
+           Identify Asset
+        </button>
       </div>
+    </div>
   );
 };
 
@@ -177,42 +159,46 @@ const PublicCatalog = () => {
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-blue-500 selection:text-white">
       {/* HEADER MINIMALISTA EXECUTIVE */}
-      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-4 md:py-6 px-6 lg:px-20 flex flex-col md:flex-row justify-between items-center gap-4">
-         <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-2xl shadow-blue-500/20">
-               <Zap size={20} className="text-white fill-white" />
+      <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-8 px-10 lg:px-20 flex flex-col lg:flex-row justify-between items-center gap-12">
+         <div className="flex items-center gap-6">
+            <div className="w-14 h-14 bg-white text-black rounded-[1.5rem] flex items-center justify-center shadow-[0_0_50px_rgba(255,255,255,0.1)]">
+               <Zap size={28} className="fill-black" />
             </div>
             <div className="flex flex-col">
-               <h1 className="text-lg md:text-xl font-black tracking-[0.2em] leading-none text-white">SYNC PRO</h1>
-               <div className="flex items-center gap-2 mt-1">
-                  <p className="text-[7px] font-black uppercase tracking-[0.4em] text-blue-500">EXECUTIVE CATALOG</p>
-                  <ShieldCheck size={8} className="text-blue-500" />
+               <h1 className="text-3xl font-black tracking-tighter leading-none text-white uppercase">Sovereign<span className="text-blue-500">OS</span></h1>
+               <div className="flex items-center gap-3 mt-2">
+                  <p className="text-[10px] font-black uppercase tracking-[0.5em] text-neutral-500">Digital Asset Marketplace</p>
+                  <ShieldCheck size={12} className="text-blue-500" />
                </div>
             </div>
          </div>
 
-         <div className="flex items-center gap-4 w-full md:w-auto">
-            <div className="relative flex-1 md:w-80">
-               <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-neutral-600" size={14} />
+         <div className="flex items-center gap-6 w-full lg:w-auto">
+            <div className="relative flex-1 lg:w-[500px] group">
+               <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-700 group-focus-within:text-white transition-colors" size={20} />
                <input 
                  type="text" 
-                 placeholder="Buscar equipo..."
+                 placeholder="Search by model or series..."
                  value={searchTerm}
                  onChange={(e) => setSearchTerm(e.target.value)}
-                 className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-6 text-[11px] md:text-xs outline-none focus:border-blue-500/50 transition-all placeholder:text-neutral-700"
+                 className="w-full bg-white/[0.03] border border-white/10 rounded-[2rem] py-6 pl-20 pr-10 text-xs text-white outline-none focus:border-white/20 transition-all placeholder:text-neutral-800 font-medium"
                />
             </div>
          </div>
       </header>
 
-      <main className="px-4 md:px-20 py-8 md:py-16">
-         {/* FILTROS DE CATEGORÍA */}
-         <div className="flex overflow-x-auto gap-2 md:gap-3 pb-6 md:pb-8 no-scrollbar scroll-smooth snap-x touch-pan-x">
+      <main className="px-10 lg:px-20 py-20">
+         {/* FILTROS DE CATEGORÍA (Executive Layout) */}
+         <div className="flex overflow-x-auto gap-4 pb-12 no-scrollbar scroll-smooth snap-x">
             {categories.map(cat => (
                <button
                  key={cat}
                  onClick={() => setFilterCategory(cat)}
-                 className={`px-6 py-3 md:px-10 md:py-4 rounded-xl md:rounded-2xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border snap-start ${filterCategory === cat ? 'bg-blue-600 border-blue-500 text-white shadow-xl shadow-blue-500/20' : 'bg-white/5 border-white/10 text-neutral-500 hover:text-white hover:bg-white/10'}`}
+                 className={`px-12 py-5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.3em] transition-all whitespace-nowrap border snap-start ${
+                   filterCategory === cat 
+                   ? 'bg-white border-white text-black shadow-[0_20px_50px_rgba(255,255,255,0.1)]' 
+                   : 'bg-white/[0.02] border-white/5 text-neutral-600 hover:text-white hover:bg-white/[0.05]'
+                 }`}
                >
                   {cat}
                </button>
@@ -221,15 +207,15 @@ const PublicCatalog = () => {
 
          {/* SKELETON LOADING GRID */}
          {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
                {[1,2,3,4,5,6].map(i => (
-                  <div key={i} className="aspect-[4/5] bg-white/5 rounded-[40px] animate-pulse relative overflow-hidden">
+                  <div key={i} className="aspect-[4/5] bg-white/[0.03] rounded-[48px] animate-pulse relative overflow-hidden">
                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
                   </div>
                ))}
             </div>
          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
                {filteredProducts.map(p => (
                   <PublicProductCard 
                     key={p.id} 
@@ -242,43 +228,52 @@ const PublicCatalog = () => {
          )}
       </main>
 
-      {/* FOOTER */}
-      <footer className="py-20 border-t border-white/5 text-center px-10">
-         <div className="max-w-2xl mx-auto">
-            <p className="text-[10px] font-black uppercase tracking-[0.6em] text-blue-500 mb-6">Sync Pro Logistics</p>
-            <h2 className="text-4xl font-black mb-8 leading-tight uppercase tracking-tighter">¿Buscas algo específico?</h2>
-            <p className="text-neutral-500 mb-12 leading-relaxed">Nuestro inventario se actualiza en tiempo real. Si no encuentras el modelo exacto, contáctanos para importación directa.</p>
-            <a href={`https://wa.me/${WHATSAPP_NUMBER}`} className="inline-flex items-center gap-4 px-12 py-6 bg-white text-black rounded-3xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-2xl">
-               <MessageCircle size={20} />
-               Hablar con un Experto
+      {/* FOOTER (Executive Authority) */}
+      <footer className="py-32 border-t border-white/5 text-center px-10 relative overflow-hidden bg-gradient-to-b from-transparent to-white/[0.02]">
+         <div className="max-w-4xl mx-auto relative z-10">
+            <div className="w-1 h-20 bg-gradient-to-b from-blue-500 to-transparent mx-auto mb-12 opacity-50" />
+            <p className="text-[12px] font-black uppercase tracking-[0.8em] text-blue-500 mb-8">Sovereign Global Asset Network</p>
+            <h2 className="text-6xl md:text-8xl font-black mb-12 leading-tight uppercase tracking-tighter">Acquire<br/><span className="text-neutral-600">Precision</span></h2>
+            <p className="text-neutral-500 mb-16 leading-relaxed max-w-xl mx-auto text-lg font-medium">Real-time inventory synchronization. Secure logistics. Global distribution standards for elite performance equipment.</p>
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}`} className="inline-flex items-center gap-6 px-16 py-8 bg-white text-black rounded-[2.5rem] font-black text-xs uppercase tracking-[0.4em] hover:bg-blue-600 hover:text-white transition-all shadow-[0_30px_60px_rgba(255,255,255,0.1)] active:scale-95">
+               <MessageCircle size={24} />
+               Secure Consultation
             </a>
          </div>
       </footer>
 
-      {/* BOTONES FLOTANTES HUD */}
-      <div className="fixed bottom-8 right-6 z-[100] flex flex-col gap-4 animate-in slide-in-from-right duration-500">
+      {/* BOTONES FLOTANTES HUD (Premium Glass) */}
+      <div className="fixed bottom-12 right-10 z-[100] flex flex-col gap-6 animate-in slide-in-from-right duration-700">
          <button 
-           onClick={() => alert('Logística VIP Sync Pro: Envíos asegurados y garantizados a nivel nacional.')}
-           className="w-12 h-12 md:w-16 md:h-16 bg-white/10 backdrop-blur-xl border border-white/10 text-orange-500 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-white transition-all"
+           onClick={() => alert('Sovereign Global Logistics: Real-time tracking and insured shipping enabled.')}
+           className="w-16 h-16 bg-white/5 backdrop-blur-3xl border border-white/10 text-amber-500 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 hover:bg-white hover:text-black transition-all group"
          >
-            <Truck size={24} />
+            <Truck size={28} className="group-hover:animate-bounce" />
          </button>
          <button 
            onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')}
-           className="w-14 h-14 md:w-20 md:h-20 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-[0_0_40px_rgba(16,185,129,0.4)] hover:scale-110 active:scale-95 transition-all animate-bounce-subtle"
+           className="w-20 h-20 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-[0_20px_50px_rgba(37,99,235,0.4)] hover:scale-110 active:scale-95 transition-all relative overflow-hidden group"
          >
-            <MessageCircle size={32} />
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+            <MessageCircle size={36} strokeWidth={2.5} />
          </button>
       </div>
 
-      {/* VISOR CINEMA */}
+      {/* VISOR CINEMA (Total Immersion) */}
       {fullViewImage && (
-        <div className="fixed inset-0 z-[100] bg-black/98 backdrop-blur-3xl flex flex-col items-center justify-center p-10 animate-in fade-in zoom-in duration-300" onClick={() => setFullViewImage(null)}>
-           <button className="absolute top-10 right-10 w-16 h-16 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10">
-              <X size={32}/>
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-12 animate-in fade-in zoom-in duration-500" onClick={() => setFullViewImage(null)}>
+           <button className="absolute top-12 right-12 w-20 h-20 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 shadow-2xl group">
+              <X size={40} className="group-hover:rotate-90 transition-transform duration-500"/>
            </button>
-           <img src={fullViewImage} className="max-w-full max-h-[80vh] object-contain rounded-3xl shadow-[0_0_100px_rgba(255,255,255,0.1)]" />
-           <p className="mt-8 text-white/40 text-[10px] font-black uppercase tracking-[0.5em]">Toca en cualquier lugar para cerrar</p>
+           
+           <div className="relative group/viewer max-w-5xl w-full flex flex-col items-center">
+              <img src={fullViewImage} className="max-w-full max-h-[75vh] object-contain rounded-[3rem] shadow-[0_50px_100px_rgba(0,0,0,0.8)] border border-white/5" />
+              <div className="mt-12 flex flex-col items-center gap-4">
+                 <p className="text-white/20 text-[10px] font-black uppercase tracking-[1em]">High Fidelity Asset Preview</p>
+                 <div className="w-12 h-[1px] bg-white/10" />
+                 <p className="text-neutral-500 text-[9px] font-black uppercase tracking-widest">Tap anywhere to return to vault</p>
+              </div>
+           </div>
         </div>
       )}
     </div>

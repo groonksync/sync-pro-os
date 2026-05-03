@@ -26,65 +26,70 @@ const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
   };
 
   return (
-    <div className="bg-[#0a0a0a] border border-white/5 rounded-[40px] overflow-hidden hover:border-white/20 transition-all flex flex-col group relative shadow-2xl">
+    <div className="bg-[#0a0a0a] border border-white/5 rounded-[40px] overflow-hidden hover:border-white/20 transition-all flex flex-col group relative shadow-2xl h-full">
       <div className="aspect-square bg-[#050505] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
-            className="max-w-[85%] max-h-[85%] object-contain transition-transform duration-700 group-hover:scale-110"
+            className="max-w-[85%] max-h-[85%] object-contain transition-transform duration-1000 group-hover:scale-110"
             alt={p.nombre}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-neutral-900 to-black">
-            <Package size={60} className="text-neutral-800" />
-            <span className="text-[8px] font-black text-neutral-800 uppercase tracking-widest">Sin Imagen</span>
+            <Package size={50} strokeWidth={1} className="text-neutral-800" />
+            <span className="text-[8px] font-black text-neutral-800 uppercase tracking-widest">No Media Available</span>
           </div>
         )}
 
         {/* CONTROLES DEL SLIDER */}
         {allImages.length > 1 && (
           <>
-            <div className="absolute inset-y-0 left-0 flex items-center px-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={prevImg} className="w-8 h-8 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all">
-                <ChevronRight className="rotate-180" size={16}/>
+            <div className="absolute inset-y-0 left-0 flex items-center px-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={prevImg} className="w-10 h-10 bg-black/60 backdrop-blur-xl text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10">
+                <ChevronRight className="rotate-180" size={18}/>
               </button>
             </div>
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={nextImg} className="w-8 h-8 bg-black/60 backdrop-blur-md text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all">
-                <ChevronRight size={16}/>
+            <div className="absolute inset-y-0 right-0 flex items-center px-4 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={nextImg} className="w-10 h-10 bg-black/60 backdrop-blur-xl text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10">
+                <ChevronRight size={18}/>
               </button>
             </div>
           </>
         )}
         
-        <div className="absolute top-4 left-4 z-10">
-          <span className="text-[9px] text-white font-black uppercase tracking-widest bg-blue-600/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl">{p.categoria || 'General'}</span>
+        <div className="absolute top-6 left-6 z-10 flex flex-col gap-2">
+          <span className="text-[8px] text-white font-black uppercase tracking-[0.2em] bg-blue-600/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl">{p.categoria || 'Standard'}</span>
+          {p.stock_actual <= (p.stock_minimo || 5) && (
+            <span className="text-[8px] text-white font-black uppercase tracking-[0.2em] bg-rose-500/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl animate-pulse">Low Stock</span>
+          )}
         </div>
         
-        <div className="absolute top-4 right-4 z-10">
-          <p className={`text-sm font-mono font-black px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10 ${p.stock_actual <= (p.stock_minimo || 5) ? 'bg-rose-500/80 text-white' : 'bg-black/60 text-white'}`}>{p.stock_actual} U.</p>
+        <div className="absolute top-6 right-6 z-10">
+          <p className="text-[10px] font-mono font-black px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10 bg-black/60 text-white shadow-2xl">{p.stock_actual} UNITS</p>
         </div>
       </div>
 
-      <div className="p-7 flex-1 flex flex-col">
-        <div className="flex-1 space-y-2 mb-8">
-          <h3 className="text-xl font-bold text-white line-clamp-1 leading-tight tracking-tight uppercase">{p.nombre}</h3>
-          {p.marca && <p className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">{p.marca}</p>}
+      <div className="p-8 flex-1 flex flex-col justify-between">
+        <div className="space-y-4">
+          <div className="space-y-1">
+             <h3 className="text-2xl font-black text-white line-clamp-1 leading-tight tracking-tighter uppercase">{p.nombre}</h3>
+             <p className="text-[9px] font-black text-blue-500 uppercase tracking-[0.4em]">{p.marca || 'Sovereign Core'}</p>
+          </div>
           
-          <div className="flex flex-wrap gap-2 mt-4">
-            {p.sku && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[9px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black">SKU: {p.sku}</div>}
-            {p.entrega_habilitada && <div className="px-3 py-1 bg-blue-500/10 rounded-lg text-[9px] font-mono text-blue-400 border border-blue-500/10 uppercase tracking-widest">Entrega OK</div>}
+          <div className="flex flex-wrap gap-2">
+            {p.sku && <div className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest font-black">SKU: {p.sku}</div>}
+            {p.entrega_habilitada && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[8px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black">READY TO SHIP</div>}
           </div>
         </div>
 
-        <div className="pt-6 border-t border-white/10 flex justify-between items-end">
+        <div className="pt-8 mt-4 border-t border-white/5 flex justify-between items-end">
           <div>
-            <p className="text-[10px] text-neutral-600 font-black uppercase mb-1 tracking-[0.2em]">Precio Venta</p>
+            <p className="text-[8px] text-neutral-600 font-black uppercase mb-1 tracking-[0.3em]">Executive Price</p>
             <p className="text-3xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-xs opacity-20 ml-1">Bs.</span></p>
           </div>
           <div className="flex gap-2">
-            <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-10 h-10 bg-rose-500/10 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"><Trash2 size={18}/></button>
-            <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center hover:bg-neutral-200 transition-all"><Edit3 size={18}/></button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10"><Trash2 size={20}/></button>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-xl"><Edit3 size={20}/></button>
           </div>
         </div>
       </div>
@@ -306,38 +311,41 @@ const Inventario = () => {
     <div className="flex flex-col h-full max-w-[1400px] w-full animate-in fade-in duration-500">
       {viewState === 'list' ? (
         <>
-          <header className="mb-10 flex justify-between items-center">
+          <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
             <div>
-              <h2 className="text-4xl font-black text-white tracking-tighter uppercase underline decoration-white/10 underline-offset-8">Inventario <span className="text-blue-500">Pro</span></h2>
-              <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-[0.4em] mt-2 flex items-center gap-2"><Globe size={14}/> Centro Logístico Sovereign OS</p>
+              <h2 className="text-5xl font-black text-white tracking-tighter uppercase leading-none">Inventario <span className="text-blue-500">Pro</span></h2>
+              <div className="flex items-center gap-4 mt-3">
+                <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.5em] flex items-center gap-2"><Layout size={14}/> Sovereign Global Asset Monitor</p>
+                <span className="w-1 h-1 bg-neutral-800 rounded-full"></span>
+                <p className="text-[10px] text-blue-500 font-black uppercase tracking-[0.5em]">{productos.length} Assets Registered</p>
+              </div>
             </div>
-            <div className="flex bg-neutral-900/50 p-1.5 rounded-2xl border border-white/5">
-              <button onClick={() => setActiveSubTab('productos')} className={`px-8 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeSubTab === 'productos' ? 'bg-white text-black' : 'text-neutral-500 hover:text-white'}`}>CATÁLOGO</button>
-              <button onClick={() => setActiveSubTab('mayoristas')} className={`px-8 py-3 rounded-xl text-[10px] font-black tracking-widest transition-all ${activeSubTab === 'mayoristas' ? 'bg-white text-black' : 'text-neutral-500 hover:text-white'}`}>DISTRIBUIDORES</button>
+            <div className="flex bg-[#0a0a0a] border border-white/5 p-1.5 rounded-[2rem] shadow-2xl">
+              <button onClick={() => setActiveSubTab('productos')} className={`px-10 py-3.5 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${activeSubTab === 'productos' ? 'bg-white text-black shadow-xl' : 'text-neutral-600 hover:text-white'}`}>MASTER CATALOG</button>
+              <button onClick={() => setActiveSubTab('mayoristas')} className={`px-10 py-3.5 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${activeSubTab === 'mayoristas' ? 'bg-white text-black shadow-xl' : 'text-neutral-600 hover:text-white'}`}>DISTRIBUTORS</button>
             </div>
           </header>
 
           {activeSubTab === 'productos' && (
-            <div className="space-y-10">
-              <div className="flex gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-600" size={20}/>
-                  <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Buscar por Nombre, Serial o SKU..." className="w-full bg-[#0a0a0a] border border-white/10 rounded-xl py-4 pl-16 pr-8 text-sm text-white outline-none focus:border-white/20 shadow-2xl"/>
+            <div className="space-y-12">
+              <div className="flex flex-col lg:flex-row gap-6">
+                <div className="relative flex-1 group">
+                  <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-700 group-focus-within:text-blue-500 transition-colors" size={20}/>
+                  <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identify assets by SN, SKU or Name..." className="w-full bg-[#0a0a0a] border border-white/10 rounded-[2rem] py-6 pl-18 pr-8 text-sm text-white outline-none focus:border-white/20 shadow-2xl font-medium transition-all"/>
                 </div>
                  <div className="flex gap-4">
-                    <button onClick={handleShareCatalog} className="px-8 py-4 bg-blue-600/10 text-blue-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-500/20 flex items-center gap-3">
-                       <Share2 size={16}/>
-                       Link
+                    <button onClick={handleShareCatalog} className="px-10 py-6 bg-blue-600/10 text-blue-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-500/20 flex items-center gap-3">
+                       <Share2 size={18}/>
+                       Public Link
                     </button>
-                    <button onClick={() => window.open('/catalogo', '_blank')} className="px-8 py-4 bg-emerald-600/10 text-emerald-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all border border-emerald-500/20 flex items-center gap-3">
-                       <ExternalLink size={16}/>
-                       Ver Catálogo Live
+                    <button onClick={openNewProduct} className="px-12 py-6 bg-white text-black rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl flex items-center gap-3 active:scale-95">
+                       <Plus size={20} strokeWidth={3}/>
+                       Register Intake
                     </button>
-                    <button onClick={openNewProduct} className="px-10 py-4 bg-white text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl">Nuevo Ingreso</button>
                  </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {filteredProducts.map(p => (
                   <ProductCard 
                     key={p.id} 
@@ -350,13 +358,13 @@ const Inventario = () => {
               </div>
 
               {hasMore && (
-                <div className="flex justify-center pt-10">
+                <div className="flex justify-center pt-16 pb-20">
                   <button 
                     onClick={() => setPage(prev => prev + 1)} 
                     disabled={loading}
-                    className="px-16 py-5 bg-white/5 border border-white/10 rounded-[32px] text-[11px] font-black text-white uppercase tracking-[0.4em] hover:bg-white/10 transition-all"
+                    className="px-20 py-6 bg-white/5 border border-white/10 rounded-[3rem] text-[11px] font-black text-white uppercase tracking-[0.5em] hover:bg-white/10 transition-all shadow-xl flex items-center gap-4"
                   >
-                    {loading ? 'Cargando Catálogo...' : 'Ver más productos'}
+                    {loading ? 'Syncing...' : 'Show More Assets'} <ChevronRight size={16}/>
                   </button>
                 </div>
               )}
@@ -364,22 +372,34 @@ const Inventario = () => {
           )}
 
           {activeSubTab === 'mayoristas' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 pb-20">
               {filteredDistributors.map(m => {
                 const deuda = parseFloat(m.total_invertido || 0) - parseFloat(m.total_pagado || 0);
                 return (
-                  <div key={m.id} onClick={() => { setActiveMayorista(m); setViewState('detail'); }} className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-8 hover:border-white/15 cursor-pointer transition-all shadow-xl group">
-                     <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center text-neutral-400 mb-6 border border-white/5"><UserIcon size={28}/></div>
-                     <h4 className="text-2xl font-black text-white mb-2 tracking-tight">{m.nombre}</h4>
-                     <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-widest flex items-center gap-2 mb-8"><Globe size={14}/> {m.region}</p>
-                     <div className="mt-auto pt-8 border-t border-white/5">
-                        <p className="text-[9px] text-neutral-600 font-black uppercase mb-1">Deuda Vigente</p>
-                        <p className="text-3xl font-mono text-rose-500 font-black">{deuda.toLocaleString()} Bs.</p>
+                  <div key={m.id} onClick={() => { setActiveMayorista(m); setViewState('detail'); }} className="bg-[#0a0a0a] border border-white/5 rounded-[3.5rem] p-12 hover:border-blue-500/30 cursor-pointer transition-all shadow-2xl group flex flex-col justify-between h-[380px]">
+                     <div className="space-y-8">
+                       <div className="w-20 h-20 rounded-[2.5rem] bg-white/5 flex items-center justify-center text-neutral-600 border border-white/5 shadow-inner group-hover:bg-blue-600/10 group-hover:text-blue-500 transition-colors">
+                          <UserIcon size={36} strokeWidth={1}/>
+                       </div>
+                       <div>
+                          <h4 className="text-3xl font-black text-white tracking-tighter leading-none mb-3 uppercase">{m.nombre}</h4>
+                          <div className="flex items-center gap-3">
+                             <Globe size={14} className="text-neutral-700"/>
+                             <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{m.region}</p>
+                          </div>
+                       </div>
+                     </div>
+                     <div className="pt-8 border-t border-white/5">
+                        <p className="text-[9px] text-neutral-600 font-black uppercase mb-2 tracking-[0.3em]">Total Balance</p>
+                        <p className={`text-4xl font-mono font-black tracking-tighter leading-none ${deuda > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>{deuda.toLocaleString()} <span className="text-sm opacity-20 ml-1">Bs.</span></p>
                      </div>
                   </div>
                 );
               })}
-              <button onClick={openNewDistributor} className="border-2 border-dashed border-white/10 rounded-[48px] p-10 flex flex-col items-center justify-center text-neutral-600 hover:text-white hover:border-white/20 transition-all"><Plus size={40}/><span className="text-[10px] font-black uppercase mt-4 tracking-widest">Nuevo Distribuidor</span></button>
+              <button onClick={openNewDistributor} className="border-2 border-dashed border-white/5 rounded-[3.5rem] p-10 flex flex-col items-center justify-center text-neutral-800 hover:text-white hover:border-white/20 transition-all gap-4 bg-white/[0.01]">
+                 <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center"><Plus size={32}/></div>
+                 <span className="text-[10px] font-black uppercase tracking-[0.3em]">Integrate Partner</span>
+              </button>
             </div>
           )}
         </>
@@ -390,38 +410,53 @@ const Inventario = () => {
               <button onClick={() => setIsReportOpen(true)} className="px-8 py-4 bg-white text-black rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-neutral-200 transition-all flex items-center gap-3 shadow-xl"><Printer size={18}/> Estado de Cuenta</button>
            </div>
            {activeMayorista && (
-             <div className="grid grid-cols-12 gap-10">
-                <div className="col-span-12 lg:col-span-4 space-y-8">
-                   <div className="bg-[#0a0a0a] border border-white/10 rounded-[64px] p-12 shadow-2xl relative overflow-hidden">
-                      <div className="w-20 h-20 bg-white/5 rounded-[32px] flex items-center justify-center text-neutral-400 mb-8 border border-white/5"><UserIcon size={32}/></div>
-                      <h3 className="text-4xl font-black text-white mb-2 tracking-tighter leading-none">{activeMayorista.nombre}</h3>
-                      <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.3em] flex items-center gap-2 mb-10"><MapPin size={16}/> {activeMayorista.region}</p>
-                      <div className="p-10 bg-rose-500/5 border border-rose-500/10 rounded-[48px] text-center shadow-inner mb-8">
-                        <p className="text-5xl font-mono text-rose-500 font-black tracking-tighter">{(activeMayorista.total_invertido - activeMayorista.total_pagado).toLocaleString()}</p>
-                        <p className="text-[10px] text-rose-500/60 font-black uppercase tracking-[0.4em] mt-4">Saldo Pendiente</p>
+             <div className="grid grid-cols-12 gap-12">
+                <div className="col-span-12 lg:col-span-4 space-y-10">
+                   <div className="bg-[#0a0a0a] border border-white/10 rounded-[4rem] p-12 shadow-2xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none text-white"><UserIcon size={200}/></div>
+                      <div className="w-24 h-24 bg-white/5 rounded-[2.5rem] flex items-center justify-center text-neutral-400 mb-10 border border-white/10 shadow-inner"><UserIcon size={44} strokeWidth={1}/></div>
+                      <h3 className="text-5xl font-black text-white mb-2 tracking-tighter leading-none uppercase">{activeMayorista.nombre}</h3>
+                      <p className="text-[11px] text-neutral-500 font-black uppercase tracking-[0.4em] flex items-center gap-3 mb-12"><MapPin size={18} className="text-blue-500"/> {activeMayorista.region}</p>
+                      
+                      <div className="p-12 bg-rose-500/5 border border-rose-500/10 rounded-[3.5rem] text-center shadow-inner mb-12">
+                        <p className="text-6xl font-mono text-rose-500 font-black tracking-tighter leading-none">{(activeMayorista.total_invertido - activeMayorista.total_pagado).toLocaleString()}</p>
+                        <p className="text-[10px] text-rose-500/60 font-black uppercase tracking-[0.5em] mt-6">Outstanding Balance (BS)</p>
                       </div>
+                      
                       <div className="grid grid-cols-2 gap-4">
-                        <button onClick={() => setIsEntregaModalOpen(true)} className="py-7 bg-white text-black rounded-[32px] text-[10px] font-black uppercase shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex flex-col items-center justify-center gap-3"><Truck size={24}/></button>
-                        <button onClick={() => setIsPagoModalOpen(true)} className="py-7 bg-emerald-500 text-white rounded-[32px] text-[10px] font-black uppercase shadow-2xl hover:scale-[1.02] active:scale-95 transition-all flex flex-col items-center justify-center gap-3"><Wallet size={24}/></button>
+                        <button onClick={() => setIsEntregaModalOpen(true)} className="py-8 bg-white text-black rounded-[2.5rem] text-[10px] font-black uppercase shadow-2xl hover:bg-neutral-200 active:scale-95 transition-all flex flex-col items-center justify-center gap-4 border border-white">
+                           <Truck size={28}/> Register Delivery
+                        </button>
+                        <button onClick={() => setIsPagoModalOpen(true)} className="py-8 bg-emerald-500 text-white rounded-[2.5rem] text-[10px] font-black uppercase shadow-2xl hover:bg-emerald-400 active:scale-95 transition-all flex flex-col items-center justify-center gap-4 border border-emerald-400">
+                           <Wallet size={28}/> Collect Payment
+                        </button>
                       </div>
-                      <a href={`https://wa.me/${activeMayorista.contacto}`} target="_blank" rel="noreferrer" className="w-full mt-4 py-6 border border-emerald-500/20 bg-emerald-500/5 text-emerald-500 rounded-[32px] text-[10px] font-black uppercase flex items-center justify-center gap-4"><MessageCircle size={24}/> WhatsApp</a>
+                      <a href={`https://wa.me/${activeMayorista.contacto}`} target="_blank" rel="noreferrer" className="w-full mt-6 py-7 border border-white/5 bg-white/5 text-white rounded-[2.5rem] text-[11px] font-black uppercase flex items-center justify-center gap-4 hover:bg-white hover:text-black transition-all">
+                         <MessageCircle size={24}/> Secure Messenger
+                      </a>
                    </div>
                 </div>
-                <div className="col-span-12 lg:col-span-8 bg-[#0a0a0a] border border-white/10 rounded-[64px] p-12 shadow-2xl relative overflow-hidden">
-                   <h3 className="text-2xl font-bold text-white mb-12 flex items-center gap-4"><History size={32} className="text-neutral-500"/> Registro de Movimientos</h3>
-                   <div className="space-y-4">
+                <div className="col-span-12 lg:col-span-8 bg-[#0a0a0a] border border-white/10 rounded-[4rem] p-16 shadow-2xl relative overflow-hidden flex flex-col">
+                   <h3 className="text-3xl font-black text-white mb-16 flex items-center gap-6 uppercase tracking-tighter">
+                      <History size={36} className="text-neutral-700"/> Digital Ledger Transactions
+                   </h3>
+                   <div className="flex-1 space-y-4">
                       {movimientos.filter(m => m.mayorista_id === activeMayorista.id).map(mov => (
-                        <div key={mov.id} className="flex justify-between items-center p-8 bg-white/[0.02] border border-white/5 rounded-[32px]">
-                           <div className="flex items-center gap-6">
-                              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${mov.tipo === 'ENTREGA' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
-                                 {mov.tipo === 'ENTREGA' ? <ArrowUpRight size={24}/> : <ArrowDownLeft size={24}/>}
+                        <div key={mov.id} className="flex justify-between items-center p-10 bg-white/[0.02] border border-white/5 rounded-[3rem] hover:bg-white/[0.04] transition-all">
+                           <div className="flex items-center gap-8">
+                              <div className={`w-16 h-16 rounded-[1.8rem] flex items-center justify-center shadow-2xl ${mov.tipo === 'ENTREGA' ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+                                 {mov.tipo === 'ENTREGA' ? <ArrowUpRight size={28}/> : <ArrowDownLeft size={28}/>}
                               </div>
                               <div>
-                                 <p className="text-lg font-bold text-white leading-none mb-2">{mov.tipo === 'ENTREGA' ? `Entrega: ${mov.productos?.nombre}` : 'Pago de Mercancía'}</p>
-                                 <p className="text-xs text-neutral-600 font-bold uppercase tracking-widest">{new Date(mov.fecha).toLocaleDateString()}</p>
+                                 <p className="text-xl font-black text-white leading-none mb-3 uppercase tracking-tight">{mov.tipo === 'ENTREGA' ? `Dispatch: ${mov.productos?.nombre}` : 'Financial Settlement'}</p>
+                                 <div className="flex items-center gap-3">
+                                    <span className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{new Date(mov.fecha).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                                    <span className="w-1 h-1 bg-neutral-800 rounded-full"></span>
+                                    <span className="text-[10px] text-neutral-400 font-mono">ID: {mov.id.slice(0,8)}</span>
+                                 </div>
                               </div>
                            </div>
-                           <p className={`text-3xl font-mono font-black ${mov.tipo === 'ENTREGA' ? 'text-rose-500' : 'text-emerald-500'}`}>{parseFloat(mov.monto).toLocaleString()} Bs.</p>
+                           <p className={`text-4xl font-mono font-black tracking-tighter ${mov.tipo === 'ENTREGA' ? 'text-rose-500' : 'text-emerald-500'}`}>{parseFloat(mov.monto).toLocaleString()} <span className="text-sm">Bs.</span></p>
                         </div>
                       ))}
                    </div>

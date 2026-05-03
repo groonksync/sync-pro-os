@@ -419,8 +419,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const applyHighlight = (colorHex, e) => { e.preventDefault(); document.execCommand('hiliteColor', false, colorHex); };
-  const clearHighlight = (e) => { e.preventDefault(); document.execCommand('hiliteColor', false, 'transparent'); };
+  const applyHighlight = (colorHex, e) => { 
+    if (e) e.preventDefault(); 
+    document.execCommand('hiliteColor', false, colorHex); 
+  };
+  const clearHighlight = (e) => { 
+    if (e) e.preventDefault(); 
+    document.execCommand('hiliteColor', false, 'transparent'); 
+  };
   const initNoteAddition = (e) => { 
     e.preventDefault(); 
     const selection = window.getSelection(); 
@@ -949,19 +955,30 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
                {sessionTab === 'editor' && (
                  <div className="flex-1 w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-[24px] flex flex-col overflow-hidden shadow-2xl relative animate-in fade-in zoom-in duration-500">
-                     {/* BARRA DE HERRAMIENTAS RESTAURADA (PRO) */}
-                     <div className="flex items-center gap-1 px-3 py-1.5 border-b border-white/5 bg-black/40 shrink-0 overflow-x-auto no-scrollbar">
-                         <div className="flex items-center gap-0.5 pr-2 border-r border-white/10 shrink-0">
-                            <button onMouseDown={(e) => formatText('bold', null, e)} title="Negrita" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Bold size={14}/></button>
-                            <button onMouseDown={(e) => formatText('italic', null, e)} title="Itálica" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Italic size={14}/></button>
-                            <button onMouseDown={(e) => applyHighlight('#fef08a', e)} title="Resaltar" className="p-1.5 text-amber-300 hover:text-amber-200 rounded-md transition-colors"><Palette size={14}/></button>
-                            <button onMouseDown={initNoteAddition} title="Añadir Nota" className="p-1.5 text-blue-400 hover:text-blue-300 rounded-md transition-colors"><MessageSquare size={14}/></button>
-                         </div>
-                         
-                         <div className="flex items-center gap-0.5 px-2 border-r border-white/10 shrink-0">
-                            <button onMouseDown={insertChecklist} title="Checklist" className="p-1.5 text-emerald-500 hover:text-emerald-400 rounded-md transition-colors"><CheckSquare size={14}/></button>
-                            <button onMouseDown={insertTable} title="Tabla" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Table2 size={14}/></button>
-                         </div>
+                     {/* BARRA DE HERRAMIENTAS RESTAURADA (MASTER EXECUTIVE) */}
+                     <div className="flex items-center gap-2 px-6 py-4 border-b border-white/5 bg-black/40 shrink-0 overflow-x-auto no-scrollbar">
+                          <div className="flex items-center gap-2 pr-4 border-r border-white/10 shrink-0">
+                             <button onMouseDown={(e) => formatText('formatBlock', '<h1>', e)} title="Título Principal (H1)" className="px-5 py-2.5 bg-blue-600/10 hover:bg-blue-600 hover:text-white rounded-xl text-blue-500 text-[11px] font-black uppercase transition-all border border-blue-500/20 flex items-center gap-2 shadow-lg">H1</button>
+                             <button onMouseDown={(e) => formatText('formatBlock', '<h2>', e)} title="Subtítulo (H2)" className="px-5 py-2.5 bg-emerald-500/10 hover:bg-emerald-500 hover:text-white rounded-xl text-emerald-500 text-[11px] font-black uppercase transition-all border border-emerald-500/20 flex items-center gap-2 shadow-lg">H2</button>
+                          </div>
+
+                          <div className="flex items-center gap-0.5 px-2 border-r border-white/10 shrink-0">
+                             <button onMouseDown={(e) => formatText('bold', null, e)} title="Negrita" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Bold size={14}/></button>
+                             <button onMouseDown={(e) => formatText('italic', null, e)} title="Itálica" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Italic size={14}/></button>
+                          </div>
+                          
+                          <div className="flex items-center gap-1.5 px-2 border-r border-white/10 shrink-0">
+                             <button onMouseDown={(e) => applyHighlight('#ef4444', e)} title="Resaltado Rojo" className="w-8 h-8 rounded-full bg-red-500 border-2 border-white/20 hover:scale-125 transition-all shadow-[0_0_15px_rgba(239,68,68,0.5)] active:scale-95"></button>
+                             <button onMouseDown={(e) => applyHighlight('#fbbf24', e)} title="Resaltado Amarillo" className="w-8 h-8 rounded-full bg-amber-400 border-2 border-white/20 hover:scale-125 transition-all shadow-[0_0_15px_rgba(251,191,36,0.5)] active:scale-95"></button>
+                             <button onMouseDown={(e) => applyHighlight('#3b82f6', e)} title="Resaltado Azul" className="w-8 h-8 rounded-full bg-blue-500 border-2 border-white/20 hover:scale-125 transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)] active:scale-95"></button>
+                             <button onMouseDown={(e) => clearHighlight(e)} title="Quitar Resaltado" className="p-2 text-neutral-500 hover:text-white rounded-md transition-colors"><Eraser size={18}/></button>
+                          </div>
+
+                          <div className="flex items-center gap-0.5 px-2 border-r border-white/10 shrink-0">
+                             <button onMouseDown={insertChecklist} title="Checklist" className="p-1.5 text-emerald-500 hover:text-emerald-400 rounded-md transition-colors"><CheckSquare size={14}/></button>
+                             <button onMouseDown={initNoteAddition} title="Añadir Nota" className="p-1.5 text-purple-400 hover:text-purple-300 rounded-md transition-colors"><MessageSquare size={14}/></button>
+                             <button onMouseDown={insertTable} title="Tabla" className="p-1.5 text-neutral-500 hover:text-white rounded-md transition-colors"><Table2 size={14}/></button>
+                          </div>
 
                          <div className="flex-1 flex items-center gap-1 px-2 overflow-x-auto no-scrollbar">
                             {EDITOR_TAGS.map(tag => (
@@ -970,18 +987,44 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                          </div>
                      </div>
 
-                     <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="w-full flex-1 p-6 text-neutral-300 font-normal text-[14px] leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})}></div>
+                     <div 
+                        ref={editorRef} 
+                        contentEditable="true" 
+                        suppressContentEditableWarning={true} 
+                        className="w-full flex-1 p-8 text-neutral-300 font-normal text-[15px] leading-relaxed editor-container outline-none mac-scrollbar overflow-y-auto" 
+                        dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} 
+                        onBlur={() => setActiveMeeting({...activeMeeting, contenido: editorRef.current.innerHTML})}
+                        onKeyDown={(e) => {
+                          // Resaltador Auto-Stop on Space
+                          if (e.key === ' ') {
+                            setTimeout(() => {
+                              document.execCommand('hiliteColor', false, 'transparent');
+                            }, 0);
+                          }
 
-                     {/* BARRA DE ESTRUCTURA INFERIOR (H1/H2) */}
-                     <div className="flex items-center gap-3 px-4 py-2.5 border-t border-white/5 bg-black/60 shrink-0">
-                        <button onMouseDown={(e) => formatText('formatBlock', 'H1', e)} className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white text-[10px] font-black uppercase transition-all border border-white/5">
-                           <Heading1 size={14} className="text-blue-400" /> Título Principal
-                        </button>
-                        <button onMouseDown={(e) => formatText('formatBlock', 'H2', e)} className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-white text-[10px] font-black uppercase transition-all border border-white/5">
-                           <Heading2 size={14} className="text-emerald-400" /> Subtítulo
-                        </button>
-                        <div className="flex-1" /> {/* Espaciador para no tapar el centro */}
-                     </div>
+                          // Checklist Smart Enter
+                          if (e.key === 'Enter') {
+                            const selection = window.getSelection();
+                            if (selection.rangeCount > 0) {
+                              const range = selection.getRangeAt(0);
+                              let container = range.commonAncestorContainer;
+                              if (container.nodeType === 3) container = container.parentNode;
+                              
+                              const checklistItem = container.closest('.editor-checklist-item');
+                              if (checklistItem) {
+                                e.preventDefault();
+                                insertChecklist(e);
+                              }
+                            }
+                          }
+                        }}
+                      ></div>
+
+                      {/* BARRA DE ESTRUCTURA INFERIOR (COMPACTA) */}
+                      <div className="flex items-center gap-3 px-4 py-1.5 border-t border-white/5 bg-black/80 shrink-0">
+                         <p className="text-[8px] text-neutral-700 font-black uppercase tracking-[0.4em]">Sovereign Editor Engine v4.0 • Executive Suite</p>
+                         <div className="flex-1" /> 
+                      </div>
 
                      {/* BOTÓN FLOTANTE IA MAGIC */}
                      <button 
