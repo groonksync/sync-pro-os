@@ -562,83 +562,149 @@ const Inventario = () => {
                      </div>
                  </div>
                  
-                 <div className="col-span-12 lg:col-span-8 space-y-6">
+                  <div className="col-span-12 lg:col-span-8 space-y-4 md:space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                       <input type="text" value={editingProduct.nombre} onChange={e => setEditingProduct({...editingProduct, nombre: e.target.value})} className="bg-white/5 border border-white/10 p-6 rounded-2xl text-white outline-none" placeholder="Nombre..."/>
-                       <input type="text" value={editingProduct.marca} onChange={e => setEditingProduct({...editingProduct, marca: e.target.value})} className="bg-white/5 border border-white/10 p-6 rounded-2xl text-white outline-none" placeholder="Marca..."/>
+                       <div className="bg-white/5 p-3 md:p-4 rounded-2xl border border-white/5">
+                          <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1 tracking-widest">Nombre del Activo</p>
+                          <input type="text" value={editingProduct.nombre || ''} onChange={(e) => setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-transparent text-xs md:text-sm font-bold text-white outline-none" placeholder="Ej: MacBook Pro M3" />
+                       </div>
+                       <div className="bg-white/5 p-3 md:p-4 rounded-2xl border border-white/5">
+                          <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1 tracking-widest">Marca / Fabricante</p>
+                          <input type="text" value={editingProduct.marca || ''} onChange={(e) => setEditingProduct({...editingProduct, marca: e.target.value})} className="w-full bg-transparent text-xs md:text-sm font-bold text-white outline-none" placeholder="Ej: Apple" />
+                       </div>
                     </div>
-                    <textarea value={editingProduct.ficha_tecnica} onChange={e => setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[40px] p-8 text-white outline-none h-44" placeholder="Ficha técnica..."/>
+
+                    <div className="grid grid-cols-3 gap-4">
+                       <div className="bg-blue-600/10 p-3 md:p-5 rounded-2xl border border-blue-500/20">
+                          <p className="text-[7px] md:text-[8px] font-black text-blue-500 uppercase mb-1 tracking-widest">Inversión Final (Ahora)</p>
+                          <input type="number" value={editingProduct.precio_venta || 0} onChange={(e) => setEditingProduct({...editingProduct, precio_venta: parseFloat(e.target.value) || 0})} className="w-full bg-transparent text-lg md:text-2xl font-mono font-black text-white outline-none" />
+                       </div>
+                       <div className="bg-white/5 p-3 md:p-5 rounded-2xl border border-white/10">
+                          <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1 tracking-widest">Precio Antes (Marketing)</p>
+                          <input type="number" value={editingProduct.precio_antes || 0} onChange={(e) => setEditingProduct({...editingProduct, precio_antes: parseFloat(e.target.value) || 0})} className="w-full bg-transparent text-lg md:text-2xl font-mono font-black text-neutral-500 outline-none" />
+                       </div>
+                       <div className="bg-white/5 p-3 md:p-5 rounded-2xl border border-white/10">
+                          <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1 tracking-widest">Logística de Envío</p>
+                          <select value={editingProduct.tipo_envio || 'Envío Gratuito'} onChange={e => setEditingProduct({...editingProduct, tipo_envio: e.target.value})} className="w-full bg-transparent text-[9px] md:text-xs font-black text-white outline-none uppercase cursor-pointer">
+                             <option value="Envío Gratuito">Envío Gratuito</option>
+                             <option value="Cobro Adicional">Cobro Adicional</option>
+                          </select>
+                       </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                       <div className="space-y-1">
+                          <label className="text-[8px] font-black text-neutral-600 uppercase tracking-widest ml-4">Categoría de Activo</label>
+                          <select value={editingProduct.categoria} onChange={e => setEditingProduct({...editingProduct, categoria: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 text-[9px] md:text-xs text-white font-black outline-none uppercase">
+                             <option value="Computadoras">Computadoras</option>
+                             <option value="Celulares">Celulares</option>
+                             <option value="Accesorios">Accesorios</option>
+                             <option value="Servicios">Servicios</option>
+                          </select>
+                       </div>
+                       <div className="space-y-1">
+                          <label className="text-[8px] font-black text-neutral-600 uppercase tracking-widest ml-4">Garantía Sync Pro</label>
+                          <input type="text" value={editingProduct.garantia || ''} onChange={e => setEditingProduct({...editingProduct, garantia: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 md:p-5 text-[9px] md:text-xs text-white font-black outline-none" placeholder="Ej: 1 Año"/>
+                       </div>
+                    </div>
+
+                    <div className="space-y-1">
+                       <label className="text-[8px] font-black text-neutral-600 uppercase tracking-widest ml-4">Ficha Técnica & Detalles</label>
+                       <textarea value={editingProduct.ficha_tecnica} onChange={e => setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} className="w-full bg-white/5 border border-white/10 rounded-[28px] p-6 md:p-8 text-[10px] md:text-xs text-white outline-none h-32 md:h-40 resize-none italic leading-relaxed" placeholder="Describe las características técnicas..."/>
+                    </div>
                  </div>
               </div>
-              <button onClick={handleSaveProduct} className="w-full mt-12 py-8 bg-white text-black font-black rounded-[40px] uppercase">Guardar Cambios</button>
+              <button onClick={handleSaveProduct} disabled={loading} className="w-full mt-8 md:mt-12 py-6 md:py-8 bg-white text-black font-black rounded-[32px] md:rounded-[40px] uppercase text-[10px] md:text-[11px] tracking-[0.4em] shadow-2xl hover:bg-neutral-200 transition-all flex items-center justify-center gap-4">
+                {loading ? 'Sincronizando...' : 'Actualizar Catálogo Maestro'} <Plus size={18}/>
+              </button>
            </div>
         </div>
       )}
 
-      {/* MODAL DE DETALLE MAESTRO (Nexus Viewer Internal con Swipe) */}
+      {/* MODAL DE DETALLE MAESTRO (Nexus Viewer Internal Compact) */}
       {selectedProduct && (
-         <div className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-500">
-            <div className="bg-[#121212] border border-white/10 w-full max-w-[1200px] rounded-[32px] md:rounded-[48px] overflow-hidden shadow-2xl relative max-h-[95vh] flex flex-col md:flex-row">
+         <div className="fixed inset-0 z-[120] bg-black/98 backdrop-blur-2xl flex items-center justify-center p-2 md:p-10 animate-in fade-in duration-500">
+            <div className="bg-[#121212] border border-white/10 w-full max-w-[1100px] rounded-[24px] md:rounded-[40px] overflow-hidden shadow-2xl relative max-h-[98vh] md:max-h-[90vh] flex flex-col md:flex-row">
                <button 
                  onClick={() => setSelectedProduct(null)}
-                 className="absolute top-4 right-4 md:top-8 md:right-8 z-[130] w-10 h-10 md:w-14 md:h-14 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
+                 className="absolute top-4 right-4 md:top-6 md:right-6 z-[140] w-10 h-10 md:w-12 md:h-12 bg-white text-black rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-2xl"
                >
-                  <X size={24}/>
+                  <X size={20}/>
                </button>
 
                <div 
-                 className="w-full md:w-1/2 bg-[#080808] p-6 md:p-16 flex items-center justify-center relative touch-pan-y group/carousel"
-                 onTouchStart={handleTouchStart}
-                 onTouchMove={handleTouchMove}
-                 onTouchEnd={handleTouchEnd}
+                 className="w-full md:w-[45%] bg-[#080808] p-4 md:p-12 flex items-center justify-center relative touch-pan-y group/carousel"
+                 onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}
                >
                   <div className="w-full h-full flex items-center justify-center animate-in fade-in duration-500" key={currentImgIndex}>
-                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[40vh] md:max-h-[70vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
+                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[35vh] md:max-h-[60vh] object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)]" />
                   </div>
 
                   {allImages.length > 1 && (
                     <>
-                      <button onClick={prevImg} className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 opacity-0 group-hover/carousel:opacity-100 hidden md:flex">
-                        <ChevronLeft size={24}/>
-                      </button>
-                      <button onClick={nextImg} className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 md:w-14 md:h-14 bg-white/5 text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10 opacity-0 group-hover/carousel:opacity-100 hidden md:flex">
-                        <ChevronRight size={24}/>
-                      </button>
-                      <div className="absolute bottom-6 md:bottom-12 left-1/2 -translate-x-1/2 flex gap-2">
+                      <button onClick={prevImg} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-12 md:h-12 bg-white/5 text-white rounded-full flex items-center justify-center hidden md:flex"><ChevronLeft size={20}/></button>
+                      <button onClick={nextImg} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-12 md:h-12 bg-white/5 text-white rounded-full flex items-center justify-center hidden md:flex"><ChevronRight size={20}/></button>
+                      <div className="absolute bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5">
                         {allImages.map((_, idx) => (
-                          <div key={idx} onClick={() => setCurrentImgIndex(idx)} className={`w-2 h-2 rounded-full transition-all cursor-pointer ${idx === currentImgIndex ? 'bg-blue-500 w-6' : 'bg-white/20'}`} />
+                          <div key={idx} onClick={() => setCurrentImgIndex(idx)} className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${idx === currentImgIndex ? 'bg-blue-500 w-4' : 'bg-white/20'}`} />
                         ))}
                       </div>
                     </>
                   )}
                </div>
 
-               <div className="w-full md:w-1/2 p-6 md:p-16 overflow-y-auto mac-scrollbar bg-[#121212] flex flex-col">
-                  <div className="flex-1 space-y-8 md:space-y-12">
-                     <div className="space-y-2 md:space-y-4">
-                        <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.4em]">Sovereign ID: {selectedProduct.codigo || 'N/A'}</p>
-                        <h2 className="text-2xl md:text-5xl font-black text-white leading-tight tracking-tighter uppercase">{selectedProduct.nombre}</h2>
+               <div className="w-full md:w-[55%] p-4 md:p-10 flex flex-col justify-between bg-[#121212]">
+                  <div className="space-y-4 md:space-y-6">
+                     <div>
+                        <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.4em]">{selectedProduct.categoria}</p>
+                        <h2 className="text-xl md:text-4xl font-black text-white leading-tight tracking-tighter uppercase mt-1">{selectedProduct.nombre}</h2>
                      </div>
-                     <div className="bg-white/[0.03] border border-white/5 p-6 md:p-10 rounded-[2rem] shadow-inner">
-                        <p className="text-[7px] md:text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-2 md:mb-4">Valor de Mercado</p>
-                        <p className="text-4xl md:text-8xl font-mono text-white font-black tracking-tighter leading-none flex items-baseline">
-                           {parseFloat(selectedProduct.precio_venta || 0).toLocaleString()} 
-                           <span className="text-lg md:text-3xl opacity-20 ml-3 md:ml-6 font-sans">BS.</span>
+                     
+                     <div className="flex items-center justify-between gap-4">
+                        <div className="flex-1 bg-white/[0.03] border border-white/5 p-4 md:p-6 rounded-2xl md:rounded-3xl">
+                           <p className="text-[6px] md:text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-1">Inversión Final</p>
+                           <div className="flex items-baseline gap-2 md:gap-4">
+                              <p className="text-3xl md:text-6xl font-mono text-white font-black tracking-tighter leading-none">
+                                 {parseFloat(selectedProduct.precio_venta || 0).toLocaleString()} 
+                              </p>
+                              <div className="flex flex-col">
+                                 {selectedProduct.precio_antes > selectedProduct.precio_venta && (
+                                    <p className="text-[10px] md:text-sm text-neutral-600 font-mono line-through opacity-50">
+                                       {parseFloat(selectedProduct.precio_antes).toLocaleString()}
+                                    </p>
+                                 )}
+                                 <span className="text-[10px] md:text-sm font-black text-blue-500">BS.</span>
+                              </div>
+                           </div>
+                        </div>
+                        <div className={`px-4 py-6 md:px-8 md:py-8 rounded-2xl md:rounded-3xl border flex flex-col items-center justify-center text-center ${selectedProduct.tipo_envio === 'Envío Gratuito' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500'}`}>
+                           <Truck size={18} className="mb-2" />
+                           <p className="text-[8px] md:text-[10px] font-black uppercase leading-tight">{selectedProduct.tipo_envio || 'Cobro Adicional'}</p>
+                        </div>
+                     </div>
+
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
+                           <p className="text-[7px] md:text-[8px] font-black text-neutral-500 uppercase mb-1">Garantía</p>
+                           <p className="text-[10px] md:text-xs font-black text-white">{selectedProduct.garantia || '---'}</p>
+                        </div>
+                        <div className="bg-white/5 p-3 md:p-4 rounded-xl md:rounded-2xl border border-white/5">
+                           <p className="text-[7px] md:text-[8px] font-black text-neutral-600 uppercase mb-1">Stock Actual</p>
+                           <p className="text-[10px] md:text-xs font-black text-white">{selectedProduct.stock_actual} Unid.</p>
+                        </div>
+                     </div>
+
+                     <div className="space-y-1">
+                        <p className="text-[8px] md:text-[10px] font-black text-white uppercase tracking-widest border-b border-white/5 pb-1">Ficha Técnica</p>
+                        <p className="text-neutral-400 text-[10px] md:text-sm italic line-clamp-3">
+                           {selectedProduct.ficha_tecnica || 'Sin detalles.'}
                         </p>
                      </div>
-                     <div className="space-y-4 md:space-y-6">
-                        <div className="flex items-center gap-3 border-b border-white/10 pb-3 md:pb-4">
-                           <FileText size={16} className="text-blue-500"/>
-                           <p className="text-[8px] md:text-[11px] font-black text-white uppercase tracking-widest">Ficha Técnica Logística</p>
-                        </div>
-                        <div className="text-neutral-400 text-xs md:text-lg leading-relaxed italic whitespace-pre-wrap">
-                           {selectedProduct.ficha_tecnica || 'No hay especificaciones registradas.'}
-                        </div>
-                     </div>
                   </div>
-                  <div className="mt-12 flex gap-4">
-                     <button onClick={() => { setSelectedProduct(null); setEditingProduct(selectedProduct); setIsModalOpen(true); }} className="flex-1 py-4 md:py-8 bg-white/5 border border-white/10 text-white rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-widest hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"><Edit3 size={18}/> Editar</button>
-                     <button onClick={() => handleConsult(selectedProduct)} className="flex-1 py-4 md:py-8 bg-blue-600 text-white rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[11px] uppercase tracking-widest hover:bg-blue-500 transition-all shadow-xl">Consultar</button>
+
+                  <div className="mt-6 flex gap-3 md:gap-4">
+                     <button onClick={() => { setSelectedProduct(null); setEditingProduct(selectedProduct); setIsModalOpen(true); }} className="flex-1 py-4 md:py-7 bg-white/5 border border-white/10 text-white rounded-xl md:rounded-[2rem] font-black text-[10px] md:text-sm uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3"><Edit3 size={16}/> Editar</button>
+                     <button onClick={() => handleConsult(selectedProduct)} className="flex-1 py-4 md:py-7 bg-blue-600 text-white rounded-xl md:rounded-[2rem] font-black text-[10px] md:text-sm uppercase hover:bg-blue-500 transition-all shadow-xl">WhatsApp</button>
                   </div>
                </div>
             </div>
