@@ -250,7 +250,7 @@ const App = () => {
         </main>
       </div>
     </GoogleOAuthProvider>
-  );  );
+  );
 };
 
 export default App;
