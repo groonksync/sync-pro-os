@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Package, Search, ChevronRight, ChevronLeft, X, 
   Truck, Zap, ShoppingCart, ShieldCheck, 
-  CheckCircle, MoreVertical
+  CheckCircle, DollarSign
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
@@ -38,7 +38,7 @@ const PublicProductCard = ({ p, onSelect }) => {
            </div>
         ) : (
            <div className="absolute top-2 right-2 md:top-3 md:right-3 z-10">
-              <span className="px-2 py-0.5 bg-emerald-500/90 backdrop-blur-md text-black text-[5px] md:text-[7px] font-black rounded-full uppercase tracking-widest flex items-center gap-1 shadow-2xl animate-pulse">
+              <span className="px-2 py-0.5 bg-emerald-500/90 backdrop-blur-md text-black text-[5px] md:text-[7px] font-black rounded-full uppercase tracking-widest flex items-center gap-1 shadow-2xl">
                 <CheckCircle size={6} /> DISPONIBLE
               </span>
            </div>
@@ -95,6 +95,8 @@ const PublicCatalog = () => {
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentImgIndex, setCurrentImgIndex] = useState(0);
+  const touchStart = useRef(0);
+  const touchEnd = useRef(0);
 
   const WHATSAPP_NUMBER = "59169109766"; 
 
@@ -152,6 +154,17 @@ const PublicCatalog = () => {
   const nextImg = () => setCurrentImgIndex(prev => (prev + 1) % allImages.length);
   const prevImg = () => setCurrentImgIndex(prev => (prev - 1 + allImages.length) % allImages.length);
 
+  const handleTouchStart = (e) => {
+    touchStart.current = e.targetTouches[0].clientX;
+  };
+  const handleTouchMove = (e) => {
+    touchEnd.current = e.targetTouches[0].clientX;
+  };
+  const handleTouchEnd = () => {
+    if (touchStart.current - touchEnd.current > 70) nextImg();
+    if (touchStart.current - touchEnd.current < -70) prevImg();
+  };
+
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-emerald-500 selection:text-black">
       <header className="sticky top-0 z-[60] bg-black/80 backdrop-blur-3xl border-b border-white/5 py-3 md:py-5 px-4 md:px-12 flex flex-col md:flex-row justify-between items-center gap-3">
@@ -195,12 +208,17 @@ const PublicCatalog = () => {
 
       {selectedProduct && (
          <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-2 md:p-6 animate-in fade-in duration-300">
-            <div className="bg-[#121212] border border-white/10 w-full max-w-[850px] rounded-[32px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative flex flex-col md:flex-row max-h-[90vh]">
+            <div className="bg-[#121212] border border-white/10 w-full max-w-[850px] rounded-[32px] overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,0.8)] relative flex flex-col md:flex-row max-h-[95vh] overflow-y-auto">
                <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 z-[160] w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-emerald-500 hover:text-white transition-all active:scale-90"><X size={18}/></button>
                
-               <div className="w-full md:w-[45%] bg-[#080808] p-4 flex flex-col items-center justify-center relative border-r border-white/5">
+               <div 
+                 className="w-full md:w-[45%] bg-[#080808] p-4 flex flex-col items-center justify-center relative border-b md:border-b-0 md:border-r border-white/5 min-h-[40vh]"
+                 onTouchStart={handleTouchStart}
+                 onTouchMove={handleTouchMove}
+                 onTouchEnd={handleTouchEnd}
+               >
                   <div className="w-full flex-1 flex items-center justify-center overflow-hidden" key={currentImgIndex}>
-                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[40vh] md:max-h-[50vh] object-contain drop-shadow-2xl rounded-2xl" />
+                     <img src={allImages[currentImgIndex]} className="max-w-full max-h-[40vh] md:max-h-[50vh] object-contain drop-shadow-2xl rounded-2xl select-none" />
                   </div>
                   {allImages.length > 1 && (
                     <div className="flex gap-2 mt-4 pb-2">
@@ -211,27 +229,30 @@ const PublicCatalog = () => {
                   )}
                </div>
 
-               <div className="w-full md:w-[55%] p-6 md:p-10 flex flex-col justify-between">
-                  <div className="space-y-5">
+               <div className="w-full md:w-[55%] p-6 md:p-10 flex flex-col justify-between overflow-y-visible">
+                  <div className="space-y-6">
                      <div>
                         <span className="text-[7px] md:text-[9px] font-black text-emerald-500 uppercase tracking-[0.4em] mb-1.5 block">DETALLES DEL ACTIVO</span>
-                        <h2 className="text-xl md:text-3xl font-black text-white tracking-tighter uppercase leading-tight">{selectedProduct.nombre}</h2>
-                        <p className="text-[8px] md:text-[10px] font-black text-white/30 uppercase tracking-[0.2em] mt-1">{selectedProduct.marca || 'Sovereign Core'}</p>
+                        <h2 className="text-2xl md:text-4xl font-black text-white tracking-tighter uppercase leading-tight">{selectedProduct.nombre}</h2>
+                        <p className="text-[10px] md:text-xs font-black text-white/40 uppercase tracking-[0.3em] mt-2">{selectedProduct.marca || 'Sovereign Core'}</p>
                      </div>
 
-                     <div className="bg-white/[0.03] border border-white/5 p-5 rounded-[2rem] shadow-inner relative overflow-hidden group">
+                     <div className="bg-white/[0.03] border border-white/5 p-6 md:p-8 rounded-[2.5rem] shadow-inner relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                            <DollarSign size={40} className="text-white" />
                         </div>
                         <p className="text-[7px] md:text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1">Precio de Adquisición</p>
                         <div className="flex items-baseline gap-3">
-                           <p className="text-3xl md:text-5xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
+                           <p className="text-4xl md:text-6xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}</p>
                            <span className="text-[10px] md:text-xs font-black text-emerald-500">BS.</span>
                         </div>
                         {selectedProduct.precio_antes > selectedProduct.precio_venta && (
-                           <p className="text-[9px] md:text-xs text-neutral-600 font-mono line-through mt-1 opacity-50">
-                              Normal: {parseFloat(selectedProduct.precio_antes).toLocaleString()} BS.
-                           </p>
+                           <div className="mt-2 flex items-center gap-2">
+                              <span className="text-[8px] md:text-[10px] font-black text-rose-500/50 uppercase tracking-widest">Normal:</span>
+                              <p className="text-sm md:text-xl text-neutral-500 font-mono line-through font-black">
+                                 {parseFloat(selectedProduct.precio_antes).toLocaleString()} BS.
+                              </p>
+                           </div>
                         )}
                      </div>
 
@@ -253,7 +274,7 @@ const PublicCatalog = () => {
                      </div>
                   </div>
 
-                  <button onClick={() => handleConsult(selectedProduct)} className="w-full mt-8 py-5 md:py-6 bg-emerald-500 text-black rounded-[1.8rem] font-black uppercase text-[10px] md:text-xs tracking-[0.2em] hover:bg-white hover:scale-[1.02] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                  <button onClick={() => handleConsult(selectedProduct)} className="w-full mt-10 py-6 md:py-8 bg-emerald-500 text-black rounded-[2.2rem] font-black uppercase text-[10px] md:text-xs tracking-[0.2em] hover:bg-white hover:scale-[1.02] transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
                      <WhatsAppIcon size={20} />
                      ORDENAR POR WHATSAPP
                   </button>
@@ -264,13 +285,5 @@ const PublicCatalog = () => {
     </div>
   );
 };
-
-// ICONO EXTRA PARA DISEÑO
-const DollarSign = ({ size, className }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-    <line x1="12" y1="1" x2="12" y2="23"></line>
-    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-  </svg>
-);
 
 export default PublicCatalog;
