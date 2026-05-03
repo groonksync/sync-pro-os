@@ -677,7 +677,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
       {/* VISTA: PERFIL CLIENTE */}
       {viewState === 'client-profile' && activeClient && (
-        <div className="h-full flex flex-col overflow-hidden animate-in slide-in-from-right duration-500">
+        <div className={`h-full flex flex-col overflow-hidden ${colors.bg} animate-in slide-in-from-right duration-500`}>
           <header className={`px-10 py-5 ${colors.card} border-b flex items-center justify-between relative z-10 shrink-0`}>
             <div className="flex items-center gap-6">
               <button onClick={() => setViewState('client-list')} className={`w-10 h-10 ${isLight ? 'bg-slate-100' : 'bg-white/5'} rounded-xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all`}><ArrowLeft size={20}/></button>
