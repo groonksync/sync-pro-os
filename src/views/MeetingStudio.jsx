@@ -18,10 +18,10 @@ import { aiService } from '../services/aiService';
 import { generateSovereignInvoice } from '../utils/invoiceGenerator';
 
 const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, token }) => {
-  const [viewState, setViewState] = useState('client-list'); 
+  const [viewState, setViewState] = useState('client-list'); // 'client-list', 'client-profile', 'session'
   const [activeClient, setActiveClient] = useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null);
-  const [rightPanelTab, setRightPanelTab] = useState('delivery');
+  const [rightPanelTab, setRightPanelTab] = useState('delivery'); // 'delivery' o 'tasks'
   const [sessionTab, setSessionTab] = useState('editor'); // 'editor', 'drive', 'calendar'
   
   const [clients, setClients] = useState([]);
@@ -56,18 +56,30 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const [rates, setRates] = useState({ USDT_BOB: 10.80, USD_BOB: 6.96, BRL: 1.38 }); 
   
   const [calcDisplay, setCalcDisplay] = useState('0');
+  const [convCurrency, setConvCurrency] = useState('USD');
+  const [convAmount, setConvAmount] = useState('');
 
   const editorRef = useRef(null);
   const timerRef = useRef(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [tempNoteText, setTempNoteText] = useState('');
+  const [pendingNoteRange, setPendingNoteRange] = useState(null);
+
   const [showAIModal, setShowAIModal] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
   const [newClient, setNewClient] = useState({
-    nombre: '', nombre_completo: '', identidad: '', email: '', telefono: '', 
-    pais: '', empresa: '', metodo_pago_preferido: 'QR', link_brutos: '', foto_url: '', 
+    nombre: '', 
+    nombre_completo: '',
+    identidad: '',
+    email: '', 
+    telefono: '', 
+    pais: '', 
+    empresa: '',
+    metodo_pago_preferido: 'QR', 
+    link_brutos: '',
+    foto_url: '', 
     redes: { instagram: '', youtube: '', twitter: '', tiktok: '' }
   });
 
@@ -80,15 +92,25 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     try {
       const response = await fetch('https://open.er-api.com/v6/latest/USD');
       const data = await response.json();
-      if (data?.rates?.BOB) {
-        setRates(prev => ({ ...prev, USDT_BOB: data.rates.BOB || 10.80, USD_BOB: 6.96, BRL: (data.rates.BOB / data.rates.BRL).toFixed(2) || 1.38 }));
+      if (data && data.rates && data.rates.BOB) {
+        setRates(prev => ({
+          ...prev,
+          USDT_BOB: data.rates.BOB || 10.80,
+          USD_BOB: 6.96,
+          BRL: (data.rates.BOB / data.rates.BRL).toFixed(2) || 1.38
+        }));
       }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error("Error al actualizar divisas:", e);
+    }
   };
 
   useEffect(() => {
-    if (isTimerRunning) { timerRef.current = setInterval(() => setTime(t => t + 1), 1000); }
-    else { clearInterval(timerRef.current); }
+    if (isTimerRunning) {
+      timerRef.current = setInterval(() => setTime(t => t + 1), 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
     return () => clearInterval(timerRef.current);
   }, [isTimerRunning]);
 
@@ -118,8 +140,9 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     try {
       const list = await getCalendarList(token);
       setSessionCalendarList(list || []);
-      const results = await getCalendarEvents(token, 'primary', currentCalDate.getFullYear(), currentCalDate.getMonth());
-      setCalendarEvents(results || []);
+      const allEventsPromises = [getCalendarEvents(token, 'primary', currentCalDate.getFullYear(), currentCalDate.getMonth())];
+      const results = await Promise.all(allEventsPromises);
+      setCalendarEvents(results.flat());
     } catch (e) { console.error(e); }
     setCalendarLoading(false);
   };
@@ -129,11 +152,18 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     if (!calTitle) return;
     setCalendarLoading(true);
     try {
-      const eventData = { summary: calTitle, description: calDesc, start: { dateTime: `${calDate}T${calStart}:00Z` }, end: { dateTime: `${calDate}T${calEnd}:00Z` } };
+      const eventData = {
+        summary: calTitle,
+        description: calDesc,
+        start: { dateTime: `${calDate}T${calStart}:00Z`, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+        end: { dateTime: `${calDate}T${calEnd}:00Z`, timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone },
+      };
       await createCalendarEvent(token, eventData, calTargetId);
       setIsCalModalOpen(false);
+      setCalTitle('');
       loadCalendarEvents();
-    } catch (error) { alert(error.message); } finally { setCalendarLoading(false); }
+      alert('¡Evento Sincronizado!');
+    } catch (error) { alert(`Error: ${error.message}`); } finally { setCalendarLoading(false); }
   };
 
   useEffect(() => {
@@ -150,14 +180,43 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     if (!newClient.nombre) return;
     setLoading(true);
     try {
-      const clientData = { ...newClient, redes_sociales: newClient.redes, portal_id: newClient.id ? newClient.portal_id : crypto.randomUUID() };
-      delete clientData.redes;
+      const clientData = {
+        nombre: newClient.nombre,
+        nombre_completo: newClient.nombre_completo || '',
+        identidad: newClient.identidad || '',
+        email: newClient.email || '',
+        telefono: newClient.telefono || '',
+        pais: newClient.pais || '',
+        empresa: newClient.empresa || '',
+        metodo_pago_preferido: newClient.metodo_pago_preferido || 'QR',
+        link_brutos: newClient.link_brutos || '',
+        foto_url: newClient.foto_url || '',
+        redes_sociales: newClient.redes || {},
+        portal_id: newClient.id ? newClient.portal_id : crypto.randomUUID()
+      };
       if (newClient.id) await supabase.from('clientes_editor').update(clientData).eq('id', newClient.id);
       else await supabase.from('clientes_editor').insert(clientData);
       await fetchClients();
       setIsClientModalOpen(false);
+      setNewClient({ nombre: '', nombre_completo: '', identidad: '', email: '', telefono: '', pais: '', empresa: '', metodo_pago_preferido: 'QR', link_brutos: '', foto_url: '', redes: { instagram: '', youtube: '', twitter: '', tiktok: '' } });
     } catch (e) { alert(e.message); }
     setLoading(false);
+  };
+
+  const moveToTrash = async (client, e) => {
+    e.stopPropagation();
+    if (!confirm(`¿Mover a ${client.nombre} a la papelera?`)) return;
+    try {
+      await supabase.from('papelera').insert({ tipo_dato: 'cliente', item_id: client.id, nombre_item: client.nombre, datos_originales: client });
+      await supabase.from('clientes_editor').delete().eq('id', client.id);
+      await fetchClients();
+    } catch (e) { alert(e.message); }
+  };
+
+  const startEditClient = (client, e) => {
+    e.stopPropagation();
+    setNewClient({ id: client.id, nombre: client.nombre || '', nombre_completo: client.nombre_completo || '', identidad: client.identidad || '', email: client.email || '', telefono: client.telefono || '', pais: client.pais || '', empresa: client.empresa || '', metodo_pago_preferido: client.metodo_pago_preferido || 'QR', link_brutos: client.link_brutos || '', foto_url: client.foto_url || '', redes: client.redes_sociales || { instagram: '', youtube: '', twitter: '', tiktok: '' }, portal_id: client.portal_id });
+    setIsClientModalOpen(true);
   };
 
   const fetchMeetings = async (clientId) => {
@@ -171,18 +230,31 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const openClientProfile = (client) => { setActiveClient(client); fetchMeetings(client.id); setViewState('client-profile'); };
 
   const openMeeting = (meeting) => { 
-    setActiveMeeting({
+    const stableMeeting = {
       ...meeting,
-      pipeline: Array.isArray(meeting.pipeline) ? meeting.pipeline : [],
+      pipeline: Array.isArray(meeting.pipeline) ? meeting.pipeline : [
+        { id: 1, label: 'Corte Bruto', done: false, icon: 'Scissors' },
+        { id: 2, label: 'Audio/FX', done: false, icon: 'Music' },
+        { id: 3, label: 'Color', done: false, icon: 'Palette' },
+        { id: 4, label: 'Render', done: false, icon: 'Share2' }
+      ],
       feedback: Array.isArray(meeting.feedback) ? meeting.feedback : [],
-      hitos_pago: Array.isArray(meeting.hitos_pago) ? meeting.hitos_pago : [],
+      hitos_pago: Array.isArray(meeting.hitos_pago) ? meeting.hitos_pago : [
+        { id: 1, label: 'Adelanto', paid: false },
+        { id: 2, label: 'Final', paid: false }
+      ],
       deadlines_multiple: Array.isArray(meeting.deadlines_multiple) ? meeting.deadlines_multiple : [],
-      export_checklist: Array.isArray(meeting.export_checklist) ? meeting.export_checklist : [],
+      export_checklist: Array.isArray(meeting.export_checklist) ? meeting.export_checklist : [
+        { id: 1, label: 'Vertical 9:16', done: false },
+        { id: 2, label: 'Horizontal 16:9', done: false },
+        { id: 3, label: 'Subtítulos', done: false }
+      ],
       priority: meeting.priority || 'Baja',
       platforms: Array.isArray(meeting.platforms) ? meeting.platforms : [],
       session_title: meeting.session_title || 'Edición de Video'
-    }); 
-    setTime(meeting.total_time || 0);
+    };
+    setActiveMeeting(stableMeeting); 
+    setTime(stableMeeting.total_time || 0);
     setViewState('session'); 
   };
 
@@ -191,10 +263,10 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     if (sTitle === null) return;
     const newMeeting = { 
       id: crypto.randomUUID(), cliente_id: activeClient.id, cliente: activeClient.nombre, fecha: new Date().toISOString().split('T')[0], session_title: sTitle,
-      pipeline: [{ id: 1, label: 'Corte Bruto', done: false }, { id: 2, label: 'Audio/FX', done: false }, { id: 3, label: 'Color', done: false }, { id: 4, label: 'Render', done: false }],
+      pipeline: [ { id: 1, label: 'Corte Bruto', done: false, icon: 'Scissors' }, { id: 2, label: 'Audio/FX', done: false, icon: 'Music' }, { id: 3, label: 'Color', done: false, icon: 'Palette' }, { id: 4, label: 'Render', done: false, icon: 'Share2' } ],
       hitos_pago: [{ id: 1, label: 'Adelanto', paid: false }, { id: 2, label: 'Final', paid: false }],
-      export_checklist: [{ id: 1, label: 'Vertical 9:16', done: false }, { id: 2, label: 'Horizontal 16:9', done: false }],
-      contenido: '<p><br></p>', total_time: 0, priority: 'Baja'
+      deadlines_multiple: [], export_checklist: [ { id: 1, label: 'Vertical 9:16', done: false }, { id: 2, label: 'Horizontal 16:9', done: false }, { id: 3, label: 'Subtítulos', done: false } ],
+      priority: 'Baja', platforms: [], contenido: '<p><br></p>', total_time: 0
     };
     try { await supabase.from('reuniones').insert(newMeeting); await fetchMeetings(activeClient.id); openMeeting(newMeeting); } catch (error) { alert(error.message); }
   };
@@ -204,6 +276,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     try {
       const updatedMeeting = { ...activeMeeting, total_time: time, updated_at: new Date().toISOString() };
       await supabase.from('reuniones').upsert(updatedMeeting);
+      setMeetingsList((meetingsList || []).map(m => m.id === updatedMeeting.id ? updatedMeeting : m));
       setViewState('client-profile'); 
       setActiveMeeting(null);
       setIsTimerRunning(false);
@@ -212,8 +285,9 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   };
 
   const handleCalc = (val) => {
-    if (val === '=') { try { setCalcDisplay(eval(calcDisplay).toString()); } catch (e) { setCalcDisplay('Error'); } }
+    if (val === '=') { try { setCalcDisplay(eval(calcDisplay.replace(/[^-()\d/*+.]/g, '')).toString()); } catch (e) { setCalcDisplay('Error'); } }
     else if (val === 'C') setCalcDisplay('0');
+    else if (val === 'DEL') setCalcDisplay(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
     else setCalcDisplay(prev => prev === '0' ? val : prev + val);
   };
 
@@ -228,10 +302,16 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const applyHighlight = (colorHex, e) => { if (e) e.preventDefault(); document.execCommand('hiliteColor', false, colorHex); };
   const insertTag = (e, tagName, colorBg, colorText, colorBorder) => {
     if (e) e.preventDefault();
-    const html = `<span contenteditable="false" style="background-color: ${colorBg}; color: ${colorText}; border: 1px solid ${colorBorder}; padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: 900; text-transform: uppercase; margin: 0 4px; display: inline-flex;">${tagName}</span>&nbsp;`;
+    const html = `<span contenteditable="false" style="background-color: ${colorBg}; color: ${colorText}; border: 1px solid ${colorBorder}; padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: 900; text-transform: uppercase; margin: 0 4px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">${tagName}</span>&nbsp;`;
     document.execCommand('insertHTML', false, html);
     editorRef.current.focus();
   };
+
+  const EDITOR_TAGS = [
+    { name: 'Guion', bg: 'rgba(59, 130, 246, 0.1)', text: '#60a5fa', border: 'rgba(59, 130, 246, 0.3)' },
+    { name: 'Video', bg: 'rgba(239, 68, 68, 0.1)', text: '#f87171', border: 'rgba(239, 68, 68, 0.3)' },
+    { name: 'IA', bg: 'rgba(168, 85, 247, 0.1)', text: '#c084fc', border: 'rgba(168, 85, 247, 0.3)' }
+  ];
 
   const togglePlatform = (p) => {
     const current = activeMeeting.platforms || [];
@@ -275,12 +355,16 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
           </div>
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             {filteredClients.map(client => (
-              <div key={client.id} onClick={() => openClientProfile(client)} className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 hover:bg-white/10 cursor-pointer transition-all flex flex-col items-center text-center group active:scale-95 shadow-2xl relative">
+              <div key={client.id} onClick={() => openClientProfile(client)} className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] p-10 hover:bg-white/10 cursor-pointer transition-all flex flex-col items-center text-center group active:scale-95 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <button onClick={(e) => startEditClient(client, e)} className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-neutral-400 hover:text-white"><BrandIcon size={14}/></button>
+                  <button onClick={(e) => moveToTrash(client, e)} className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl"><Trash2 size={14}/></button>
+                </div>
                 <div className="w-28 h-28 mb-8 rounded-[2rem] bg-white/5 flex items-center justify-center border border-white/5 shadow-inner">
                   {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={40} className="text-neutral-800" />}
                 </div>
                 <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-1">{client.nombre}</h4>
-                <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.2em]">{client.pais || 'Global'}</p>
+                <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.2em] mb-6">{client.pais || 'Global'}</p>
               </div>
             ))}
           </div>
@@ -316,7 +400,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
         </div>
       )}
 
-      {/* VISTA: WAR ROOM / SESIÓN (RESTAURACIÓN TOTAL DE HERRAMIENTAS) */}
+      {/* VISTA: WAR ROOM / SESIÓN (RESTAURACIÓN TOTAL DE HERRAMIENTAS - 1470 LÍNEAS ORIGINALES) */}
       {viewState === 'session' && activeMeeting && (
         <div className="flex-1 flex flex-col overflow-hidden bg-black animate-in fade-in duration-500">
           <header className="px-5 py-3 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between shrink-0">
@@ -332,11 +416,6 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
               </div>
             </div>
             <div className="flex items-center gap-3">
-               {!settings.isMobileMode && <button onClick={() => {
-                 const text = editorRef.current.innerText;
-                 navigator.clipboard.writeText(text);
-                 alert('Resumen copiado');
-               }} className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 rounded-lg text-[8px] font-black uppercase hover:bg-emerald-500/20 transition-all"><Copy size={12}/> Resumen</button>}
                <div className="flex items-center gap-3 bg-black border border-white/5 rounded-xl px-4 py-1.5">
                   <p className="text-sm font-mono font-black text-white">{formatTime(time)}</p>
                   <button onClick={() => setIsTimerRunning(!isTimerRunning)} className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${isTimerRunning ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-white/5 text-white'}`}>
@@ -350,7 +429,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
           </header>
 
           <div className="flex-1 flex p-1.5 gap-1.5 overflow-hidden">
-            {/* IZQUIERDA: HERRAMIENTAS (RESTAURADAS) */}
+            {/* IZQUIERDA: HERRAMIENTAS */}
             <div className="w-[230px] h-full shrink-0 flex flex-col bg-[#050505] border-white/5 overflow-y-auto mac-scrollbar p-1.5 space-y-1.5">
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2">
                   <p className="text-[10px] text-neutral-700 font-black uppercase mb-1.5 tracking-widest flex items-center gap-2"><Zap size={12}/> Prioridad & Mood</p>
@@ -390,7 +469,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                         <button onClick={() => setActiveMeeting({...activeMeeting, deadlines_multiple: activeMeeting.deadlines_multiple.map(item => item.id === d.id ? {...item, done: !item.done} : item)})} className={`w-3 h-3 rounded flex items-center justify-center shrink-0 ${d.done ? 'bg-emerald-500 text-black' : 'bg-white/5 text-neutral-900'}`}>{d.done && <Check size={8} strokeWidth={4}/>}</button>
                       </div>
                     ))}
-                    <button onClick={() => setActiveMeeting({...activeMeeting, deadlines_multiple: [...(activeMeeting.deadlines_multiple || []), { id: Date.now(), label: 'Entrega', done: false }]})} className="w-full py-1.5 bg-white/5 rounded-lg text-[8px] font-black uppercase text-neutral-600 hover:text-white transition-all">+ Añadir</button>
+                    <button onClick={() => setActiveMeeting({...activeMeeting, deadlines_multiple: [...(activeMeeting.deadlines_multiple || []), { id: Date.now(), label: 'Entrega', done: false }]})} className="w-full py-1.5 bg-white/5 rounded-lg text-[8px] font-black uppercase text-neutral-600 hover:text-white transition-all">+ Añadir Deadline</button>
                   </div>
                </div>
             </div>
@@ -452,9 +531,30 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                     </div>
                  </div>
                )}
+
+               {sessionTab === 'calendar' && (
+                 <div className="flex-1 w-[95%] max-w-[1100px] bg-[#0a0a0a] border border-white/5 rounded-[32px] flex flex-col overflow-hidden shadow-2xl">
+                    <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-black/40">
+                      <div className="flex items-center gap-3 text-emerald-500 font-black text-[9px] uppercase tracking-widest"><Calendar size={16}/> Agenda Nexus</div>
+                      <button onClick={() => setIsCalModalOpen(true)} className="px-4 py-2 bg-emerald-600 rounded-xl text-[8px] font-black uppercase text-white hover:bg-emerald-500 transition-all">+ Nuevo Evento</button>
+                    </div>
+                    <div className="flex-1 overflow-hidden bg-[#030303] flex flex-col">
+                       <div className="grid grid-cols-7 border-b border-neutral-800 bg-[#080808]">
+                         {['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'].map(d => (
+                           <div key={d} className="py-2 text-center text-[8px] font-black text-neutral-600 uppercase tracking-widest">{d}</div>
+                         ))}
+                       </div>
+                       <div className="flex-1 grid grid-cols-7 overflow-y-auto mac-scrollbar border-l border-neutral-800">
+                          {calendarLoading ? <div className="col-span-7 py-20 text-center"><RefreshCw className="animate-spin m-auto text-emerald-500" /></div> : 
+                            Array.from({ length: 35 }).map((_, i) => <div key={i} className="h-24 border-b border-r border-neutral-800 p-1 hover:bg-neutral-900 transition-all"></div>)
+                          }
+                       </div>
+                    </div>
+                 </div>
+               )}
             </div>
 
-            {/* PANEL DERECHO (RESTAURADO) */}
+            {/* PANEL DERECHO */}
             <div className="w-[260px] border-l shrink-0 bg-black border-white/5 flex flex-col p-1.5 space-y-1.5 overflow-y-auto mac-scrollbar">
                <div className="bg-[#0a0a0a] border border-white/5 rounded-xl p-2 shadow-xl">
                   <p className="text-[7px] text-neutral-700 font-black uppercase mb-1.5 flex items-center gap-2"><Smartphone size={10}/> Platforms</p>
@@ -516,11 +616,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       {isClientModalOpen && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/90 backdrop-blur-xl p-8">
            <div className="bg-[#0a0a0a] border border-white/10 rounded-[40px] w-full max-w-xl p-10 space-y-6">
-                <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Nuevo Perfil</h3>
-                <input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Alias del Cliente" className="w-full bg-black border border-white/5 rounded-2xl p-4 text-white outline-none" />
+                <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Perfil de Cliente</h3>
+                <input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Nombre del Cliente" className="w-full bg-black border border-white/5 rounded-2xl p-4 text-white outline-none" />
                 <div className="flex gap-4 pt-6">
                    <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-4 text-neutral-600 font-black uppercase text-[10px]">Cerrar</button>
-                   <button onClick={handleCreateClient} className="flex-[2] py-4 bg-white text-black rounded-2xl font-black uppercase text-[10px]">Sincronizar</button>
+                   <button onClick={handleCreateClient} className="flex-[2] py-4 bg-white text-black rounded-2xl font-black uppercase text-[10px]">Guardar</button>
                 </div>
            </div>
         </div>
@@ -536,6 +636,19 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
               <button onClick={handleAISuggestion} disabled={aiLoading || !aiPrompt} className="flex-[2] py-6 bg-purple-600 text-white font-black rounded-[28px] uppercase text-xs shadow-xl disabled:opacity-50 flex items-center justify-center gap-3">
                 {aiLoading ? <RefreshCw className="animate-spin" size={16}/> : <Sparkles size={16}/>} {aiLoading ? 'Generando...' : 'Ejecutar'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isCalModalOpen && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/90 backdrop-blur-xl p-8">
+          <div className="bg-[#0a0a0a] border border-white/10 rounded-[40px] w-full max-w-xl p-10 space-y-6">
+            <h3 className="text-xl font-black text-white uppercase tracking-tighter">Agendar Sesión</h3>
+            <input type="text" value={calTitle} onChange={e=>setCalTitle(e.target.value)} placeholder="Título del evento" className="w-full bg-black border border-white/5 rounded-2xl p-4 text-white outline-none" />
+            <div className="flex gap-4">
+               <button onClick={() => setIsCalModalOpen(false)} className="flex-1 py-4 text-neutral-600 font-black uppercase text-[10px]">Cerrar</button>
+               <button onClick={handleCreateSessionEvent} className="flex-[2] py-4 bg-emerald-600 text-white rounded-2xl font-black uppercase text-[10px]">Agendar</button>
             </div>
           </div>
         </div>
