@@ -26,70 +26,61 @@ const ProductCard = ({ p, onEdit, onDelete, onViewImage }) => {
   };
 
   return (
-    <div className="bg-[#0a0a0a] border border-white/5 rounded-[40px] overflow-hidden hover:border-white/20 transition-all flex flex-col group relative shadow-2xl h-full">
-      <div className="aspect-square bg-[#050505] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
+    <div className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] overflow-hidden hover:border-white/20 transition-all flex flex-col group relative shadow-2xl h-full">
+      <div className="aspect-square bg-[#080808] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
-            className="max-w-[85%] max-h-[85%] object-contain transition-transform duration-1000 group-hover:scale-110"
+            className="max-w-[90%] max-h-[90%] object-contain transition-transform duration-1000 group-hover:scale-110"
             alt={p.nombre}
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-neutral-900 to-black">
-            <Package size={50} strokeWidth={1} className="text-neutral-800" />
-            <span className="text-[8px] font-black text-neutral-800 uppercase tracking-widest">No Media Available</span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-[#050505]">
+            <Package size={30} strokeWidth={1} className="text-neutral-800" />
+            <span className="text-[6px] font-black text-neutral-800 uppercase tracking-widest">Sin Media</span>
           </div>
         )}
 
-        {/* CONTROLES DEL SLIDER */}
-        {allImages.length > 1 && (
-          <>
-            <div className="absolute inset-y-0 left-0 flex items-center px-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={prevImg} className="w-10 h-10 bg-black/60 backdrop-blur-xl text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10">
-                <ChevronRight className="rotate-180" size={18}/>
-              </button>
-            </div>
-            <div className="absolute inset-y-0 right-0 flex items-center px-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={nextImg} className="w-10 h-10 bg-black/60 backdrop-blur-xl text-white rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-all border border-white/10">
-                <ChevronRight size={18}/>
-              </button>
-            </div>
-          </>
-        )}
-        
-        <div className="absolute top-6 left-6 z-10 flex flex-col gap-2">
-          <span className="text-[8px] text-white font-black uppercase tracking-[0.2em] bg-blue-600/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl">{p.categoria || 'Standard'}</span>
+        <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10 flex flex-col gap-1.5">
+          <span className="text-[6px] md:text-[8px] text-white font-black uppercase tracking-widest bg-blue-600/90 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/10 shadow-2xl">
+            {p.categoria || 'Standard'}
+          </span>
           {p.stock_actual <= (p.stock_minimo || 5) && (
-            <span className="text-[8px] text-white font-black uppercase tracking-[0.2em] bg-rose-500/80 backdrop-blur-xl px-4 py-2 rounded-xl border border-white/10 shadow-2xl animate-pulse">Low Stock</span>
+            <span className="text-[6px] md:text-[8px] text-white font-black uppercase tracking-widest bg-rose-500/90 backdrop-blur-md px-2 py-1 md:px-3 md:py-1.5 rounded-lg border border-white/10 shadow-2xl animate-pulse">
+              Bajo Stock
+            </span>
           )}
         </div>
         
-        <div className="absolute top-6 right-6 z-10">
-          <p className="text-[10px] font-mono font-black px-4 py-2 rounded-xl backdrop-blur-xl border border-white/10 bg-black/60 text-white shadow-2xl">{p.stock_actual} UNITS</p>
+        <div className="absolute top-3 right-3 md:top-4 md:right-4 z-10">
+          <p className="text-[8px] md:text-[10px] font-mono font-black px-2 py-1 md:px-3 md:py-1.5 rounded-lg backdrop-blur-md border border-white/10 bg-black/40 text-white shadow-2xl">
+            {p.stock_actual} UDS
+          </p>
         </div>
       </div>
 
-      <div className="p-8 flex-1 flex flex-col justify-between">
-        <div className="space-y-4">
-          <div className="space-y-1">
-             <h3 className="text-2xl font-black text-white line-clamp-1 leading-tight tracking-tighter uppercase">{p.nombre}</h3>
-             <p className="text-[9px] font-black text-blue-500 uppercase tracking-[0.4em]">{p.marca || 'Sovereign Core'}</p>
+      <div className="p-3 md:p-6 flex-1 flex flex-col justify-between">
+        <div className="space-y-2 md:space-y-3">
+          <div className="space-y-0.5">
+             <h3 className="text-xs md:text-lg font-black text-white line-clamp-1 leading-tight tracking-tight uppercase">{p.nombre}</h3>
+             <p className="text-[7px] md:text-[9px] font-black text-blue-500 uppercase tracking-[0.3em]">{p.marca || 'Sovereign Core'}</p>
           </div>
           
-          <div className="flex flex-wrap gap-2">
-            {p.sku && <div className="px-3 py-1 bg-white/5 rounded-lg text-[8px] font-mono text-neutral-500 border border-white/5 uppercase tracking-widest font-black">SKU: {p.sku}</div>}
-            {p.entrega_habilitada && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[8px] font-mono text-emerald-500 border border-emerald-500/10 uppercase tracking-widest font-black">READY TO SHIP</div>}
+          <div className="flex flex-wrap gap-1.5">
+            {p.sku && <div className="px-2 py-0.5 bg-white/5 rounded-md text-[6px] md:text-[8px] font-mono text-neutral-500 border border-white/5 uppercase tracking-tighter">SKU: {p.sku}</div>}
           </div>
         </div>
 
-        <div className="pt-8 mt-4 border-t border-white/5 flex justify-between items-end">
+        <div className="pt-3 md:pt-6 mt-2 md:mt-4 border-t border-white/5 flex justify-between items-center">
           <div>
-            <p className="text-[8px] text-neutral-600 font-black uppercase mb-1 tracking-[0.3em]">Executive Price</p>
-            <p className="text-3xl font-mono text-white font-black tracking-tighter leading-none">{parseFloat(p.precio_venta || 0).toLocaleString()} <span className="text-xs opacity-20 ml-1">Bs.</span></p>
+            <p className="text-lg md:text-2xl font-mono text-white font-black tracking-tighter leading-none">
+              {parseFloat(p.precio_venta || 0).toLocaleString()} 
+              <span className="text-[8px] md:text-xs opacity-20 ml-1 font-sans">BS.</span>
+            </p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10"><Trash2 size={20}/></button>
-            <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-xl"><Edit3 size={20}/></button>
+          <div className="flex gap-1.5 md:gap-2">
+            <button onClick={(e) => { e.stopPropagation(); onDelete(p.id, p.imagen); }} className="w-7 h-7 md:w-10 md:h-10 bg-rose-500/10 text-rose-500 rounded-lg md:rounded-xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all border border-rose-500/10"><Trash2 size={14}/></button>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-7 h-7 md:w-10 md:h-10 bg-white text-black rounded-lg md:rounded-xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-xl"><Edit3 size={14}/></button>
           </div>
         </div>
       </div>
@@ -308,44 +299,44 @@ const Inventario = () => {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-[1400px] w-full animate-in fade-in duration-500">
+    <div className="flex flex-col h-full max-w-full w-full animate-in fade-in duration-500">
       {viewState === 'list' ? (
         <>
-          <header className="mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-            <div>
-              <h2 className="text-5xl font-black text-white tracking-tighter uppercase leading-none">Inventario <span className="text-blue-500">Pro</span></h2>
-              <div className="flex items-center gap-4 mt-3">
-                <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.5em] flex items-center gap-2"><Layout size={14}/> Sovereign Global Asset Monitor</p>
+          <header className="mb-8 md:mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-1">
+              <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase leading-none">Inventario <span className="text-blue-500">Pro</span></h2>
+              <div className="flex items-center gap-3">
+                <p className="text-[8px] md:text-[10px] text-neutral-600 font-black uppercase tracking-[0.4em] flex items-center gap-2"><Layout size={12}/> Global Asset Monitor</p>
                 <span className="w-1 h-1 bg-neutral-800 rounded-full"></span>
-                <p className="text-[10px] text-blue-500 font-black uppercase tracking-[0.5em]">{productos.length} Assets Registered</p>
+                <p className="text-[8px] md:text-[10px] text-blue-500 font-black uppercase tracking-[0.4em]">{productos.length} Activos</p>
               </div>
             </div>
-            <div className="flex bg-[#0a0a0a] border border-white/5 p-1.5 rounded-[2rem] shadow-2xl">
-              <button onClick={() => setActiveSubTab('productos')} className={`px-10 py-3.5 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${activeSubTab === 'productos' ? 'bg-white text-black shadow-xl' : 'text-neutral-600 hover:text-white'}`}>MASTER CATALOG</button>
-              <button onClick={() => setActiveSubTab('mayoristas')} className={`px-10 py-3.5 rounded-[1.5rem] text-[10px] font-black tracking-widest transition-all ${activeSubTab === 'mayoristas' ? 'bg-white text-black shadow-xl' : 'text-neutral-600 hover:text-white'}`}>DISTRIBUTORS</button>
+            <div className="flex bg-[#121212] border border-white/5 p-1 rounded-2xl md:rounded-[2rem] shadow-2xl">
+              <button onClick={() => setActiveSubTab('productos')} className={`px-6 md:px-10 py-2.5 md:py-3.5 rounded-xl md:rounded-[1.5rem] text-[8px] md:text-[10px] font-black tracking-widest transition-all ${activeSubTab === 'productos' ? 'bg-white text-black shadow-xl' : 'text-neutral-600 hover:text-white'}`}>CATÁLOGO MAESTRO</button>
+              <button onClick={() => setActiveSubTab('mayoristas')} className={`px-6 md:px-10 py-2.5 md:py-3.5 rounded-xl md:rounded-[1.5rem] text-[8px] md:text-[10px] font-black tracking-widest transition-all ${activeSubTab === 'mayoristas' ? 'bg-white text-black shadow-xl' : 'text-neutral-600 hover:text-white'}`}>DISTRIBUIDORES</button>
             </div>
           </header>
-
+ 
           {activeSubTab === 'productos' && (
-            <div className="space-y-12">
-              <div className="flex flex-col lg:flex-row gap-6">
+            <div className="space-y-8 md:space-y-12">
+              <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
                 <div className="relative flex-1 group">
-                  <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-700 group-focus-within:text-blue-500 transition-colors" size={20}/>
-                  <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identify assets by SN, SKU or Name..." className="w-full bg-[#0a0a0a] border border-white/10 rounded-[2rem] py-6 pl-18 pr-8 text-sm text-white outline-none focus:border-white/20 shadow-2xl font-medium transition-all"/>
+                  <Search className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 text-neutral-700" size={18}/>
+                  <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Identificar activos por SN, SKU o Nombre..." className="w-full bg-[#121212] border border-white/10 rounded-2xl md:rounded-[2rem] py-4 md:py-6 pl-14 md:pl-18 pr-6 text-xs md:text-sm text-white outline-none focus:border-white/20 transition-all"/>
                 </div>
-                 <div className="flex gap-4">
-                    <button onClick={handleShareCatalog} className="px-10 py-6 bg-blue-600/10 text-blue-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-500/20 flex items-center gap-3">
-                       <Share2 size={18}/>
-                       Public Link
+                 <div className="flex gap-3 md:gap-4 w-full lg:w-auto">
+                    <button onClick={handleShareCatalog} className="flex-1 lg:flex-none px-6 md:px-10 py-4 md:py-6 bg-blue-600/10 text-blue-500 rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all border border-blue-500/20 flex items-center justify-center gap-2 md:gap-3">
+                       <Share2 size={16}/>
+                       Link Público
                     </button>
-                    <button onClick={openNewProduct} className="px-12 py-6 bg-white text-black rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl flex items-center gap-3 active:scale-95">
-                       <Plus size={20} strokeWidth={3}/>
-                       Register Intake
+                    <button onClick={openNewProduct} className="flex-1 lg:flex-none px-6 md:px-12 py-4 md:py-6 bg-white text-black rounded-2xl md:rounded-[2rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest hover:bg-neutral-200 transition-all shadow-xl flex items-center justify-center gap-2 md:gap-3 active:scale-95">
+                       <Plus size={18} strokeWidth={3}/>
+                       Nuevo Ingreso
                     </button>
                  </div>
-              </div>
+              </div></div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
                 {filteredProducts.map(p => (
                   <ProductCard 
                     key={p.id} 

@@ -19,9 +19,9 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
   const oldPrice = p.precio_anterior || (parseFloat(p.precio_venta || 0) * 1.25);
 
   return (
-    <div className="bg-[#0a0a0a] border border-white/5 rounded-2xl md:rounded-[32px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
+    <div className="bg-[#121212] border border-white/5 rounded-2xl md:rounded-[32px] p-0 hover:border-white/20 transition-all flex flex-col group relative shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700 h-full">
       {/* IMAGEN ULTRA-COMPACTA */}
-      <div className="aspect-square bg-[#050505] m-1.5 md:m-2.5 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
+      <div className="aspect-square bg-[#080808] m-1.5 md:m-2.5 rounded-xl md:rounded-[24px] relative overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => onViewImage(allImages[imgIndex])}>
         {allImages.length > 0 ? (
           <img 
             src={allImages[imgIndex]} 
@@ -50,16 +50,16 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
       </div>
 
       <div className="px-3 pb-3 md:px-5 md:pb-5 pt-1 flex-1 flex flex-col justify-between">
-        <div className="space-y-1">
-          <h3 className="text-[10px] md:text-sm font-bold text-white leading-tight tracking-tight uppercase line-clamp-1">{p.nombre}</h3>
+        <div className="space-y-1 md:space-y-2">
+          <h3 className="text-[10px] md:text-base font-black text-white leading-tight tracking-tight uppercase line-clamp-1">{p.nombre}</h3>
           
           <div className="flex items-baseline gap-1.5">
-             <p className="text-[11px] md:text-lg font-mono text-white font-black">
+             <p className="text-[11px] md:text-2xl font-mono text-white font-black tracking-tighter">
                 {parseFloat(p.precio_venta || 0).toLocaleString()} 
+                <span className="text-[6px] md:text-[9px] opacity-20 ml-1 font-sans">BS.</span>
              </p>
-             <span className="text-[6px] md:text-[8px] opacity-20 font-sans tracking-widest uppercase font-black">BS</span>
              {p.precio_anterior && (
-               <span className="text-[7px] md:text-[9px] text-rose-500/40 line-through font-mono ml-auto">
+               <span className="text-[7px] md:text-[10px] text-rose-500/40 line-through font-mono ml-auto">
                  {parseFloat(p.precio_anterior).toLocaleString()}
                </span>
              )}
@@ -68,9 +68,9 @@ const PublicProductCard = ({ p, onViewImage, onConsult }) => {
 
         <button 
           onClick={() => onConsult(p)}
-          className="w-full mt-2.5 py-1.5 md:py-2.5 bg-white text-black rounded-lg md:rounded-xl font-black text-[7px] md:text-[9px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-lg"
+          className="w-full mt-2 md:mt-4 py-2 md:py-3 bg-white text-black rounded-lg md:rounded-2xl font-black text-[7px] md:text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-lg border border-transparent"
         >
-           <WhatsAppIcon size={10} className="md:w-3.5 md:h-3.5" />
+           <WhatsAppIcon size={12} className="md:w-4 md:h-4" />
            Consultar
         </button>
       </div>
