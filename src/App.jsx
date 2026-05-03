@@ -223,6 +223,8 @@ const App = () => {
     }
   };
 
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
       <div className={`flex h-screen w-full bg-[#050505] text-white font-sans selection:bg-white selection:text-black overflow-hidden ${appSettings.interfaceDensity}`}>
@@ -231,6 +233,8 @@ const App = () => {
           setActiveTab={setActiveTab} 
           settings={appSettings}
           googleUser={googleUser}
+          isCollapsed={isSidebarCollapsed}
+          setIsCollapsed={setIsSidebarCollapsed}
           counts={{ 
             meetings: Array.isArray(meetingsList) ? meetingsList.length : 0, 
             prestamos: Array.isArray(data?.prestamos) ? data.prestamos.length : 0,
@@ -240,13 +244,13 @@ const App = () => {
         
         <main className={`flex-1 h-full overflow-y-auto mac-scrollbar relative bg-[#050505] transition-all duration-500 ${appSettings.isMobileMode ? 'w-full' : ''}`}>
           <div className="absolute top-0 inset-x-0 h-64 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none"></div>
-          <div className="w-full px-6 py-6 lg:px-8 lg:py-8 relative z-10 flex flex-col min-h-full">
+          <div className="w-full px-4 py-6 lg:px-12 lg:py-10 relative z-10 flex flex-col min-h-full">
             {renderSafeContent()}
           </div>
         </main>
       </div>
     </GoogleOAuthProvider>
-  );
+  );  );
 };
 
 export default App;
