@@ -11,7 +11,7 @@ import {
   Upload, Download, Bold, Italic, Strikethrough, List, CheckSquare, Table2, Heading1, Heading2,
   Facebook, Smartphone as TiktokIcon, Cloud, Sparkles, Type, Highlighter, TrendingUp, BarChart3,
   AlignLeft, AlignCenter, AlignRight, ListOrdered, ClipboardList, Briefcase, Edit3, Mail as MailIcon,
-  Crown
+  Crown, Grid, LayoutGrid
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
@@ -227,122 +227,142 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   return (
     <div className={`flex flex-col h-screen w-full ${colors.bg} ${colors.text} overflow-hidden font-sans transition-colors duration-500`}>
       
-      {/* VISTA: LISTA DE CLIENTES (THE SOVEREIGN MATRIX) */}
+      {/* VISTA: LISTA DE CLIENTES (THE SOVEREIGN MATRIX - ELITE REFINEMENT) */}
       {viewState === 'client-list' && (
-        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000">
+        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000 relative">
           
-          <div className="flex-1 overflow-y-auto mac-scrollbar p-8 space-y-8 max-w-[1900px] mx-auto w-full relative z-10">
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-10 space-y-10 max-w-[1900px] mx-auto w-full relative z-10">
             
-            {/* MATRIX PULSE MONITOR (GRÁFICA DE LÍNEAS SVG) */}
-            <header className={`${colors.card} rounded-[2.5rem] p-8 shadow-2xl border-b-4 border-b-[#10b981]/20 animate-in slide-in-from-top duration-700`}>
-               <div className="flex justify-between items-start mb-8">
-                  <div>
-                    <p className={`text-[10px] text-[#10b981] font-black uppercase tracking-[0.6em] mb-2 flex items-center gap-2`}><Activity size={12} className="animate-pulse"/> Sovereign OS • Matrix Command</p>
-                    <h2 className={`text-4xl font-black ${colors.text} tracking-tighter uppercase leading-none`}>Operaciones <span className={isLight ? 'text-slate-300' : 'text-white/10'}>Globales</span></h2>
+            {/* MATRIX COMMAND CENTER (ADVANCED AREA CHART) */}
+            <header className={`${colors.card} rounded-[3rem] p-10 shadow-2xl border border-white/5 relative overflow-hidden group animate-in slide-in-from-top duration-1000`}>
+               {/* EFECTO DE LUZ DE FONDO */}
+               <div className="absolute top-0 right-0 w-[50%] h-full bg-gradient-to-l from-[#10b981]/5 to-transparent pointer-events-none"></div>
+               
+               <div className="flex justify-between items-start mb-12 relative z-10">
+                  <div className="space-y-3">
+                    <p className={`text-[10px] text-[#10b981] font-black uppercase tracking-[0.8em] flex items-center gap-3 animate-pulse`}>
+                       <Activity size={14}/> Operational Pulse • Quantum Terminal
+                    </p>
+                    <h2 className={`text-6xl font-black ${colors.text} tracking-tighter uppercase leading-[0.8]`}>
+                       Matrix <br/><span className={isLight ? 'text-slate-200' : 'text-neutral-900'}>Command</span>
+                    </h2>
                   </div>
-                  <div className="flex gap-4">
-                     <div className="text-right border-r border-white/10 pr-6">
-                        <p className="text-[8px] text-neutral-600 font-black uppercase mb-1">Volumen Total</p>
-                        <p className="text-2xl font-black text-white leading-none">12.4K <span className="text-[10px] text-[#10b981]">+12%</span></p>
+                  
+                  <div className="flex gap-10">
+                     <div className="text-right">
+                        <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mb-2">Global Momentum</p>
+                        <p className="text-5xl font-black text-white leading-none tracking-tighter">84.2%</p>
+                        <p className="text-[10px] text-[#10b981] font-black mt-2">▲ 4.8% EFFICIENCY</p>
                      </div>
-                     <button onClick={() => setIsClientModalOpen(true)} className="px-8 py-3 bg-[#10b981] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center gap-3">
-                       <Plus size={16} strokeWidth={3}/> Reclutar Talento
+                     <button onClick={() => setIsClientModalOpen(true)} className="px-12 py-5 bg-[#10b981] text-white rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_20px_50px_rgba(16,185,129,0.3)] flex items-center gap-4">
+                       <Plus size={20} strokeWidth={3}/> Reclutar Talento
                      </button>
                   </div>
                </div>
 
-               <div className="h-24 w-full relative">
-                  <svg className="w-full h-full opacity-50" preserveAspectRatio="none" viewBox="0 0 1000 100">
-                     <path d="M0,80 Q50,20 100,50 T200,30 T300,70 T400,40 T500,60 T600,20 T700,50 T800,30 T900,80 T1000,40" fill="none" stroke="#10b981" strokeWidth="3" className="animate-dash" />
-                     <path d="M0,80 Q50,20 100,50 T200,30 T300,70 T400,40 T500,60 T600,20 T700,50 T800,30 T900,80 T1000,40 L1000,100 L0,100 Z" fill="url(#emerald-grad)" opacity="0.1" />
+               {/* GRÁFICA DE ÁREA AVANZADA (SVG MULTI-LAYER) */}
+               <div className="h-40 w-full relative animate-in fade-in duration-1000 delay-500">
+                  <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 1000 100">
+                     {/* CAPA DE SOMBRA / ÁREA */}
+                     <path d="M0,80 Q50,20 100,60 T200,40 T300,80 T400,30 T500,70 T600,40 T700,90 T800,50 T900,70 T1000,30 L1000,100 L0,100 Z" fill="url(#elite-grad)" opacity="0.15" />
+                     {/* LÍNEA DE DATOS PRINCIPAL */}
+                     <path d="M0,80 Q50,20 100,60 T200,40 T300,80 T400,30 T500,70 T600,40 T700,90 T800,50 T900,70 T1000,30" fill="none" stroke="#10b981" strokeWidth="4" strokeLinecap="round" className="animate-dash" />
+                     {/* NODOS DE DATOS (BRILLOS) */}
+                     {[100, 200, 300, 400, 500, 600, 700, 800, 900].map((x, i) => (
+                        <circle key={i} cx={x} cy={60 - (i%2)*20} r="3" fill="#10b981" className="animate-pulse shadow-[0_0_10px_#10b981]" />
+                     ))}
                      <defs>
-                        <linearGradient id="emerald-grad" x1="0" x2="0" y1="0" y2="1">
+                        <linearGradient id="elite-grad" x1="0" x2="0" y1="0" y2="1">
                            <stop offset="0%" stopColor="#10b981" />
                            <stop offset="100%" stopColor="transparent" />
                         </linearGradient>
                      </defs>
                   </svg>
-                  <div className="absolute inset-0 flex justify-between items-end px-2 pointer-events-none">
-                     {[...Array(10)].map((_, i) => <div key={i} className="w-[1px] h-full bg-white/5"></div>)}
+                  {/* REJILLA CINEMÁTICA */}
+                  <div className="absolute inset-0 flex justify-between px-1 pointer-events-none opacity-5">
+                     {[...Array(20)].map((_, i) => <div key={i} className="w-[1px] h-full bg-white"></div>)}
                   </div>
                </div>
             </header>
 
-            {/* BARRA DE BÚSQUEDA TÁCTICA */}
-            <div className="flex gap-4 items-center animate-in fade-in duration-1000 delay-300">
+            {/* CONTROL DE FILTROS TÁCTICOS */}
+            <div className="flex gap-6 items-center animate-in slide-in-from-bottom duration-1000 delay-300">
               <div className="relative group flex-1">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800" size={20}/>
-                <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Filtrar matriz de operaciones..." className={`w-full ${colors.input} rounded-2xl py-4 pl-14 pr-6 text-base outline-none focus:border-[#10b981]/30 transition-all font-bold placeholder:text-neutral-900 shadow-xl`} />
+                <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={24}/>
+                <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Escanear matriz de talentos por nombre, región o segmento..." className={`w-full ${colors.input} rounded-[2.5rem] py-6 pl-20 pr-8 text-xl outline-none border border-white/5 focus:border-[#10b981]/30 transition-all font-bold placeholder:text-neutral-900 shadow-2xl`} />
               </div>
-              <div className="flex bg-black/40 p-1 rounded-xl border border-white/5">
-                 {[<BarChart3 size={16}/>, <List size={16}/>, <Grid size={16}/>].map((icon, i) => (
-                   <button key={i} className={`p-3 transition-all rounded-lg ${i === 1 ? 'bg-[#10b981] text-white shadow-lg' : 'text-neutral-700 hover:text-white hover:bg-white/5'}`}>{icon}</button>
+              <div className="flex bg-black/60 p-1.5 rounded-[1.5rem] border border-white/10 shadow-2xl">
+                 {[<BarChart3 size={20}/>, <List size={20}/>, <LayoutGrid size={20}/>].map((icon, i) => (
+                   <button key={i} className={`p-4 transition-all rounded-xl ${i === 1 ? 'bg-[#10b981] text-white shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'text-neutral-700 hover:text-white hover:bg-white/5'}`}>{icon}</button>
                  ))}
               </div>
             </div>
 
-            {/* THE MATRIX: DATA-GRID TABLE */}
-            <div className={`${colors.card} rounded-[2.5rem] overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-1000 delay-500`}>
+            {/* DATA-GRID MATRIX (PRECISION TABLE) */}
+            <div className={`${colors.card} rounded-[3.5rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.4)] border border-white/5 animate-in slide-in-from-bottom duration-1000 delay-500`}>
                <table className="w-full text-left border-collapse">
                   <thead>
                      <tr className="border-b border-white/5 bg-white/[0.01]">
-                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest">Rango</th>
-                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest">Identidad del Talento</th>
-                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest">Región</th>
-                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest">Segmento</th>
-                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest text-center">Frecuencia</th>
-                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest text-right">Métrica / Tendencia</th>
-                        <th className="p-6 text-[9px] text-neutral-600 font-black uppercase tracking-widest text-right">Acciones</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Nivel</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Identidad</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Región</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em]">Segmento</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em] text-center">Frecuencia de Carga</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em] text-right">Tendencia</th>
+                        <th className="px-10 py-8 text-[10px] text-neutral-700 font-black uppercase tracking-[0.3em] text-right">Comandos</th>
                      </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                      {filteredClients.map((client, idx) => (
-                       <tr key={client.id} onClick={() => openClientProfile(client)} className="group hover:bg-white/[0.03] transition-all cursor-pointer">
-                          <td className="p-6"><span className="text-xs font-mono text-neutral-700">#{(idx + 1).toString().padStart(2, '0')}</span></td>
-                          <td className="p-6">
-                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 overflow-hidden shrink-0 group-hover:scale-110 transition-all">
-                                   {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={20} className="text-neutral-800 m-auto mt-2.5" />}
+                       <tr key={client.id} onClick={() => openClientProfile(client)} className="group hover:bg-[#10b981]/[0.03] transition-all cursor-pointer relative overflow-hidden">
+                          {/* RESALTE LATERAL AL HOVER */}
+                          <div className="absolute left-0 top-0 w-1 h-full bg-[#10b981] transform -translate-x-full group-hover:translate-x-0 transition-transform"></div>
+                          
+                          <td className="px-10 py-8"><span className="text-sm font-mono text-neutral-800 font-black tracking-tighter">{(idx + 1).toString().padStart(2, '0')}</span></td>
+                          <td className="px-10 py-8">
+                             <div className="flex items-center gap-6">
+                                <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 overflow-hidden shrink-0 shadow-xl group-hover:scale-110 transition-all ring-2 ring-transparent group-hover:ring-[#10b981]/20">
+                                   {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={24} className="text-neutral-800 m-auto mt-4" />}
                                 </div>
                                 <div>
-                                   <p className={`text-sm font-black ${colors.text} uppercase tracking-tighter`}>{client.nombre}</p>
-                                   <p className="text-[8px] text-[#10b981] font-bold uppercase tracking-widest">{client.email || 'NO_CONTACT_DATA'}</p>
+                                   <p className={`text-base font-black ${colors.text} uppercase tracking-tighter leading-none mb-1.5`}>{client.nombre}</p>
+                                   <p className="text-[10px] text-neutral-600 font-bold uppercase tracking-widest">{client.email || 'ACCESS_PENDING'}</p>
                                 </div>
                              </div>
                           </td>
-                          <td className="p-6"><div className="flex items-center gap-2 text-[10px] font-bold text-neutral-500 uppercase tracking-widest"><Globe size={12}/> {client.pais || 'Global'}</div></td>
-                          <td className="p-6">
-                             <div className="flex items-center gap-2">
-                                {idx % 4 === 0 && <div className="px-3 py-1 bg-amber-500/10 rounded-lg text-[7px] font-black text-amber-500 uppercase flex items-center gap-1.5"><Crown size={10}/> Whale</div>}
-                                {idx % 4 === 1 && <div className="px-3 py-1 bg-blue-500/10 rounded-lg text-[7px] font-black text-blue-500 uppercase flex items-center gap-1.5"><Zap size={10}/> Frequent</div>}
-                                {idx % 4 === 2 && <div className="px-3 py-1 bg-emerald-500/10 rounded-lg text-[7px] font-black text-emerald-500 uppercase flex items-center gap-1.5"><Globe size={10}/> Global</div>}
-                                {idx % 4 === 3 && <div className="px-3 py-1 bg-purple-500/10 rounded-lg text-[7px] font-black text-purple-500 uppercase flex items-center gap-1.5"><TrendingUp size={10}/> Growth</div>}
+                          <td className="px-10 py-8"><div className="flex items-center gap-3 text-xs font-black text-neutral-500 uppercase tracking-widest"><Globe size={16} className="text-neutral-800"/> {client.pais || 'Global'}</div></td>
+                          <td className="px-10 py-8">
+                             <div className="flex items-center gap-3">
+                                {idx % 4 === 0 && <div className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[8px] font-black text-amber-500 uppercase flex items-center gap-2"><Crown size={12}/> Whale Tier</div>}
+                                {idx % 4 === 1 && <div className="px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-[8px] font-black text-blue-500 uppercase flex items-center gap-2"><Zap size={12}/> High Frequency</div>}
+                                {idx % 4 === 2 && <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[8px] font-black text-emerald-500 uppercase flex items-center gap-2"><Globe size={12}/> Global Talent</div>}
+                                {idx % 4 === 3 && <div className="px-4 py-2 bg-purple-500/10 border border-purple-500/20 rounded-xl text-[8px] font-black text-purple-500 uppercase flex items-center gap-2"><TrendingUp size={12}/> Rapid Growth</div>}
                              </div>
                           </td>
-                          <td className="p-6">
-                             <div className="w-32 mx-auto space-y-1.5">
-                                <div className="flex justify-between text-[7px] font-black text-neutral-700 uppercase"><span>Load</span><span>{70 + (idx * 5) % 30}%</span></div>
-                                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                   <div className="h-full bg-gradient-to-r from-blue-500 to-[#10b981]" style={{ width: `${70 + (idx * 5) % 30}%` }}></div>
+                          <td className="px-10 py-8">
+                             <div className="w-40 mx-auto space-y-2">
+                                <div className="flex justify-between text-[9px] font-black text-neutral-700 uppercase tracking-widest"><span>Load Factor</span><span>{70 + (idx * 5) % 30}%</span></div>
+                                <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden p-[1px] border border-white/5">
+                                   <div className="h-full bg-gradient-to-r from-blue-500 to-[#10b981] rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]" style={{ width: `${70 + (idx * 5) % 30}%` }}></div>
                                 </div>
                              </div>
                           </td>
-                          <td className="p-6 text-right">
-                             <div className="inline-flex items-center gap-4">
-                                <svg className="w-16 h-8 opacity-40 group-hover:opacity-100 transition-all" viewBox="0 0 100 40">
-                                   <path d={`M0,${30 - (idx%5)*4} Q20,${10 + (idx%3)*8} 40,${25 - (idx%4)*5} T80,${15 + (idx%2)*10} T100,20`} fill="none" stroke={idx % 2 === 0 ? "#10b981" : "#f43f5e"} strokeWidth="2" />
+                          <td className="px-10 py-8 text-right">
+                             <div className="inline-flex items-center gap-6">
+                                <svg className="w-20 h-10 opacity-30 group-hover:opacity-100 transition-all" viewBox="0 0 100 40">
+                                   <path d={`M0,${30 - (idx%5)*4} Q20,${10 + (idx%3)*8} 40,${25 - (idx%4)*5} T80,${15 + (idx%2)*10} T100,20`} fill="none" stroke={idx % 2 === 0 ? "#10b981" : "#f43f5e"} strokeWidth="3" strokeLinecap="round" />
                                 </svg>
-                                <div className="text-right min-w-[60px]">
-                                   <p className="text-[10px] font-black text-white font-mono leading-none mb-1">+{(2.4 + idx*0.3).toFixed(1)}%</p>
-                                   <p className={`text-[8px] font-black uppercase ${idx % 2 === 0 ? 'text-[#10b981]' : 'text-rose-500'}`}>{idx % 2 === 0 ? 'Rising' : 'Cooling'}</p>
+                                <div className="text-right min-w-[70px]">
+                                   <p className="text-sm font-black text-white font-mono tracking-tighter leading-none mb-1.5">+{(2.4 + idx*0.3).toFixed(1)}%</p>
+                                   <p className={`text-[9px] font-black uppercase tracking-widest ${idx % 2 === 0 ? 'text-[#10b981]' : 'text-rose-500'}`}>{idx % 2 === 0 ? 'Rising' : 'Stable'}</p>
                                 </div>
                              </div>
                           </td>
-                          <td className="p-6">
-                             <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                                <button onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${client.email}`; }} className="p-2.5 bg-white/5 hover:bg-[#10b981] text-white rounded-lg transition-all"><MailIcon size={14}/></button>
-                                <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="p-2.5 bg-white/5 hover:bg-blue-500 text-white rounded-lg transition-all"><Edit3 size={14}/></button>
-                                <button onClick={(e) => handleDeleteClient(client.id, e)} className="p-2.5 bg-white/5 hover:bg-rose-600 text-white rounded-lg transition-all"><Trash2 size={14}/></button>
+                          <td className="px-10 py-8">
+                             <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                                <button onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${client.email}`; }} className="w-11 h-11 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl hover:bg-[#10b981] hover:text-white transition-all"><MailIcon size={18}/></button>
+                                <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="w-11 h-11 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl hover:bg-blue-500 hover:text-white transition-all"><Edit3 size={18}/></button>
+                                <button onClick={(e) => handleDeleteClient(client.id, e)} className="w-11 h-11 bg-white text-rose-600 rounded-xl flex items-center justify-center shadow-2xl hover:bg-rose-600 hover:text-white transition-all"><Trash2 size={18}/></button>
                              </div>
                           </td>
                        </tr>
