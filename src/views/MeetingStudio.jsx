@@ -226,35 +226,112 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   return (
     <div className={`flex flex-col h-screen w-full ${colors.bg} ${colors.text} overflow-hidden font-sans transition-colors duration-500`}>
       
-      {/* VISTA: LISTA DE CLIENTES */}
+      {/* VISTA: LISTA DE CLIENTES (ELITE MOTION REORG) */}
       {viewState === 'client-list' && (
-        <div className="p-10 space-y-10 overflow-y-auto mac-scrollbar h-full max-w-[1800px] mx-auto w-full animate-in fade-in duration-700">
-          <header className="flex justify-between items-end pb-8 border-b border-white/5">
-            <div>
-              <p className={`text-[10px] ${isLight ? 'text-slate-400' : 'text-[#10b981]'} font-black uppercase tracking-[0.5em] mb-3 flex items-center gap-2`}><Sparkles size={12}/> Sovereign OS • Talent Hub</p>
-              <h2 className={`text-6xl font-black ${colors.text} tracking-tighter uppercase leading-none`}>Identificar <span className={isLight ? 'text-slate-200' : 'text-neutral-900'}>Talento</span></h2>
-            </div>
-            <button onClick={() => setIsClientModalOpen(true)} className="px-10 py-5 bg-[#10b981] text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest hover:scale-105 transition-all flex items-center gap-3 active:scale-95"><Plus size={18} strokeWidth={3}/> Reclutar Talento</button>
-          </header>
-          <div className="relative group">
-            <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-800" size={24}/>
-            <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Escanear base de datos..." className={`w-full ${colors.input} rounded-[2.5rem] py-7 pl-20 pr-8 text-xl outline-none focus:border-[#10b981]/30 transition-all font-bold`} />
+        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-1000 relative">
+          
+          {/* DECORACIÓN DE FONDO (PARTÍCULAS) */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+             <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#10b981]/10 blur-[120px] rounded-full animate-pulse"></div>
+             <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-blue-500/5 blur-[100px] rounded-full"></div>
           </div>
-          <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {filteredClients.map(client => (
-              <div key={client.id} onClick={() => openClientProfile(client)} className={`${colors.card} rounded-[3rem] aspect-square p-8 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col items-center justify-center group active:scale-95 relative overflow-hidden border-b-2 border-b-transparent hover:border-b-[#10b981] hover:-translate-y-2`}>
-                <div className="absolute top-6 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 z-20">
-                   <button onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${client.email}`; }} className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-[#10b981] hover:text-white transition-all"><MailIcon size={18}/></button>
-                   <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-blue-500 hover:text-white transition-all"><Edit3 size={18}/></button>
-                   <button onClick={(e) => handleDeleteClient(client.id, e)} className="w-10 h-10 bg-white text-rose-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-rose-600 hover:text-white transition-all"><Trash2 size={18}/></button>
+
+          <div className="flex-1 overflow-y-auto mac-scrollbar p-10 space-y-12 relative z-10 max-w-[1900px] mx-auto w-full">
+            
+            {/* HERO COMMAND CENTER CON GRÁFICOS */}
+            <header className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-end pb-12 border-b border-white/5">
+              <div className="lg:col-span-2 space-y-6">
+                <div>
+                  <p className={`text-[10px] text-[#10b981] font-black uppercase tracking-[0.6em] mb-4 flex items-center gap-3 animate-in slide-in-from-left duration-700`}>
+                    <Sparkles size={14} className="animate-pulse"/> Sovereign OS • Global Intelligence Terminal
+                  </p>
+                  <h2 className={`text-8xl font-black ${colors.text} tracking-tighter uppercase leading-[0.8] mb-4 animate-in slide-in-from-left duration-1000`}>
+                    Identificar <br/><span className={isLight ? 'text-slate-200' : 'text-neutral-900'}>Talento</span>
+                  </h2>
                 </div>
-                <div className="w-32 h-32 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-2xl overflow-hidden mb-6 group-hover:scale-105 transition-all relative z-10">
-                  {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={48} className={isLight ? 'text-slate-200' : 'text-neutral-900'} />}
+                
+                {/* GRÁFICO DE ACTIVIDAD (SVG PULSE) */}
+                <div className={`${colors.card} rounded-[2.5rem] p-8 flex items-center gap-10 animate-in fade-in zoom-in duration-1000 shadow-2xl`}>
+                   <div className="flex-1 space-y-4">
+                      <p className={`text-[9px] ${colors.textMuted} font-black uppercase tracking-widest`}>Pulso de Producción Global</p>
+                      <div className="h-16 flex items-end gap-1.5">
+                         {[40, 70, 45, 90, 65, 80, 50, 100, 75, 85, 60, 95].map((h, i) => (
+                           <div key={i} className="flex-1 bg-gradient-to-t from-[#10b981]/10 to-[#10b981] rounded-full hover:scale-y-110 transition-all cursor-crosshair shadow-[0_0_10px_rgba(16,185,129,0.3)]" style={{ height: `${h}%` }}></div>
+                         ))}
+                      </div>
+                   </div>
+                   <div className="shrink-0 text-right">
+                      <p className="text-[10px] text-neutral-600 font-black uppercase mb-1">Carga de Agencia</p>
+                      <p className="text-5xl font-black text-[#10b981]">84%</p>
+                   </div>
                 </div>
-                <div className="text-center relative z-10"><h4 className={`text-xl font-black ${colors.text} uppercase mb-2`}>{client.nombre}</h4><p className={`text-[9px] ${colors.textMuted} font-black uppercase tracking-[0.3em] flex items-center justify-center gap-2`}><Globe size={10}/> {client.pais || 'Global'}</p></div>
-                <button onClick={(e) => toggleClientStatus(client, e)} className={`mt-6 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest transition-all ${client.status === 'Activo' ? 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/30' : 'bg-rose-500/10 text-rose-500 border border-rose-500/30'}`}>{client.status || 'Activo'}</button>
               </div>
-            ))}
+
+              <div className="space-y-6 animate-in slide-in-from-right duration-1000">
+                <div className={`${colors.card} rounded-[2.5rem] p-8 border-l-4 border-l-[#10b981] shadow-2xl`}>
+                  <p className="text-[10px] text-neutral-600 font-black uppercase mb-3 tracking-widest">Smart Insights</p>
+                  <div className="flex items-center gap-4 mb-4">
+                     <div className="w-12 h-12 rounded-xl bg-[#10b981]/10 flex items-center justify-center text-[#10b981]"><TrendingUp size={24}/></div>
+                     <div>
+                        <p className="text-xs font-black text-white uppercase tracking-tighter">Top Talento Semanal</p>
+                        <p className="text-[10px] text-neutral-500 font-bold uppercase">Susi Bolivia</p>
+                     </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                     <div className="text-center">
+                        <p className="text-[8px] text-neutral-700 font-black mb-1 uppercase">Proyectos</p>
+                        <p className="text-xl font-black text-white">24</p>
+                     </div>
+                     <div className="text-center">
+                        <p className="text-[8px] text-neutral-700 font-black mb-1 uppercase">Talento</p>
+                        <p className="text-xl font-black text-white">{clients.length}</p>
+                     </div>
+                     <div className="text-center">
+                        <p className="text-[8px] text-neutral-700 font-black mb-1 uppercase">Status</p>
+                        <p className="text-xl font-black text-[#10b981]">LIVE</p>
+                     </div>
+                  </div>
+                </div>
+                <button onClick={() => setIsClientModalOpen(true)} className="w-full py-6 bg-[#10b981] text-white rounded-[2rem] font-black text-[12px] uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-95 transition-all shadow-[0_20px_50px_rgba(16,185,129,0.3)] flex items-center justify-center gap-4">
+                  <Plus size={20} strokeWidth={3}/> Reclutar Nuevo Talento
+                </button>
+              </div>
+            </header>
+
+            {/* BÚSQUEDA Y REJILLA */}
+            <div className="space-y-8 animate-in slide-in-from-bottom duration-1000 delay-300">
+              <div className="relative group max-w-4xl">
+                <Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-800 group-focus-within:text-[#10b981] transition-colors" size={24}/>
+                <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Escanear base de datos por nombre, empresa o país..." className={`w-full ${colors.input} rounded-[2.5rem] py-7 pl-20 pr-8 text-xl outline-none focus:border-[#10b981]/30 transition-all font-bold placeholder:text-neutral-900 shadow-2xl`} />
+              </div>
+
+              <div className="grid gap-8 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                {filteredClients.map((client, idx) => (
+                  <div key={client.id} onClick={() => openClientProfile(client)} className={`${colors.card} rounded-[3rem] aspect-square p-8 hover:bg-white/[0.02] cursor-pointer transition-all flex flex-col items-center justify-center group active:scale-95 relative overflow-hidden border-b-2 border-b-transparent hover:border-b-[#10b981] hover:-translate-y-3 animate-in fade-in slide-in-from-bottom duration-700`} style={{ animationDelay: `${idx * 50}ms` }}>
+                    
+                    {/* HUD FLOTANTE */}
+                    <div className="absolute top-8 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 z-20">
+                       <button onClick={(e) => { e.stopPropagation(); window.location.href=`mailto:${client.email}`; }} className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-[#10b981] hover:text-white transition-all"><MailIcon size={18}/></button>
+                       <button onClick={(e) => { e.stopPropagation(); setNewClient(client); setIsClientModalOpen(true); }} className="w-10 h-10 bg-white text-black rounded-full flex items-center justify-center shadow-2xl hover:bg-blue-500 hover:text-white transition-all"><Edit3 size={18}/></button>
+                       <button onClick={(e) => handleDeleteClient(client.id, e)} className="w-10 h-10 bg-white text-rose-600 rounded-full flex items-center justify-center shadow-2xl hover:bg-rose-600 hover:text-white transition-all"><Trash2 size={18}/></button>
+                    </div>
+
+                    <div className="w-36 h-36 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-2xl overflow-hidden mb-8 group-hover:scale-105 transition-all relative z-10 ring-4 ring-transparent group-hover:ring-[#10b981]/20">
+                      {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" alt="" /> : <UserIcon size={56} className={isLight ? 'text-slate-200' : 'text-neutral-900'} />}
+                    </div>
+
+                    <div className="text-center relative z-10">
+                      <h4 className={`text-2xl font-black ${colors.text} uppercase tracking-tighter leading-none mb-3`}>{client.nombre}</h4>
+                      <p className={`text-[10px] ${colors.textMuted} font-black uppercase tracking-[0.4em] flex items-center justify-center gap-2`}><Globe size={12}/> {client.pais || 'Global'}</p>
+                    </div>
+
+                    <button onClick={(e) => toggleClientStatus(client, e)} className={`mt-8 px-6 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${client.status === 'Activo' ? 'bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]' : 'bg-rose-500/10 text-rose-500 border border-rose-500/30'}`}>
+                       {client.status || 'Activo'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
