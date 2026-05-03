@@ -6,12 +6,12 @@ import {
   Calendar, CheckCircle2, Clock, User as UserIcon, Tag, Play, Pause, RotateCcw, 
   Layers, ListChecks, History, Timer, Scissors, Music, Palette, Share2, Activity,
   Calculator as CalcIcon, RefreshCw, AlertCircle, Check, Link, Target, ChevronRight,
-  Zap, Copy, Smartphone, Monitor, Info, HardDrive, Megaphone, Palette as BrandIcon,
-  Building2, Globe as GlobeIcon, File, FileVideo, Image as ImageIcon, Folder, ChevronLeft,
+  Zap, Copy, Smartphone, Monitor, Info, HardDrive, Megaphone, 
+  Globe as GlobeIcon, File, FileVideo, Image as ImageIcon, Folder, ChevronLeft,
   Upload, Download, Bold, Italic, Strikethrough, List, CheckSquare, Table2, Heading1, Heading2,
   Facebook, Smartphone as TiktokIcon, Cloud, Sparkles, Type, Highlighter, TrendingUp, BarChart3,
   AlignLeft, AlignCenter, AlignRight, ListOrdered, ClipboardList, Briefcase, Edit3, Mail as MailIcon,
-  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2, Phone, FolderOpen
+  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
