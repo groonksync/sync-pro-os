@@ -233,18 +233,33 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
           <div className="flex-1 overflow-y-auto mac-scrollbar p-8 space-y-8 max-w-[1900px] mx-auto w-full relative z-10">
             
             {/* ATLAS HUD: SEGMENTACIÓN DE INTELIGENCIA */}
-            <header className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in slide-in-from-top duration-700">
-               {/* CLUSTER: VIP COMMAND */}
-               <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-amber-500 shadow-2xl relative overflow-hidden group`}>
-                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all rotate-12"><Crown size={64}/></div>
-                  <div className="relative z-10">
-                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Top Tier • VIPs</p>
-                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner"><Crown size={24}/></div>
-                        <div><p className="text-2xl font-black text-white leading-none">08</p><p className="text-[8px] text-amber-500/60 font-bold uppercase">High Payers</p></div>
-                     </div>
+            <header className="space-y-8 animate-in slide-in-from-top duration-700">
+               <div className="flex justify-between items-end">
+                  <div>
+                    <p className={`text-[10px] text-[#10b981] font-black uppercase tracking-[0.6em] mb-2 flex items-center gap-2`}><Sparkles size={12} className="animate-pulse"/> Sovereign OS • Editor Pro</p>
+                    <h2 className={`text-5xl font-black ${colors.text} tracking-tighter uppercase leading-none`}>Identificar <span className={isLight ? 'text-slate-300' : 'text-white/10'}>Talento</span></h2>
+                  </div>
+                  <div className="text-right">
+                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-1">Status Global</p>
+                     <p className="text-2xl font-black text-[#10b981] leading-none animate-pulse">SYSTEM LIVE</p>
                   </div>
                </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {/* CLUSTER: VIP COMMAND */}
+                  <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-amber-500 shadow-2xl relative overflow-hidden group`}>
+                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-30 transition-all rotate-12"><Crown size={64}/></div>
+                     <div className="relative z-10">
+                        <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-3">Top Tier • VIPs</p>
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 shadow-inner"><Crown size={24}/></div>
+                           <div><p className="text-2xl font-black text-white leading-none">08</p><p className="text-[8px] text-amber-500/60 font-bold uppercase">High Payers</p></div>
+                        </div>
+                     </div>
+                  </div>
+                  {/* Otros clusters se mantienen... */}
+               </div>
+            </header>
 
                {/* CLUSTER: FREQUENCY PULSE */}
                <div className={`${colors.card} rounded-[2rem] p-6 border-l-4 border-l-blue-500 shadow-2xl relative overflow-hidden group`}>
