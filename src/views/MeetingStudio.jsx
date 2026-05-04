@@ -320,7 +320,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   return (
     <>
       <div className={`flex flex-col h-screen w-full ${colors.bg} ${colors.text} overflow-hidden font-sans transition-colors duration-500`}>
-        {/* NAVEGACIÓN MAESTRA - Estilo Fintrixity Compact */}
+        {/* NAVEGACION MAESTRA - Estilo Fintrixity Compact */}
         <nav className="h-16 border-b border-white/5 flex items-center justify-between px-8 relative z-50 bg-[#0b0c0e]/80 backdrop-blur-3xl">
            <div className="flex items-center gap-4">
               <div className="w-8 h-8 bg-[#10b981] rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-transform hover:rotate-6">
@@ -457,7 +457,6 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
           </div>
         )}
 
-        )}
 
         {/* VISTA: PERFIL CLIENTE COMPACT */}
         {viewState === 'client-profile' && activeClient && (
@@ -585,14 +584,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
                          <div className="flex gap-3">
                             <button className="flex-1 py-3 bg-[#1a1c20] text-neutral-700 hover:text-white font-black text-[8px] uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 border border-white/10"><FolderOpen size={12}/> Docs</button>
-                            <button className="w-10 h-10 bg-[#10b981] text-white rounded-xl flex items-center justify-center shadow-lg"><ChevronRight size={20}/></button>
                          </div>
-                      </div>
-                   ))}
-                </div>
-                </div>
-             </div>
-          </div>
         )}
 
         {/* VISTA: WAR ROOM / EDITOR - COMPACT */}
