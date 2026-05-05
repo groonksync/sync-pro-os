@@ -586,9 +586,6 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
                             <button className="flex-1 py-3 bg-[#1a1c20] text-neutral-700 hover:text-white font-black text-[8px] uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 border border-white/10"><FolderOpen size={12}/> Docs</button>
                          </div>
                    ))}
-                </div>
-             </div>
-          </div>
         )}
 
         {/* VISTA: WAR ROOM / EDITOR - COMPACT */}
