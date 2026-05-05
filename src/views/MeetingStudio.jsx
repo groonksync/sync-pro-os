@@ -197,7 +197,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
                        <div className="text-right text-xl font-mono mb-4 h-8 overflow-hidden">{calcDisplay}</div>
                        <div className="grid grid-cols-4 gap-1">
                           {['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'].map(btn => (
-                            <button key={btn} onClick={() => setCalcDisplay(btn === '=' ? eval(calcDisplay).toString() : calcDisplay === '0' ? btn : calcDisplay + btn)} className="h-10 rounded bg-[#121417] border-white/10 shadow-2xl text-[10px] font-bold hover:bg-[#10b981] transition-colors">{btn}</button>
+                            <button key={btn} onClick={() => setCalcDisplay(btn === '=' ? parseFloat(calcDisplay).toString() : calcDisplay === '0' ? btn : calcDisplay + btn)} className="h-10 rounded bg-[#121417] border-white/10 shadow-2xl text-[10px] font-bold hover:bg-[#10b981] transition-colors">{btn}</button>
                           ))}
                           <button onClick={() => setCalcDisplay('0')} className="col-span-4 h-8 rounded bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-widest mt-1">Clear</button>
                        </div>
