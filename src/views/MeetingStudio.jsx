@@ -42,7 +42,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {} }) =>
   const [time, setTime] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [calcDisplay, setCalcDisplay] = useState('0');
-  const [isClientModalOpen, setIsClientModalOpen] = useState(false);
+  const [isClientModalOpen, setIsClientModalOpen] = useState(false); const [showAIModal, setShowAIModal] = useState(false);
   const [newClient, setNewClient] = useState({ nombre: '', email: '', pais: '', empresa: '' });
   const timerRef = useRef(null);
   const editorRef = useRef(null);
