@@ -30,7 +30,7 @@ const EDITOR_TAGS = [
   { name: 'Review', color: '#f59e0b' }
 ];
 
-const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {} }) => {
+const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  settings = {} }) => {
   const [viewState, setViewState] = useState('client-list'); 
   const [activeClient, setActiveClient] = useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null);
@@ -163,7 +163,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {} }) =>
                 <button onClick={() => { setActiveMeeting({ id: Date.now(), session_title: 'Nueva Sesión', created_at: new Date().toISOString(), contenido: '' }); setViewState('session'); }} className="px-8 py-4 bg-white text-black rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-2xl"><Plus size={18} strokeWidth={3}/> Nueva Sesión</button>
              </div>
              <div className="grid grid-cols-4 gap-6">
-                {meetings.filter(m => m.client_id === activeClient.id).map(meeting => (
+                {[{id:1,session_title:"Promo 04/05/2026",client_id:"ex-1"}].filter(m => m.client_id === activeClient.id).map(meeting => (
                   <div key={meeting.id} onClick={() => { setActiveMeeting(meeting); setViewState('session'); }} className="bg-[#121417] border-white/10 shadow-2xl p-8 rounded-[2rem] border border-white/5 hover:border-white/20 transition-all cursor-pointer group">
                      <div className="w-12 h-12 bg-gradient-to-br from-[#0b0c0e] via-[#121417] to-[#0b0c0e] rounded-2xl flex items-center justify-center text-neutral-700 mb-6 group-hover:text-[#10b981] transition-colors"><MessageSquare size={24}/></div>
                      <h4 className="text-lg font-black text-white uppercase tracking-tighter mb-2">{meeting.session_title}</h4>
