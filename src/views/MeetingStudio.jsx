@@ -37,7 +37,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {} }) =>
   const [activeAgencyPlan, setActiveAgencyPlan] = useState(null);
   const [sessionTab, setSessionTab] = useState('editor');
   const [clientSearch, setClientSearch] = useState('');
-  const [clients, setClients] = useState([]);
+  const [clients, setClients] = useState([{id:"ex-1",nombre:"Nexus Corp",pais:"Miami, USA",email:"contact@nexus.com"}]);
   const [meetings, setMeetings] = useState([]);
   const [time, setTime] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
