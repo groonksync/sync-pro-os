@@ -10,6 +10,7 @@ import {
   Package,
   TrendingUp,
   Activity,
+  Video,
   Home,
   Briefcase,
   User,
@@ -34,14 +35,8 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
   };
 
   const menuItems = [
-    { id: 'resumen', label: 'Centro de Control', icon: Activity },
-    { id: 'prestamos', label: 'Cartera Préstamos', icon: Landmark, count: counts?.prestamos },
-    { id: 'inventario', label: 'Inventario Pro', icon: Package },
-    { id: 'pagos', label: 'Mis Egresos', icon: Wallet },
-    { id: 'drive-sovereign', label: 'Drive Sovereign', icon: Cloud },
-    { id: 'calendar', label: 'Google Calendar', icon: Calendar },
-    { id: 'recordatorios', label: 'Recordatorios', icon: Bell, count: counts?.notificaciones },
-    { id: 'papelera', label: 'Papelera', icon: Trash2 },
+    { id: 'resumen', label: 'AGENCIA', icon: Activity },
+    { id: 'editor', label: 'Editor de Video', icon: Video, count: counts?.meetings },
   ];
 
   const accentStyle = {
