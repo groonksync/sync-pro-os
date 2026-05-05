@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import CommandCenter from './views/CommandCenter';
-import MeetingStudio from './views/MeetingStudio';
 import Prestamos from './views/Prestamos';
 import Notifications from './views/Notifications';
 import Pagos from './views/Pagos';
@@ -198,7 +197,6 @@ const App = () => {
             onQuickPayment={handleQuickPayment} 
           />
         );
-        case 'editor': return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} settings={appSettings} isDark={isDarkMode} token={googleToken} />;
         case 'prestamos': return (
           <Prestamos 
             data={data} 
