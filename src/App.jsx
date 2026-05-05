@@ -1,6 +1,6 @@
 // Sovereign OS - System Updated: 2026-05-01
 import React, { useState, useEffect } from 'react';
-import Sidebar from './components/Sidebar';
+import SovereignSidebar from './components/SovereignSidebar';
 import CommandCenter from './views/CommandCenter';
 import Prestamos from './views/Prestamos';
 import Notifications from './views/Notifications';
@@ -241,7 +241,7 @@ const App = () => {
     }
   };
 
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSovereignSidebarCollapsed, setIsSovereignSidebarCollapsed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   // EFECTO DE TEMA GLOBAL
@@ -252,13 +252,13 @@ const App = () => {
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
       <div className={`flex h-screen w-full ${isDarkMode ? 'bg-[#050505] text-white' : 'bg-neutral-50 text-neutral-900'} font-sans selection:bg-emerald-500 selection:text-black overflow-hidden transition-colors duration-500 ${appSettings.interfaceDensity}`}>
-        <Sidebar 
+        <SovereignSidebar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 
           settings={appSettings}
           googleUser={googleUser}
-          isCollapsed={isSidebarCollapsed}
-          setIsCollapsed={setIsSidebarCollapsed}
+          isCollapsed={isSovereignSidebarCollapsed}
+          setIsCollapsed={setIsSovereignSidebarCollapsed}
           isDark={isDarkMode}
           setIsDark={setIsDarkMode}
           counts={{ 
