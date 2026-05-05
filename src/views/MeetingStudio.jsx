@@ -37,8 +37,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {} }) =>
   const [activeAgencyPlan, setActiveAgencyPlan] = useState(null);
   const [sessionTab, setSessionTab] = useState('editor');
   const [clientSearch, setClientSearch] = useState('');
-  const [clients, setClients] = useState([]);
-  const [meetings, setMeetings] = useState([]);
+  const [clients, setClients] = useState([{id:"ex-1",nombre:"Nexus Corp",pais:"Miami, USA",email:"contact@nexus.com"},{id:"ex-2",nombre:"Emerald Studio",pais:"BR",email:"prod@emerald.br"},{id:"ex-3",nombre:"Global Media",pais:"ES",email:"info@global.es"},{id:"ex-4",nombre:"Visionary Films",pais:"UK",email:"hello@visionary.uk"},{id:"ex-5",nombre:"Apex Digital",pais:"UAE",email:"sales@apex.ae"}]);
+  const [meetings, setMeetings] = useState([{id:"ex-1",nombre:"Nexus Corp",pais:"Miami, USA",email:"contact@nexus.com"},{id:"ex-2",nombre:"Emerald Studio",pais:"BR",email:"prod@emerald.br"},{id:"ex-3",nombre:"Global Media",pais:"ES",email:"info@global.es"},{id:"ex-4",nombre:"Visionary Films",pais:"UK",email:"hello@visionary.uk"},{id:"ex-5",nombre:"Apex Digital",pais:"UAE",email:"sales@apex.ae"}]);
   const [time, setTime] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [calcDisplay, setCalcDisplay] = useState('0');
