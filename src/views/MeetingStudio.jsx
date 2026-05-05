@@ -107,7 +107,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
           <div className="w-8 h-8 bg-[#10b981] rounded flex items-center justify-center"><Briefcase size={16}/></div>
           <h1 className="text-sm font-black uppercase tracking-tighter italic">Sovereign <span className="text-neutral-600">Nexus</span></h1>
         </div>
-        <div className="flex bg-[#121417] border-white/10 shadow-2xl p-1 rounded-lg border border-white/5">
+        <div className="flex bg-neutral-900 border-white/10 shadow-2xl p-1 rounded-lg border border-white/5">
           <button onClick={() => setViewState('client-list')} className={`px-6 py-2 rounded text-[9px] font-black uppercase tracking-widest transition-all ${viewState.includes('client') || viewState === 'session' ? 'bg-[#10b981] text-white' : 'text-neutral-600 hover:text-white'}`}>Editor Pro</button>
           <button onClick={() => setViewState('plan-list')} className={`px-6 py-2 rounded text-[9px] font-black uppercase tracking-widest transition-all ${viewState.includes('plan') ? 'bg-[#10b981] text-white' : 'text-neutral-600 hover:text-white'}`}>Planes Agencia</button>
         </div>
@@ -127,7 +127,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
               <div className="flex items-center gap-4">
                 <div className="relative w-80">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-neutral-700" size={18}/>
-                  <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Filtrar Identidad..." className="w-full bg-[#121417] border-white/10 shadow-2xl rounded-2xl py-4 pl-14 pr-6 text-[11px] outline-none border border-white/5 focus:border-[#10b981]/30 transition-all font-bold uppercase tracking-widest" />
+                  <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Filtrar Identidad..." className="w-full bg-neutral-900 border-white/10 shadow-2xl rounded-2xl py-4 pl-14 pr-6 text-[11px] outline-none border border-white/5 focus:border-[#10b981]/30 transition-all font-bold uppercase tracking-widest" />
                 </div>
                 <button onClick={() => setIsClientModalOpen(true)} className="px-6 py-4 bg-[#10b981] text-white rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center gap-3 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#10b981]/20"><Plus size={18} strokeWidth={3}/> Nuevo Cliente</button>
               </div>
@@ -135,7 +135,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
 
             <div className="grid grid-cols-5 gap-4">
               {clients.filter(c => c.nombre.toLowerCase().includes(clientSearch.toLowerCase())).map((client) => (
-                <div key={client.id} className="bg-[#121417] border-white/10 shadow-2xl rounded-3xl p-6 border border-white/5 hover:border-[#10b981]/40 transition-all group cursor-pointer" onClick={() => { setActiveClient(client); setViewState('session-list'); }}>
+                <div key={client.id} className="bg-neutral-900 border-white/10 shadow-2xl rounded-3xl p-6 border border-white/5 hover:border-[#10b981]/40 transition-all group cursor-pointer" onClick={() => { setActiveClient(client); setViewState('session-list'); }}>
                    <div className="flex justify-between items-start mb-6">
                       <div className="w-12 h-12 bg-gradient-to-br from-[#0b0c0e] via-[#121417] to-[#0b0c0e] rounded-2xl border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                         <UserIcon size={20} className="text-neutral-700 group-hover:text-[#10b981]" />
@@ -164,7 +164,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
              </div>
              <div className="grid grid-cols-4 gap-6">
                 {[{id:1,session_title:"Promo 04/05/2026",client_id:"ex-1"}].filter(m => m.client_id === activeClient.id).map(meeting => (
-                  <div key={meeting.id} onClick={() => { setActiveMeeting(meeting); setViewState('session'); }} className="bg-[#121417] border-white/10 shadow-2xl p-8 rounded-[2rem] border border-white/5 hover:border-white/20 transition-all cursor-pointer group">
+                  <div key={meeting.id} onClick={() => { setActiveMeeting(meeting); setViewState('session'); }} className="bg-neutral-900 border-white/10 shadow-2xl p-8 rounded-[2rem] border border-white/5 hover:border-white/20 transition-all cursor-pointer group">
                      <div className="w-12 h-12 bg-gradient-to-br from-[#0b0c0e] via-[#121417] to-[#0b0c0e] rounded-2xl flex items-center justify-center text-neutral-700 mb-6 group-hover:text-[#10b981] transition-colors"><MessageSquare size={24}/></div>
                      <h4 className="text-lg font-black text-white uppercase tracking-tighter mb-2">{meeting.session_title}</h4>
                      <p className="text-[9px] text-neutral-700 font-bold uppercase tracking-widest">{new Date(meeting.created_at).toLocaleDateString()}</p>
@@ -178,7 +178,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
         {viewState === 'session' && activeMeeting && (
           <div className="h-full flex animate-in zoom-in duration-500 bg-gradient-to-br from-[#0b0c0e] via-[#121417] to-[#0b0c0e]">
             {/* BARRA LATERAL: HERRAMIENTAS */}
-            <aside className="w-80 border-r border-white/5 flex flex-col bg-[#121417] border-white/10 shadow-2xl/30">
+            <aside className="w-80 border-r border-white/5 flex flex-col bg-neutral-900 border-white/10 shadow-2xl/30">
                <div className="p-8 border-b border-white/5">
                   <p className="text-[9px] font-black text-neutral-700 uppercase tracking-widest mb-4">Control de Tiempo</p>
                   <div className="bg-gradient-to-br from-[#0b0c0e] via-[#121417] to-[#0b0c0e] rounded-2xl p-6 border border-white/5 text-center">
@@ -197,7 +197,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
                        <div className="text-right text-xl font-mono mb-4 h-8 overflow-hidden">{calcDisplay}</div>
                        <div className="grid grid-cols-4 gap-1">
                           {['7','8','9','/','4','5','6','*','1','2','3','-','0','.','=','+'].map(btn => (
-                            <button key={btn} onClick={() => setCalcDisplay(btn === '=' ? parseFloat(calcDisplay).toString() : calcDisplay === '0' ? btn : calcDisplay + btn)} className="h-10 rounded bg-[#121417] border-white/10 shadow-2xl text-[10px] font-bold hover:bg-[#10b981] transition-colors">{btn}</button>
+                            <button key={btn} onClick={() => setCalcDisplay(btn === '=' ? parseFloat(calcDisplay).toString() : calcDisplay === '0' ? btn : calcDisplay + btn)} className="h-10 rounded bg-neutral-900 border-white/10 shadow-2xl text-[10px] font-bold hover:bg-[#10b981] transition-colors">{btn}</button>
                           ))}
                           <button onClick={() => setCalcDisplay('0')} className="col-span-4 h-8 rounded bg-red-500/10 text-red-500 text-[8px] font-black uppercase tracking-widest mt-1">Clear</button>
                        </div>
@@ -206,7 +206,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
 
                   <div>
                     <p className="text-[9px] font-black text-neutral-700 uppercase tracking-widest mb-4">Drive Nexus</p>
-                    <div className="bg-[#121417] border-white/10 shadow-2xl rounded-2xl p-6 border border-white/5 space-y-4">
+                    <div className="bg-neutral-900 border-white/10 shadow-2xl rounded-2xl p-6 border border-white/5 space-y-4">
                        <div className="flex items-center gap-3 text-[#10b981]">
                           <Folder size={18}/>
                           <span className="text-[10px] font-black uppercase tracking-widest truncate">{activeClient.nombre}_FILES</span>
@@ -237,7 +237,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
 
             {/* AREA DE NOTAS (APPLE NOTES CLONE) */}
             <main className="flex-1 flex flex-col">
-               <header className="h-16 px-8 border-b border-white/5 flex items-center justify-between bg-[#121417] border-white/10 shadow-2xl/50 backdrop-blur-3xl">
+               <header className="h-16 px-8 border-b border-white/5 flex items-center justify-between bg-neutral-900 border-white/10 shadow-2xl/50 backdrop-blur-3xl">
                   <div className="flex items-center gap-6">
                      <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></div>
@@ -279,7 +279,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
              </div>
              <div className="grid grid-cols-4 gap-8">
                 {AGENCY_PLANS.map((plan) => (
-                  <div key={plan.name} onClick={() => { setActiveAgencyPlan(plan); setViewState('plan-detail'); }} className="bg-[#121417] border-white/10 shadow-2xl p-10 rounded-[3rem] border border-white/5 hover:border-[#10b981]/30 transition-all group cursor-pointer relative overflow-hidden h-96 flex flex-col justify-between">
+                  <div key={plan.name} onClick={() => { setActiveAgencyPlan(plan); setViewState('plan-detail'); }} className="bg-neutral-900 border-white/10 shadow-2xl p-10 rounded-[3rem] border border-white/5 hover:border-[#10b981]/30 transition-all group cursor-pointer relative overflow-hidden h-96 flex flex-col justify-between">
                      <div className="relative z-10">
                         <div className="w-16 h-16 bg-gradient-to-br from-[#0b0c0e] via-[#121417] to-[#0b0c0e] rounded-3xl flex items-center justify-center mb-8 border border-white/10 group-hover:scale-110 transition-transform">
                            <Layers size={32} style={{ color: plan.color }}/>
@@ -311,7 +311,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
              <div className="grid grid-cols-5 gap-4">
                 {/* LISTA DE CLIENTES DEL PLAN (5 POR FILA) */}
                 {[1,2].map(i => (
-                  <div key={i} className="bg-[#121417] border-white/10 shadow-2xl rounded-3xl p-6 border border-white/5 hover:border-[#10b981]/40 transition-all group cursor-pointer">
+                  <div key={i} className="bg-neutral-900 border-white/10 shadow-2xl rounded-3xl p-6 border border-white/5 hover:border-[#10b981]/40 transition-all group cursor-pointer">
                      <div className="flex justify-between items-start mb-6">
                         <div className="w-12 h-12 bg-gradient-to-br from-[#0b0c0e] via-[#121417] to-[#0b0c0e] rounded-2xl border border-white/10 flex items-center justify-center"><UserIcon size={20} className="text-neutral-700"/></div>
                         <div className="px-3 py-1 bg-[#10b981]/10 rounded text-[7px] font-black text-[#10b981] uppercase tracking-widest">Inmueble {i}</div>
@@ -329,7 +329,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
       {/* MODAL IA ORACLE */}
       {showAIModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-10 animate-in zoom-in duration-300">
-           <div className="bg-[#121417] border-white/10 shadow-2xl rounded-[4rem] p-20 w-full max-w-4xl border border-white/5 shadow-2xl">
+           <div className="bg-neutral-900 border-white/10 shadow-2xl rounded-[4rem] p-20 w-full max-w-4xl border border-white/5 shadow-2xl">
               <div className="flex items-center gap-6 mb-12">
                  <div className="w-16 h-16 bg-[#10b981] rounded-3xl flex items-center justify-center text-white"><Sparkles size={32}/></div>
                  <h4 className="text-5xl font-black text-white uppercase tracking-tighter leading-none">IA <span className="text-[#10b981]">Oracle</span></h4>
@@ -346,7 +346,7 @@ const MeetingStudio = ({ meetingsList = [{id:1, session_title:"Demo"}],  setting
       {/* MODAL CREAR CLIENTE */}
       {isClientModalOpen && (
         <div className="fixed inset-0 z-[900] flex items-center justify-center bg-black/95 backdrop-blur-3xl p-8 animate-in zoom-in duration-300">
-          <div className="bg-[#121417] border-white/10 shadow-2xl border-t-8 border-[#10b981] rounded-[4rem] w-full max-w-2xl p-16 space-y-12">
+          <div className="bg-neutral-900 border-white/10 shadow-2xl border-t-8 border-[#10b981] rounded-[4rem] w-full max-w-2xl p-16 space-y-12">
             <div className="text-center space-y-4">
               <h3 className="text-5xl font-black text-white uppercase tracking-tighter leading-none">Nuevo <span className="text-[#10b981]">Nexus</span></h3>
               <p className="text-neutral-700 font-bold uppercase tracking-[0.4em] text-[10px]">Portal de Sincronización de Identidad</p>
