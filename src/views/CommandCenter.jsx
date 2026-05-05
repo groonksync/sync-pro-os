@@ -60,7 +60,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
       {/* HEADER ADAPTATIVO */}
       <header className={`flex ${isMobile ? 'flex-col items-center text-center gap-6' : 'justify-between items-end mb-8'}`}>
         <div className={isMobile ? 'space-y-2' : ''}>
-          <h2 className={`font-black tracking-tighter uppercase ${isMobile ? 'text-3xl' : 'text-4xl'}`}>Centro de Control</h2>
+          <h2 className={`font-black tracking-tighter uppercase ${isMobile ? 'text-3xl' : 'text-4xl'}`}>AGENCIA HUB</h2>
           <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.4em] flex items-center justify-center md:justify-start gap-2">
             <Activity size={14} /> Gestión Maestra Sovereign
           </p>

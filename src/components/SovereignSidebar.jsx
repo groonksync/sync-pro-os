@@ -34,7 +34,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
   };
 
   const menuItems = [
-    { id: 'resumen', label: 'Centro de Control', icon: Activity },
+    { id: 'resumen', label: 'AGENCIA', icon: Activity },
     { id: 'prestamos', label: 'Cartera Préstamos', icon: Landmark, count: counts?.prestamos },
     { id: 'inventario', label: 'Inventario Pro', icon: Package },
     { id: 'pagos', label: 'Mis Egresos', icon: Wallet },
