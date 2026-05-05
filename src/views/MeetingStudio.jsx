@@ -261,7 +261,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {} }) =>
                </header>
 
                <div className="flex-1 relative bg-[#0b0c0e]">
-                  <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="w-full h-full p-20 text-white font-medium text-xl leading-relaxed outline-none mac-scrollbar overflow-y-auto max-w-[1000px] mx-auto prose prose-invert prose-emerald" children={{ __html: activeMeeting.contenido || '<p><br></p>' }} />
+                  <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="w-full h-full p-20 text-white font-medium text-xl leading-relaxed outline-none mac-scrollbar overflow-y-auto max-w-[1000px] mx-auto prose prose-invert prose-emerald" dangerouslySetInnerHTML={{ __html: activeMeeting.contenido || '<p><br></p>' }} />
                   <button onMouseDown={(e) => { e.preventDefault(); setShowAIModal(true); }} className="absolute bottom-12 right-12 w-16 h-16 bg-[#10b981] text-white rounded-3xl shadow-[0_20px_40px_rgba(16,185,129,0.3)] flex items-center justify-center transition-all hover:scale-110 active:scale-95 group">
                      <Sparkles size={28} className="group-hover:rotate-12 transition-transform"/>
                   </button>
