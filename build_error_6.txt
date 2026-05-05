@@ -1,0 +1,31 @@
+
+> sync-pro-os@0.0.0 build
+> vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 20 modules transformed.
+x Build failed in 621ms
+error during build:
+[vite:esbuild] Transform failed with 1 error:
+/Users/groonkm2pro/Library/CloudStorage/GoogleDrive-carlosjoelsb@gmail.com/Mi unidad/App Personal/sync-pro-os/src/views/MeetingStudio.jsx:592:16: ERROR: Unterminated regular expression
+file: /Users/groonkm2pro/Library/CloudStorage/GoogleDrive-carlosjoelsb@gmail.com/Mi unidad/App Personal/sync-pro-os/src/views/MeetingStudio.jsx:592:16
+
+Unterminated regular expression
+590|                  </div>
+591|               </div>
+592|            </div>
+   |                  ^
+593|          )}
+594|  
+
+    at failureErrorWithLog (/Users/groonkm2pro/Library/CloudStorage/GoogleDrive-carlosjoelsb@gmail.com/Mi unidad/App Personal/sync-pro-os/node_modules/esbuild/lib/main.js:1472:15)
+    at /Users/groonkm2pro/Library/CloudStorage/GoogleDrive-carlosjoelsb@gmail.com/Mi unidad/App Personal/sync-pro-os/node_modules/esbuild/lib/main.js:755:50
+    at responseCallbacks.<computed> (/Users/groonkm2pro/Library/CloudStorage/GoogleDrive-carlosjoelsb@gmail.com/Mi unidad/App Personal/sync-pro-os/node_modules/esbuild/lib/main.js:622:9)
+    at handleIncomingPacket (/Users/groonkm2pro/Library/CloudStorage/GoogleDrive-carlosjoelsb@gmail.com/Mi unidad/App Personal/sync-pro-os/node_modules/esbuild/lib/main.js:677:12)
+    at Socket.readFromStdout (/Users/groonkm2pro/Library/CloudStorage/GoogleDrive-carlosjoelsb@gmail.com/Mi unidad/App Personal/sync-pro-os/node_modules/esbuild/lib/main.js:600:7)
+    at Socket.emit (node:events:524:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at Pipe.onStreamRead (node:internal/stream_base_commons:191:23)
