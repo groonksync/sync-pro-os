@@ -6,7 +6,12 @@ let cachedModel = null;
 
 export const aiService = {
   generateScript: async (prompt, context = "", tone = "Profesional") => {
-    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyDPfOi__30UMo7_5-q5787uxoAAs02c2yg";
+    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+    
+    if (!API_KEY) {
+      console.error("CRITICAL: Gemini API Key is missing. Please set VITE_GEMINI_API_KEY in Vercel/Environment.");
+      return "Error: Configuración de IA incompleta (Falta API Key).";
+    }
     
     let attempts = 0;
     const maxAttempts = 3;
