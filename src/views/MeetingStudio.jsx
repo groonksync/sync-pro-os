@@ -97,6 +97,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     }
   };
 
+  const normalizeText = (text) => {
+    if (!text) return "";
+    return text.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  };
+
   const handleCreateClient = async () => {
     if (!newClient.nombre) {
       alert("El nombre es obligatorio");
@@ -107,17 +112,17 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       console.log("Attempting to save client:", newClient);
       const clientData = { 
         nombre: newClient.nombre,
-        email: newClient.email,
-        pais: newClient.pais,
-        empresa: newClient.empresa,
+        email: newClient.email || '',
+        pais: newClient.pais || '',
+        empresa: newClient.empresa || '',
         estado: 'Activo'
       };
       
-      const { data, error } = await supabase.from('clientes_editor').insert([clientData]).select();
+      const { error } = await supabase.from('clientes_editor').insert([clientData]);
       
       if (error) throw error;
       
-      console.log("Client saved successfully:", data);
+      console.log("Client saved successfully");
       await fetchClients();
       setIsClientModalOpen(false);
       setNewClient({ nombre: '', email: '', pais: '', empresa: '', status: 'Activo' });
