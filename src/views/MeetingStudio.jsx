@@ -86,25 +86,46 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const fetchClients = async () => {
     try {
       const { data, error } = await supabase.from('clientes_editor').select('*').order('created_at', { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching clients:", error);
+        return;
+      }
+      console.log("Clients loaded:", data);
       setClients(data || []);
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error("Fetch Exception:", e); 
+    }
   };
 
-  const normalizeText = (text) => (text || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
   const handleCreateClient = async () => {
-    if (!newClient.nombre) return;
+    if (!newClient.nombre) {
+      alert("El nombre es obligatorio");
+      return;
+    }
     setLoading(true);
     try {
-      const clientData = { ...newClient, redes_sociales: newClient.redes, portal_id: newClient.id ? newClient.portal_id : crypto.randomUUID() };
-      delete clientData.redes;
-      if (newClient.id) await supabase.from('clientes_editor').update(clientData).eq('id', newClient.id);
-      else await supabase.from('clientes_editor').insert(clientData);
+      console.log("Attempting to save client:", newClient);
+      const clientData = { 
+        nombre: newClient.nombre,
+        email: newClient.email,
+        pais: newClient.pais,
+        empresa: newClient.empresa,
+        estado: 'Activo'
+      };
+      
+      const { data, error } = await supabase.from('clientes_editor').insert([clientData]).select();
+      
+      if (error) throw error;
+      
+      console.log("Client saved successfully:", data);
       await fetchClients();
       setIsClientModalOpen(false);
-      setNewClient({ nombre: '', email: '', pais: '', status: 'Activo', redes: { instagram: '', youtube: '', tiktok: '' } });
-    } catch (e) { alert(e.message); }
+      setNewClient({ nombre: '', email: '', pais: '', empresa: '', status: 'Activo' });
+      alert("¡Cliente guardado con éxito!");
+    } catch (e) { 
+      console.error("Save Error:", e);
+      alert("Error al guardar: " + (e.message || "Verifica la consola")); 
+    }
     setLoading(false);
   };
 
