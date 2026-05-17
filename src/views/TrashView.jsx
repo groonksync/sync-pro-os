@@ -15,6 +15,7 @@ import { supabase } from '../lib/supabaseClient';
 const TrashView = ({ settings }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [dbError, setDbError] = useState(false);
 
   useEffect(() => {
     fetchTrashItems();
@@ -22,29 +23,52 @@ const TrashView = ({ settings }) => {
 
   const fetchTrashItems = async () => {
     setLoading(true);
+    setDbError(false);
+    
+    let dbItems = [];
+    let localItems = [];
+
+    // 1. Cargar items de Supabase
     try {
-      // 1. Cargar items
       const { data, error } = await supabase
         .from('papelera')
         .select('*')
         .order('borrado_el', { ascending: false });
       
       if (error) throw error;
-      setItems(data || []);
+      dbItems = data || [];
 
-      // 2. Limpieza automática de items expirados (mayor a 30 días)
+      // Limpieza automática de items expirados (mayor a 30 días)
       const now = new Date();
-      const expiredItems = (data || []).filter(item => new Date(item.expira_el) < now);
+      const expiredItems = dbItems.filter(item => new Date(item.expira_el) < now);
       
       if (expiredItems.length > 0) {
         const ids = expiredItems.map(i => i.id);
         await supabase.from('papelera').delete().in('id', ids);
-        setItems(prev => prev.filter(i => !ids.includes(i.id)));
+        dbItems = dbItems.filter(i => !ids.includes(i.id));
       }
-
     } catch (e) {
-      console.error(e);
+      console.warn("Papelera de base de datos no configurada, recurriendo a papelera local.");
+      setDbError(true);
     }
+
+    // 2. Cargar items locales de localStorage
+    try {
+      const localTrash = localStorage.getItem('sovereign_local_trash');
+      if (localTrash) {
+        localItems = JSON.parse(localTrash);
+        
+        // Limpieza de expirados locales
+        const now = new Date();
+        localItems = localItems.filter(item => new Date(item.expira_el) > now);
+        localStorage.setItem('sovereign_local_trash', JSON.stringify(localItems));
+      }
+    } catch (e) {
+      console.error("Error al cargar papelera local:", e);
+    }
+
+    // Combinar ambos
+    setItems([...dbItems, ...localItems]);
     setLoading(false);
   };
 
@@ -53,21 +77,42 @@ const TrashView = ({ settings }) => {
     
     setLoading(true);
     try {
-      let tableName = '';
-      if (item.tipo_dato === 'cliente') tableName = 'clientes_editor';
-      if (item.tipo_dato === 'sesion') tableName = 'reuniones';
-      // Añadir más tipos aquí...
+      // Caso 1: Item local (ID empieza por trash- o dbError es true)
+      if (item.id.toString().startsWith('trash-') || dbError) {
+        if (item.tipo_dato === 'nota') {
+          const localNotas = JSON.parse(localStorage.getItem('sovereign_notas') || '[]');
+          localStorage.setItem('sovereign_notas', JSON.stringify([item.datos_originales, ...localNotas]));
+        } else if (item.tipo_dato === 'credencial') {
+          const localCreds = JSON.parse(localStorage.getItem('sovereign_creds') || '[]');
+          localStorage.setItem('sovereign_creds', JSON.stringify([item.datos_originales, ...localCreds]));
+        }
 
-      if (tableName) {
-        // Insertar de nuevo en la tabla original
-        const { error: restoreError } = await supabase.from(tableName).insert(item.datos_originales);
-        if (restoreError) throw restoreError;
-
-        // Borrar de la papelera
-        await supabase.from('papelera').delete().eq('id', item.id);
+        // Eliminar de papelera local
+        const localTrash = JSON.parse(localStorage.getItem('sovereign_local_trash') || '[]');
+        const updatedTrash = localTrash.filter(i => i.id !== item.id);
+        localStorage.setItem('sovereign_local_trash', JSON.stringify(updatedTrash));
         
         setItems(prev => prev.filter(i => i.id !== item.id));
-        alert('Item restaurado con éxito.');
+        alert('Item restaurado localmente con éxito.');
+      } else {
+        // Caso 2: Supabase
+        let tableName = '';
+        if (item.tipo_dato === 'cliente') tableName = 'clientes_editor';
+        if (item.tipo_dato === 'sesion') tableName = 'reuniones';
+        if (item.tipo_dato === 'nota') tableName = 'notas';
+        if (item.tipo_dato === 'credencial') tableName = 'boveda_pass';
+
+        if (tableName) {
+          // Insertar de nuevo en la tabla original
+          const { error: restoreError } = await supabase.from(tableName).insert(item.datos_originales);
+          if (restoreError) throw restoreError;
+
+          // Borrar de la papelera
+          await supabase.from('papelera').delete().eq('id', item.id);
+          
+          setItems(prev => prev.filter(i => i.id !== item.id));
+          alert('Item restaurado en la nube con éxito.');
+        }
       }
     } catch (e) {
       alert(`Error al restaurar: ${e.message}`);
@@ -80,8 +125,15 @@ const TrashView = ({ settings }) => {
     
     setLoading(true);
     try {
-      await supabase.from('papelera').delete().eq('id', item.id);
+      if (item.id.toString().startsWith('trash-') || dbError) {
+        const localTrash = JSON.parse(localStorage.getItem('sovereign_local_trash') || '[]');
+        const updatedTrash = localTrash.filter(i => i.id !== item.id);
+        localStorage.setItem('sovereign_local_trash', JSON.stringify(updatedTrash));
+      } else {
+        await supabase.from('papelera').delete().eq('id', item.id);
+      }
       setItems(prev => prev.filter(i => i.id !== item.id));
+      alert('Eliminado permanentemente.');
     } catch (e) {
       alert(e.message);
     }
@@ -93,7 +145,14 @@ const TrashView = ({ settings }) => {
     
     setLoading(true);
     try {
-      await supabase.from('papelera').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      // Vaciar local
+      localStorage.removeItem('sovereign_local_trash');
+
+      // Vaciar Supabase
+      if (!dbError) {
+        await supabase.from('papelera').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      }
+
       setItems([]);
       alert('Papelera vaciada.');
     } catch (e) {

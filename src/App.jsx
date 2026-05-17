@@ -13,6 +13,8 @@ import GoogleCalendar from './views/GoogleCalendar';
 import TrashView from './views/TrashView';
 import ClientPortal from './views/ClientPortal';
 import PublicCatalog from './views/PublicCatalog';
+import Notas from './views/Notas';
+import BovedaPass from './views/BovedaPass';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { supabase } from './lib/supabaseClient';
 
@@ -215,6 +217,8 @@ const App = () => {
         case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} />;
         case 'recordatorios': return <Notifications data={data} />;
         case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} />;
+        case 'notas': return <Notas settings={appSettings} isDark={isDarkMode} />;
+        case 'boveda-pass': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;
         case 'papelera': return <TrashView settings={appSettings} />;
         case 'configuracion': return (
           <Ajustes 

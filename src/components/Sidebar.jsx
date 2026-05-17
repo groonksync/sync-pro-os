@@ -24,7 +24,9 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  Zap
+  Zap,
+  FileText,
+  Key
 } from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isCollapsed, setIsCollapsed, isDark, setIsDark }) => {
@@ -43,6 +45,8 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
     { id: 'drive-sovereign', label: 'Drive Sovereign', icon: Cloud },
     { id: 'calendar', label: 'Google Calendar', icon: Calendar },
     { id: 'recordatorios', label: 'Recordatorios', icon: Bell, count: counts?.notificaciones },
+    { id: 'notas', label: 'Notas', icon: FileText },
+    { id: 'boveda-pass', label: 'Bóveda Pass', icon: Key },
     { id: 'papelera', label: 'Papelera', icon: Trash2 },
   ];
 
