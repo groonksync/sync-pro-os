@@ -11,7 +11,7 @@ import {
   Upload, Download, Bold, Italic, Strikethrough, List, CheckSquare, Table2, Heading1, Heading2,
   Facebook, Smartphone as TiktokIcon, Cloud, Sparkles, Type, Highlighter, TrendingUp, BarChart3,
   AlignLeft, AlignCenter, AlignRight, ListOrdered, ClipboardList, Briefcase, Edit3, Mail as MailIcon,
-  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2
+  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2, Terminal, Code2, Cpu, PieChart, TrendingDown, Eye
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
@@ -20,10 +20,13 @@ import { aiService } from '../services/aiService';
 const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, token }) => {
   const isLight = settings.theme === 'light';
   
+  // viewState can be: 'client-list' (default under CLIENTES tab), 'client-profile', 'session'
+  // agencyViewState can be: 'agency-hub' (default under AGENCIA tab), 'agency-session', 'agency-editor'
+  // We use activeTab: 'clientes' | 'agencia' | 'edicion' to orchestrate the main view
+  const [activeTab, setActiveTab] = useState('clientes');
   const [viewState, setViewState] = useState('client-list'); 
   const [activeClient, setActiveClient] = useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null);
-  const [sessionTab, setSessionTab] = useState('editor'); 
   
   // ESTADO DE AGENCIA DE MARKETING
   const [activeAgencyPlan, setActiveAgencyPlan] = useState('Básico'); 
@@ -53,7 +56,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     nombre: '', email: '', pais: '', empresa: '', status: 'Activo'
   });
 
-  useEffect(() => { fetchClients(); }, []);
+  useEffect(() => { 
+    fetchClients(); 
+    fetchMeetings();
+    fetchAgencyClients();
+  }, []);
 
   useEffect(() => {
     if (isTimerRunning) timerRef.current = setInterval(() => setTime(t => t + 1), 1000);
@@ -90,7 +97,12 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     setLoading(false);
   };
 
-  const openClientProfile = (client) => { setActiveClient(client); fetchMeetings(); setViewState('client-profile'); };
+  const openClientProfile = (client) => { 
+    setActiveClient(client); 
+    fetchMeetings(); 
+    setViewState('client-profile'); 
+    setActiveTab('clientes');
+  };
 
   const [meetings, setMeetings] = useState([]);
   const fetchMeetings = async () => {
@@ -106,6 +118,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     setEditorContent(meeting.contenido || '<p><br></p>');
     setTime(meeting.total_time || 0);
     setViewState('session'); 
+    setActiveTab('edicion');
   };
 
   const createMeeting = async () => {
@@ -132,6 +145,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       if (error) throw error;
       await fetchMeetings();
       setViewState('client-profile');
+      setActiveTab('clientes');
       setActiveMeeting(null);
       setIsTimerRunning(false);
     } catch (error) { alert(error.message); }
@@ -144,8 +158,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
   const [agencySearch, setAgencySearch] = useState('');
 
   useEffect(() => {
-    if (viewState.includes('agency')) fetchAgencyClients();
-  }, [viewState, activeAgencyPlan]);
+    fetchAgencyClients();
+  }, [activeAgencyPlan]);
 
   const fetchAgencyClients = async () => {
     try {
@@ -189,6 +203,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
       await fetchStrategies(selectedCompany.id);
       setActiveStrategy(newStrat);
       setViewState('agency-editor');
+      setActiveTab('agencia');
     } catch (error) { alert(error.message); }
   };
 
@@ -221,13 +236,17 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
   };
 
-  const formatText = (command, value = null, e) => { if (e) e.preventDefault(); document.execCommand(command, false, value); editorRef.current.focus(); };
+  const formatText = (command, value = null, e) => { 
+    if (e) e.preventDefault(); 
+    document.execCommand(command, false, value); 
+    if (editorRef.current) editorRef.current.focus(); 
+  };
 
   const handleAISuggestion = async () => {
     if (!aiPrompt) return;
     setAiLoading(true);
     try {
-      const suggestion = await aiService.generateScript(aiPrompt, editorRef.current.innerHTML, 'Profesional');
+      const suggestion = await aiService.generateScript(aiPrompt, editorRef.current?.innerHTML || '', 'Profesional');
       document.execCommand('insertHTML', false, suggestion.replace(/\n/g, '<br>') + '<br>');
       setShowAIModal(false);
       setAiPrompt('');
@@ -259,102 +278,662 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, toke
 
   return (
     <div className={`flex flex-col h-screen w-full ${colors.bg} ${colors.text} overflow-hidden font-sans transition-colors duration-500`}>
-      <nav className="h-20 border-b border-white/5 flex items-center justify-between px-10 relative z-50 bg-black/20 backdrop-blur-3xl">
+      
+      {/* HEADER PRINCIPAL PREMIUM: NEURAL PRODUCTION */}
+      <nav className="h-20 border-b border-white/5 flex items-center justify-between px-10 relative z-50 bg-[#08080a]/60 backdrop-blur-3xl">
          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-[#10b981] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)]"><Briefcase size={20} className="text-white"/></div>
-            <h1 className="text-xl font-black tracking-tighter uppercase">Sovereign <span className="text-neutral-500 italic">OS</span></h1>
+            <div className="w-10 h-10 bg-[#10b981]/10 rounded-2xl flex items-center justify-center border border-[#10b981]/30 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+               <Zap size={20} className="text-[#10b981] animate-pulse"/>
+            </div>
+            <div className="flex flex-col">
+               <span className="text-[11px] font-black tracking-[0.25em] text-[#10b981] uppercase leading-none">Sovereign OS</span>
+               <span className="text-[8px] font-bold text-neutral-500 tracking-[0.4em] uppercase mt-1 leading-none">Neural Production</span>
+            </div>
          </div>
-         <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/10 shadow-2xl">
-            <button onClick={() => setViewState('client-list')} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewState.includes('client') || viewState === 'session' ? 'bg-[#10b981] text-white shadow-lg' : 'text-neutral-600 hover:text-white'}`}><Video size={14}/> Editor Pro</button>
-            <button onClick={() => setViewState('agency-hub')} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewState.includes('agency') ? 'bg-amber-500 text-white shadow-lg' : 'text-neutral-600 hover:text-white'}`}><Briefcase size={14}/> Agencia</button>
+         
+         {/* NAVEGACIÓN CAPSULAR DE TRES PESTAÑAS (Misma de la Imagen 1) */}
+         <div className="flex bg-[#121417]/85 p-1 rounded-[1.2rem] border border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+            <button 
+              onClick={() => { setActiveTab('clientes'); setViewState('client-list'); }} 
+              className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 ${activeTab === 'clientes' ? 'bg-[#10b981] text-white shadow-lg shadow-[#10b981]/25 scale-105' : 'text-neutral-500 hover:text-white'}`}
+            >
+               <Users size={12}/> Clientes
+            </button>
+            <button 
+              onClick={() => { setActiveTab('agencia'); setViewState('agency-hub'); }} 
+              className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 ${activeTab === 'agencia' ? 'bg-[#f59e0b] text-white shadow-lg shadow-[#f59e0b]/25 scale-105' : 'text-neutral-500 hover:text-white'}`}
+            >
+               <Briefcase size={12}/> Agencia Pro
+            </button>
+            <button 
+              onClick={() => { 
+                setActiveTab('edicion'); 
+                if (activeMeeting) {
+                  setViewState('session');
+                } else {
+                  setViewState('recent-meetings');
+                }
+              }} 
+              className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] transition-all flex items-center gap-2 ${activeTab === 'edicion' ? 'bg-[#8b5cf6] text-white shadow-lg shadow-[#8b5cf6]/25 scale-105' : 'text-neutral-500 hover:text-white'}`}
+            >
+               <Video size={12}/> Edición de Video
+            </button>
          </div>
+
+         {/* BADGE SYSTEM READY Y AVATAR */}
          <div className="flex items-center gap-6">
-            <button className="text-neutral-700 hover:text-white transition-all"><Calendar size={20}/></button>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 border-2 border-white/10"></div>
+            <div className="hidden md:flex items-center gap-2.5 px-4 py-2 bg-[#10b981]/5 border border-[#10b981]/20 rounded-full">
+               <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-ping"></span>
+               <span className="text-[8px] font-black uppercase tracking-widest text-[#10b981]">• System Ready</span>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#10b981] to-[#8b5cf6] border border-white/20 p-[2px] cursor-pointer hover:scale-105 transition-all">
+               <div className="w-full h-full bg-[#0b0c0e] rounded-full flex items-center justify-center font-black text-xs text-white">4</div>
+            </div>
          </div>
       </nav>
 
-      {viewState === 'client-list' && (
-        <div className="flex flex-col h-full overflow-hidden p-10 space-y-10 max-w-[1900px] mx-auto w-full">
-            <header className={`${colors.card} rounded-[3rem] p-10 border border-white/5 flex justify-between items-center`}>
-               <div><p className="text-[10px] text-[#10b981] font-black uppercase tracking-[0.8em] animate-pulse">Operational Matrix</p><h2 className="text-6xl font-black text-white uppercase tracking-tighter leading-none">Control de <span className="text-white/10">Clientes</span></h2></div>
-               <button onClick={() => setIsClientModalOpen(true)} className="px-12 py-5 bg-[#10b981] text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest hover:scale-105 transition-all shadow-lg flex items-center gap-4"><Plus size={20}/> Nuevo Cliente</button>
-            </header>
-            <div className="relative"><Search className="absolute left-8 top-1/2 -translate-y-1/2 text-neutral-800" size={24}/><input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="Filtrar clientes..." className={`w-full ${colors.input} rounded-[2.5rem] py-6 pl-20 pr-8 text-xl outline-none border border-white/5 focus:border-[#10b981]/30 transition-all font-bold`} /></div>
-            <div className={`${colors.card} rounded-[3.5rem] overflow-hidden border border-white/5`}>
-               <table className="w-full text-left"><thead className="bg-white/[0.01] border-b border-white/5"><tr className="text-[10px] text-neutral-700 font-black uppercase tracking-widest"><th className="px-10 py-8">Cliente</th><th className="px-10 py-8">Email</th><th className="px-10 py-8 text-right">Comandos</th></tr></thead><tbody className="divide-y divide-white/5">{uniqueClients.map(client => (<tr key={client.id} onClick={() => openClientProfile(client)} className="group hover:bg-[#10b981]/[0.03] transition-all cursor-pointer"><td className="px-10 py-8 text-base font-black uppercase tracking-tighter">{client.nombre}</td><td className="px-10 py-8 text-xs font-bold text-neutral-600">{client.email || 'Global Partner'}</td><td className="px-10 py-8 text-right"><ChevronRight size={20} className="text-neutral-800 group-hover:text-[#10b981] transition-all ml-auto"/></td></tr>))}</tbody></table>
-            </div>
-        </div>
-      )}
+      {/* CONTENIDO PRINCIPAL BASADO EN PESTAÑAS */}
+      <div className="flex-1 overflow-hidden relative bg-[#0b0c0e]">
+        
+        {/* PESTAÑA: CLIENTES */}
+        {activeTab === 'clientes' && (
+          <div className="h-full overflow-y-auto max-w-[1700px] mx-auto w-full p-10 space-y-8 animate-in fade-in duration-500">
+             
+             {viewState === 'client-list' && (
+               <>
+                 {/* OPERATIONAL MATRIX TITLE */}
+                 <header className="flex justify-between items-end">
+                    <div className="space-y-1">
+                       <p className="text-[9px] text-[#10b981] font-black uppercase tracking-[0.6em] animate-pulse">Operational Matrix</p>
+                       <h2 className="text-5xl font-black text-white uppercase tracking-tighter leading-none">Control de Clientes</h2>
+                    </div>
+                    <button 
+                      onClick={() => setIsClientModalOpen(true)} 
+                      className="px-8 py-4 bg-[#10b981] hover:bg-[#059669] text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:scale-105 transition-all shadow-[0_15px_30px_rgba(16,185,129,0.2)] flex items-center gap-3"
+                    >
+                       <Plus size={16}/> Nuevo Cliente
+                    </button>
+                 </header>
 
-      {viewState === 'client-profile' && activeClient && (
-        <div className="h-full flex flex-col p-10 space-y-10 max-w-[1500px] mx-auto w-full">
-          <header className="flex items-center justify-between"><div className="flex items-center gap-8"><button onClick={() => setViewState('client-list')} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-500 hover:text-[#10b981] transition-all"><ArrowLeft size={24}/></button><div><h3 className="text-3xl font-black text-white uppercase tracking-tighter">{activeClient.nombre}</h3><p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest">{activeClient.empresa || 'Independent Production'}</p></div></div><button onClick={createMeeting} className="px-10 py-5 bg-[#10b981] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-4 shadow-xl"><Video size={18}/> Iniciar Producción</button></header>
-          <div className="space-y-4">{filteredMeetings.map(m => (<div key={m.id} onClick={() => openMeeting(m)} className={`${colors.card} rounded-[2rem] p-8 border border-white/5 flex items-center justify-between hover:bg-white/[0.01] transition-all cursor-pointer shadow-2xl`}><div className="flex items-center gap-10"><div className="w-16 h-16 rounded-2xl bg-neutral-900 flex items-center justify-center text-[#10b981]"><FileVideo size={28}/></div><div><h4 className="text-2xl font-black text-white uppercase tracking-tighter">{m.session_title}</h4><p className="text-[10px] text-neutral-600 font-bold uppercase">{m.fecha}</p></div></div><div className="text-right"><p className="text-[8px] text-neutral-700 font-black uppercase mb-1">Elapsed</p><p className="text-2xl font-black text-white font-mono">{formatTime(m.total_time)}</p></div></div>))}</div>
-        </div>
-      )}
+                 {/* MICRO-HUD: 4 CARDS (Exactamente como en la Imagen 1) */}
+                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    {/* CARD 1: CAPACIDAD OPERATIVA */}
+                    <div className="bg-[#121417] border border-white/5 rounded-3xl p-6 flex items-center justify-between shadow-2xl relative overflow-hidden group hover:border-[#10b981]/25 transition-all">
+                       <div className="space-y-2">
+                          <p className="text-[8px] text-neutral-500 font-black uppercase tracking-widest">Capacidad Operativa</p>
+                          <p className="text-3xl font-mono font-black text-[#10b981]">98.4%</p>
+                       </div>
+                       <div className="w-12 h-12 rounded-2xl bg-[#10b981]/5 border border-[#10b981]/15 flex items-center justify-center text-[#10b981] group-hover:scale-110 transition-transform">
+                          <Activity size={22}/>
+                       </div>
+                    </div>
 
-      {viewState === 'agency-hub' && (
-        <div className="flex flex-col h-full p-12 space-y-16 max-w-[1900px] mx-auto w-full">
-            <header className="flex justify-between items-center"><div><div className="w-2 h-10 bg-amber-500 rounded-full mb-4"></div><h2 className="text-4xl font-black text-white uppercase tracking-tighter">Agencia de <span className="text-neutral-500 italic">Marketing</span></h2></div><button onClick={() => setIsCompanyModalOpen(true)} className="px-10 py-4 bg-amber-500 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl"><Plus size={18}/> Nuevo Proyecto</button></header>
-            <div className="grid grid-cols-4 gap-6">{['Básico', 'Intermedio', 'Avanzado', 'Personalizado'].map(p => (<div key={p} onClick={() => setActiveAgencyPlan(p)} className={`p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 hover:border-amber-500/50 transition-all cursor-pointer ${activeAgencyPlan === p ? 'bg-white/[0.05] border-amber-500 shadow-xl' : ''}`}><h4 className="text-lg font-black text-white uppercase tracking-tighter mb-2">{p}</h4><p className="text-[9px] text-neutral-600 font-bold uppercase">{agencyClients.length} Proyectos</p></div>))}</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">{filteredAgencyClients.map(company => (<div key={company.id} onClick={() => { setSelectedCompany(company); fetchStrategies(company.id); setViewState('agency-session'); }} className="bg-[#080808] border border-white/5 rounded-[2.5rem] p-8 hover:border-amber-500/30 transition-all cursor-pointer"><div className="flex items-center gap-6 mb-8"><div className="w-16 h-16 bg-neutral-900 rounded-2xl flex items-center justify-center text-amber-500"><Building2 size={28}/></div><div><h4 className="text-xl font-black text-white uppercase tracking-tighter">{company.nombre_empresa}</h4><p className="text-[9px] text-neutral-600 font-black uppercase">Socio: {company.dueño}</p></div></div><div className="flex gap-3"><div className="flex-1 p-3 bg-white/5 rounded-xl text-center text-[9px] font-black text-amber-500 uppercase">Ver Estrategia</div></div></div>))}</div>
-        </div>
-      )}
+                    {/* CARD 2: PROYECTOS EN RENDER */}
+                    <div className="bg-[#121417] border border-white/5 rounded-3xl p-6 flex items-center justify-between shadow-2xl relative overflow-hidden group hover:border-[#3b82f6]/25 transition-all">
+                       <div className="space-y-2">
+                          <p className="text-[8px] text-neutral-500 font-black uppercase tracking-widest">Proyectos en Render</p>
+                          <p className="text-3xl font-mono font-black text-[#3b82f6]">2</p>
+                       </div>
+                       <div className="w-12 h-12 rounded-2xl bg-[#3b82f6]/5 border border-[#3b82f6]/15 flex items-center justify-center text-[#3b82f6] group-hover:scale-110 transition-transform">
+                          <Video size={22}/>
+                       </div>
+                    </div>
 
-      {viewState === 'agency-session' && selectedCompany && (
-        <div className="flex flex-col h-full p-10 space-y-10 max-w-[1500px] mx-auto w-full">
-           <header className="flex items-center justify-between"><div className="flex items-center gap-8"><button onClick={() => setViewState('agency-hub')} className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-500 hover:text-amber-500 transition-all"><ArrowLeft size={24}/></button><div><h3 className="text-3xl font-black text-white uppercase tracking-tighter">{selectedCompany.nombre_empresa}</h3><p className="text-[10px] text-amber-500 font-black uppercase">{selectedCompany.plan}</p></div></div><button onClick={createStrategy} className="px-10 py-5 bg-white text-black rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-4 hover:bg-amber-500 hover:text-white transition-all shadow-xl"><Sparkles size={18}/> Nueva Estrategia</button></header>
-           <div className="space-y-4">{strategies.map(s => (<div key={s.id} onClick={() => { setActiveStrategy(s); setEditorContent(s.contenido); setTime(s.total_time); setViewState('agency-editor'); }} className={`${colors.card} rounded-[2rem] p-8 flex items-center justify-between hover:border-amber-500/30 transition-all cursor-pointer shadow-2xl`}><div className="flex items-center gap-10"><div className="w-16 h-16 rounded-2xl bg-neutral-900 flex items-center justify-center text-amber-500"><Target size={28}/></div><h4 className="text-2xl font-black text-white uppercase tracking-tighter">{s.titulo_estrategia}</h4></div><ChevronRight size={24} className="text-neutral-800"/></div>))}</div>
-        </div>
-      )}
+                    {/* CARD 3: LATENCIA NEURAL */}
+                    <div className="bg-[#121417] border border-white/5 rounded-3xl p-6 flex items-center justify-between shadow-2xl relative overflow-hidden group hover:border-[#8b5cf6]/25 transition-all">
+                       <div className="space-y-2">
+                          <p className="text-[8px] text-neutral-500 font-black uppercase tracking-widest">Latencia Neural</p>
+                          <p className="text-3xl font-mono font-black text-[#8b5cf6]">0.4ms</p>
+                       </div>
+                       <div className="w-12 h-12 rounded-2xl bg-[#8b5cf6]/5 border border-[#8b5cf6]/15 flex items-center justify-center text-[#8b5cf6] group-hover:scale-110 transition-transform">
+                          <Cpu size={22}/>
+                       </div>
+                    </div>
 
-      {viewState === 'agency-editor' && activeStrategy && (
-        <div className="flex flex-col h-full overflow-hidden">
-           <header className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-black/40">
-              <div className="flex items-center gap-6"><button onClick={() => setViewState('agency-session')} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-neutral-600 hover:text-amber-500 transition-all"><ArrowLeft size={20}/></button><h3 className="text-lg font-black text-white uppercase">{activeStrategy.titulo_estrategia}</h3></div>
-              <div className="flex items-center gap-4"><div className="bg-[#080808] border border-white/5 rounded-xl px-5 py-2 flex items-center gap-4 text-xl font-mono font-black text-white">{formatTime(time)}<button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">{isTimerRunning ? <Pause size={14}/> : <Play size={14}/>}</button></div><button onClick={saveStrategy} className="px-6 py-3 bg-white text-black text-[10px] font-black rounded-xl uppercase tracking-widest shadow-xl"><Save size={16}/> Guardar</button></div>
-           </header>
-           <div className="flex-1 flex p-4 gap-4 overflow-hidden max-w-[1800px] mx-auto w-full">
-              <div className="w-[300px] space-y-4"><div className="bg-[#121418] p-5 rounded-2xl shadow-2xl text-right text-2xl font-mono font-black text-white bg-[#080808] p-4 rounded-xl border border-white/5">{calcDisplay}</div><div className="grid grid-cols-4 gap-2">{['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','=','+'].slice(0,19).map(btn => (<button key={btn} onClick={() => handleCalc(btn)} className="h-10 rounded-lg text-[10px] font-black bg-white/5 text-neutral-500">{btn}</button>))}<button onClick={()=>handleCalc('=')} className="h-10 rounded-lg text-[10px] font-black bg-amber-500 text-white col-span-2">=</button></div></div>
-              <div className="flex-1 bg-[#121418] rounded-[2rem] overflow-hidden flex flex-col shadow-2xl"><div className="px-8 py-4 border-b border-white/5 flex gap-4"><button onMouseDown={(e)=>formatText('bold',null,e)} className="p-2 text-neutral-600 hover:text-white"><Bold size={18}/></button><button onMouseDown={(e)=>formatText('insertUnorderedList',null,e)} className="p-2 text-neutral-600 hover:text-white"><List size={18}/></button></div><div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="flex-1 p-12 text-white font-medium text-lg leading-relaxed outline-none mac-scrollbar overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} /></div>
-           </div>
-        </div>
-      )}
+                    {/* CARD 4: BASE DE CLIENTES */}
+                    <div className="bg-[#121417] border border-white/5 rounded-3xl p-6 flex items-center justify-between shadow-2xl relative overflow-hidden group hover:border-[#f59e0b]/25 transition-all">
+                       <div className="space-y-2">
+                          <p className="text-[8px] text-neutral-500 font-black uppercase tracking-widest">Base de Clientes</p>
+                          <p className="text-3xl font-mono font-black text-[#f59e0b]">{clients.length}</p>
+                       </div>
+                       <div className="w-12 h-12 rounded-2xl bg-[#f59e0b]/5 border border-[#f59e0b]/15 flex items-center justify-center text-[#f59e0b] group-hover:scale-110 transition-transform">
+                          <Users size={22}/>
+                       </div>
+                    </div>
 
-      {viewState === 'session' && activeMeeting && (
-        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-500">
-          <header className={`px-6 py-4 border-b ${colors.card} flex items-center justify-between bg-black/40`}>
-            <div className="flex items-center gap-6"><button onClick={saveMeeting} className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all"><ArrowLeft size={20}/></button><h3 className="text-lg font-black text-white uppercase">{activeMeeting.session_title}</h3></div>
-            <div className="flex items-center gap-4"><div className="bg-[#080808] border border-white/5 rounded-xl px-5 py-2 flex items-center gap-4 text-xl font-mono font-black text-white">{formatTime(time)}<button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-8 h-8 rounded-lg bg-[#10b981] flex items-center justify-center">{isTimerRunning ? <Pause size={14}/> : <Play size={14}/>}</button></div><button onClick={saveMeeting} className="px-6 py-3 bg-white text-black text-[10px] font-black rounded-xl uppercase shadow-xl"><Save size={16}/> Finalizar</button></div>
-          </header>
-          <div className="flex-1 flex p-4 gap-4 overflow-hidden max-w-[1800px] mx-auto w-full">
-            <div className="w-[300px] space-y-4"><div className="bg-[#121418] p-5 rounded-2xl shadow-xl text-right text-2xl font-mono font-black text-white bg-[#080808] p-4 rounded-xl border border-white/5 shadow-inner">{calcDisplay}</div><div className="grid grid-cols-4 gap-2">{['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','=','+'].slice(0,19).map(btn => (<button key={btn} onClick={() => handleCalc(btn)} className="h-10 rounded-lg text-[10px] font-black bg-white/5 text-neutral-500">{btn}</button>))}<button onClick={()=>handleCalc('=')} className="h-10 rounded-lg text-[10px] font-black bg-[#10b981] text-white col-span-2 shadow-lg">=</button></div></div>
-            <div className="flex-1 bg-[#121418] rounded-[2rem] overflow-hidden flex flex-col shadow-2xl"><div className="px-8 py-4 border-b border-white/5 flex gap-4"><button onMouseDown={(e)=>formatText('bold',null,e)} className="p-2 text-neutral-600 hover:text-white"><Bold size={18}/></button><button onMouseDown={(e)=>formatText('insertUnorderedList',null,e)} className="p-2 text-neutral-600 hover:text-white"><List size={18}/></button></div><div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="flex-1 p-12 text-white font-medium text-lg leading-relaxed outline-none mac-scrollbar overflow-y-auto" dangerouslySetInnerHTML={{ __html: activeMeeting.contenido }} /></div>
+                 </div>
+
+                 {/* SEARCH BAR */}
+                 <div className="relative">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-600" size={20}/>
+                    <input 
+                      type="text" 
+                      value={clientSearch} 
+                      onChange={e=>setClientSearch(e.target.value)} 
+                      placeholder="Filtrar Identidad de Socio..." 
+                      className="w-full bg-[#121417] rounded-2xl py-5 pl-16 pr-8 text-xs outline-none border border-white/5 focus:border-[#10b981]/30 transition-all font-bold uppercase tracking-widest text-white placeholder-neutral-600" 
+                    />
+                 </div>
+
+                 {/* CUADRÍCULA DE CLIENTES - OBSIDIAN GLASS DESIGN (Imagen 1) */}
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {uniqueClients.map(client => (
+                      <div 
+                        key={client.id} 
+                        onClick={() => openClientProfile(client)}
+                        className="bg-[#121417] rounded-[2.5rem] p-8 border border-white/5 hover:border-[#10b981]/35 transition-all duration-300 group cursor-pointer relative overflow-hidden shadow-2xl"
+                      >
+                         <div className="flex flex-col h-full justify-between gap-6 relative z-10">
+                            
+                            <div className="flex justify-between items-start">
+                               <div className="w-14 h-14 bg-[#08080a] rounded-2xl border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                  <UserIcon size={22} className="text-neutral-500 group-hover:text-[#10b981] transition-all"/>
+                               </div>
+                               <div className="px-3.5 py-1.5 bg-[#10b981]/10 rounded-xl text-[8px] font-black text-[#10b981] uppercase tracking-widest border border-[#10b981]/25">
+                                  Active Partner
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                               <h4 className="text-xl font-black uppercase tracking-tighter text-white group-hover:text-[#10b981] transition-colors">{client.nombre}</h4>
+                               <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest">{client.email || 'Global Partner Account'}</p>
+                            </div>
+
+                            <button className="w-full py-4 bg-[#1a1c20] hover:bg-[#10b981] text-neutral-500 hover:text-white rounded-xl font-black uppercase text-[9px] tracking-widest transition-all flex items-center justify-center gap-2">
+                               Abrir Nexus <ChevronRight size={14}/>
+                            </button>
+                         </div>
+                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#10b981]/5 blur-[80px] opacity-30 group-hover:opacity-100 transition-opacity"></div>
+                      </div>
+                    ))}
+                 </div>
+               </>
+             )}
+
+             {/* CLIENT PROFILE VIEW */}
+             {viewState === 'client-profile' && activeClient && (
+               <div className="space-y-8 animate-in fade-in duration-500">
+                  <header className="flex items-center justify-between">
+                     <div className="flex items-center gap-6">
+                        <button 
+                          onClick={() => setViewState('client-list')} 
+                          className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-500 hover:text-[#10b981] hover:bg-[#10b981]/5 transition-all"
+                        >
+                           <ArrowLeft size={20}/>
+                        </button>
+                        <div>
+                           <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-1.5">{activeClient.nombre}</h3>
+                           <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest">{activeClient.email || 'Independent Partner'}</p>
+                        </div>
+                     </div>
+                     <button 
+                       onClick={createMeeting} 
+                       className="px-8 py-4 bg-[#10b981] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl hover:scale-105 transition-all"
+                     >
+                        <Video size={16}/> Iniciar Producción
+                     </button>
+                  </header>
+
+                  <div className="relative">
+                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-700" size={20}/>
+                     <input 
+                       type="text" 
+                       value={meetingSearch} 
+                       onChange={e => setMeetingSearch(e.target.value)} 
+                       placeholder="Buscar Sesión..." 
+                       className="w-full bg-[#121417] border border-white/5 rounded-2xl py-5 pl-16 pr-8 text-xs font-bold uppercase tracking-widest text-white placeholder-neutral-700"
+                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4">
+                     {filteredMeetings.length > 0 ? filteredMeetings.map(m => (
+                       <div 
+                         key={m.id} 
+                         onClick={() => openMeeting(m)}
+                         className="bg-[#121417] rounded-3xl p-6 border border-white/5 flex items-center justify-between hover:border-[#10b981]/20 transition-all cursor-pointer group"
+                       >
+                          <div className="flex items-center gap-6">
+                             <div className="w-12 h-12 rounded-2xl bg-[#08080a] border border-white/10 flex items-center justify-center text-[#10b981]">
+                                <FileVideo size={22}/>
+                             </div>
+                             <div>
+                                <h5 className="text-lg font-black uppercase tracking-tight text-white group-hover:text-[#10b981] transition-colors">{m.session_title}</h5>
+                                <p className="text-[9px] text-neutral-600 font-bold uppercase mt-1">{m.created_at ? new Date(m.created_at).toLocaleDateString() : 'Active Workspace'}</p>
+                             </div>
+                          </div>
+                          <div className="flex items-center gap-8">
+                             <div className="text-right">
+                                <p className="text-[8px] text-neutral-700 font-black uppercase tracking-widest mb-0.5">Elapsed</p>
+                                <p className="text-xl font-black text-white font-mono">{formatTime(m.total_time)}</p>
+                             </div>
+                             <ChevronRight size={20} className="text-neutral-700 group-hover:text-white transition-colors"/>
+                          </div>
+                       </div>
+                     )) : (
+                       <div className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem]">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-neutral-600">No hay sesiones de producción registradas para este socio.</p>
+                       </div>
+                     )}
+                  </div>
+               </div>
+             )}
+
           </div>
-        </div>
-      )}
+        )}
 
+        {/* PESTAÑA: AGENCIA PRO */}
+        {activeTab === 'agencia' && (
+          <div className="h-full overflow-y-auto max-w-[1700px] mx-auto w-full p-10 space-y-12 animate-in fade-in duration-500">
+             
+             {viewState === 'agency-hub' && (
+               <>
+                  <header className="flex justify-between items-center">
+                     <div>
+                        <div className="w-12 h-[2px] bg-amber-500 mb-3"></div>
+                        <h2 className="text-4xl font-black text-white uppercase tracking-tighter">Agencia de Marketing</h2>
+                     </div>
+                     <button 
+                       onClick={() => setIsCompanyModalOpen(true)} 
+                       className="px-8 py-4 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl"
+                     >
+                        <Plus size={16}/> Nuevo Proyecto
+                     </button>
+                  </header>
+
+                  {/* PLANES DE AGENCIA CARD CAPSUlES */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                     {['Básico', 'Intermedio', 'Avanzado', 'Personalizado'].map(p => (
+                       <div 
+                         key={p} 
+                         onClick={() => setActiveAgencyPlan(p)} 
+                         className={`p-6 rounded-3xl border transition-all cursor-pointer relative overflow-hidden group ${activeAgencyPlan === p ? 'bg-amber-500/10 border-amber-500 shadow-xl' : 'bg-[#121417] border-white/5 hover:border-amber-500/30'}`}
+                       >
+                          <h4 className="text-lg font-black text-white uppercase tracking-tighter mb-1.5">{p}</h4>
+                          <p className="text-[8px] font-black uppercase tracking-widest text-neutral-500 group-hover:text-amber-500 transition-colors">Ver Proyectos Activos</p>
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 blur-[50px]"></div>
+                       </div>
+                     ))}
+                  </div>
+
+                  {/* BUSCADOR DE AGENCIA */}
+                  <div className="relative">
+                     <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-700" size={20}/>
+                     <input 
+                       type="text" 
+                       value={agencySearch} 
+                       onChange={e=>setAgencySearch(e.target.value)} 
+                       placeholder="Buscar Empresa Socio..." 
+                       className="w-full bg-[#121417] border border-white/5 rounded-2xl py-5 pl-16 pr-8 text-xs font-bold uppercase tracking-widest text-white placeholder-neutral-700" 
+                     />
+                  </div>
+
+                  {/* GRID DE COMPAÑÍAS DE AGENCIA */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                     {filteredAgencyClients.length > 0 ? filteredAgencyClients.map(company => (
+                       <div 
+                         key={company.id} 
+                         onClick={() => { setSelectedCompany(company); fetchStrategies(company.id); setViewState('agency-session'); }}
+                         className="bg-[#121417] border border-white/5 rounded-[2.5rem] p-8 hover:border-amber-500/35 transition-all cursor-pointer relative overflow-hidden group"
+                       >
+                          <div className="flex items-center gap-5 mb-8">
+                             <div className="w-14 h-14 bg-[#08080a] border border-white/10 rounded-2xl flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                                <Building2 size={24}/>
+                             </div>
+                             <div>
+                                <h4 className="text-xl font-black text-white uppercase tracking-tighter group-hover:text-amber-500 transition-colors">{company.nombre_empresa}</h4>
+                                <p className="text-[9px] text-neutral-600 font-bold uppercase">Socio: {company.dueño}</p>
+                             </div>
+                          </div>
+                          <div className="w-full py-4 bg-[#1a1c20] hover:bg-amber-500 text-neutral-500 hover:text-white rounded-xl text-center text-[9px] font-black uppercase tracking-widest transition-all">
+                             Ver Mesa de Estrategia
+                          </div>
+                       </div>
+                     )) : (
+                       <div className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] col-span-full">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-neutral-600">No hay proyectos de agencia bajo este plan en este momento.</p>
+                       </div>
+                     )}
+                  </div>
+               </>
+             )}
+
+             {/* AGENDA DE ESTRATEGIAS */}
+             {viewState === 'agency-session' && selectedCompany && (
+               <div className="space-y-8 animate-in fade-in duration-500">
+                  <header className="flex items-center justify-between">
+                     <div className="flex items-center gap-6">
+                        <button 
+                          onClick={() => setViewState('agency-hub')} 
+                          className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-500 hover:text-amber-500 transition-all"
+                        >
+                           <ArrowLeft size={20}/>
+                        </button>
+                        <div>
+                           <h3 className="text-3xl font-black text-white uppercase tracking-tighter leading-none mb-1.5">{selectedCompany.nombre_empresa}</h3>
+                           <p className="text-[10px] text-amber-500 font-black uppercase tracking-widest">Plan: {selectedCompany.plan}</p>
+                        </div>
+                     </div>
+                     <button 
+                       onClick={createStrategy} 
+                       className="px-8 py-4 bg-white text-black hover:bg-amber-500 hover:text-white rounded-2xl text-[11px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl transition-all"
+                     >
+                        <Sparkles size={16}/> Nueva Estrategia
+                     </button>
+                  </header>
+
+                  <div className="grid grid-cols-1 gap-4">
+                     {strategies.length > 0 ? strategies.map(s => (
+                       <div 
+                         key={s.id} 
+                         onClick={() => { setActiveStrategy(s); setEditorContent(s.contenido); setTime(s.total_time); setViewState('agency-editor'); }}
+                         className="bg-[#121417] rounded-3xl p-6 border border-white/5 flex items-center justify-between hover:border-amber-500/30 transition-all cursor-pointer group"
+                       >
+                          <div className="flex items-center gap-6">
+                             <div className="w-12 h-12 rounded-2xl bg-[#08080a] border border-white/10 flex items-center justify-center text-amber-500">
+                                <Target size={22}/>
+                             </div>
+                             <h5 className="text-lg font-black uppercase tracking-tight text-white group-hover:text-amber-500 transition-colors">{s.titulo_estrategia}</h5>
+                          </div>
+                          <ChevronRight size={20} className="text-neutral-700 group-hover:text-white transition-colors"/>
+                       </div>
+                     )) : (
+                       <div className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem]">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-neutral-600">No hay planes estratégicos registrados.</p>
+                       </div>
+                     )}
+                  </div>
+               </div>
+             )}
+
+             {/* EDITOR DE ESTRATEGIA */}
+             {viewState === 'agency-editor' && activeStrategy && (
+               <div className="flex flex-col h-[calc(100vh-14rem)] overflow-hidden animate-in fade-in duration-500">
+                  <header className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-black/40 rounded-t-3xl">
+                     <div className="flex items-center gap-5">
+                        <button 
+                          onClick={() => setViewState('agency-session')} 
+                          className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-neutral-600 hover:text-amber-500 transition-all"
+                        >
+                           <ArrowLeft size={16}/>
+                        </button>
+                        <h3 className="text-base font-black text-white uppercase tracking-tight">{activeStrategy.titulo_estrategia}</h3>
+                     </div>
+                     <div className="flex items-center gap-4">
+                        <div className="bg-[#080808] border border-white/5 rounded-xl px-4 py-2 flex items-center gap-4 text-lg font-mono font-black text-white">
+                           {formatTime(time)}
+                           <button 
+                             onClick={() => setIsTimerRunning(!isTimerRunning)} 
+                             className="w-7 h-7 rounded-lg bg-amber-500 text-white flex items-center justify-center"
+                           >
+                              {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
+                           </button>
+                        </div>
+                        <button 
+                          onClick={saveStrategy} 
+                          className="px-6 py-3.5 bg-white text-black hover:bg-amber-500 hover:text-white text-[10px] font-black rounded-xl uppercase tracking-widest transition-all shadow-xl"
+                        >
+                           <Save size={14}/> Guardar
+                        </button>
+                     </div>
+                  </header>
+                  
+                  <div className="flex-1 flex p-4 gap-4 overflow-hidden bg-black/20 rounded-b-3xl border-x border-b border-white/5">
+                     {/* CALC SIDE PANEL */}
+                     <div className="w-[280px] flex flex-col gap-4">
+                        <div className="bg-[#121417] p-5 rounded-2xl shadow-xl text-right text-2xl font-mono font-black text-white border border-white/5">{calcDisplay}</div>
+                        <div className="grid grid-cols-4 gap-2 flex-1 max-h-[300px]">
+                           {['C','/','*','-','7','8','9','+','4','5','6','='].map(btn => (
+                             <button 
+                               key={btn} 
+                               onClick={() => handleCalc(btn)} 
+                               className={`rounded-xl text-[10px] font-black ${btn === '=' ? 'bg-amber-500 text-white' : 'bg-white/5 text-neutral-500 hover:text-white'}`}
+                             >
+                                {btn}
+                             </button>
+                           ))}
+                        </div>
+                     </div>
+                     
+                     {/* RICH TEXT EDITOR */}
+                     <div className="flex-1 bg-[#121417] rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-white/5">
+                        <div className="px-6 py-3.5 border-b border-white/5 flex gap-4 bg-black/30">
+                           <button onMouseDown={(e) => formatText('bold', null, e)} className="p-2 text-neutral-500 hover:text-white transition-colors"><Bold size={16}/></button>
+                           <button onMouseDown={(e) => formatText('insertUnorderedList', null, e)} className="p-2 text-neutral-500 hover:text-white transition-colors"><List size={16}/></button>
+                        </div>
+                        <div 
+                          ref={editorRef} 
+                          contentEditable="true" 
+                          suppressContentEditableWarning={true} 
+                          className="flex-1 p-10 text-white font-medium text-lg leading-relaxed outline-none mac-scrollbar overflow-y-auto" 
+                          dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} 
+                        />
+                     </div>
+                  </div>
+               </div>
+             )}
+
+          </div>
+        )}
+
+        {/* PESTAÑA: EDICIÓN DE VIDEO WORKSPACE (Apple Notes Clone & Timer) */}
+        {activeTab === 'edicion' && (
+          <div className="h-full overflow-y-auto max-w-[1700px] mx-auto w-full p-10 space-y-8 animate-in fade-in duration-500">
+             
+             {viewState === 'recent-meetings' && (
+               <div className="space-y-8">
+                  <header className="space-y-1">
+                     <p className="text-[9px] text-[#8b5cf6] font-black uppercase tracking-[0.6em]">Production Grid</p>
+                     <h2 className="text-5xl font-black text-white uppercase tracking-tighter leading-none">Edición de Video</h2>
+                  </header>
+
+                  <div className="py-16 text-center border-2 border-dashed border-white/5 rounded-[2.5rem] space-y-6">
+                     <div className="w-16 h-16 bg-[#8b5cf6]/5 border border-[#8b5cf6]/20 text-[#8b5cf6] rounded-3xl flex items-center justify-center mx-auto">
+                        <Video size={28}/>
+                     </div>
+                     <div className="space-y-2 max-w-md mx-auto">
+                        <h4 className="text-lg font-black uppercase tracking-tight">Estación de Trabajo Inactiva</h4>
+                        <p className="text-neutral-500 text-xs leading-relaxed">Para iniciar o continuar una edición de video, ve a la pestaña **Clientes**, abre el perfil de un socio y presiona **Iniciar Producción** o selecciona una sesión existente.</p>
+                     </div>
+                     <button 
+                       onClick={() => { setActiveTab('clientes'); setViewState('client-list'); }}
+                       className="px-6 py-3.5 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-[#8b5cf6]/20"
+                     >
+                        Ir a Clientes
+                     </button>
+                  </div>
+               </div>
+             )}
+
+             {viewState === 'session' && activeMeeting && (
+               <div className="flex flex-col h-[calc(100vh-14rem)] overflow-hidden animate-in fade-in duration-500">
+                  <header className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-black/40 rounded-t-3xl">
+                     <div className="flex items-center gap-5">
+                        <button 
+                          onClick={() => { 
+                            setActiveTab('clientes'); 
+                            setViewState('client-profile'); 
+                          }} 
+                          className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center text-neutral-600 hover:text-[#10b981] transition-all"
+                        >
+                           <ArrowLeft size={16}/>
+                        </button>
+                        <div className="flex flex-col">
+                           <span className="text-xs text-neutral-500 font-bold uppercase tracking-widest leading-none">Sesión Activa</span>
+                           <h3 className="text-base font-black text-white uppercase tracking-tight mt-1 leading-none">{activeMeeting.session_title}</h3>
+                        </div>
+                     </div>
+                     <div className="flex items-center gap-4">
+                        <div className="bg-[#080808] border border-white/5 rounded-xl px-4 py-2 flex items-center gap-4 text-lg font-mono font-black text-white">
+                           {formatTime(time)}
+                           <button 
+                             onClick={() => setIsTimerRunning(!isTimerRunning)} 
+                             className="w-7 h-7 rounded-lg bg-[#8b5cf6] text-white flex items-center justify-center"
+                           >
+                              {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
+                           </button>
+                        </div>
+                        <button 
+                          onClick={saveMeeting} 
+                          className="px-6 py-3.5 bg-[#10b981] text-white hover:bg-[#059669] text-[10px] font-black rounded-xl uppercase tracking-widest transition-all shadow-xl shadow-[#10b981]/15"
+                        >
+                           <Save size={14}/> Finalizar
+                        </button>
+                     </div>
+                  </header>
+
+                  <div className="flex-1 flex p-4 gap-4 overflow-hidden bg-black/20 rounded-b-3xl border-x border-b border-white/5">
+                     {/* CALC SIDE PANEL */}
+                     <div className="w-[280px] flex flex-col gap-4">
+                        <div className="bg-[#121417] p-5 rounded-2xl shadow-xl text-right text-2xl font-mono font-black text-white border border-white/5">{calcDisplay}</div>
+                        <div className="grid grid-cols-4 gap-2 flex-1 max-h-[280px]">
+                           {['C','/','*','-','7','8','9','+','4','5','6','='].map(btn => (
+                             <button 
+                               key={btn} 
+                               onClick={() => handleCalc(btn)} 
+                               className={`rounded-xl text-[10px] font-black ${btn === '=' ? 'bg-[#8b5cf6] text-white' : 'bg-white/5 text-neutral-500 hover:text-white'}`}
+                             >
+                                {btn}
+                             </button>
+                           ))}
+                        </div>
+
+                        {/* IA WRITING ASSISTANT CARD */}
+                        <div className="p-5 bg-[#8b5cf6]/5 border border-[#8b5cf6]/15 rounded-2xl flex flex-col gap-3">
+                           <div className="flex items-center gap-2 text-[#8b5cf6]">
+                              <Sparkles size={16} className="animate-spin duration-300"/>
+                              <span className="text-[9px] font-black uppercase tracking-widest">Asistente IA</span>
+                           </div>
+                           <p className="text-[8px] text-neutral-500 font-medium leading-relaxed">Genera guiones de video profesionales o expande tus ideas usando inteligencia artificial integrada.</p>
+                           <button 
+                             onClick={() => setShowAIModal(true)}
+                             className="w-full py-3 bg-[#8b5cf6] text-white rounded-xl text-[8px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-lg shadow-[#8b5cf6]/10"
+                           >
+                              Lanzar Script IA
+                           </button>
+                        </div>
+                     </div>
+
+                     {/* RICH TEXT EDITOR */}
+                     <div className="flex-1 bg-[#121417] rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-white/5">
+                        <div className="px-6 py-3.5 border-b border-white/5 flex gap-4 bg-black/30">
+                           <button onMouseDown={(e) => formatText('bold', null, e)} className="p-2 text-neutral-500 hover:text-white transition-colors"><Bold size={16}/></button>
+                           <button onMouseDown={(e) => formatText('insertUnorderedList', null, e)} className="p-2 text-neutral-500 hover:text-white transition-colors"><List size={16}/></button>
+                        </div>
+                        <div 
+                          ref={editorRef} 
+                          contentEditable="true" 
+                          suppressContentEditableWarning={true} 
+                          className="flex-1 p-10 text-white font-medium text-lg leading-relaxed outline-none mac-scrollbar overflow-y-auto max-w-[900px] mx-auto prose prose-invert" 
+                          dangerouslySetInnerHTML={{ __html: editorContent }} 
+                        />
+                     </div>
+                  </div>
+               </div>
+             )}
+
+          </div>
+        )}
+
+      </div>
+
+      {/* MODALES FLOTANTES */}
       {isClientModalOpen && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/95 backdrop-blur-xl p-8 animate-in zoom-in duration-300">
-           <div className={`${colors.card} border-t-4 border-t-[#10b981] rounded-[3rem] w-full max-w-xl p-12 space-y-8 shadow-2xl`}>
+        <div className="fixed inset-0 z-[600] flex items-center justify-center bg-black/90 backdrop-blur-xl p-8 animate-in zoom-in duration-300">
+           <div className="bg-[#121417] border border-white/5 rounded-[3rem] w-full max-w-xl p-12 space-y-8 shadow-2xl relative overflow-hidden">
                 <h3 className="text-3xl font-black text-white uppercase">Sovereign <span className="text-[#10b981]">Nexus</span></h3>
-                <div className="space-y-4"><input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Nombre..." className={`w-full ${colors.input} rounded-2xl p-6 text-lg outline-none`} /><input type="email" value={newClient.email} onChange={e=>setNewClient({...newClient, email: e.target.value})} placeholder="Email..." className={`w-full ${colors.input} rounded-2xl p-6 text-lg outline-none`} /></div>
-                <div className="flex gap-4"><button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-6 text-neutral-600 font-black uppercase text-[10px]">Cerrar</button><button onClick={handleCreateClient} className="flex-[2] py-6 bg-[#10b981] text-white rounded-2xl font-black uppercase text-[10px] shadow-lg">Guardar</button></div>
+                <div className="space-y-4">
+                   <input 
+                     type="text" 
+                     value={newClient.nombre} 
+                     onChange={e=>setNewClient({...newClient, nombre: e.target.value})} 
+                     placeholder="Nombre Completo..." 
+                     className="w-full bg-[#0d0f12] border border-white/5 rounded-2xl p-6 text-sm text-white outline-none font-bold placeholder-neutral-600 focus:border-[#10b981]/30 transition-all uppercase tracking-wider" 
+                   />
+                   <input 
+                     type="email" 
+                     value={newClient.email} 
+                     onChange={e=>setNewClient({...newClient, email: e.target.value})} 
+                     placeholder="Dirección Email..." 
+                     className="w-full bg-[#0d0f12] border border-white/5 rounded-2xl p-6 text-sm text-white outline-none font-bold placeholder-neutral-600 focus:border-[#10b981]/30 transition-all uppercase tracking-wider" 
+                   />
+                </div>
+                <div className="flex gap-4">
+                   <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-5 text-neutral-600 hover:text-white font-black uppercase text-[10px] tracking-widest">Cerrar</button>
+                   <button onClick={handleCreateClient} className="flex-[2] py-5 bg-[#10b981] hover:bg-[#059669] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg">Guardar Socio</button>
+                </div>
+                <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#10b981]/5 rounded-full blur-[80px]"></div>
            </div>
         </div>
       )}
 
       {isCompanyModalOpen && (
-        <div className="fixed inset-0 z-[800] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-8 animate-in zoom-in duration-300">
-           <div className="bg-[#121418] border-t-4 border-t-amber-500 rounded-[3rem] w-full max-w-xl p-12 space-y-8 shadow-2xl">
+        <div className="fixed inset-0 z-[800] flex items-center justify-center bg-black/90 backdrop-blur-xl p-8 animate-in zoom-in duration-300">
+           <div className="bg-[#121417] border border-white/5 rounded-[3rem] w-full max-w-xl p-12 space-y-8 shadow-2xl relative overflow-hidden">
                 <h3 className="text-3xl font-black text-white uppercase">Sovereign <span className="text-amber-500">Agency</span></h3>
-                <div className="space-y-4"><input type="text" value={newCompany.nombre_empresa} onChange={e=>setNewCompany({...newCompany, nombre_empresa: e.target.value})} placeholder="Empresa..." className="w-full bg-[#0d0f12] border border-white/5 rounded-2xl p-6 text-lg text-white outline-none" /><input type="text" value={newCompany.dueño} onChange={e=>setNewCompany({...newCompany, dueño: e.target.value})} placeholder="Socio..." className="w-full bg-[#0d0f12] border border-white/5 rounded-2xl p-6 text-lg text-white outline-none" /></div>
-                <div className="flex gap-4"><button onClick={() => setIsCompanyModalOpen(false)} className="flex-1 py-6 text-neutral-600 font-black uppercase text-[10px]">Cerrar</button><button onClick={handleCreateAgencyClient} className="flex-[2] py-6 bg-amber-500 text-white rounded-2xl font-black uppercase text-[10px] shadow-lg">Lanzar</button></div>
+                <div className="space-y-4">
+                   <input 
+                     type="text" 
+                     value={newCompany.nombre_empresa} 
+                     onChange={e=>setNewCompany({...newCompany, nombre_empresa: e.target.value})} 
+                     placeholder="Nombre Empresa..." 
+                     className="w-full bg-[#0d0f12] border border-white/5 rounded-2xl p-6 text-sm text-white outline-none font-bold placeholder-neutral-600 focus:border-amber-500/30 transition-all uppercase tracking-wider" 
+                   />
+                   <input 
+                     type="text" 
+                     value={newCompany.dueño} 
+                     onChange={e=>setNewCompany({...newCompany, dueño: e.target.value})} 
+                     placeholder="Dueño/Socio Lead..." 
+                     className="w-full bg-[#0d0f12] border border-white/5 rounded-2xl p-6 text-sm text-white outline-none font-bold placeholder-neutral-600 focus:border-amber-500/30 transition-all uppercase tracking-wider" 
+                   />
+                </div>
+                <div className="flex gap-4">
+                   <button onClick={() => setIsCompanyModalOpen(false)} className="flex-1 py-5 text-neutral-600 hover:text-white font-black uppercase text-[10px] tracking-widest">Cerrar</button>
+                   <button onClick={handleCreateAgencyClient} className="flex-[2] py-5 bg-amber-500 hover:bg-amber-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg">Lanzar Proyecto</button>
+                </div>
+                <div className="absolute -top-10 -right-10 w-48 h-48 bg-amber-500/5 rounded-full blur-[80px]"></div>
            </div>
         </div>
       )}
+
+      {showAIModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/95 backdrop-blur-2xl p-8 animate-in zoom-in duration-300">
+           <div className="bg-[#121417] border border-white/5 rounded-[3rem] w-full max-w-xl p-12 space-y-8 shadow-2xl relative overflow-hidden">
+                <div className="flex items-center gap-3">
+                   <Sparkles size={24} className="text-[#8b5cf6] animate-pulse"/>
+                   <h3 className="text-3xl font-black text-white uppercase">IA Script <span className="text-[#8b5cf6]">Vanguard</span></h3>
+                </div>
+                <div className="space-y-4">
+                   <textarea 
+                     value={aiPrompt} 
+                     onChange={e => setAiPrompt(e.target.value)} 
+                     placeholder="Describe el guión o contenido que deseas generar con inteligencia artificial..." 
+                     className="w-full bg-[#0d0f12] border border-white/5 rounded-2xl p-6 text-sm text-white outline-none font-medium h-48 focus:border-[#8b5cf6]/30 transition-all placeholder-neutral-700 leading-relaxed"
+                   />
+                </div>
+                <div className="flex gap-4">
+                   <button 
+                     onClick={() => setShowAIModal(false)} 
+                     className="flex-1 py-5 text-neutral-600 hover:text-white font-black uppercase text-[10px] tracking-widest"
+                   >
+                      Cancelar
+                   </button>
+                   <button 
+                     onClick={handleAISuggestion} 
+                     disabled={aiLoading} 
+                     className="flex-[2] py-5 bg-[#8b5cf6] text-white hover:bg-[#7c3aed] rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg flex items-center justify-center gap-3"
+                   >
+                      {aiLoading ? <RefreshCw size={14} className="animate-spin"/> : <Sparkles size={14}/>} 
+                      {aiLoading ? 'Generando...' : 'Generar Contenido'}
+                   </button>
+                </div>
+                <div className="absolute -top-10 -right-10 w-48 h-48 bg-[#8b5cf6]/5 rounded-full blur-[80px]"></div>
+           </div>
+        </div>
+      )}
+
     </div>
   );
 };
+
 export default MeetingStudio;
