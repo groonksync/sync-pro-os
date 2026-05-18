@@ -10,10 +10,13 @@ import Inventario from './views/Inventario';
 import Ajustes from './views/Ajustes';
 import DriveSovereign from './views/DriveSovereign';
 import GoogleCalendar from './views/GoogleCalendar';
+import Recordatorios from './views/Recordatorios';
+import Notas from './views/Notas';
+import BovedaSoberana from './views/BovedaSoberana';
 import TrashView from './views/TrashView';
+import SovereignAgent from './views/SovereignAgent';
 import ClientPortal from './views/ClientPortal';
 import PublicCatalog from './views/PublicCatalog';
-import Notas from './views/Notas';
 import BovedaPass from './views/BovedaPass';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { supabase } from './lib/supabaseClient';
@@ -78,16 +81,29 @@ const App = () => {
     prestamos: [],
     proyectos: [],
     ventas: [],
-    pagos: []
+    pagos: [],
+    productos: [],
+    recordatorios: []
   });
 
-  const [appSettings, setAppSettings] = useState({
-    accentColor: '#ffffff',
-    isMobileMode: false,
-    interfaceDensity: 'normal',
-    currencyRates: { USD: 10.50, EUR: 11.20, BRL: 2.10 },
-    studioName: 'Sync Pro Studio'
+  const [appSettings, setAppSettings] = useState(() => {
+    const saved = localStorage.getItem('sovereign_settings');
+    const defaults = {
+      accentColor: '#ffffff',
+      isMobileMode: false,
+      interfaceDensity: 'normal',
+      currencyRates: { USD: 10.50, EUR: 11.20, BRL: 2.10 },
+      studioName: 'Sync Pro Studio',
+      aiProvider: 'gemini',
+      geminiKey: '',
+      deepseekKey: ''
+    };
+    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
   });
+
+  useEffect(() => {
+    localStorage.setItem('sovereign_settings', JSON.stringify(appSettings));
+  }, [appSettings]);
 
   const fetchData = async () => {
     try {
@@ -99,6 +115,12 @@ const App = () => {
 
       const { data: serviciosData } = await supabase.from('servicios').select('*');
       if (serviciosData) setServicios(serviciosData);
+
+      const { data: productosData } = await supabase.from('productos').select('*').order('created_at', { ascending: false });
+      if (productosData) setData(prev => ({ ...prev, productos: productosData }));
+
+      const { data: recordatoriosData } = await supabase.from('recordatorios').select('*').order('created_at', { ascending: false });
+      if (recordatoriosData) setData(prev => ({ ...prev, recordatorios: recordatoriosData }));
     } catch (e) {
       console.error("Error crítico de datos:", e);
     }
@@ -108,9 +130,7 @@ const App = () => {
     fetchData();
     // DETECCIÓN AUTOMÁTICA DE DISPOSITIVOS MÓVILES
     const checkMobile = () => {
-      if (window.innerWidth < 1024) {
-        setAppSettings(prev => ({ ...prev, isMobileMode: true }));
-      }
+      setAppSettings(prev => ({ ...prev, isMobileMode: window.innerWidth < 1024 }));
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -212,13 +232,13 @@ const App = () => {
           />
         );
         case 'notificaciones': return <Notifications data={data} isDark={isDarkMode} />;
-        case 'pagos': return <Pagos isDark={isDarkMode} />;
+        case 'pagos': return <Pagos isDark={isDarkMode} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} />;
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} />;
+        case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} />;
+        case 'notas': return <Notas isDark={isDarkMode} />;
+        case 'boveda': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;
         case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} />;
-        case 'recordatorios': return <Notifications data={data} />;
         case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} />;
-        case 'notas': return <Notas settings={appSettings} isDark={isDarkMode} />;
-        case 'boveda-pass': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;
         case 'papelera': return <TrashView settings={appSettings} />;
         case 'configuracion': return (
           <Ajustes 
@@ -252,12 +272,12 @@ const App = () => {
 
   // EFECTO DE TEMA GLOBAL
   useEffect(() => {
-    document.body.style.backgroundColor = isDarkMode ? '#050505' : '#f8f9fa';
+    document.body.style.backgroundColor = isDarkMode ? '#121212' : '#f8f9fa';
   }, [isDarkMode]);
 
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
-      <div className={`flex h-screen w-full ${isDarkMode ? 'bg-[#050505] text-white' : 'bg-neutral-50 text-neutral-900'} font-sans selection:bg-emerald-500 selection:text-black overflow-hidden transition-colors duration-500 ${appSettings.interfaceDensity}`}>
+      <div className={`flex h-screen w-full ${isDarkMode ? 'bg-[#121212] text-white' : 'bg-neutral-50 text-neutral-900'} font-sans selection:bg-emerald-500 selection:text-black overflow-hidden transition-colors duration-500 ${appSettings.interfaceDensity}`}>
         <Sidebar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 
@@ -275,11 +295,19 @@ const App = () => {
         />
         
         <main className={`flex-1 h-full overflow-y-auto mac-scrollbar relative transition-all duration-700 ease-in-out ${appSettings.isMobileMode ? 'pb-24' : ''}`}>
-          <div className={`absolute top-0 inset-x-0 h-64 bg-gradient-to-b ${isDarkMode ? 'from-white/[0.02]' : 'from-black/[0.02]'} to-transparent pointer-events-none`}></div>
-          <div className={`w-full relative z-10 flex flex-col min-h-full max-w-[2000px] mx-auto transition-all ${appSettings.isMobileMode ? 'px-4 py-4' : 'px-6 py-8 lg:px-16 lg:py-12'}`}>
+          <div className={`w-full relative z-10 flex flex-col min-h-full max-w-[2000px] mx-auto transition-all ${activeTab === 'notas' ? '' : (appSettings.isMobileMode ? 'px-4 py-4' : 'px-6 py-8 lg:px-16 lg:py-12')}`}>
             {renderSafeContent()}
           </div>
         </main>
+        
+        {/* AGENTE GLOBAL FLOTANTE */}
+        <SovereignAgent 
+          isDark={isDarkMode} 
+          currentView={activeTab}
+          settings={appSettings}
+          setSettings={setAppSettings}
+          onRefresh={fetchData}
+        />
       </div>
     </GoogleOAuthProvider>
   );

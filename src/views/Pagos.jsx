@@ -5,19 +5,17 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
-const Pagos = () => {
-  const [servicios, setServicios] = useState([]);
+const Pagos = ({ servicios = [], onRefresh }) => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [activeService, setActiveService] = useState(null);
 
   useEffect(() => {
-    fetchServicios();
+    if (onRefresh) onRefresh();
   }, []);
 
-  const fetchServicios = async () => {
-    const { data, error } = await supabase.from('servicios').select('*').order('fecha_pago', { ascending: true });
-    if (data) setServicios(data);
+  const fetchServicios = () => {
+    if (onRefresh) onRefresh();
   };
 
   const openNew = () => {
@@ -59,11 +57,11 @@ const Pagos = () => {
     <div className="flex flex-col h-full max-w-[1200px] w-full animate-in fade-in duration-500">
       <header className="mb-8 flex justify-between items-center">
         <div>
-          <h2 className="text-3xl font-light text-white tracking-tight">Gestión de <span className="text-neutral-400 font-medium">Pagos y Servicios</span></h2>
+          <h2 className="text-3xl font-light text-white tracking-tight">Gestión de <span className="text-neutral-400 font-medium">Egresos</span></h2>
           <p className="text-[11px] text-neutral-500 uppercase tracking-widest mt-1">Control de gastos personales y suscripciones digitales</p>
         </div>
         <button onClick={openNew} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-lg border border-white/10 transition-all flex items-center gap-2">
-          <Plus size={16} /> Registrar Servicio
+          <Plus size={16} /> Registrar Egreso
         </button>
       </header>
 
@@ -105,13 +103,13 @@ const Pagos = () => {
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#0f0f0f] border border-white/10 w-full max-w-[500px] rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-white">Configurar Servicio</h3>
+              <h3 className="text-xl font-bold text-white">Configurar Egreso</h3>
               <button onClick={() => setIsEditing(false)} className="text-neutral-500 hover:text-white transition-colors"><X size={20}/></button>
             </div>
 
             <div className="space-y-5">
               <div>
-                <label className="text-[10px] font-bold text-neutral-500 uppercase mb-2 block tracking-widest">Nombre del Servicio</label>
+                <label className="text-[10px] font-bold text-neutral-500 uppercase mb-2 block tracking-widest">Nombre del Egreso</label>
                 <input 
                   type="text" 
                   value={activeService.nombre} 
@@ -185,7 +183,7 @@ const Pagos = () => {
                 disabled={loading}
                 className="w-full py-4 bg-white text-black font-bold rounded-2xl hover:bg-neutral-200 transition-all flex items-center justify-center gap-2"
               >
-                <Save size={18} /> {loading ? 'Guardando...' : 'Guardar Servicio'}
+                <Save size={18} /> {loading ? 'Guardando...' : 'Guardar Egreso'}
               </button>
             </div>
           </div>

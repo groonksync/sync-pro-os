@@ -96,7 +96,7 @@ export default function DriveSovereign({ token, user, onLoginSuccess }) {
   );
 
   return (
-    <div className="flex flex-col h-full w-full animate-in fade-in duration-500 relative"
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-500 relative bg-[#121212]"
       onDragOver={e => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
@@ -116,49 +116,50 @@ export default function DriveSovereign({ token, user, onLoginSuccess }) {
       )}
 
       {/* HEADER */}
-      <header className="mb-6 flex justify-between items-center border-b border-white/5 pb-6">
+      <header className="mb-10 flex justify-between items-center border-b border-white/5 pb-10">
         <div>
           <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-white/5 rounded-xl"><Cloud size={18} className="text-blue-400"/></div>
-            <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Drive <span className="text-neutral-700">Pro</span></h2>
+            <div className="p-2 bg-[#1a1a1a] rounded-xl border border-white/5"><Cloud size={18} className="text-blue-500"/></div>
+            <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Drive <span className="text-neutral-700">Sovereign</span></h2>
           </div>
           {/* BREADCRUMB */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {breadcrumb.map((b, i) => (
               <React.Fragment key={i}>
-                <button onClick={() => { if (i < breadcrumb.length-1) { setFolder(b); setHistory(breadcrumb.slice(0,i)); }}} className={`text-[9px] font-black uppercase tracking-widest transition-colors ${i === breadcrumb.length-1 ? 'text-white' : 'text-neutral-600 hover:text-neutral-300'}`}>{b.name}</button>
-                {i < breadcrumb.length-1 && <ChevronRight size={10} className="text-neutral-700"/>}
+                <button onClick={() => { if (i < breadcrumb.length-1) { setFolder(b); setHistory(breadcrumb.slice(0,i)); }}} className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${i === breadcrumb.length-1 ? 'text-blue-500' : 'text-neutral-600 hover:text-neutral-300'}`}>{b.name}</button>
+                {i < breadcrumb.length-1 && <ChevronRight size={10} className="text-neutral-800"/>}
               </React.Fragment>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {/* SEARCH */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-600" size={13}/>
-            <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} className="bg-white/5 border border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-[10px] text-white outline-none focus:border-white/20 w-52"/>
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={14}/>
+            <input type="text" placeholder="FILTRAR BÓVEDA..." value={search} onChange={e => setSearch(e.target.value)} className="bg-[#1a1a1a] border border-white/5 rounded-2xl py-3 pl-12 pr-6 text-[10px] font-black uppercase tracking-widest text-white outline-none focus:border-blue-500/30 w-64 transition-all"/>
           </div>
 
           {/* VIEW TOGGLE */}
-          <div className="flex bg-white/5 rounded-xl border border-white/5 p-1">
+          <div className="flex bg-[#1a1a1a] rounded-2xl border border-white/5 p-1">
             {[['grid', Grid],['list', List],['detail', AlignJustify]].map(([v, Icon]) => (
-              <button key={v} onClick={() => setView(v)} className={`p-2 rounded-lg transition-all ${view===v ? 'bg-white/10 text-white' : 'text-neutral-600 hover:text-neutral-400'}`}><Icon size={14}/></button>
+              <button key={v} onClick={() => setView(v)} className={`p-2.5 rounded-xl transition-all ${view===v ? 'bg-blue-500 text-white shadow-lg' : 'text-neutral-600 hover:text-neutral-400'}`}><Icon size={14}/></button>
             ))}
           </div>
 
+          <div className="h-8 w-px bg-white/10 mx-2"></div>
+
           {/* ACTIONS */}
-          <button onClick={() => setNewFolderMode(true)} className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black uppercase text-neutral-300 hover:bg-white/10 transition-all">
-            <FolderPlus size={15}/> Carpeta
+          <button onClick={() => setNewFolderMode(true)} className="flex items-center gap-3 px-6 py-3 bg-[#1a1a1a] border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-neutral-300 hover:bg-white/5 transition-all">
+            <FolderPlus size={16}/> Carpeta
           </button>
-          <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 rounded-xl text-[10px] font-black uppercase text-white hover:bg-blue-500 transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)]">
-            <Upload size={15}/> Subir
+          <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-3 px-8 py-3 bg-blue-600 rounded-2xl text-[9px] font-black uppercase tracking-widest text-white hover:bg-blue-500 transition-all shadow-xl">
+            <Upload size={16}/> Subir
           </button>
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={e => handleUpload(e.target.files)}/>
-          <button onClick={() => load()} className="p-2.5 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 text-neutral-500">
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''}/>
+          <button onClick={() => load()} className="p-3 bg-[#1a1a1a] rounded-2xl border border-white/5 hover:bg-white/5 text-neutral-500 transition-all">
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>
           </button>
-          {history.length > 0 && <button onClick={goBack} className="p-2.5 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 text-neutral-500"><ArrowLeft size={15}/></button>}
         </div>
       </header>
 
@@ -199,13 +200,13 @@ export default function DriveSovereign({ token, user, onLoginSuccess }) {
               {filtered.map(f => (
                 <div key={f.id} onDoubleClick={() => f.mimeType === 'application/vnd.google-apps.folder' ? navigate({id:f.id,name:f.name}) : setSelected(f)}
                   onClick={() => setSelected(f)}
-                  className={`bg-[#0a0a0a] border rounded-2xl p-4 hover:border-white/20 transition-all group cursor-pointer relative ${selected?.id===f.id ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/[0.04]'}`}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="p-3 bg-black rounded-xl border border-white/5 group-hover:scale-110 transition-transform duration-300">{ICON(f.mimeType)}</div>
-                    <button onClick={e => { e.stopPropagation(); setMenuFile(menuFile?.id===f.id ? null : f); }} className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-white/10 rounded-lg text-neutral-600 hover:text-white transition-all"><MoreVertical size={13}/></button>
+                  className={`bg-[#1a1a1a] border rounded-[2rem] p-6 hover:border-blue-500/30 transition-all group cursor-pointer relative ${selected?.id===f.id ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/5 shadow-2xl'}`}>
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="p-4 bg-black/40 rounded-2xl border border-white/5 group-hover:scale-110 transition-transform duration-500 shadow-inner">{ICON(f.mimeType, 28)}</div>
+                    <button onClick={e => { e.stopPropagation(); setMenuFile(menuFile?.id===f.id ? null : f); }} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/5 rounded-xl text-neutral-600 hover:text-white transition-all"><MoreVertical size={16}/></button>
                   </div>
-                  <p className="text-[11px] font-bold text-white truncate mb-1">{f.name}</p>
-                  <p className="text-[9px] text-neutral-700">{fmtSize(f.size)}</p>
+                  <p className="text-[12px] font-black text-white uppercase tracking-widest truncate mb-1">{f.name}</p>
+                  <p className="text-[9px] text-neutral-600 font-bold uppercase">{fmtSize(f.size)}</p>
                   {menuFile?.id === f.id && (
                     <div className="absolute top-2 right-8 z-30 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-1.5 min-w-[140px]">
                       {f.mimeType !== 'application/vnd.google-apps.folder' && <button onClick={e=>{e.stopPropagation();handleDownload(f);setMenuFile(null);}} className="w-full flex items-center gap-2 px-3 py-2 text-[10px] text-neutral-300 hover:bg-white/5 rounded-lg"><Download size={12}/>Descargar</button>}

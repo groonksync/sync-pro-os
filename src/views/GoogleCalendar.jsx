@@ -139,45 +139,46 @@ const GoogleCalendar = ({ token, user }) => {
   };
 
   return (
-    <div className="flex-1 h-full flex flex-col bg-[#030303] text-neutral-200 overflow-hidden font-sans">
+    <div className="flex-1 h-full flex flex-col bg-[#121212] text-neutral-200 overflow-hidden font-sans">
       
       {/* HEADER EXECUTIVE */}
-      <header className="h-16 flex items-center justify-between px-6 border-b border-white/10 bg-black">
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-3">
-             <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-                <CalendarIcon className="text-white" size={18}/>
+      <header className="h-20 flex items-center justify-between px-10 border-b border-white/5 bg-[#121212]">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4">
+             <div className="w-10 h-10 bg-[#1a1a1a] rounded-2xl flex items-center justify-center border border-white/5 shadow-xl">
+                <CalendarIcon className="text-blue-500" size={20}/>
              </div>
              <div>
-                <h2 className="text-sm font-black uppercase tracking-tighter text-white">Sovereign Scheduler</h2>
-                <div className="flex items-center gap-1.5">
+                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">Sovereign <span className="text-neutral-600">Scheduler</span></h2>
+                <div className="flex items-center gap-2 mt-1">
                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                   <p className="text-[8px] text-neutral-500 font-black uppercase tracking-[0.2em]">Real-time Google Sync</p>
+                   <p className="text-[7px] text-emerald-500 font-black uppercase tracking-[0.3em]">Real-time Google Sync</p>
                 </div>
              </div>
           </div>
           
-          <div className="flex items-center gap-1 ml-4 bg-white/5 p-1 rounded-lg border border-white/5">
-            <button onClick={() => setCurrentDate(new Date())} className="px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest hover:bg-white/10 text-white transition-all">Hoy</button>
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-2 hover:bg-white/10 rounded-lg text-neutral-400"><ChevronLeft size={16}/></button>
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-2 hover:bg-white/10 rounded-lg text-neutral-400"><ChevronRight size={16}/></button>
-            <span className="text-sm font-bold ml-4 mr-4 text-white uppercase tracking-widest">
+          <div className="flex items-center gap-1 ml-6 bg-black/40 p-1.5 rounded-2xl border border-white/5 shadow-inner">
+            <button onClick={() => setCurrentDate(new Date())} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/5 text-white transition-all">Hoy</button>
+            <div className="w-px h-4 bg-white/10 mx-2"></div>
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-2 hover:bg-white/5 rounded-lg text-neutral-400 transition-all"><ChevronLeft size={16}/></button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-2 hover:bg-white/5 rounded-lg text-neutral-400 transition-all"><ChevronRight size={16}/></button>
+            <span className="text-xs font-black mx-4 text-white uppercase tracking-[0.2em] min-w-[140px] text-center">
               {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-           <button onClick={loadInitialData} className="p-2.5 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 text-neutral-400 transition-all">
+        <div className="flex items-center gap-6">
+           <button onClick={loadInitialData} className="p-3 bg-[#1a1a1a] rounded-2xl border border-white/5 hover:bg-white/5 text-neutral-400 transition-all shadow-xl">
               <RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>
            </button>
-           <div className="h-8 w-px bg-white/10"></div>
-           <div className="flex items-center gap-3">
+           <div className="h-10 w-px bg-white/10"></div>
+           <div className="flex items-center gap-4">
               <div className="text-right">
-                 <p className="text-[9px] font-black text-white uppercase tracking-widest">{user?.name || 'Director'}</p>
-                 <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-widest">Sovereign OS</p>
+                 <p className="text-[10px] font-black text-white uppercase tracking-widest">{user?.name || 'Director'}</p>
+                 <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Master Node</p>
               </div>
-              <div className="w-9 h-9 rounded-xl bg-blue-600 border border-blue-400/30 flex items-center justify-center text-white font-black text-sm">
+              <div className="w-10 h-10 rounded-2xl bg-[#1a1a1a] border border-white/5 flex items-center justify-center text-white font-black text-sm shadow-xl">
                  {user?.name?.charAt(0) || 'G'}
               </div>
            </div>
@@ -187,9 +188,9 @@ const GoogleCalendar = ({ token, user }) => {
       <div className="flex-1 flex overflow-hidden">
         
         {/* PANEL IZQUIERDO: PRODUCTIVIDAD */}
-        <aside className="w-64 flex flex-col p-6 border-r border-white/5 bg-[#050505]">
-           <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center justify-center gap-3 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(37,99,235,0.3)] hover:bg-blue-500 transition-all mb-8 active:scale-95">
-              <Plus size={18}/> Nuevo Evento
+        <aside className="w-72 flex flex-col p-8 border-r border-white/5 bg-[#121212]">
+           <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center justify-center gap-4 py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-blue-500 transition-all mb-10 active:scale-95">
+              <Plus size={20} strokeWidth={3}/> Nuevo Evento
            </button>
 
            <div className="space-y-8">
@@ -223,7 +224,7 @@ const GoogleCalendar = ({ token, user }) => {
         </aside>
 
         {/* MAIN CALENDAR GRID */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-[#030303]">
+        <main className="flex-1 flex flex-col overflow-hidden bg-[#121212]">
           <div className="grid grid-cols-7 h-12 border-b border-white/5 bg-black/40">
             {['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map(day => (
               <div key={day} className="flex items-center justify-center text-[10px] font-black text-neutral-500 tracking-[0.25em]">{day}</div>
@@ -240,7 +241,7 @@ const GoogleCalendar = ({ token, user }) => {
         </main>
 
         {/* PANEL DERECHO: FILTROS (CALENDARIOS) */}
-        <aside className="w-72 flex flex-col p-6 border-l border-white/5 bg-[#050505] overflow-y-auto mac-scrollbar">
+        <aside className="w-72 flex flex-col p-6 border-l border-white/5 bg-[#121212] overflow-y-auto mac-scrollbar">
            <h3 className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-2"><Filter size={14} className="text-blue-500"/> Capas de Tiempo</h3>
            <div className="space-y-2">
               {calendarList.length === 0 && <p className="text-[9px] text-neutral-700 font-bold uppercase italic text-center py-4">No se detectaron capas de calendario.</p>}

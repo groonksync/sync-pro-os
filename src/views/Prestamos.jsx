@@ -86,6 +86,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 <thead>
                   <tr className={`${isDark ? 'bg-black/60 border-white/5' : 'bg-neutral-50 border-neutral-100'} border-b`}>
                     <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Acreditado</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest text-center">Periodo (Inicio/Fin)</th>
                     <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Capital</th>
                     <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Interés</th>
                     <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest text-right">Acción</th>
@@ -97,12 +98,26 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-4">
                           <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-white/5 text-neutral-400' : 'bg-neutral-100 text-neutral-500'} flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all`}><User size={18} /></div>
-                          <div><p className={`text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-tight`}>{p.nombre || 'Sin Nombre'}</p><p className="text-[10px] text-neutral-500 mt-1 uppercase font-black tracking-widest">{p.estado}</p></div>
+                          <div>
+                            <p className={`text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-tight`}>{p.nombre || 'Sin Nombre'}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                               <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${p.estado === 'Finalizado' ? 'bg-emerald-500/10 text-emerald-500' : p.estado === 'En Mora' ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}`}>
+                                 {p.estado || 'Activo'}
+                               </span>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-8 py-5 text-center">
+                        <div className="inline-flex flex-col items-center">
+                           <span className="text-[10px] font-mono text-neutral-500 font-bold">{p.inicio || '---'}</span>
+                           <ArrowRight size={10} className="text-neutral-800 my-1"/>
+                           <span className="text-[10px] font-mono text-rose-500 font-bold">{p.fin || '---'}</span>
                         </div>
                       </td>
                       <td className="px-8 py-5"><p className={`text-base font-mono font-black ${isDark ? 'text-white' : 'text-neutral-900'}`}>{parseFloat(p.capital).toLocaleString()} <span className="text-[10px] opacity-40 font-sans">{p.moneda}</span></p></td>
                       <td className="px-8 py-5"><p className="text-base font-mono text-emerald-500 font-black">{(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span className="text-[10px] opacity-40 font-sans">{p.moneda}</span></p></td>
-                      <td className="px-8 py-5 text-right"><div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity"><button className="p-3 bg-blue-600/10 text-blue-500 rounded-xl hover:bg-blue-600 hover:text-white transition-all"><ChevronRight size={18} /></button></div></td>
+                      <td className="px-8 py-5 text-right"><div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity"><button className="p-3 bg-blue-600 text-white rounded-xl shadow-lg active:scale-95 transition-all"><FileSignature size={18} /></button></div></td>
                     </tr>
                   ))}
                 </tbody>
@@ -118,7 +133,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                         <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest mt-1">{(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} {p.moneda}</p>
                       </div>
                     </div>
-                    <ChevronRight size={20} className="text-neutral-400"/>
+                    <FileSignature size={20} className="text-blue-600"/>
                   </div>
                 ))}
               </div>
@@ -136,10 +151,11 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 <div className={`flex items-center gap-4 mt-4 ${isMobile ? 'justify-center flex-wrap' : ''}`}>
                   <div className={`${isDark ? 'bg-white/5 border-white/5' : 'bg-neutral-50 border-neutral-200'} flex items-center gap-2 px-4 py-2 rounded-xl border`}><FileSignature size={14} className="text-neutral-500" /><input type="text" value={activePrestamo.ci} onChange={e=>setActivePrestamo({...activePrestamo, ci: e.target.value})} className={`bg-transparent outline-none w-24 text-[10px] ${isDark ? 'text-white' : 'text-neutral-900'} font-black`} placeholder="CI..."/></div>
                   <div className={`${isDark ? 'bg-white/5 border-white/5' : 'bg-neutral-50 border-neutral-200'} flex items-center gap-2 px-4 py-2 rounded-xl border`}><Smartphone size={14} className="text-neutral-500" /><input type="text" value={activePrestamo.telefono} onChange={e=>setActivePrestamo({...activePrestamo, telefono: e.target.value})} className={`bg-transparent outline-none w-24 text-[10px] ${isDark ? 'text-white' : 'text-neutral-900'} font-black`} placeholder="WA..."/></div>
+                  <select value={activePrestamo.estado} onChange={e=>setActivePrestamo({...activePrestamo, estado: e.target.value})} className={`${isDark ? 'bg-white/5 border-white/5 text-blue-400' : 'bg-neutral-50 border-neutral-200 text-blue-600'} px-4 py-2 rounded-xl border text-[10px] font-black uppercase outline-none`}><option value="Activo">Activo</option><option value="En Mora">En Mora</option><option value="Finalizado">Finalizado</option></select>
                 </div>
               </div>
             </div>
-            <button onClick={closePrestamo} className={`bg-blue-600 text-white text-[11px] font-black rounded-2xl md:rounded-[2rem] hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95 uppercase tracking-widest ${isMobile ? 'w-full py-6' : 'px-8 py-4'}`}><Save size={20}/> Guardar Cambios</button>
+            <button onClick={handleSave} className={`bg-blue-600 text-white text-[11px] font-black rounded-2xl md:rounded-[2rem] hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95 uppercase tracking-widest ${isMobile ? 'w-full py-6' : 'px-8 py-4'}`}><Save size={20}/> Guardar Maestro</button>
           </header>
           <div className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`}>
             <div className={`${isMobile ? '' : 'col-span-8'} space-y-8`}>
@@ -158,7 +174,17 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   })}
                  </div>
               </div>
+              
+              <div className={`${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border rounded-[28px] p-8 shadow-2xl`}>
+                 <h3 className="text-xs font-black tracking-[0.2em] uppercase text-neutral-500 flex items-center gap-3 mb-6"><CheckCircle2 size={18}/> Datos del Contrato y Garantía</h3>
+                 <textarea value={activePrestamo.garantia} onChange={e=>setActivePrestamo({...activePrestamo, garantia: e.target.value})} className={`w-full h-32 bg-transparent border-2 ${isDark ? 'border-white/5 text-white' : 'border-neutral-100 text-neutral-900'} rounded-3xl p-6 text-xs outline-none focus:border-blue-500/30 transition-all font-medium`} placeholder="Escribe aquí los detalles de la garantía (Ej: Auto, Título de propiedad, etc.)"></textarea>
+                 <div className="grid grid-cols-2 gap-4 mt-6">
+                    <div><label className="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2 block">Link Contrato Drive</label><input type="text" value={activePrestamo.drive_contrato} onChange={e=>setActivePrestamo({...activePrestamo, drive_contrato: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 text-white' : 'bg-neutral-50 text-neutral-900'} p-4 rounded-xl text-[10px] outline-none border border-transparent focus:border-blue-500/20`} placeholder="https://drive.google.com/..."/></div>
+                    <div><label className="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2 block">Link Fotos Respaldo</label><input type="text" value={activePrestamo.drive_fotos} onChange={e=>setActivePrestamo({...activePrestamo, drive_fotos: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 text-white' : 'bg-neutral-50 text-neutral-900'} p-4 rounded-xl text-[10px] outline-none border border-transparent focus:border-blue-500/20`} placeholder="https://photos.app.goo.gl/..."/></div>
+                 </div>
+              </div>
             </div>
+            
             <div className={`${isMobile ? '' : 'col-span-4'} space-y-6`}>
                <div className={`${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border rounded-[28px] p-8 shadow-2xl space-y-6`}>
                   <label className="text-[10px] text-neutral-500 block mb-4 font-black uppercase tracking-widest">Capital Invertido</label>
@@ -166,6 +192,14 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <div className="grid grid-cols-2 gap-4">
                      <div><label className="text-[9px] text-neutral-500 block mb-2 font-black uppercase tracking-widest">Interés (%)</label><input type="number" value={activePrestamo.interes} onChange={e=>setActivePrestamo({...activePrestamo, interes: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 border-white/5 text-emerald-500' : 'bg-neutral-50 border-neutral-200 text-emerald-600'} rounded-2xl p-4 text-2xl font-mono outline-none font-black`} /></div>
                      <div><label className="text-[9px] text-neutral-500 block mb-2 font-black uppercase tracking-widest">Moneda</label><select value={activePrestamo.moneda} onChange={e=>setActivePrestamo({...activePrestamo, moneda: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-neutral-50 border-neutral-200 text-neutral-900'} rounded-2xl p-4 text-xl font-bold outline-none appearance-none`}><option value="BOB">BOB</option><option value="USD">USD</option></select></div>
+                  </div>
+               </div>
+
+               <div className={`${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border rounded-[28px] p-8 shadow-2xl space-y-6`}>
+                  <label className="text-[10px] text-neutral-500 block mb-4 font-black uppercase tracking-widest">Periodo del Préstamo</label>
+                  <div className="space-y-4">
+                    <div><p className="text-[8px] text-neutral-600 uppercase font-black mb-2 tracking-widest">Fecha Inicio</p><input type="date" value={activePrestamo.inicio} onChange={e=>setActivePrestamo({...activePrestamo, inicio: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 text-white' : 'bg-neutral-50 text-neutral-900'} p-4 rounded-xl text-xs outline-none`}/></div>
+                    <div><p className="text-[8px] text-neutral-600 uppercase font-black mb-2 tracking-widest">Fecha Vencimiento</p><input type="date" value={activePrestamo.fin} onChange={e=>setActivePrestamo({...activePrestamo, fin: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 text-white' : 'bg-neutral-50 text-neutral-900'} p-4 rounded-xl text-xs outline-none`}/></div>
                   </div>
                </div>
             </div>

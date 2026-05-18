@@ -20,13 +20,14 @@ import {
   Trash2,
   ShoppingBag,
   ExternalLink,
-  ChevronLeft,
-  ChevronRight,
+  PanelLeftClose,
+  PanelLeftOpen,
   Sun,
   Moon,
   Zap,
-  FileText,
-  Key
+  BrainCircuit,
+  StickyNote,
+  ShieldCheck
 } from 'lucide-react';
 
 const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isCollapsed, setIsCollapsed, isDark, setIsDark }) => {
@@ -45,8 +46,8 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
     { id: 'drive-sovereign', label: 'Drive Sovereign', icon: Cloud },
     { id: 'calendar', label: 'Google Calendar', icon: Calendar },
     { id: 'recordatorios', label: 'Recordatorios', icon: Bell, count: counts?.notificaciones },
-    { id: 'notas', label: 'Notas', icon: FileText },
-    { id: 'boveda-pass', label: 'Bóveda Pass', icon: Key },
+    { id: 'notas', label: 'Notas', icon: StickyNote },
+    { id: 'boveda', label: 'Bóveda Pass', icon: ShieldCheck },
     { id: 'papelera', label: 'Papelera', icon: Trash2 },
   ];
 
@@ -56,39 +57,51 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
     boxShadow: isDark ? `0 10px 30px -10px ${settings.accentColor}44` : `0 10px 20px -5px ${settings.accentColor}66`
   };
 
-  // NAVEGACIÓN MÓVIL OPTIMIZADA
+  // NAVEGACIÓN MÓVIL ULTRA-REFINADA (ESTILO ISLA)
   if (settings.isMobileMode) {
     return (
-      <nav className={`fixed bottom-0 inset-x-0 h-20 ${isDark ? 'bg-[#080808]/90 border-white/5' : 'bg-white/90 border-neutral-200'} backdrop-blur-2xl border-t flex items-center justify-around px-2 z-[1000] animate-in slide-in-from-bottom duration-500 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]`}>
-        {menuItems.slice(0, 5).map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={`flex flex-col items-center gap-1 p-3 transition-all active:scale-90 ${activeTab === item.id ? 'scale-110' : 'opacity-40 grayscale'}`}
+      <div className="fixed bottom-4 inset-x-4 z-[1000] animate-in slide-in-from-bottom-8 duration-700">
+        <nav className={`h-16 ${isDark ? 'bg-[#1a1a1a]/80 border-white/5' : 'bg-white/80 border-neutral-200'} backdrop-blur-2xl border rounded-3xl flex items-center justify-around px-2 shadow-2xl`}>
+          {menuItems.slice(0, 5).map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className="relative flex flex-col items-center justify-center w-12 h-12 transition-all active:scale-75"
+            >
+              <div className={`transition-all duration-300 ${activeTab === item.id ? 'text-white' : 'text-neutral-500'}`} style={activeTab === item.id ? { color: settings.accentColor } : {}}>
+                <item.icon size={18} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+              </div>
+              {activeTab === item.id && (
+                <div className="absolute -bottom-1 w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: settings.accentColor }}></div>
+              )}
+            </button>
+          ))}
+          <div className="w-px h-6 bg-white/10 mx-1"></div>
+          <button 
+            onClick={() => setActiveTab('configuracion')} 
+            className="relative flex flex-col items-center justify-center w-12 h-12 transition-all active:scale-75"
           >
-            <div className="p-2 rounded-2xl transition-all" style={activeTab === item.id ? { backgroundColor: `${settings.accentColor}22`, color: settings.accentColor } : { color: isDark ? '#fff' : '#000' }}>
-              <item.icon size={22} strokeWidth={activeTab === item.id ? 2.5 : 2} />
-            </div>
+             <div className={`transition-all duration-300 ${activeTab === 'configuracion' ? 'text-white' : 'text-neutral-500'}`} style={activeTab === 'configuracion' ? { color: settings.accentColor } : {}}>
+                <Settings size={18} />
+             </div>
+             {activeTab === 'configuracion' && (
+                <div className="absolute -bottom-1 w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: settings.accentColor }}></div>
+             )}
           </button>
-        ))}
-        <button onClick={() => setActiveTab('configuracion')} className={`flex flex-col items-center gap-1 p-3 transition-all active:scale-90 ${activeTab === 'configuracion' ? 'scale-110' : 'opacity-40 grayscale'}`}>
-           <div className="p-2 rounded-2xl transition-all" style={activeTab === 'configuracion' ? { backgroundColor: `${settings.accentColor}22`, color: settings.accentColor } : { color: isDark ? '#fff' : '#000' }}>
-              <Settings size={22} />
-           </div>
-        </button>
-      </nav>
+        </nav>
+      </div>
     );
   }
 
   return (
-    <div className={`${isCollapsed ? 'w-24' : 'w-64'} ${isDark ? 'bg-[#080808] border-white/5' : 'bg-white border-neutral-200'} border-r flex flex-col h-full py-8 px-4 transition-all duration-700 ease-in-out overflow-visible relative group/sidebar`}>
+    <div className={`${isCollapsed ? 'w-24' : 'w-64'} ${isDark ? 'bg-[#121212] border-white/5' : 'bg-white border-neutral-200'} border-r flex flex-col h-full py-8 px-4 transition-all duration-700 ease-in-out overflow-visible relative group/sidebar`}>
       
-      {/* BOTÓN DE COLAPSO */}
+      {/* BOTÓN DE COLAPSO PROFESIONAL */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`absolute -right-3 top-10 w-6 h-6 ${isDark ? 'bg-white text-black' : 'bg-neutral-900 text-white'} rounded-full flex items-center justify-center shadow-xl border border-white/10 z-[100] hover:scale-110 transition-all`}
+        className={`absolute -right-4 top-12 w-8 h-8 ${isDark ? 'bg-[#121212] text-neutral-500 hover:text-white' : 'bg-white text-neutral-400 hover:text-black'} rounded-xl flex items-center justify-center shadow-2xl border border-white/10 z-[100] transition-all duration-500 hover:scale-110 active:scale-90`}
       >
-        {isCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+        {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
       </button>
 
       {/* LOGO */}
@@ -135,7 +148,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
               )}
 
               {isCollapsed && item.count > 0 && (
-                <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border border-[#080808] animate-pulse"></div>
+                <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border border-[#121212] animate-pulse"></div>
               )}
             </button>
 
