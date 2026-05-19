@@ -1212,7 +1212,7 @@ const ProjectEngineView = () => {
                           {isGenerating ? (
                              <><div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div> Inyectando estructura física...</>
                           ) : !destinationPath ? (
-                             <><Info size={16}/> Vincula el disco duro para estructurar</>
+                             <>Vincula el disco duro para estructurar</>
                           ) : (
                              <><Zap size={16} fill="currentColor"/> Generar Entorno de Producción</>
                           )}
