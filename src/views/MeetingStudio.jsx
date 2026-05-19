@@ -949,13 +949,13 @@ const ProjectEngineView = () => {
           <div className="flex bg-black/40 border border-white/5 rounded-2xl p-1.5 self-start md:self-auto shadow-2xl">
              <button 
                 onClick={() => setActiveTab('estructurador')}
-                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'estructurador' ? 'bg-purple-600 text-white shadow-xl' : 'text-neutral-500 hover:text-white'}`}
+                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'estructurador' ? 'bg-neutral-800 text-white border border-neutral-700 shadow-xl' : 'text-neutral-500 hover:text-white'}`}
              >
                 <Folder size={14} /> Estructurador Pro
              </button>
              <button 
                 onClick={() => setActiveTab('suite')}
-                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'suite' ? 'bg-purple-600 text-white shadow-xl' : 'text-neutral-500 hover:text-white'}`}
+                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'suite' ? 'bg-neutral-800 text-white border border-neutral-700 shadow-xl' : 'text-neutral-500 hover:text-white'}`}
              >
                 <Wrench size={14} /> Suite de productividad
              </button>
@@ -969,7 +969,7 @@ const ProjectEngineView = () => {
                 {/* SELECT DESTINATION CARD */}
                 <div className="bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/[0.04] p-8 rounded-[2rem] shadow-2xl flex flex-col space-y-5">
                    <div className="flex items-center gap-3 pb-3 border-b border-white/5">
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center border border-purple-500/20 shadow-inner">
+                      <div className="w-10 h-10 rounded-xl bg-neutral-800/80 text-neutral-300 flex items-center justify-center border border-neutral-700/50 shadow-inner">
                          <FolderOpen size={18} />
                       </div>
                       <div>
@@ -990,7 +990,7 @@ const ProjectEngineView = () => {
                             />
                             <button 
                                onClick={handleSelectDirectory}
-                               className="px-5 bg-purple-600 hover:bg-purple-700 text-white text-[10px] font-black uppercase rounded-2xl shadow-xl transition-all hover:scale-105 shrink-0"
+                               className="px-5 bg-neutral-800 hover:bg-neutral-700 text-white border border-neutral-700 text-[10px] font-black uppercase rounded-2xl shadow-xl transition-all hover:scale-105 shrink-0"
                             >
                                Examinar...
                             </button>
@@ -1002,7 +1002,7 @@ const ProjectEngineView = () => {
                 {/* NOMENCLATURA */}
                 <div className="bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/[0.04] p-8 rounded-[2rem] shadow-2xl flex flex-col space-y-5">
                    <div className="flex items-center gap-3 pb-3 border-b border-white/5">
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center border border-purple-500/20 shadow-inner">
+                      <div className="w-10 h-10 rounded-xl bg-neutral-800/80 text-neutral-300 flex items-center justify-center border border-neutral-700/50 shadow-inner">
                          <Folder size={18} />
                       </div>
                       <div>
@@ -1019,7 +1019,7 @@ const ProjectEngineView = () => {
                             value={carpetaMaestra} 
                             onChange={e=>setCarpetaMaestra(e.target.value)} 
                             placeholder="Ej: Base de Edición Principal" 
-                            className="w-full bg-black/40 border border-white/5 focus:border-purple-500/50 rounded-2xl p-5 text-sm text-white outline-none transition-all shadow-inner focus:shadow-[0_0_20px_rgba(147,51,234,0.15)]" 
+                            className="w-full bg-black/40 border border-white/5 focus:border-neutral-500/50 rounded-2xl p-5 text-sm text-white outline-none transition-all shadow-inner focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]" 
                          />
                       </div>
                       <div className="space-y-2">
@@ -1029,7 +1029,7 @@ const ProjectEngineView = () => {
                             value={empresa} 
                             onChange={e=>setEmpresa(e.target.value)} 
                             placeholder="Ej: Urbanización Bensa" 
-                            className="w-full bg-black/40 border border-white/5 focus:border-purple-500/50 rounded-2xl p-5 text-sm text-white outline-none transition-all shadow-inner focus:shadow-[0_0_20px_rgba(147,51,234,0.15)]" 
+                            className="w-full bg-black/40 border border-white/5 focus:border-neutral-500/50 rounded-2xl p-5 text-sm text-white outline-none transition-all shadow-inner focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]" 
                          />
                       </div>
                       <div className="space-y-2">
@@ -1039,7 +1039,7 @@ const ProjectEngineView = () => {
                             value={proyecto} 
                             onChange={e=>setProyecto(e.target.value)} 
                             placeholder="Ej: Spot Comercial" 
-                            className="w-full bg-black/40 border border-white/5 focus:border-purple-500/50 rounded-2xl p-5 text-sm text-white outline-none transition-all shadow-inner focus:shadow-[0_0_20px_rgba(147,51,234,0.15)]" 
+                            className="w-full bg-black/40 border border-white/5 focus:border-neutral-500/50 rounded-2xl p-5 text-sm text-white outline-none transition-all shadow-inner focus:shadow-[0_0_20px_rgba(255,255,255,0.05)]" 
                          />
                       </div>
                    </div>
@@ -1051,7 +1051,7 @@ const ProjectEngineView = () => {
                 {/* TEMPLATE PICKER */}
                 <div className="bg-[#0a0a0a]/80 backdrop-blur-xl border border-white/[0.04] p-8 rounded-[2rem] shadow-2xl space-y-6">
                    <div className="flex items-center gap-3 pb-4 border-b border-white/5">
-                      <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center border border-purple-500/20 shadow-inner">
+                      <div className="w-10 h-10 rounded-xl bg-neutral-800/80 text-neutral-300 flex items-center justify-center border border-neutral-700/50 shadow-inner">
                          <Layers size={18} />
                       </div>
                       <div>
@@ -1067,7 +1067,7 @@ const ProjectEngineView = () => {
                             <select 
                                value={selectedPremiere} 
                                onChange={e=>setSelectedPremiere(e.target.value)} 
-                               className="w-full bg-black/40 border border-white/5 focus:border-purple-500/50 rounded-2xl p-5 pr-12 text-sm text-white outline-none transition-all shadow-inner appearance-none focus:shadow-[0_0_20px_rgba(147,51,234,0.15)] cursor-pointer"
+                               className="w-full bg-black/40 border border-white/5 focus:border-neutral-500/50 rounded-2xl p-5 pr-12 text-sm text-white outline-none transition-all shadow-inner appearance-none focus:shadow-[0_0_20px_rgba(255,255,255,0.05)] cursor-pointer"
                             >
                                <option value="">No incluir Premiere Pro</option>
                                {templates.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1081,7 +1081,7 @@ const ProjectEngineView = () => {
                             <select 
                                value={selectedAE} 
                                onChange={e=>setSelectedAE(e.target.value)} 
-                               className="w-full bg-black/40 border border-white/5 focus:border-purple-500/50 rounded-2xl p-5 pr-12 text-sm text-white outline-none transition-all shadow-inner appearance-none focus:shadow-[0_0_20px_rgba(147,51,234,0.15)] cursor-pointer"
+                               className="w-full bg-black/40 border border-white/5 focus:border-neutral-500/50 rounded-2xl p-5 pr-12 text-sm text-white outline-none transition-all shadow-inner appearance-none focus:shadow-[0_0_20px_rgba(255,255,255,0.05)] cursor-pointer"
                             >
                                <option value="">No incluir After Effects</option>
                                {templates.map(t => <option key={t} value={t}>{t}</option>)}
@@ -1093,16 +1093,16 @@ const ProjectEngineView = () => {
 
                    {/* RECURSOS ADICIONALES CHECKBOXES */}
                    <div className="grid grid-cols-3 gap-4 pt-2">
-                      <label className="flex items-center gap-2 cursor-pointer bg-black/30 border border-white/5 rounded-2xl p-3 hover:border-purple-500/30 transition-all">
-                         <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="accent-purple-500 w-4 h-4 rounded-lg cursor-pointer" />
+                      <label className="flex items-center gap-2 cursor-pointer bg-black/30 border border-white/5 rounded-2xl p-3 hover:border-neutral-500/30 transition-all">
+                         <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="accent-neutral-400 w-4 h-4 rounded-lg cursor-pointer" />
                          <span className="text-[9px] font-black text-neutral-400 uppercase tracking-wider">Audio SFX</span>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer bg-black/30 border border-white/5 rounded-2xl p-3 hover:border-purple-500/30 transition-all">
-                         <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="accent-purple-500 w-4 h-4 rounded-lg cursor-pointer" />
+                      <label className="flex items-center gap-2 cursor-pointer bg-black/30 border border-white/5 rounded-2xl p-3 hover:border-neutral-500/30 transition-all">
+                         <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="accent-neutral-400 w-4 h-4 rounded-lg cursor-pointer" />
                          <span className="text-[9px] font-black text-neutral-400 uppercase tracking-wider">Logotipos</span>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer bg-black/30 border border-white/5 rounded-2xl p-3 hover:border-purple-500/30 transition-all">
-                         <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="accent-purple-500 w-4 h-4 rounded-lg cursor-pointer" />
+                      <label className="flex items-center gap-2 cursor-pointer bg-black/30 border border-white/5 rounded-2xl p-3 hover:border-neutral-500/30 transition-all">
+                         <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="accent-neutral-400 w-4 h-4 rounded-lg cursor-pointer" />
                          <span className="text-[9px] font-black text-neutral-400 uppercase tracking-wider">MOGRTs</span>
                       </label>
                    </div>
@@ -1110,16 +1110,16 @@ const ProjectEngineView = () => {
 
                 {/* CONSOLA DE INYECCIÓN DE PRODUCCIÓN REFINADA */}
                  <div className="bg-[#0a0a0a]/95 backdrop-blur-xl border border-white/[0.04] p-8 rounded-[2rem] shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[480px]">
-                    <div className="absolute -top-32 -right-32 w-[350px] h-[350px] bg-purple-500/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div className="absolute -top-32 -right-32 w-[350px] h-[350px] bg-white/[0.01] rounded-full blur-3xl pointer-events-none"></div>
                     
                     <div className="space-y-6">
                        {/* HEADER BANNER */}
                        <div className="flex items-center justify-between pb-4 border-b border-white/5">
                           <div className="flex items-center gap-2.5">
-                             <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse shadow-[0_0_10px_rgba(168,85,247,0.5)]"></div>
+                             <div className="w-2.5 h-2.5 rounded-full bg-neutral-400 animate-pulse shadow-[0_0_10px_rgba(255,255,255,0.4)]"></div>
                              <span className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Consola de Inyección Local</span>
                           </div>
-                          <span className="px-2.5 py-0.5 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[8px] font-bold rounded uppercase tracking-wider">
+                          <span className="px-2.5 py-0.5 bg-neutral-800 border border-neutral-700 text-neutral-300 text-[8px] font-bold rounded uppercase tracking-wider">
                              Listo para estructurar
                           </span>
                        </div>
@@ -1130,7 +1130,7 @@ const ProjectEngineView = () => {
                           <div className="bg-black/40 border border-white/5 rounded-2xl p-4 space-y-1">
                              <p className="text-[8px] text-neutral-500 font-black uppercase tracking-wider">Disco Duro Destino</p>
                              <div className="flex items-center gap-2">
-                                <HardDrive size={13} className={destinationPath ? 'text-purple-500' : 'text-neutral-500'} />
+                                <HardDrive size={13} className={destinationPath ? 'text-neutral-300' : 'text-neutral-500'} />
                                 <span className="text-xs text-neutral-200 font-bold font-mono truncate">
                                    {destinationPath ? (typeof destinationPath === 'string' ? destinationPath.split('/').pop() : destinationPath.name) : 'No vinculado'}
                                 </span>
@@ -1164,10 +1164,10 @@ const ProjectEngineView = () => {
                              <span className="text-neutral-400 font-medium">Plantillas de Software:</span>
                              <div className="flex gap-2">
                                 {selectedPremiere && (
-                                   <span className="bg-[#2e1065]/50 border border-[#7c3aed]/30 px-2 py-0.5 rounded text-[8px] font-black text-[#a78bfa] uppercase tracking-wider">[Pr] Premiere</span>
+                                   <span className="bg-neutral-800 border border-neutral-700 px-2 py-0.5 rounded text-[8px] font-black text-neutral-300 uppercase tracking-wider">[Pr] Premiere</span>
                                 )}
                                 {selectedAE && (
-                                   <span className="bg-[#4a044e]/50 border border-[#d946ef]/30 px-2 py-0.5 rounded text-[8px] font-black text-[#f5d0fe] uppercase tracking-wider">[Ae] After Effects</span>
+                                   <span className="bg-neutral-800 border border-neutral-700 px-2 py-0.5 rounded text-[8px] font-black text-neutral-300 uppercase tracking-wider">[Ae] After Effects</span>
                                 )}
                                 {!selectedPremiere && !selectedAE && (
                                    <span className="text-[10px] text-neutral-600 italic">Ninguna seleccionada</span>
@@ -1180,13 +1180,13 @@ const ProjectEngineView = () => {
                        <div className="space-y-2">
                           <p className="text-[8px] text-neutral-500 font-black uppercase tracking-wider">Módulos Auxiliares de Inyección</p>
                           <div className="flex flex-wrap gap-2">
-                             <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest uppercase border ${incSFX ? 'bg-purple-500/10 border-purple-500/25 text-purple-300' : 'bg-black/30 border-white/5 text-neutral-600'}`}>
+                             <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest uppercase border ${incSFX ? 'bg-neutral-800 border-neutral-700 text-neutral-200' : 'bg-black/30 border-white/5 text-neutral-600'}`}>
                                 Audio SFX
                              </span>
-                             <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest uppercase border ${incLogos ? 'bg-purple-500/10 border-purple-500/25 text-purple-300' : 'bg-black/30 border-white/5 text-neutral-600'}`}>
+                             <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest uppercase border ${incLogos ? 'bg-neutral-800 border-neutral-700 text-neutral-200' : 'bg-black/30 border-white/5 text-neutral-600'}`}>
                                 Logotipos
                              </span>
-                             <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest uppercase border ${incMOGRTs ? 'bg-purple-500/10 border-purple-500/25 text-purple-300' : 'bg-black/30 border-white/5 text-neutral-600'}`}>
+                             <span className={`px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest uppercase border ${incMOGRTs ? 'bg-neutral-800 border-neutral-700 text-neutral-200' : 'bg-black/30 border-white/5 text-neutral-600'}`}>
                                 MOGRTs Pro
                              </span>
                              <span className="px-2.5 py-1 rounded-lg text-[8px] font-black tracking-widest uppercase border bg-black/30 border-white/5 text-neutral-500">
