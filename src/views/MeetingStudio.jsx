@@ -871,7 +871,7 @@ const ProjectEngineView = () => {
 
         if (selectedPremiere) {
           setStatusMsg('Clonando plantilla de Premiere Pro...');
-          const res = await fetch(`/edicion_de_video/premiere_pro/${selectedPremiere}.prproj`);
+          const res = await fetch(`/plantillas_adobe/premiere_pro/${selectedPremiere}.prproj`);
           if (!res.ok) throw new Error('No se pudo descargar la plantilla');
           const blob = await res.blob();
           const prFileHandle = await prDir.getFileHandle(`${folderName}.prproj`, { create: true });
@@ -882,7 +882,7 @@ const ProjectEngineView = () => {
 
         if (selectedAE) {
           setStatusMsg('Clonando plantilla de After Effects...');
-          const res = await fetch(`/edicion_de_video/after_effects/${selectedAE}.aep`);
+          const res = await fetch(`/plantillas_adobe/after_effects/${selectedAE}.aep`);
           if (!res.ok) throw new Error('No se pudo descargar la plantilla');
           const blob = await res.blob();
           const aeFileHandle = await aeDir.getFileHandle(`${folderName}.aep`, { create: true });
