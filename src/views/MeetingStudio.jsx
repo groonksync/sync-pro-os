@@ -11,7 +11,7 @@ import {
   Upload, Download, Bold, Italic, Strikethrough, List, CheckSquare, Table2, Heading1, Heading2,
   Facebook, Smartphone as TiktokIcon, Cloud, Sparkles, Type, Highlighter, TrendingUp, BarChart3,
   AlignLeft, AlignCenter, AlignRight, ListOrdered, ClipboardList, Briefcase, Edit3, Mail as MailIcon,
-  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2, Eye, EyeOff, Cpu
+  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2, Eye, EyeOff, Cpu, Wrench
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
@@ -934,11 +934,11 @@ const ProjectEngineView = () => {
   );
 
   return (
-    <div className="flex-grow flex-shrink min-h-0 flex flex-col p-8 lg:p-12 space-y-8 max-w-[1500px] mx-auto w-full animate-in fade-in duration-700 overflow-y-auto mac-scrollbar bg-[#121212]">
+    <div className="flex-grow flex-shrink min-h-0 flex flex-col p-8 lg:p-12 space-y-8 max-w-[1500px] mx-auto w-full animate-in fade-in duration-700 overflow-y-auto mac-scrollbar">
        <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-6 gap-6">
           <div>
              <h2 className="text-3xl font-black text-white uppercase tracking-tighter flex items-center gap-3">
-                Sovereign <span className="text-purple-500">Edición de Video</span>
+                Edición de Video
              </h2>
              <p className="text-[9px] text-neutral-500 font-black uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
                 <HardDrive size={12} className="text-purple-500"/> Suite de Producción y Herramientas Locales
@@ -949,15 +949,15 @@ const ProjectEngineView = () => {
           <div className="flex bg-black/40 border border-white/5 rounded-2xl p-1.5 self-start md:self-auto shadow-2xl">
              <button 
                 onClick={() => setActiveTab('estructurador')}
-                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === 'estructurador' ? 'bg-purple-600 text-white shadow-xl' : 'text-neutral-500 hover:text-white'}`}
+                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'estructurador' ? 'bg-purple-600 text-white shadow-xl' : 'text-neutral-500 hover:text-white'}`}
              >
-                📁 Estructurador Pro
+                <Folder size={14} /> Estructurador Pro
              </button>
              <button 
                 onClick={() => setActiveTab('suite')}
-                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${activeTab === 'suite' ? 'bg-purple-600 text-white shadow-xl' : 'text-neutral-500 hover:text-white'}`}
+                className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2 ${activeTab === 'suite' ? 'bg-purple-600 text-white shadow-xl' : 'text-neutral-500 hover:text-white'}`}
              >
-                🛠️ Suite de Productividad PRO
+                <Wrench size={14} /> Suite de productividad
              </button>
           </div>
        </header>
@@ -1167,7 +1167,7 @@ const ProjectEngineView = () => {
                                    <span className="bg-[#2e1065]/50 border border-[#7c3aed]/30 px-2 py-0.5 rounded text-[8px] font-black text-[#a78bfa] uppercase tracking-wider">[Pr] Premiere</span>
                                 )}
                                 {selectedAE && (
-                                   <span className="bg-[#1e3a8a]/50 border border-[#2563eb]/30 px-2 py-0.5 rounded text-[8px] font-black text-[#60a5fa] uppercase tracking-wider">[Ae] After Effects</span>
+                                   <span className="bg-[#4a044e]/50 border border-[#d946ef]/30 px-2 py-0.5 rounded text-[8px] font-black text-[#f5d0fe] uppercase tracking-wider">[Ae] After Effects</span>
                                 )}
                                 {!selectedPremiere && !selectedAE && (
                                    <span className="text-[10px] text-neutral-600 italic">Ninguna seleccionada</span>
@@ -1207,7 +1207,7 @@ const ProjectEngineView = () => {
                        <button 
                           onClick={handleGenerate} 
                           disabled={isGenerating || !destinationPath} 
-                          className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.25em] text-[10.5px] flex items-center justify-center gap-3 transition-all duration-500 ${isGenerating || !destinationPath ? 'bg-white/[0.02] text-neutral-600 border border-white/[0.04] cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white border border-purple-500/20 hover:border-purple-500/40 hover:scale-[1.01] shadow-[0_0_40px_rgba(168,85,247,0.15)] active:scale-95 cursor-pointer'}`}
+                          className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.25em] text-[10.5px] flex items-center justify-center gap-3 transition-all duration-500 ${isGenerating || !destinationPath ? 'bg-white/[0.02] text-neutral-600 border border-white/[0.04] cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 text-white border border-purple-500/20 hover:border-purple-500/40 hover:scale-[1.01] shadow-[0_0_40px_rgba(168,85,247,0.15)] active:scale-95 cursor-pointer'}`}
                        >
                           {isGenerating ? (
                              <><div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div> Inyectando estructura física...</>
