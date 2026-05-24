@@ -52,9 +52,9 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
   ];
 
   const accentStyle = {
-    backgroundColor: settings.accentColor,
-    color: (settings.accentColor === '#ffffff' || (!isDark && settings.accentColor === '#ffffff')) ? '#000000' : '#ffffff',
-    boxShadow: isDark ? `0 10px 30px -10px ${settings.accentColor}44` : `0 10px 20px -5px ${settings.accentColor}66`
+    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+    color: isDark ? '#ffffff' : '#000000',
+    border: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
   };
 
   // NAVEGACIÓN MÓVIL ULTRA-REFINADA (ESTILO ISLA)
@@ -94,7 +94,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
   }
 
   return (
-    <div className={`${isCollapsed ? 'w-24' : 'w-64'} ${isDark ? 'bg-[#121212] border-white/5' : 'bg-white border-neutral-200'} border-r flex flex-col h-full py-8 px-4 transition-all duration-700 ease-in-out overflow-visible relative group/sidebar`}>
+    <div className={`${isCollapsed ? 'w-24' : 'w-64'} ${isDark ? 'bg-[#09090b] border-white/5' : 'bg-white border-neutral-200'} border-r flex flex-col h-full py-8 px-4 transition-all duration-700 ease-in-out overflow-visible relative group/sidebar`}>
       
       {/* BOTÓN DE COLAPSO PROFESIONAL */}
       <button 

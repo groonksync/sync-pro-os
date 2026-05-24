@@ -272,7 +272,7 @@ const App = () => {
 
   // EFECTO DE TEMA GLOBAL
   useEffect(() => {
-    document.body.style.backgroundColor = isDarkMode ? '#121212' : '#f8f9fa';
+    document.body.style.backgroundColor = isDarkMode ? '#0c0c0e' : '#f8f9fa';
   }, [isDarkMode]);
 
   return (

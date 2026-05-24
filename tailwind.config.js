@@ -6,9 +6,13 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
       colors: {
-        background: '#050505',
-        sidebar: '#0a0a0a',
+        background: '#0c0c0e',
+        sidebar: '#09090b',
+        card: '#151518',
       }
     },
   },
