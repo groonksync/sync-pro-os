@@ -424,7 +424,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
 
         {/* COLUMN 1: FOLDERS + FILTERS */}
         <div className="flex flex-col gap-3 overflow-y-auto min-h-0 rounded-xl p-3 scrollbar-thin"
-          style={{ backgroundColor: c.panel, border: `1px solid ${t.border}` }}>
+          style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
 
           {/* Folders Section */}
           <div>
@@ -510,7 +510,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
 
         {/* COLUMN 2: NOTE LIST */}
         <div className="flex flex-col gap-3 overflow-hidden min-h-0 rounded-xl p-3"
-          style={{ backgroundColor: c.panel, border: `1px solid ${t.border}` }}>
+          style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
 
           {/* Search */}
           <div className="relative shrink-0">
@@ -626,7 +626,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
 
         {/* COLUMN 3: EDITOR */}
         <div className="flex flex-col overflow-hidden min-h-0 rounded-xl p-3"
-          style={{ backgroundColor: c.panel, border: `1px solid ${t.border}` }}>
+          style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
           
           {activeNote ? (
             <div className="flex-1 flex flex-col min-h-0 gap-3">
@@ -794,7 +794,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
       {isNewFolderModalOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center animate-in fade-in duration-200"
           style={{ backgroundColor: 'rgba(20,20,20,0.85)', backdropFilter: 'blur(8px)' }}>
-          <div className="rounded-2xl p-6 w-full max-w-sm shadow-2xl" style={{ backgroundColor: c.panel, border: `1px solid ${t.borderLight}` }}>
+          <div className="rounded-2xl p-6 w-full max-w-sm shadow-2xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
             <h4 className="text-sm font-semibold mb-5 flex items-center gap-2" style={{ color: t.text }}>
               <FolderPlus size={18} style={{ color: t.accent }} /> Nueva Carpeta
             </h4>
