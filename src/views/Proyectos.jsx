@@ -118,8 +118,8 @@ const Proyectos = ({ proyectos, setProyectos }) => {
         <div className="animate-in fade-in duration-300">
           <header className="mb-6 flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-light text-white tracking-tight">Proyectos</h2>
-              <p className="text-[11px] text-neutral-500 uppercase tracking-widest mt-1">Gestión de producción audiovisual</p>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Proyectos</h2>
+              <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Gestión de producción audiovisual</p>
             </div>
             <button onClick={() => setView('create')}
               className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5">
@@ -154,10 +154,10 @@ const Proyectos = ({ proyectos, setProyectos }) => {
           </div>
 
           {/* Tabla */}
-          <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-xl overflow-hidden">
+          <div className="bg-[#202022] border border-white/[0.05] rounded-xl overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-black/40 border-b border-white/[0.05]">
+                <tr className="bg-[#141414]/40 border-b border-white/[0.05]">
                   <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Proyecto</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Tipo</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Entrega</th>
@@ -231,7 +231,7 @@ const Proyectos = ({ proyectos, setProyectos }) => {
           <div className="flex items-center gap-2 mb-4 text-xs text-neutral-500 cursor-pointer hover:text-white w-max" onClick={() => setView('list')}>
             <ArrowLeft size={12}/> Volver a Proyectos
           </div>
-          <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-xl p-8 shadow-2xl">
+          <div className="bg-[#202022] border border-white/[0.05] rounded-xl p-8 shadow-2xl">
             <h2 className="text-2xl font-light text-white tracking-tight mb-6 flex items-center gap-2">
               <Briefcase size={20} className="text-amber-500"/> Nuevo Proyecto
             </h2>
@@ -239,44 +239,44 @@ const Proyectos = ({ proyectos, setProyectos }) => {
               <div className="col-span-2">
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Nombre del Proyecto *</label>
                 <input type="text" value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50" placeholder="Ej: Boda Rodríguez — Edición Final" autoFocus/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50" placeholder="Ej: Boda Rodríguez — Edición Final" autoFocus/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Cliente</label>
                 <input type="text" value={form.cliente} onChange={e => setForm({...form, cliente: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Nombre del cliente"/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Nombre del cliente"/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Tipo de Proyecto</label>
                 <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50 cursor-pointer">
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50 cursor-pointer">
                   {TIPOS.map(t => <option key={t}>{t}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Fecha de Inicio</label>
                 <input type="date" value={form.fecha_inicio} onChange={e => setForm({...form, fecha_inicio: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none focus:border-amber-500/50"/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none focus:border-amber-500/50"/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Fecha de Entrega</label>
                 <input type="date" value={form.fecha_entrega} onChange={e => setForm({...form, fecha_entrega: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none focus:border-amber-500/50"/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none focus:border-amber-500/50"/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Presupuesto ($)</label>
                 <input type="number" value={form.presupuesto} onChange={e => setForm({...form, presupuesto: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0"/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0"/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Carpeta Drive</label>
                 <input type="text" value={form.drive} onChange={e => setForm({...form, drive: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="https://drive.google.com/..."/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="https://drive.google.com/..."/>
               </div>
               <div className="col-span-2">
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Notas internas</label>
                 <textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50 min-h-[70px] resize-none" placeholder="Requerimientos, instrucciones especiales..."/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50 min-h-[70px] resize-none" placeholder="Requerimientos, instrucciones especiales..."/>
               </div>
             </div>
             <button onClick={handleCreate} disabled={loading || !form.nombre.trim()}
@@ -317,17 +317,17 @@ const Proyectos = ({ proyectos, setProyectos }) => {
           <div className="grid grid-cols-12 gap-6">
             {/* Columna izquierda */}
             <div className="col-span-5 flex flex-col gap-5">
-              <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-xl p-5">
+              <div className="bg-[#202022] border border-white/[0.05] rounded-xl p-5">
                 <h3 className="text-[10px] font-bold tracking-widest uppercase text-neutral-500 mb-4 flex items-center gap-1.5"><Calendar size={12}/> Fechas y Presupuesto</h3>
                 <div className="space-y-3">
-                  <div className="bg-black/40 border border-white/5 rounded-lg p-3">
+                  <div className="bg-[#141414]/40 border border-white/5 rounded-lg p-3">
                     <label className="text-[10px] text-neutral-500 block mb-1">Tipo de Proyecto</label>
                     <select value={activeProyecto.tipo || 'Edición'} onChange={e => setActiveProyecto({...activeProyecto, tipo: e.target.value})}
                       className="bg-transparent text-sm text-white outline-none w-full cursor-pointer">
                       {TIPOS.map(t => <option key={t}>{t}</option>)}
                     </select>
                   </div>
-                  <div className="bg-black/40 border border-white/5 rounded-lg p-3">
+                  <div className="bg-[#141414]/40 border border-white/5 rounded-lg p-3">
                     <label className="text-[10px] text-neutral-500 block mb-1">Estado</label>
                     <select value={activeProyecto.estado} onChange={e => setActiveProyecto({...activeProyecto, estado: e.target.value})}
                       className={`bg-transparent text-sm outline-none w-full cursor-pointer font-bold ${statusConfig[activeProyecto.estado]?.color}`}>
@@ -335,18 +335,18 @@ const Proyectos = ({ proyectos, setProyectos }) => {
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-black/40 border border-white/5 rounded-lg p-3">
+                    <div className="bg-[#141414]/40 border border-white/5 rounded-lg p-3">
                       <label className="text-[10px] text-neutral-500 block mb-1">Inicio</label>
                       <input type="date" value={activeProyecto.fecha_inicio || ''} onChange={e => setActiveProyecto({...activeProyecto, fecha_inicio: e.target.value})}
                         className="bg-transparent text-xs text-white outline-none w-full"/>
                     </div>
-                    <div className="bg-black/40 border border-white/5 rounded-lg p-3">
+                    <div className="bg-[#141414]/40 border border-white/5 rounded-lg p-3">
                       <label className="text-[10px] text-neutral-500 block mb-1">Entrega</label>
                       <input type="date" value={activeProyecto.fecha_entrega || ''} onChange={e => setActiveProyecto({...activeProyecto, fecha_entrega: e.target.value})}
                         className="bg-transparent text-xs text-white outline-none w-full"/>
                     </div>
                   </div>
-                  <div className="bg-black/40 border border-white/5 rounded-lg p-3">
+                  <div className="bg-[#141414]/40 border border-white/5 rounded-lg p-3">
                     <label className="text-[10px] text-neutral-500 block mb-1">Presupuesto ($)</label>
                     <input type="number" value={activeProyecto.presupuesto || ''} onChange={e => setActiveProyecto({...activeProyecto, presupuesto: e.target.value})}
                       className="bg-transparent text-2xl font-mono text-amber-500 outline-none w-full" placeholder="0"/>
@@ -357,18 +357,18 @@ const Proyectos = ({ proyectos, setProyectos }) => {
 
             {/* Columna derecha */}
             <div className="col-span-7 flex flex-col gap-5">
-              <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-xl p-5">
+              <div className="bg-[#202022] border border-white/[0.05] rounded-xl p-5">
                 <h3 className="text-[10px] font-bold tracking-widest uppercase text-neutral-500 mb-3 flex items-center gap-1.5"><Briefcase size={12}/> Notas Internas</h3>
                 <textarea value={activeProyecto.notas || ''} onChange={e => setActiveProyecto({...activeProyecto, notas: e.target.value})}
                   placeholder="Requerimientos, instrucciones especiales, assets entregados..."
-                  className="w-full bg-black/40 border border-white/5 rounded-lg p-3 text-sm text-white outline-none focus:border-amber-500/50 min-h-[120px] resize-none"/>
+                  className="w-full bg-[#141414]/40 border border-white/5 rounded-lg p-3 text-sm text-white outline-none focus:border-amber-500/50 min-h-[120px] resize-none"/>
               </div>
 
               <div className="bg-gradient-to-br from-blue-500/[0.02] to-transparent border border-blue-500/10 rounded-xl p-5">
                 <h3 className="text-[10px] font-bold tracking-widest uppercase text-blue-400 mb-4 flex items-center gap-1.5">
                   <FolderOpen size={12}/> Carpeta en Drive
                 </h3>
-                <div className="bg-black/40 border border-white/5 rounded-lg p-3 relative">
+                <div className="bg-[#141414]/40 border border-white/5 rounded-lg p-3 relative">
                   <input type="text" value={activeProyecto.drive || ''} onChange={e => setActiveProyecto({...activeProyecto, drive: e.target.value})}
                     className="w-full bg-transparent text-xs text-white outline-none border-b border-white/10 pb-1 focus:border-blue-500/50 pr-20" placeholder="https://drive.google.com/..."/>
                   {activeProyecto.drive && (

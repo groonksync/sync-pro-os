@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Wallet, Package, BarChart3, CalendarDays, Box, ShieldCheck, 
-  RefreshCw, Bell, CheckSquare, Video, ChevronRight
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Wallet, Package, BarChart3, CalendarDays, Box, ShieldCheck,
+  RefreshCw, Bell, CheckSquare, Video, ChevronRight, UserPlus, Clock
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
+import { getTheme } from '../lib/theme';
 
 const GoogleLogo = ({ size = 18 }) => <Google.Color size={size} />;
 const DeepSeekLogo = ({ size = 18 }) => <DeepSeek.Color size={size} />;
 
-const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [], recordatorios: [] }, servicios = [], settings, onNavigateToPrestamo, onQuickPayment }) => {
+const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [], recordatorios: [] }, servicios = [], settings, isDark, onNavigateToPrestamo, onQuickPayment }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const hoy = new Date();
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
   const isMobile = settings?.isMobileMode;
@@ -55,12 +57,19 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
   // LÓGICA DE DATOS: VIDEO
   const listaVideos = Array.isArray(meetingsList) ? meetingsList : [];
 
+  // Cobros con timeline corregida: primer pago = 1 mes después del inicio
   const allCobros = listaPrestamos.map(p => {
     if (!p?.inicio) return null;
     const start = new Date(p.inicio);
     if (isNaN(start.getTime())) return null;
-    const nextDate = new Date(hoy.getFullYear(), hoy.getMonth(), start.getDate());
-    if (nextDate < hoy && nextDate.toDateString() !== hoy.toDateString()) nextDate.setMonth(nextDate.getMonth() + 1);
+    
+    const billingDay = start.getDate();
+    let nextDate = new Date(hoy.getFullYear(), hoy.getMonth(), billingDay);
+    
+    if (nextDate < hoy && nextDate.toDateString() !== hoy.toDateString()) {
+      nextDate.setMonth(nextDate.getMonth() + 1);
+    }
+    
     const diff = Math.ceil((nextDate - hoy) / (1000 * 60 * 60 * 24));
     const isPaidThisMonth = (Array.isArray(p.pagos) ? p.pagos : []).includes(mesActual);
     return { ...p, nextDate, diffDays: diff, isPaidThisMonth };
@@ -68,137 +77,218 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
 
   const cobrosActivos = allCobros.filter(p => !p.isPaidThisMonth && p.diffDays <= 7).sort((a, b) => a.diffDays - b.diffDays);
 
+  // NUEVOS PRESTAMISTAS RECIENTES (últimos 30 días)
+  const nuevosPrestamistas = listaPrestamos.filter(p => {
+    if (!p?.inicio) return false;
+    const start = new Date(p.inicio);
+    if (isNaN(start.getTime())) return false;
+    const diffDays = Math.floor((hoy - start) / (1000 * 60 * 60 * 24));
+    return diffDays <= 30;
+  }).sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
+
   const ActiveAILogo = settings.aiProvider === 'deepseek' ? DeepSeekLogo : GoogleLogo;
 
+  const sectionHeaderStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingBottom: '16px',
+    marginBottom: '20px',
+    borderBottom: `1px solid ${t.border}`,
+  };
+
   return (
-    <div className={`animate-in fade-in duration-500 w-full ${isMobile ? 'space-y-8' : 'space-y-12'} pb-24 bg-[#121212]`}>
-      
-      {/* HEADER INTEGRADO */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-white/5 pb-8">
+    <div className="animate-in fade-in duration-500 w-full pb-24">
+      {/* HEADER */}
+      <div style={sectionHeaderStyle}>
         <div>
-           <h2 className="text-3xl font-black text-white uppercase tracking-tight">Centro de Control</h2>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+            Centro de Control
+          </h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
+            Panel de monitoreo operativo
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-           {/* INDICADOR IA INTEGRADO */}
-           <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/5 flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                 <ActiveAILogo />
-                 <div>
-                    <p className="text-[9px] text-neutral-500 font-black uppercase tracking-widest leading-none">Modelo de IA</p>
-                    <p className="text-xs font-bold text-white uppercase mt-1">
-                       {aiBalance} <span className="text-[8px] text-neutral-600">{settings.aiProvider === 'deepseek' ? 'USD' : 'INF'}</span>
-                    </p>
-                 </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 14px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '9999px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ActiveAILogo />
+              <div>
+                <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Modelo de IA</p>
+                <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, marginTop: '2px', margin: 0 }}>
+                  {aiBalance} <span style={{ fontSize: '8px', color: t.textDim }}>{settings.aiProvider === 'deepseek' ? 'USD' : 'INF'}</span>
+                </p>
               </div>
-              <button onClick={fetchAiBalance} className={`p-1.5 bg-white/5 rounded-lg text-neutral-500 hover:text-white transition-all ${isRefreshing ? 'animate-spin' : ''}`}>
-                 <RefreshCw size={12} />
-              </button>
-           </div>
-           
-           {/* STATUS SISTEMA */}
-           <div className="px-4 py-2 bg-white/5 rounded-xl border border-white/5">
-              <p className="text-[9px] text-neutral-500 font-black uppercase tracking-widest leading-none">Sistema</p>
-              <p className="text-xs font-bold text-emerald-500 uppercase mt-1 flex items-center gap-2">
-                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
-                 Operativo
-              </p>
-           </div>
+            </div>
+            <button 
+              onClick={fetchAiBalance} 
+              className={isRefreshing ? 'animate-spin' : ''}
+              style={{ padding: '4px', borderRadius: '8px', border: 'none', background: 'transparent', color: t.textDim, cursor: 'pointer' }}
+            >
+              <RefreshCw size={12} />
+            </button>
+          </div>
+          
+          <div style={{ padding: '8px 14px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '9999px' }}>
+            <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Sistema</p>
+            <p style={{ fontSize: '11px', fontWeight: 600, color: t.success, marginTop: '2px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.success, display: 'inline-block' }}></span>
+              Operativo
+            </p>
+          </div>
         </div>
       </div>
 
-      <section className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
-        {/* CAPITAL */}
-        <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-3xl group">
-           <div className="flex items-center justify-between mb-6">
-              <div className="w-10 h-10 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-400 group-hover:text-white transition-all">
-                 <Wallet size={20} />
+      {/* PRESTAMISTAS RECIENTES */}
+      {nuevosPrestamistas.length > 0 && (
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <UserPlus size={16} color={t.accent} />
+            <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text, margin: 0 }}>
+              Nuevos Prestamistas
+            </h3>
+            <span style={{ fontSize: '10px', color: t.textDim, marginLeft: 'auto' }}>
+              {nuevosPrestamistas.length} {nuevosPrestamistas.length === 1 ? 'nuevo' : 'nuevos'} en los últimos 30 días
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {nuevosPrestamistas.slice(0, 5).map(p => (
+              <div 
+                key={p.id} 
+                onClick={() => onNavigateToPrestamo && onNavigateToPrestamo(p.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px',
+                  backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px',
+                  cursor: 'pointer', transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.backgroundColor = t.hoverActive; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.backgroundColor = t.input; }}
+              >
+                <div style={{
+                  width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', fontSize: '11px', fontWeight: 700,
+                  backgroundColor: t.accentSoft, color: t.accent,
+                }}>
+                  {p.nombre?.charAt(0) || '?'}
+                </div>
+                <div>
+                  <p style={{ fontSize: '12px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre || 'Sin nombre'}</p>
+                  <p style={{ fontSize: '9px', color: t.textDim, margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Clock size={10} />
+                    {p.inicio ? new Date(p.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : 'Hoy'}
+                  </p>
+                </div>
+                <p style={{ fontSize: '12px', fontWeight: 600, color: t.accent, margin: '0 0 0 auto' }}>
+                  {parseFloat(p.capital).toLocaleString()} <span style={{ fontSize: '8px' }}>{p.moneda}</span>
+                </p>
               </div>
-              <span className="text-[9px] text-emerald-500 font-black uppercase tracking-widest bg-emerald-500/10 px-2 py-1 rounded-md">Capital</span>
-           </div>
-           <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest mb-1">Activos en Calle</p>
-           <h3 className="text-4xl font-black text-white tracking-tighter">
-              {totalCapital.toLocaleString()} <span className="text-sm text-neutral-600 font-medium">BS</span>
-           </h3>
-           <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-              <p className="text-[9px] text-neutral-600 font-bold uppercase">Rendimiento Mensual</p>
-              <p className="text-xs font-black text-emerald-500">+{totalInteresMensual.toLocaleString()} BS</p>
-           </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* FILA 1: KPIs PRINCIPALES */}
+      <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`} style={{ marginBottom: '24px' }}>
+        <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft }}>
+              <Wallet size={18} color={t.accent} />
+            </div>
+            <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 10px', borderRadius: '9999px', backgroundColor: t.accentSoft, color: t.accent }}>
+              Capital
+            </span>
+          </div>
+          <p style={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Activos en Calle</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', marginTop: '4px' }}>
+            {totalCapital.toLocaleString()} <span style={{ fontSize: '0.875rem', fontWeight: 500, color: t.textDim }}>BS</span>
+          </h3>
+          <div style={{ marginTop: '16px', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1px solid ${t.border}` }}>
+            <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', color: t.textDim, margin: 0 }}>Rendimiento Mensual</p>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: t.success, margin: 0 }}>+{totalInteresMensual.toLocaleString()} BS</p>
+          </div>
         </div>
 
-        {/* INVENTARIO PRO */}
-        <div className="bg-[#0a0a0a] border border-white/5 p-8 rounded-3xl group">
-           <div className="flex items-center justify-between mb-6">
-              <div className="w-10 h-10 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-400 group-hover:text-white transition-all">
-                 <Package size={20} />
-              </div>
-              <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${stockBajo.length > 0 ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                 {stockBajo.length > 0 ? 'Stock Bajo' : 'Inventario'}
-              </span>
-           </div>
-           <p className="text-[10px] text-neutral-500 font-black uppercase tracking-widest mb-1">Valor de Almacén</p>
-           <h3 className="text-4xl font-black text-white tracking-tighter">
-              {valorInventario.toLocaleString()} <span className="text-sm text-neutral-600 font-medium">BS</span>
-           </h3>
-           <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
-              <p className="text-[9px] text-neutral-600 font-bold uppercase">Artículos Totales</p>
-              <p className="text-xs font-black text-white">{listaProductos.length} Artículos</p>
-           </div>
+        <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft }}>
+              <Package size={18} color={t.accent} />
+            </div>
+            <span style={{
+              fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
+              padding: '4px 10px', borderRadius: '9999px',
+              backgroundColor: stockBajo.length > 0 ? 'rgba(239, 68, 68, 0.10)' : t.accentSoft,
+              color: stockBajo.length > 0 ? t.danger : t.accent,
+            }}>
+              {stockBajo.length > 0 ? 'Stock Bajo' : 'Inventario'}
+            </span>
+          </div>
+          <p style={{ fontSize: '10px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Valor de Almacén</p>
+          <h3 style={{ fontSize: '1.75rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', marginTop: '4px' }}>
+            {valorInventario.toLocaleString()} <span style={{ fontSize: '0.875rem', fontWeight: 500, color: t.textDim }}>BS</span>
+          </h3>
+          <div style={{ marginTop: '16px', paddingTop: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1px solid ${t.border}` }}>
+            <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', color: t.textDim, margin: 0 }}>Artículos Totales</p>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: t.text, margin: 0 }}>{listaProductos.length} Artículos</p>
+          </div>
         </div>
       </section>
 
-      {/* FILA 2: MATRIZ OPERATIVA (IZQUIERDA: RENDIMIENTO, DERECHA: LOGÍSTICA) */}
-      <section className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`}>
+      {/* FILA 2: RENDIMIENTO + TAREAS */}
+      <section className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`} style={{ marginBottom: '24px' }}>
          
-         {/* RENDIMIENTO FINANCIERO */}
-         <div className={`${isMobile ? '' : 'col-span-7'} bg-[#0a0a0a] border border-white/5 rounded-[2rem] overflow-hidden shadow-xl`}>
-            <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+         <div className={`${isMobile ? '' : 'col-span-7'}`} style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+            <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${t.border}` }}>
                <div>
-                  <h3 className="text-sm font-black uppercase tracking-widest text-white">Rendimiento Operativo</h3>
-                  <p className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest mt-1">Gestión de capital en circulación</p>
+                  <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text, margin: 0 }}>Rendimiento Operativo</h3>
+                  <p style={{ fontSize: '9px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginTop: '4px', margin: 0 }}>Gestión de capital en circulación</p>
                </div>
             </div>
             
-            <div className="overflow-x-auto">
-               <table className="w-full text-left">
+            <div style={{ overflowX: 'auto' }}>
+               <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                   <thead>
-                     <tr className="border-b border-white/5">
-                        <th className="px-8 py-5 text-[9px] font-black uppercase text-neutral-500 tracking-widest">Activo</th>
-                        <th className="px-8 py-5 text-[9px] font-black uppercase text-neutral-500 tracking-widest">Fecha Cobro</th>
-                        <th className="px-8 py-5 text-[9px] font-black uppercase text-neutral-500 tracking-widest">Estado</th>
-                        <th className="px-8 py-5 text-[9px] font-black uppercase text-neutral-500 tracking-widest text-right">Monto</th>
+                     <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                        <th style={{ padding: '14px 20px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Activo</th>
+                        <th style={{ padding: '14px 20px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Fecha Cobro</th>
+                        <th style={{ padding: '14px 20px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Estado</th>
+                        <th style={{ padding: '14px 20px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Monto</th>
                      </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody>
                      {listaPrestamos.slice(0, 5).map(p => {
-                        const pData = allCobros.find(c => c.id === p.id);
+                        const pData = allCobros.find(c => t.id === p.id);
                         const isPaid = pData?.isPaidThisMonth;
                         return (
-                           <tr key={p.id} className="hover:bg-white/[0.02] transition-colors group">
-                              <td className="px-8 py-5">
-                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-xs font-black text-neutral-400 group-hover:text-white transition-all">
-                                       {p.nombre.charAt(0)}
+                           <tr key={p.id} style={{ borderBottom: `1px solid ${t.border}`, transition: 'background 0.2s' }}
+                             onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                              <td style={{ padding: '14px 20px' }}>
+                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, backgroundColor: t.accentSoft, color: t.accent }}>
+                                       {p.nombre?.charAt(0) || '?'}
                                     </div>
-                                    <p className="text-xs font-black text-white uppercase">{p.nombre}</p>
+                                    <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre}</p>
                                  </div>
                               </td>
-                              <td className="px-8 py-5">
-                                 <p className="text-[10px] font-bold text-neutral-400 uppercase">
+                              <td style={{ padding: '14px 20px' }}>
+                                 <p style={{ fontSize: '10px', fontWeight: 500, color: t.textMuted, margin: 0 }}>
                                     {pData?.nextDate ? pData.nextDate.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : 'N/A'}
                                  </p>
                               </td>
-                              <td className="px-8 py-5">
-                                 <div className="flex items-center gap-3">
+                              <td style={{ padding: '14px 20px' }}>
+                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <input 
                                        type="checkbox" 
                                        checked={isPaid || false} 
                                        onChange={() => onQuickPayment && onQuickPayment(p.id)}
-                                       className="w-4 h-4 rounded border-white/10 bg-white/5 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer"
+                                       style={{ width: '14px', height: '14px', borderRadius: '4px', accentColor: t.accent, cursor: 'pointer' }}
                                     />
-                                    <span className={`text-[9px] font-black uppercase ${isPaid ? 'text-emerald-500' : 'text-amber-500'}`}>{isPaid ? 'Pagado' : 'Pendiente'}</span>
+                                    <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', color: isPaid ? t.success : t.warning }}>
+                                      {isPaid ? 'Pagado' : 'Pendiente'}
+                                    </span>
                                  </div>
                               </td>
-                              <td className="px-8 py-5 text-right font-mono font-black text-white text-xs">
+                              <td style={{ padding: '14px 20px', textAlign: 'right', fontWeight: 600, fontSize: '11px', color: t.text }}>
                                  {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toFixed(0)} BS
                               </td>
                            </tr>
@@ -209,50 +299,55 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
             </div>
          </div>
 
-         {/* TASK PULSE (RECORDATORIOS) */}
-         <div className={`${isMobile ? '' : 'col-span-5'} space-y-6`}>
-            <div className="bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-8">
-               <h3 className="text-sm font-black uppercase tracking-widest text-white mb-8 flex items-center gap-3">
-                  <Bell size={18} className="text-amber-500" /> Pulso de Tareas
+         <div className={`${isMobile ? '' : 'col-span-5'} space-y-4`}>
+            <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+               <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <Bell size={14} color={t.warning} /> Pulso de Tareas
                </h3>
-               <div className="space-y-4">
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {tareasPendientes.slice(0, 3).map(task => (
-                    <div key={task.id} className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-2xl group hover:border-white/10 transition-all">
-                       <div className="flex items-center gap-4">
-                          <div className={`w-2 h-2 rounded-full ${task.prioridad === 'Crítica' ? 'bg-rose-500' : task.prioridad === 'Alta' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                    <div key={task.id} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '12px', borderRadius: '10px',
+                      backgroundColor: t.input, border: `1px solid ${t.border}`,
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = t.textDim; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0, backgroundColor: task.prioridad === 'Crítica' ? t.danger : task.prioridad === 'Alta' ? t.warning : t.accent }}></div>
                           <div>
-                             <p className="text-xs font-black text-white uppercase truncate max-w-[150px]">{task.titulo}</p>
-                             <p className="text-[8px] text-neutral-600 font-bold uppercase tracking-widest">{task.categoria} • {task.prioridad}</p>
+                             <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>{task.titulo}</p>
+                             <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>{task.categoria} • {task.prioridad}</p>
                           </div>
                        </div>
-                       <button className="p-2 text-neutral-700 hover:text-white transition-colors">
-                          <CheckSquare size={16} />
+                       <button style={{ padding: '6px', borderRadius: '6px', border: 'none', background: 'transparent', color: t.textDim, cursor: 'pointer' }}>
+                          <CheckSquare size={14} />
                        </button>
                     </div>
                   ))}
                   {tareasPendientes.length === 0 && (
-                     <div className="py-10 text-center border border-dashed border-white/5 rounded-2xl">
-                        <p className="text-[9px] text-neutral-700 font-black uppercase tracking-widest">Sistema de Tareas Limpio</p>
+                     <div style={{ padding: '24px', textAlign: 'center', border: `1px dashed ${t.border}`, borderRadius: '12px' }}>
+                        <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Sistema de Tareas Limpio</p>
                      </div>
                   )}
                </div>
             </div>
 
-            {/* PRODUCTION PIPELINE (EDITOR DE VIDEO) */}
-            <div className="bg-[#0a0a0a] border border-white/5 rounded-[2.2rem] p-8">
-               <h3 className="text-sm font-black uppercase tracking-widest text-white mb-8 flex items-center gap-3">
-                  <Video size={18} className="text-blue-500" /> Cola de Producción
+            <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+               <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <Video size={14} color={t.accent} /> Cola de Producción
                </h3>
-               <div className="flex items-center gap-6">
-                  <div className="flex-1">
-                     <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mb-1">Proyectos Activos</p>
-                     <p className="text-3xl font-black text-white">{listaVideos.length}</p>
+               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{ flex: 1 }}>
+                     <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Proyectos Activos</p>
+                     <p style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, marginTop: '4px' }}>{listaVideos.length}</p>
                   </div>
-                  <div className="flex-1">
-                     <div className="h-2 bg-white/5 rounded-full overflow-hidden mb-2">
-                        <div className="h-full bg-blue-500 w-2/3 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                  <div style={{ flex: 1 }}>
+                     <div style={{ height: '6px', borderRadius: '9999px', overflow: 'hidden', backgroundColor: t.input, marginBottom: '8px' }}>
+                        <div style={{ height: '100%', width: '66%', borderRadius: '9999px', backgroundColor: t.accent }}></div>
                      </div>
-                     <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-widest">Capacidad de Renderizado</p>
+                     <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Capacidad de Renderizado</p>
                   </div>
                </div>
             </div>
@@ -260,18 +355,23 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
 
       </section>
 
-      {/* FILA 3: STATUS RÁPIDO (FOOTER DASHBOARD) */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      {/* FILA 3: STATUS RÁPIDO */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
          {[
-           { label: 'Egresos Mes', val: totalEgresos.toLocaleString(), icon: BarChart3, color: 'text-rose-500' },
-           { label: 'Proximos Cobros', val: cobrosActivos.length, icon: CalendarDays, color: 'text-amber-500' },
-           { label: 'Artículos Stock Bajo', val: stockBajo.length, icon: Box, color: 'text-orange-500' },
-           { label: 'Estado de Seguridad', val: 'Élite', icon: ShieldCheck, color: 'text-emerald-500' }
+           { label: 'Egresos Mes', val: totalEgresos.toLocaleString(), icon: BarChart3, color: t.danger },
+           { label: 'Próximos Cobros', val: cobrosActivos.length, icon: CalendarDays, color: t.warning },
+           { label: 'Artículos Stock Bajo', val: stockBajo.length, icon: Box, color: '#d4873a' },
+           { label: 'Nuevos Prestamistas', val: nuevosPrestamistas.length, icon: UserPlus, color: t.accent }
          ].map(item => (
-            <div key={item.label} className="bg-white/[0.02] border border-white/5 p-6 rounded-[2rem] flex flex-col items-center text-center group hover:bg-white/[0.04] transition-all">
-               <item.icon size={20} className={`${item.color} mb-3`} />
-               <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mb-1">{item.label}</p>
-               <p className="text-xs font-black text-white uppercase">{item.val}</p>
+            <div key={item.label} style={{
+              padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
+              backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hoverActive; }}>
+               <item.icon size={18} color={item.color} style={{ marginBottom: '10px' }} />
+               <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>{item.label}</p>
+               <p style={{ fontSize: '12px', fontWeight: 700, color: t.text, marginTop: '4px' }}>{item.val}</p>
             </div>
          ))}
       </section>

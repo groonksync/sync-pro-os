@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Calendar, Clock, AlertCircle, Plus, Search, Trash2, 
   CheckCircle2, Circle, Zap, Bell, TrendingUp,
   ShoppingCart, Lightbulb, X, User, DollarSign, FileText
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
 
 const Recordatorios = ({ settings, isDark }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [recordatorios, setRecordatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('Todos');
@@ -72,337 +74,305 @@ const Recordatorios = ({ settings, isDark }) => {
 
   const handleCreate = async () => {
     if (!nuevoRecordatorio.titulo) return;
-    setLoading(true);
     try {
       const { error } = await supabase
         .from('recordatorios')
         .insert([{
           ...nuevoRecordatorio,
-          fecha: nuevoRecordatorio.fecha || null,
-          fecha_fin: nuevoRecordatorio.fecha_fin || null,
           subtareas: subtareasTemp,
-          id: crypto.randomUUID(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          estado: 'Pendiente',
+          monto: parseFloat(nuevoRecordatorio.monto) || 0,
         }]);
-      
       if (error) throw error;
-      
       setIsModalOpen(false);
       setSubtareasTemp([]);
       setNuevoRecordatorio({
-        titulo: '', descripcion: '', fecha: '', fecha_fin: '', prioridad: 'Media', categoria: 'Tarea', estado: 'Pendiente', monto: 0, nombre_contacto: '', recurrencia: 'Ninguna'
+        titulo: '', descripcion: '', fecha: '', fecha_fin: '', prioridad: 'Media',
+        categoria: 'Tarea', estado: 'Pendiente', monto: 0, nombre_contacto: '', recurrencia: 'Ninguna'
       });
-      await fetchRecordatorios();
-    } catch (e) {
-      alert("❌ ERROR: " + e.message);
-    } finally {
-      setLoading(false);
-    }
+      fetchRecordatorios();
+    } catch (e) { console.error(e); }
   };
 
   const toggleEstado = async (id, estadoActual) => {
-    const nuevoEstado = estadoActual === 'Pendiente' ? 'Completado' : 'Pendiente';
+    const nuevoEstado = estadoActual === 'Completado' ? 'Pendiente' : 'Completado';
     try {
-      const { error } = await supabase
-        .from('recordatorios')
-        .update({ estado: nuevoEstado })
-        .eq('id', id);
-      
-      if (error) throw error;
+      await supabase.from('recordatorios').update({ estado: nuevoEstado }).eq('id', id);
       fetchRecordatorios();
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
   };
 
   const deleteRecordatorio = async (id) => {
-    if (!confirm("¿Eliminar este recordatorio?")) return;
     try {
-      const { error } = await supabase
-        .from('recordatorios')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      await supabase.from('recordatorios').delete().eq('id', id);
       fetchRecordatorios();
-    } catch (e) {
-      console.error(e);
-    }
+    } catch (e) { console.error(e); }
   };
 
-  const stats = {
-    total: recordatorios.length,
-    pendientes: recordatorios.filter(r => r.estado === 'Pendiente').length,
-    criticos: recordatorios.filter(r => r.prioridad === 'Crítica' && r.estado === 'Pendiente').length,
-    gastos: recordatorios.filter(r => r.estado === 'Pendiente').reduce((acc, curr) => acc + (parseFloat(curr.monto) || 0), 0)
-  };
+  const stats = [
+    { label: 'Total', val: recordatorios.length, icon: Bell },
+    { label: 'Completados', val: recordatorios.filter(r => r.estado === 'Completado').length, icon: CheckCircle2 },
+    { label: 'Pendientes', val: recordatorios.filter(r => r.estado !== 'Completado').length, icon: AlertCircle },
+  ];
 
   const getPriorityColor = (p) => {
     switch(p) {
-      case 'Crítica': return 'text-rose-500 border-rose-500/20 bg-rose-500/5';
-      case 'Alta': return 'text-amber-500 border-amber-500/20 bg-amber-500/5';
-      case 'Media': return 'text-blue-500 border-blue-500/20 bg-blue-500/5';
-      default: return 'text-emerald-500 border-emerald-500/20 bg-emerald-500/5';
+      case 'Crítica': return { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.25)' };
+      case 'Alta': return { color: '#d4a04a', bg: 'rgba(212, 160, 74, 0.12)', border: 'rgba(212, 160, 74, 0.25)' };
+      case 'Media': return { color: t.accent, bg: t.accentSoft, border: 'rgba(160, 160, 160, 0.2)' };
+      default: return { color: '#7ecba0', bg: 'rgba(126, 203, 160, 0.12)', border: 'rgba(126, 203, 160, 0.25)' };
     }
   };
 
   const filtered = recordatorios.filter(r => {
-    const matchesSearch = r.titulo.toLowerCase().includes(searchTerm.toLowerCase());
-    if (activeFilter === 'Todos') return matchesSearch;
-    return r.categoria === activeFilter && matchesSearch;
+    const term = searchTerm.toLowerCase();
+    const matchSearch = !term || 
+      r.titulo?.toLowerCase().includes(term) || 
+      r.nombre_contacto?.toLowerCase().includes(term) ||
+      r.monto?.toString().includes(term);
+    const matchFilter = activeFilter === 'Todos' || r.categoria === activeFilter;
+    return matchSearch && matchFilter;
   });
 
+  const categories = [
+    { key: 'Tarea', icon: FileText, label: 'Tareas y Obligaciones' },
+    { key: 'Compra', icon: ShoppingCart, label: 'Compras Previstas' },
+    { key: 'Idea', icon: Lightbulb, label: 'Ideas y Creatividad' },
+    { key: 'Nota', icon: DollarSign, label: 'Apuntes Personales' },
+  ];
+
   return (
-    <div className="flex flex-col h-full w-full animate-in fade-in duration-700">
-      
-      <header className="mb-12">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-10">
-          <div>
-            <div className="flex items-center gap-4 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
-                <Bell size={28} />
-              </div>
-              <h2 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">
-                Recordatorios
-              </h2>
-            </div>
-          </div>
-
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="px-8 py-4 bg-white text-black rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 transition-all flex items-center gap-3 shadow-2xl active:scale-95"
-          >
-            <Plus size={16} /> Crear Recordatorio
-          </button>
+    <div className="h-full w-full flex flex-col">
+      {/* HEADER */}
+      <header className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: t.border }}>
+        <div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Recordatorios</h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Sistema de Gestión de Tareas</p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            { label: 'Carga Operativa', val: stats.pendientes, icon: Clock, color: 'text-white' },
-            { label: 'Prioridad Crítica', val: stats.criticos, icon: AlertCircle, color: 'text-rose-500' },
-            { label: 'Flujo Estimado', val: stats.gastos.toLocaleString() + ' BS', icon: TrendingUp, color: 'text-amber-500' },
-            { label: 'Completado', val: stats.total > 0 ? Math.round(((stats.total - stats.pendientes) / stats.total) * 100) + '%' : '0%', icon: CheckCircle2, color: 'text-emerald-500' }
-          ].map((kpi, i) => (
-            <div key={i} className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-6 flex items-center gap-5 hover:border-white/10 transition-colors">
-              <div className={`p-4 rounded-2xl bg-black/40 ${kpi.color}`}>
-                <kpi.icon size={20} />
-              </div>
-              <div>
-                <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest">{kpi.label}</p>
-                <h4 className={`text-2xl font-black ${kpi.color} tracking-tighter whitespace-nowrap`}>{kpi.val}</h4>
-              </div>
-            </div>
-          ))}
-        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all"
+          style={{ backgroundColor: t.accent, color: t.bg }}
+          onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
+          onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
+        >
+          <Plus size={14} /> Nuevo
+        </button>
       </header>
 
-      <div className="flex flex-col md:flex-row gap-6 mb-10 items-center justify-between">
-        <div className="flex bg-black rounded-2xl p-1.5 border border-white/5 w-full md:w-auto overflow-x-auto mac-scrollbar">
+      {/* STATS */}
+      <div className="grid grid-cols-3 gap-3 mb-5">
+        {stats.map((kpi, i) => (
+          <div key={i} className="flex items-center gap-3 transition-all"
+            style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px' }}
+          >
+            <div style={{ backgroundColor: t.accentSoft, borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <kpi.icon size={16} color={t.accent} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>{kpi.label}</p>
+              <h4 className="text-lg font-black tracking-tight truncate" style={{ color: t.text }}>{kpi.val}</h4>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* FILTERS + SEARCH */}
+      <div className="flex flex-col md:flex-row gap-3 mb-6 items-center justify-between">
+        <div className="flex p-1 rounded-xl w-full md:w-auto overflow-x-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
           {['Todos', 'Tarea', 'Compra', 'Idea', 'Nota'].map(f => (
-            <button 
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              className={`px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeFilter === f ? 'bg-white text-black shadow-xl' : 'text-neutral-600 hover:text-white'}`}
-            >
-              {f === 'Todos' ? 'Todos' : f === 'Nota' ? 'Apuntes' : `${f}s`}
-            </button>
+            <button key={f} onClick={() => setActiveFilter(f)}
+              className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all whitespace-nowrap"
+              style={{
+                backgroundColor: activeFilter === f ? t.accent : 'transparent',
+                color: activeFilter === f ? '#000000' : t.textDim,
+              }}
+            >{f}</button>
           ))}
         </div>
-
-        <div className="relative w-full md:w-[400px]">
-          <Search size={18} className="absolute left-5 top-1/2 -translate-y-1/2 text-neutral-700" />
-          <input 
-            type="text" 
-            placeholder="Buscar recordatorios o apuntes..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-white/[0.02] border border-white/5 rounded-2xl py-4 pl-14 pr-6 text-xs text-white outline-none focus:border-amber-500/30 transition-all"
+        <div className="relative w-full md:w-[320px]">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" color={t.textDim} />
+          <input
+            type="text" value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            placeholder="Buscar recordatorio..."
+            className="w-full rounded-xl py-3 pl-12 pr-4 text-xs outline-none transition-all"
+            style={{
+              backgroundColor: t.panel,
+              border: `1px solid ${t.border}`,
+              color: t.text,
+            }}
+            onFocus={e => { e.currentTarget.style.borderColor = t.accent; }}
+            onBlur={e => { e.currentTarget.style.borderColor = t.border; }}
           />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* COLUMNA DE ACCIÓN: Tareas y Compras */}
-        <div className="space-y-12">
-          {[
-            { key: 'Tarea', label: 'Tareas y Pendientes', icon: Zap, color: 'emerald' },
-            { key: 'Compra', label: 'Lista de Compras', icon: ShoppingCart, color: 'amber' }
-          ].map(cat => (
-            <section key={cat.key} className="space-y-6">
-              <div className="flex items-center gap-3 px-4 py-2 border-l-2 border-amber-500 bg-white/[0.01]">
-                <cat.icon size={16} className="text-amber-500" />
-                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.3em]">{cat.label}</h3>
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                {filtered
-                  .filter(r => r.categoria === cat.key || (cat.key === 'Tarea' && !['Compra', 'Idea', 'Nota'].includes(r.categoria)))
-                  .map(r => (
-                    <RecordatorioCard key={r.id} r={r} onToggle={toggleEstado} onSubToggle={toggleSubtarea} onDelete={deleteRecordatorio} colorFunc={getPriorityColor} />
-                  ))}
-              </div>
-            </section>
-          ))}
-        </div>
-
-        {/* COLUMNA DE CONOCIMIENTO: Ideas y Apuntes */}
-        <div className="space-y-12">
-          {[
-            { key: 'Idea', label: 'Laboratorio de Ideas', icon: Lightbulb, color: 'blue' },
-            { key: 'Nota', label: 'Apuntes Rápidos', icon: FileText, color: 'purple' }
-          ].map(cat => (
-            <section key={cat.key} className="space-y-6">
-              <div className="flex items-center gap-3 px-4 py-2 border-l-2 border-emerald-500 bg-white/[0.01]">
-                <cat.icon size={16} className="text-emerald-500" />
-                <h3 className="text-[11px] font-black text-white uppercase tracking-[0.3em]">{cat.label}</h3>
-              </div>
-              <div className="grid grid-cols-1 gap-4">
-                {filtered
-                  .filter(r => r.categoria === cat.key)
-                  .map(r => (
-                    <RecordatorioCard key={r.id} r={r} onToggle={toggleEstado} onSubToggle={toggleSubtarea} onDelete={deleteRecordatorio} colorFunc={getPriorityColor} />
-                  ))}
-              </div>
-            </section>
-          ))}
-        </div>
+      {/* LIST */}
+      <div className="flex-1 overflow-y-auto mac-scrollbar space-y-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
+          </div>
+        ) : (
+          categories.map(cat => {
+            const items = filtered.filter(r => r.categoria === cat.key || (cat.key === 'Tarea' && !['Compra', 'Idea', 'Nota'].includes(r.categoria)));
+            if (items.length === 0) return null;
+            return (
+              <section key={cat.key} className="space-y-3">
+                <div className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: t.accentSoft }}>
+                  <cat.icon size={14} color={t.accent} />
+                  <h3 className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: t.text }}>{cat.label}</h3>
+                </div>
+                {items.length === 0 ? (
+                  <div className="text-center py-6 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px dashed ${t.border}` }}>
+                    <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Sin elementos</p>
+                  </div>
+                ) : (
+                  items.map(r => (
+                    <RecordatorioCard key={r.id} r={r} onToggle={toggleEstado} onSubToggle={toggleSubtarea} onDelete={deleteRecordatorio} colorFunc={getPriorityColor} isDark={isDark} />
+                  ))
+                )}
+              </section>
+            );
+          })
+        )}
       </div>
 
+      {/* MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-[600] flex items-center justify-center p-4">
-          <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-2xl rounded-[2.5rem] p-10 animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto mac-scrollbar">
-            <header className="flex justify-between items-center mb-10">
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4" style={{ backgroundColor: t.overlay, backdropFilter: 'blur(24px)' }}>
+          <div className="w-full max-w-lg rounded-2xl p-6 animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
+            <header className="flex justify-between items-center mb-6">
                <div>
-                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter">Nuevo <span className="text-amber-500">Recordatorio</span></h3>
-                 <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest mt-1">Sincronización con vida personal</p>
+                 <h3 className="text-lg font-black text-white uppercase tracking-tight">Nuevo <span style={{ color: t.accent }}>Recordatorio</span></h3>
+                 <p className="text-[8px] font-black uppercase tracking-widest mt-1" style={{ color: t.textDim }}>Sincronización con vida personal</p>
                </div>
-               <button onClick={() => setIsModalOpen(false)} className="text-neutral-700 hover:text-white transition-colors"><X size={24}/></button>
+               <button onClick={() => setIsModalOpen(false)} className="transition-colors" style={{ color: t.textDim }}>
+                 <X size={20}/>
+               </button>
             </header>
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <p className="text-[9px] text-neutral-600 font-black uppercase ml-2 tracking-widest">Título / Asunto</p>
-                <input 
-                  type="text" 
-                  value={nuevoRecordatorio.titulo}
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Título / Asunto</p>
+                <input type="text" value={nuevoRecordatorio.titulo}
                   onChange={e => setNuevoRecordatorio({...nuevoRecordatorio, titulo: e.target.value})}
                   placeholder="Ej: Comprar café de especialidad..."
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-sm text-white font-bold outline-none focus:border-amber-500/30 transition-all"
+                  className="w-full rounded-xl p-3.5 text-xs outline-none transition-all"
+                  style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <p className="text-[9px] text-neutral-600 font-black uppercase ml-2 tracking-widest">Persona Relacionada</p>
-                  <input 
-                    type="text" 
-                    value={nuevoRecordatorio.nombre_contacto}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Persona Relacionada</p>
+                  <input type="text" value={nuevoRecordatorio.nombre_contacto}
                     onChange={e => setNuevoRecordatorio({...nuevoRecordatorio, nombre_contacto: e.target.value})}
                     placeholder="Nombre..."
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-xs text-white outline-none"
+                    className="w-full rounded-xl p-3.5 text-xs outline-none"
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                   />
                 </div>
-                <div className="space-y-2">
-                  <p className="text-[9px] text-neutral-600 font-black uppercase ml-2 tracking-widest">Monto Estimado (BS)</p>
-                  <input 
-                    type="number" 
-                    value={nuevoRecordatorio.monto}
+                <div className="space-y-1.5">
+                  <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Monto Estimado (BS)</p>
+                  <input type="number" value={nuevoRecordatorio.monto}
                     onChange={e => setNuevoRecordatorio({...nuevoRecordatorio, monto: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-xs text-white outline-none"
+                    className="w-full rounded-xl p-3.5 text-xs outline-none"
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <p className="text-[9px] text-neutral-600 font-black uppercase ml-2 tracking-widest">Recurrencia</p>
-                  <select 
-                    value={nuevoRecordatorio.recurrencia}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Recurrencia</p>
+                  <select value={nuevoRecordatorio.recurrencia}
                     onChange={e => setNuevoRecordatorio({...nuevoRecordatorio, recurrencia: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-[10px] font-black text-white uppercase outline-none"
+                    className="w-full rounded-xl p-3.5 text-[9px] font-black uppercase outline-none"
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                   >
-                    <option value="Ninguna">Único</option>
-                    <option value="Mensual">Mensual</option>
-                    <option value="Bimestral">Bimestral</option>
-                    <option value="Trimestral">Trimestral</option>
-                    <option value="Anual">Anual</option>
+                    <option value="Ninguna" style={{ backgroundColor: t.bg, color: t.text }}>Único</option>
+                    <option value="Mensual" style={{ backgroundColor: t.bg, color: t.text }}>Mensual</option>
+                    <option value="Bimestral" style={{ backgroundColor: t.bg, color: t.text }}>Bimestral</option>
+                    <option value="Trimestral" style={{ backgroundColor: t.bg, color: t.text }}>Trimestral</option>
+                    <option value="Anual" style={{ backgroundColor: t.bg, color: t.text }}>Anual</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-[9px] text-neutral-600 font-black uppercase ml-2 tracking-widest">Inicio</p>
-                  <input 
-                    type="date" 
-                    value={nuevoRecordatorio.fecha}
+                <div className="space-y-1.5">
+                  <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Inicio</p>
+                  <input type="date" value={nuevoRecordatorio.fecha}
                     onChange={e => setNuevoRecordatorio({...nuevoRecordatorio, fecha: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-xs text-white outline-none"
+                    className="w-full rounded-xl p-3.5 text-xs outline-none"
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                   />
                 </div>
-                <div className="space-y-2">
-                  <p className="text-[9px] text-neutral-600 font-black uppercase ml-2 tracking-widest">Vencimiento</p>
-                  <input 
-                    type="date" 
-                    value={nuevoRecordatorio.fecha_fin}
+                <div className="space-y-1.5">
+                  <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Vencimiento</p>
+                  <input type="date" value={nuevoRecordatorio.fecha_fin}
                     onChange={e => setNuevoRecordatorio({...nuevoRecordatorio, fecha_fin: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-xs text-white outline-none"
+                    className="w-full rounded-xl p-3.5 text-xs outline-none"
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                   />
                 </div>
               </div>
 
-              <div className="space-y-4 p-6 bg-black/40 rounded-[2rem] border border-white/5">
-                <p className="text-[9px] text-neutral-600 font-black uppercase tracking-widest">Lista de Items / Pasos</p>
+              <div className="space-y-3 p-4 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Lista de Items / Pasos</p>
                 <div className="flex gap-2">
-                   <input 
-                    type="text" 
-                    value={nuevaSubtarea}
+                   <input type="text" value={nuevaSubtarea}
                     onChange={e => setNuevaSubtarea(e.target.value)}
                     placeholder="Añadir ítem..."
-                    className="flex-1 bg-white/[0.03] border border-white/5 rounded-xl px-4 py-3 text-xs text-white outline-none"
+                    className="flex-1 rounded-lg px-3.5 py-2.5 text-xs outline-none"
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                     onKeyDown={e => e.key === 'Enter' && addSubtarea()}
                    />
-                   <button onClick={addSubtarea} className="p-3 bg-white text-black rounded-xl hover:bg-amber-500 transition-all"><Plus size={16}/></button>
+                   <button onClick={addSubtarea} className="p-2.5 rounded-lg transition-all" style={{ backgroundColor: t.accent, color: '#000000' }}><Plus size={14}/></button>
                 </div>
-                <div className="space-y-2 max-h-40 overflow-y-auto mac-scrollbar pr-2">
+                <div className="space-y-1.5 max-h-32 overflow-y-auto mac-scrollbar pr-1">
                    {subtareasTemp.map(st => (
-                     <div key={st.id} className="flex items-center justify-between bg-white/[0.02] p-3 rounded-xl border border-white/5">
-                        <span className="text-[10px] text-neutral-400 font-bold">{st.texto}</span>
-                        <button onClick={() => setSubtareasTemp(subtareasTemp.filter(i => i.id !== st.id))} className="text-neutral-700 hover:text-rose-500 transition-all"><Trash2 size={14}/></button>
+                     <div key={st.id} className="flex items-center justify-between p-2.5 rounded-lg" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                        <span className="text-[9px] font-bold" style={{ color: t.textMuted }}>{st.texto}</span>
+                        <button onClick={() => setSubtareasTemp(subtareasTemp.filter(i => i.id !== st.id))} className="transition-all" style={{ color: t.textDim }}>
+                          <Trash2 size={12}/>
+                        </button>
                      </div>
                    ))}
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <p className="text-[9px] text-neutral-600 font-black uppercase ml-2 tracking-widest">Categoría</p>
-                  <select 
-                    value={nuevoRecordatorio.categoria}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Categoría</p>
+                  <select value={nuevoRecordatorio.categoria}
                     onChange={e => setNuevoRecordatorio({...nuevoRecordatorio, categoria: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-[10px] font-black text-white uppercase outline-none"
+                    className="w-full rounded-xl p-3.5 text-[9px] font-black uppercase outline-none"
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                   >
-                    <option value="Tarea">Tarea</option>
-                    <option value="Compra">Compra</option>
-                    <option value="Idea">Idea</option>
-                    <option value="Nota">Apunte Personal</option>
+                    <option value="Tarea" style={{ backgroundColor: t.bg, color: t.text }}>Tarea</option>
+                    <option value="Compra" style={{ backgroundColor: t.bg, color: t.text }}>Compra</option>
+                    <option value="Idea" style={{ backgroundColor: t.bg, color: t.text }}>Idea</option>
+                    <option value="Nota" style={{ backgroundColor: t.bg, color: t.text }}>Apunte Personal</option>
                   </select>
                 </div>
-                <div className="space-y-2">
-                  <p className="text-[9px] text-neutral-600 font-black uppercase ml-2 tracking-widest">Prioridad</p>
-                  <select 
-                    value={nuevoRecordatorio.prioridad}
+                <div className="space-y-1.5">
+                  <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Prioridad</p>
+                  <select value={nuevoRecordatorio.prioridad}
                     onChange={e => setNuevoRecordatorio({...nuevoRecordatorio, prioridad: e.target.value})}
-                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl p-5 text-[10px] font-black text-white uppercase outline-none"
+                    className="w-full rounded-xl p-3.5 text-[9px] font-black uppercase outline-none"
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                   >
-                    <option value="Baja">Baja</option>
-                    <option value="Media">Media</option>
-                    <option value="Alta">Alta</option>
-                    <option value="Crítica">Crítica</option>
+                    <option value="Baja" style={{ backgroundColor: t.bg, color: t.text }}>Baja</option>
+                    <option value="Media" style={{ backgroundColor: t.bg, color: t.text }}>Media</option>
+                    <option value="Alta" style={{ backgroundColor: t.bg, color: t.text }}>Alta</option>
+                    <option value="Crítica" style={{ backgroundColor: t.bg, color: t.text }}>Crítica</option>
                   </select>
                 </div>
               </div>
 
-              <div className="pt-4 flex gap-4">
-                 <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 text-neutral-600 font-black uppercase text-[10px] tracking-widest hover:text-white transition-all">Cancelar</button>
-                 <button onClick={handleCreate} className="flex-[2] py-4 bg-amber-500 hover:bg-amber-400 text-black font-black uppercase text-[10px] tracking-[0.3em] rounded-2xl transition-all shadow-xl shadow-amber-500/10">Crear Recordatorio</button>
+              <div className="pt-3 flex gap-3">
+                 <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3.5 font-black uppercase text-[9px] tracking-widest transition-all" style={{ color: t.textDim }}>Cancelar</button>
+                 <button onClick={handleCreate} className="flex-[2] py-3.5 font-black uppercase text-[9px] tracking-[0.2em] rounded-xl transition-all" style={{ backgroundColor: t.accent, color: '#000000' }}>Crear Recordatorio</button>
               </div>
             </div>
           </div>
@@ -412,80 +382,101 @@ const Recordatorios = ({ settings, isDark }) => {
   );
 };
 
-const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc }) => (
-  <div className={`group relative bg-white/[0.02] border border-white/5 rounded-[2.5rem] p-6 transition-all hover:bg-white/[0.04] ${r.estado === 'Completado' ? 'opacity-40' : ''}`}>
-    <div className="flex gap-5 items-start">
-      <button 
-        onClick={() => onToggle(r.id, r.estado)}
-        className={`mt-1.5 transition-all ${r.estado === 'Completado' ? 'text-emerald-500' : 'text-neutral-800 hover:text-neutral-600'}`}
-      >
-        {r.estado === 'Completado' ? <CheckCircle2 size={24} /> : <Circle size={24} />}
-      </button>
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className={`text-sm font-black uppercase tracking-tight truncate ${r.estado === 'Completado' ? 'line-through text-neutral-600' : 'text-white'}`}>
-            {r.titulo}
-          </h4>
-          <div className={`px-2 py-0.5 rounded-lg border text-[7px] font-black uppercase tracking-widest ${colorFunc(r.prioridad)}`}>
-            {r.prioridad}
+const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDark }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const pc = colorFunc(r.prioridad);
+  return (
+    <div 
+      className="group relative transition-all"
+      style={{ 
+        backgroundColor: t.accentSoft,
+        border: `1px solid ${t.border}`,
+        borderRadius: 12,
+        padding: 14,
+        opacity: r.estado === 'Completado' ? 0.45 : 1,
+      }}
+    >
+      <div className="flex gap-3 items-start">
+        <button 
+          onClick={() => onToggle(r.id, r.estado)}
+          className="mt-0.5 transition-all shrink-0"
+          style={{ color: r.estado === 'Completado' ? t.accent : t.textDim }}
+        >
+          {r.estado === 'Completado' ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+        </button>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between mb-1.5">
+            <h4 className="text-xs font-black uppercase tracking-tight truncate" style={{
+              color: r.estado === 'Completado' ? t.textDim : t.text,
+              textDecoration: r.estado === 'Completado' ? 'line-through' : 'none',
+            }}>
+              {r.titulo}
+            </h4>
+            <div className="px-2 py-0.5 rounded-lg border text-[7px] font-black uppercase tracking-widest shrink-0 ml-2" style={{ color: pc.color, backgroundColor: pc.bg, borderColor: pc.border }}>
+              {r.prioridad}
+            </div>
           </div>
-        </div>
 
-        {(r.nombre_contacto || r.monto > 0) && (
-          <div className="flex flex-wrap gap-4 mb-4">
-            {r.nombre_contacto && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-neutral-400 font-bold uppercase">
-                <User size={10} className="text-amber-500" /> {r.nombre_contacto}
-              </div>
-            )}
-            {r.monto > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[9px] text-white font-black uppercase">
-                <TrendingUp size={10} className="text-amber-500" /> {r.monto} BS
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-4 mb-4">
-          {r.recurrencia && r.recurrencia !== 'Ninguna' && (
-            <div className="flex items-center gap-2 text-[8px] text-emerald-500 font-black uppercase tracking-widest">
-              <Zap size={10} /> {r.recurrencia}
+          {(r.nombre_contacto || r.monto > 0) && (
+            <div className="flex flex-wrap gap-2 mb-2.5">
+              {r.nombre_contacto && (
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-bold uppercase" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textMuted }}>
+                  <User size={8} color={t.accent} /> {r.nombre_contacto}
+                </div>
+              )}
+              {r.monto > 0 && (
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.text }}>
+                  <TrendingUp size={8} color={t.accent} /> {r.monto} BS
+                </div>
+              )}
             </div>
           )}
-          {r.fecha && (
-            <div className="flex items-center gap-1.5 text-[8px] text-neutral-600 font-black uppercase">
-              <Clock size={10} /> {new Date(r.fecha).toLocaleDateString()} {r.fecha_fin ? `al ${new Date(r.fecha_fin).toLocaleDateString()}` : ''}
+
+          <div className="flex flex-wrap gap-3 mb-2.5">
+            {r.recurrencia && r.recurrencia !== 'Ninguna' && (
+              <div className="flex items-center gap-1.5 text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>
+                <Zap size={8} /> {r.recurrencia}
+              </div>
+            )}
+            {r.fecha && (
+              <div className="flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.textDim }}>
+                <Clock size={8} /> {new Date(r.fecha).toLocaleDateString()} {r.fecha_fin ? `al ${new Date(r.fecha_fin).toLocaleDateString()}` : ''}
+              </div>
+            )}
+          </div>
+
+          {r.subtareas && r.subtareas.length > 0 && (
+            <div className="space-y-1.5 mt-2.5 p-3 rounded-xl" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+               {r.subtareas.map(st => (
+                 <div 
+                  key={st.id} 
+                  onClick={(e) => { e.stopPropagation(); onSubToggle(r.id, st.id, r.subtareas); }}
+                  className="flex items-center gap-2 cursor-pointer group/sub"
+                 >
+                   {st.completado ? <CheckCircle2 size={12} color={t.accent} /> : <Circle size={12} color={t.textDim} />}
+                   <span className="text-[9px] font-bold" style={{
+                     color: st.completado ? t.textDim : t.textMuted,
+                     textDecoration: st.completado ? 'line-through' : 'none',
+                   }}>
+                     {st.texto}
+                   </span>
+                 </div>
+               ))}
             </div>
           )}
         </div>
 
-        {r.subtareas && r.subtareas.length > 0 && (
-          <div className="space-y-2 mt-4 p-4 bg-black/30 rounded-2xl border border-white/5">
-             {r.subtareas.map(st => (
-               <div 
-                key={st.id} 
-                onClick={(e) => { e.stopPropagation(); onSubToggle(r.id, st.id, r.subtareas); }}
-                className="flex items-center gap-3 cursor-pointer group/sub"
-               >
-                 {st.completado ? <CheckCircle2 size={14} className="text-emerald-500" /> : <Circle size={14} className="text-neutral-700 group-hover/sub:text-neutral-500" />}
-                 <span className={`text-[10px] font-bold ${st.completado ? 'line-through text-neutral-600' : 'text-neutral-400'}`}>
-                   {st.texto}
-                 </span>
-               </div>
-             ))}
-          </div>
-        )}
+        <button 
+          onClick={() => onDelete(r.id)}
+          className="opacity-0 group-hover:opacity-100 p-1.5 transition-all shrink-0"
+          style={{ color: t.textDim }}
+        >
+          <Trash2 size={15} />
+        </button>
       </div>
-
-      <button 
-        onClick={() => onDelete(r.id)}
-        className="opacity-0 group-hover:opacity-100 p-2 text-neutral-800 hover:text-rose-500 transition-all shrink-0"
-      >
-        <Trash2 size={18} />
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 export default Recordatorios;

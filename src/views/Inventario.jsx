@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Package, Search, Plus, Save, Trash2, Edit3, X, Image as ImageIcon,
   Truck, Tag, Box as BoxIcon, Layout, CheckCircle, ChevronLeft, ChevronRight,
@@ -7,66 +7,70 @@ import {
   Barcode, Shield, ZapOff, Activity, Palette, ClipboardList
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
+
+const toastStyle = (isDark, t) => ({
+  position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)', zIndex: 300
+});
 
 const Toast = ({ message, show, onClose, isDark }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   useEffect(() => {
-    if (show) {
-      const timer = setTimeout(() => onClose(), 3000);
-      return () => clearTimeout(timer);
-    }
+    if (show) { const timer = setTimeout(() => onClose(), 3000); return () => clearTimeout(timer); }
   }, [show, onClose]);
   if (!show) return null;
   return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] animate-in fade-in slide-in-from-bottom-10 duration-500">
-      <div className={`${isDark ? 'bg-black/60 border-white/10' : 'bg-white/80 border-black/5'} backdrop-blur-2xl border px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 min-w-[240px] justify-center`}>
-        <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500"><CheckCircle size={18} /></div>
-        <span className={`${isDark ? 'text-white' : 'text-neutral-900'} text-[11px] font-black uppercase tracking-[0.4em]`}>{message}</span>
+    <div style={toastStyle(isDark, t)}>
+      <div style={{ backgroundColor: isDark ? 'rgba(20,20,20,0.6)' : 'rgba(245,245,247,0.9)', backdropFilter: 'blur(24px)', border: `1px solid ${t.border}`, padding: '12px 24px', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', gap: 12, minWidth: 240, justifyContent: 'center' }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: t.accentSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.accent }}><CheckCircle size={16} /></div>
+        <span style={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.4em' }}>{message}</span>
       </div>
     </div>
   );
 };
 
 const ProductCard = ({ p, onEdit, onDelete, isDark }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const stock = parseInt(p.stock_actual || 0);
   const isAgotado = stock === 0;
   
   return (
-    <div className="bg-[#080808] border border-white/5 rounded-[2.5rem] p-5 flex flex-row gap-6 group hover:border-emerald-500/30 transition-all duration-500 shadow-2xl relative overflow-hidden h-[190px]">
-      <div className="relative w-[150px] h-full rounded-[2rem] overflow-hidden bg-[#050505] border border-white/5 shrink-0 shadow-inner">
+    <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'row', gap: 20, transition: 'all 0.5s', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', position: 'relative', overflow: 'hidden', height: 190 }}>
+      <div style={{ position: 'relative', width: 140, height: '100%', borderRadius: 12, overflow: 'hidden', backgroundColor: t.bg, border: `1px solid ${t.border}`, flexShrink: 0 }}>
         {p.imagen ? (
-          <img src={p.imagen} className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 ${isAgotado ? 'grayscale brightness-50 blur-[2px]' : ''}`} alt={p.nombre || 'Producto'} />
+          <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 1s', filter: isAgotado ? 'grayscale(1) brightness(0.5) blur(2px)' : 'none' }} alt={p.nombre || 'Producto'} />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-white/5"><Package size={40} strokeWidth={1} className="text-neutral-900" /></div>
+          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft }}><Package size={36} strokeWidth={1} color={isDark ? '#333' : '#bbb'} /></div>
         )}
-        {isAgotado && <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-[1px] pointer-events-none"><span className="text-white text-[9px] font-black tracking-[0.4em] uppercase">AGOTADO</span></div>}
+        {isAgotado && <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(20,20,20,0.6)', backdropFilter: 'blur(1px)', pointerEvents: 'none' }}><span style={{ color: '#fff', fontSize: 8, fontWeight: 900, letterSpacing: '0.4em', textTransform: 'uppercase' }}>AGOTADO</span></div>}
         
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center gap-3">
-           <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} className="w-10 h-10 bg-white text-black rounded-xl flex items-center justify-center shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 hover:scale-110 active:scale-95"><Edit3 size={16}/></button>
-           <button onClick={(e) => { e.stopPropagation(); onDelete(p.id); }} className="w-10 h-10 bg-rose-500 text-white rounded-xl flex items-center justify-center shadow-2xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-500 hover:bg-rose-600 hover:scale-110 active:scale-95"><Trash2 size={16}/></button>
+        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(20,20,20,0.4)', opacity: 0, transition: 'all 0.5s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+           <button onClick={(e) => { e.stopPropagation(); onEdit(p); }} style={{ width: 36, height: 36, backgroundColor: '#fff', color: '#000', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', transition: 'all 0.3s', border: 'none', cursor: 'pointer' }}><Edit3 size={14}/></button>
+           <button onClick={(e) => { e.stopPropagation(); onDelete(p.id); }} style={{ width: 36, height: 36, backgroundColor: t.danger, color: '#fff', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 30px rgba(0,0,0,0.5)', transition: 'all 0.3s', border: 'none', cursor: 'pointer' }}><Trash2 size={14}/></button>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col justify-between py-1 min-w-0">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">{p.marca || 'SOVEREIGN'}</span>
-            <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${stock < 5 ? 'bg-amber-500/10 text-amber-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '4px 0', minWidth: 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 8, fontWeight: 900, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.2em' }}>{p.marca || 'SOVEREIGN'}</span>
+            <div style={{ padding: '3px 10px', borderRadius: 20, fontSize: 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.accentSoft, color: t.accent }}>
               {stock} UNIDADES
             </div>
           </div>
-          <h3 className="text-[15px] font-black text-white uppercase tracking-tight line-clamp-2 leading-tight group-hover:text-emerald-400 transition-colors">{p.nombre || 'Sin Nombre'}</h3>
-          <div className="flex items-center gap-3">
-             <div className="px-2 py-0.5 bg-white/5 rounded-md border border-white/5 text-[7px] font-black text-neutral-500 uppercase">{p.categoria || 'GENERAL'}</div>
-             <div className="text-[7px] font-mono text-neutral-600 font-bold uppercase truncate">SKU: {p.sku || p.codigo || 'N/A'}</div>
+          <h3 style={{ fontSize: 14, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.02em', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.2' }}>{p.nombre || 'Sin Nombre'}</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+             <div style={{ padding: '2px 6px', backgroundColor: t.accentSoft, borderRadius: 6, border: `1px solid ${t.border}`, fontSize: 6, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase' }}>{p.categoria || 'GENERAL'}</div>
+             <div style={{ fontSize: 6, fontFamily: 'monospace', color: t.textDim, fontWeight: 700, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>SKU: {p.sku || p.codigo || 'N/A'}</div>
           </div>
         </div>
 
-        <div className="flex items-end justify-between pt-2 border-t border-white/5">
-          <div className="flex flex-col">
-            {p.precio_antes > 0 && <p className="text-[9px] font-mono font-black text-neutral-600 line-through leading-none mb-0.5">{parseFloat(p.precio_antes || 0).toLocaleString()} BS.</p>}
-            <div className="flex items-baseline gap-1.5"><span className="text-2xl font-mono font-black text-white tracking-tighter">{parseFloat(p.precio_venta || 0).toLocaleString()}</span><span className="text-[10px] font-black text-neutral-500 uppercase">BS.</span></div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', paddingTop: 6, borderTop: `1px solid ${t.border}` }}>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {p.precio_antes > 0 && <p style={{ fontSize: 8, fontFamily: 'monospace', fontWeight: 900, color: t.textDim, textDecoration: 'line-through', lineHeight: 1, marginBottom: 2 }}>{parseFloat(p.precio_antes || 0).toLocaleString()} BS.</p>}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}><span style={{ fontSize: 24, fontFamily: 'monospace', fontWeight: 900, color: t.text, letterSpacing: '-0.05em' }}>{parseFloat(p.precio_venta || 0).toLocaleString()}</span><span style={{ fontSize: 9, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase' }}>BS.</span></div>
           </div>
-          <button onClick={() => onEdit(p)} className="h-10 px-6 bg-white/[0.03] hover:bg-white text-white hover:text-black rounded-xl flex items-center justify-center gap-3 transition-all active:scale-95 border border-white/10 hover:border-transparent"><ShoppingCart size={14}/><span className="text-[10px] font-black uppercase tracking-widest">MASTER CONTROL</span></button>
+          <button onClick={() => onEdit(p)} style={{ height: 32, padding: '0 16px', backgroundColor: t.accentSoft, color: t.text, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s', border: `1px solid ${t.border}`, cursor: 'pointer', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}><ShoppingCart size={12}/><span>MASTER CONTROL</span></button>
         </div>
       </div>
     </div>
@@ -86,6 +90,7 @@ const AMAZON_CATEGORIES = [
 ];
 
 const Inventario = ({ settings = {}, isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,7 +101,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
   const [toast, setToast] = useState({ show: false, message: '' });
 
   const isMobile = settings?.isMobileMode;
-  const normalizeText = (t) => (t || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizeText = (tt) => (tt || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   useEffect(() => { fetchData(); }, [page]);
 
@@ -117,30 +122,14 @@ const Inventario = ({ settings = {}, isDark = true }) => {
     setLoading(true);
     try {
       const garantiaString = editingProduct.garantia_unit === 'Sin Garantía' ? 'Sin Garantía' : `${editingProduct.garantia_num || 0} ${editingProduct.garantia_unit || 'Días'}`;
-      
-      // Creamos un metadata con TODOS los campos extras por si no existen como columnas
       const meta = {
         ...(editingProduct.metadata || {}),
-        sku: editingProduct.sku || '',
-        color: editingProduct.color || '',
-        condicion: editingProduct.condicion || 'Nuevo',
-        distribuidor: editingProduct.distribuidor || '',
-        ubicacion: editingProduct.ubicacion || '',
-        serial: editingProduct.serial || '',
-        tipo_envio: editingProduct.tipo_envio || 'Envío Gratuito'
+        sku: editingProduct.sku || '', color: editingProduct.color || '', condicion: editingProduct.condicion || 'Nuevo',
+        distribuidor: editingProduct.distribuidor || '', ubicacion: editingProduct.ubicacion || '',
+        serial: editingProduct.serial || '', tipo_envio: editingProduct.tipo_envio || 'Envío Gratuito'
       };
-
-      const payload = { 
-        ...editingProduct, 
-        garantia: garantiaString, 
-        updated_at: new Date().toISOString(),
-        metadata: meta
-      };
-      
-      // Limpiamos campos de ayuda visual
-      delete payload.garantia_num; 
-      delete payload.garantia_unit;
-
+      const payload = { ...editingProduct, garantia: garantiaString, updated_at: new Date().toISOString(), metadata: meta };
+      delete payload.garantia_num; delete payload.garantia_unit;
       const { error } = await supabase.from('productos').upsert(payload);
       if (error) throw error;
       await fetchData(); setIsModalOpen(false); setEditingProduct(null); setToast({ show: true, message: 'OPERACIÓN EXITOSA' });
@@ -151,26 +140,16 @@ const Inventario = ({ settings = {}, isDark = true }) => {
     if (!p) return;
     let gNum = 0, gUnit = 'Días';
     if (p.garantia && p.garantia !== 'Sin Garantía') { 
-      const parts = p.garantia.split(' '); 
-      gNum = parseInt(parts[0]) || 0; 
-      gUnit = parts[1] || 'Días'; 
+      const parts = p.garantia.split(' '); gNum = parseInt(parts[0]) || 0; gUnit = parts[1] || 'Días'; 
     }
     const meta = p.metadata || {};
     setEditingProduct({ 
-      ...p, 
-      garantia_num: gNum, 
-      garantia_unit: gUnit,
+      ...p, garantia_num: gNum, garantia_unit: gUnit,
       imagenes: p.imagenes || (p.imagen ? [p.imagen] : []),
-      precio_costo: p.precio_costo || 0,
-      precio_venta: p.precio_venta || 0,
-      precio_antes: p.precio_antes || 0,
-      stock_actual: p.stock_actual || 0,
-      sku: p.sku || meta.sku || '',
-      condicion: p.condicion || meta.condicion || 'Nuevo',
-      color: p.color || meta.color || '',
-      distribuidor: p.distribuidor || meta.distribuidor || '',
-      ubicacion: p.ubicacion || meta.ubicacion || '',
-      serial: p.serial || meta.serial || '',
+      precio_costo: p.precio_costo || 0, precio_venta: p.precio_venta || 0, precio_antes: p.precio_antes || 0,
+      stock_actual: p.stock_actual || 0, sku: p.sku || meta.sku || '', condicion: p.condicion || meta.condicion || 'Nuevo',
+      color: p.color || meta.color || '', distribuidor: p.distribuidor || meta.distribuidor || '',
+      ubicacion: p.ubicacion || meta.ubicacion || '', serial: p.serial || meta.serial || '',
       tipo_envio: p.tipo_envio || meta.tipo_envio || 'Envío Gratuito'
     });
     setIsModalOpen(true);
@@ -178,7 +157,11 @@ const Inventario = ({ settings = {}, isDark = true }) => {
 
   const openNewProduct = () => {
     setEditingProduct({ 
-      id: crypto.randomUUID(), nombre: '', categoria: 'Electrónica', marca: '', distribuidor: '', precio_costo: 0, precio_venta: 0, precio_antes: 0, stock_actual: 0, stock_minimo: 5, stock_vendido: 0, ficha_tecnica: '', estado: 'Stock', imagen: '', codigo: '', sku: '', ubicacion: '', serial: '', garantia_num: 0, garantia_unit: 'Días', tipo_envio: 'Envío Gratuito', imagenes: [], metadata: { condicion: 'Nuevo', color: '' }, color: '', condicion: 'Nuevo'
+      id: crypto.randomUUID(), nombre: '', categoria: 'Electrónica', marca: '', distribuidor: '',
+      precio_costo: 0, precio_venta: 0, precio_antes: 0, stock_actual: 0, stock_minimo: 5, stock_vendido: 0,
+      ficha_tecnica: '', estado: 'Stock', imagen: '', codigo: '', sku: '', ubicacion: '', serial: '',
+      garantia_num: 0, garantia_unit: 'Días', tipo_envio: 'Envío Gratuito', imagenes: [],
+      metadata: { condicion: 'Nuevo', color: '' }, color: '', condicion: 'Nuevo'
     });
     setIsModalOpen(true);
   };
@@ -219,80 +202,77 @@ const Inventario = ({ settings = {}, isDark = true }) => {
 
   const ITEMS_PER_PAGE = 30;
 
-    const stats = [
-    { label: 'Activos Totales', val: productos.length, icon: Package, color: 'text-white' },
-    { label: 'Stock Crítico', val: productos.filter(p => p.stock_actual < 5 && p.stock_actual > 0).length, icon: AlertTriangle, color: 'text-amber-500' },
-    { label: 'Valor de Activos', val: productos.reduce((acc, p) => acc + (parseFloat(p.precio_venta || 0) * parseInt(p.stock_actual || 0)), 0).toLocaleString() + ' BS', icon: DollarSign, color: 'text-emerald-500' },
-    { label: 'Categorías Amazon', val: new Set(productos.map(p => p.categoria)).size, icon: Layers, color: 'text-purple-500' },
-    { label: 'Fuga por Agotados', val: productos.filter(p => p.stock_actual <= 0).length, icon: ZapOff, color: 'text-rose-500' }
+  const stats = [
+    { label: 'Activos Totales', val: productos.length, icon: Package },
+    { label: 'Stock Crítico', val: productos.filter(p => p.stock_actual < 5 && p.stock_actual > 0).length, icon: AlertTriangle },
+    { label: 'Valor de Activos', val: productos.reduce((acc, p) => acc + (parseFloat(p.precio_venta || 0) * parseInt(p.stock_actual || 0)), 0).toLocaleString() + ' BS', icon: DollarSign },
+    { label: 'Categorías Amazon', val: new Set(productos.map(p => p.categoria)).size, icon: Layers },
+    { label: 'Fuga por Agotados', val: productos.filter(p => p.stock_actual <= 0).length, icon: ZapOff }
   ];
 
   return (
-    <div className={`flex flex-col h-full w-full animate-in fade-in duration-700 ${isMobile ? 'pb-20' : ''}`}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', paddingBottom: isMobile ? 80 : 0 }}>
       <Toast show={toast.show} message={toast.message} isDark={isDark} onClose={() => setToast({ ...toast, show: false })} />
       
-      <header className={`flex ${isMobile ? 'flex-col gap-6' : 'flex-row justify-between items-center mb-12 gap-8'}`}>
-        <div className="flex items-center gap-5">
-           <div className="w-12 h-12 bg-[#10b981] rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.2)] border border-white/10 shrink-0"><BoxIcon size={24} className="text-black" strokeWidth={2.5} /></div>
-           <div>
-              <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tighter leading-none">Inventario <span className="text-emerald-500">Pro</span></h2>
-           </div>
+      <header style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: isMobile ? undefined : 'space-between', alignItems: isMobile ? undefined : 'center', marginBottom: isMobile ? 24 : 32, gap: isMobile ? 16 : 0 }}>
+        <div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Inventario <span style={{ color: t.accent }}>Pro</span></h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Gestión de productos y stock</p>
         </div>
-        <button onClick={openNewProduct} className="bg-white text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-emerald-500 transition-all shadow-2xl flex items-center justify-center gap-4 active:scale-95 px-8 py-4">
-           <Plus size={18} strokeWidth={3}/> Nuevo Activo Maestro
+        <button onClick={openNewProduct} style={{ backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, border: 'none', cursor: 'pointer', padding: '10px 24px', transition: 'all 0.2s' }}>
+           <Plus size={16} strokeWidth={3}/> Nuevo Activo Maestro
         </button>
       </header>
 
-      {/* INVENTORY STATS - 5 HORIZONTAL BOXES */}
       {!isMobile && (
-        <div className="grid grid-cols-5 gap-6 mb-12">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 32 }}>
           {stats.map((s, i) => (
-            <div key={i} className="bg-[#080808] border border-white/5 rounded-[2.5rem] p-8 flex items-center justify-between shadow-2xl hover:border-white/10 transition-all group">
-               <div className="min-w-0">
-                  <p className="text-[10px] font-black text-neutral-700 uppercase tracking-[0.2em] mb-2 group-hover:text-neutral-500 transition-colors">{s.label}</p>
-                  <p className="text-2xl font-black text-white truncate">{s.val}</p>
+            <div key={i} style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 20px 60px rgba(0,0,0,0.5)', transition: 'all 0.3s' }}>
+               <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 6 }}>{s.label}</p>
+                  <p style={{ fontSize: 20, fontWeight: 900, color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.val}</p>
                </div>
-               <div className={`w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center ${s.color} shadow-inner group-hover:scale-110 transition-all`}><s.icon size={24}/></div>
+               <div style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: t.accentSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.accent }}><s.icon size={22}/></div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="relative mb-10">
-        <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-neutral-800" size={18}/>
-        <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Buscar activos por nombre, código o SKU..." className="w-full bg-[#050505] border border-white/5 text-white rounded-2xl py-5 pl-16 pr-8 text-xs font-medium outline-none focus:border-emerald-500/20 shadow-inner placeholder:text-neutral-800" />
+      <div style={{ position: 'relative', marginBottom: 24 }}>
+        <Search style={{ position: 'absolute', left: 20, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={16}/>
+        <input type="text" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} placeholder="Buscar activos por nombre, código o SKU..." style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, color: t.text, borderRadius: 12, padding: '14px 16px 14px 48px', fontSize: 11, fontWeight: 500, outline: 'none' }} />
       </div>
 
-      <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
+      <div style={{ display: 'grid', gap: 16, gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr' }}>
         {filteredProducts.map(p => ( <ProductCard key={p.id} p={p} isDark={isDark} onEdit={handleEditProduct} onDelete={id => { if(confirm('¿Borrar activo?')) supabase.from('productos').delete().eq('id', id).then(fetchData); }} /> ))}
       </div>
 
       {isModalOpen && editingProduct && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl z-[500] flex items-center justify-center p-4 overflow-y-auto">
-           <div className="bg-[#0a0a0a] border border-white/10 w-full max-w-6xl rounded-[3.5rem] shadow-2xl relative flex flex-col md:flex-row overflow-hidden animate-in zoom-in duration-300 max-h-[92vh]">
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: t.overlay, backdropFilter: 'blur(24px)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, overflowY: 'auto' }}>
+           <div style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, width: '100%', maxWidth: 1100, borderRadius: 20, boxShadow: '0 40px 120px rgba(0,0,0,0.8)', position: 'relative', display: 'flex', flexDirection: 'row', overflow: 'hidden', maxHeight: '92vh' }}>
               
-              <div className="w-full md:w-[420px] bg-black/40 p-10 border-r border-white/5 flex flex-col gap-8 overflow-y-auto mac-scrollbar">
-                 <div className="space-y-4">
-                    <div className="aspect-square bg-white/[0.02] rounded-[2.5rem] border border-white/5 flex items-center justify-center relative overflow-hidden group shadow-2xl">
-                       {editingProduct.imagen ? <img src={editingProduct.imagen} className="w-full h-full object-cover" alt="Main" /> : <ImageIcon size={80} className="text-neutral-900" />}
-                       <div className="absolute top-6 left-6 px-4 py-1.5 bg-emerald-500 text-black text-[9px] font-black rounded-full uppercase tracking-widest shadow-xl flex items-center gap-2"><Star size={10} fill="black"/> Portada Principal</div>
+              <div style={{ width: 380, backgroundColor: isDark ? 'rgba(20,20,20,0.4)' : 'rgba(245,245,247,0.4)', padding: 32, borderRight: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 24, overflowY: 'auto' }}>
+                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div style={{ aspectRatio: '1/1', backgroundColor: t.accentSoft, borderRadius: 16, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
+                       {editingProduct.imagen ? <img src={editingProduct.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Main" /> : <ImageIcon size={64} color={t.textDim} />}
+                       <div style={{ position: 'absolute', top: 16, left: 16, padding: '4px 12px', backgroundColor: t.accent, color: '#000', fontSize: 8, fontWeight: 900, borderRadius: 20, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 6 }}><Star size={10} fill="black"/> Portada Principal</div>
                     </div>
-                    <div className="flex justify-between items-center px-2">
-                       <p className="text-[10px] font-black text-neutral-600 uppercase tracking-widest">Multimedia ({editingProduct.imagenes.length})</p>
-                       <label className="bg-emerald-500/10 text-emerald-500 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest cursor-pointer hover:bg-emerald-500 hover:text-black transition-all"><input type="file" className="hidden" accept="image/*" multiple onChange={handleImageUpload}/> Subir</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 8px' }}>
+                       <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Multimedia ({editingProduct.imagenes.length})</p>
+                       <label style={{ backgroundColor: t.accentSoft, color: t.accent, padding: '4px 14px', borderRadius: 10, fontSize: 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', transition: 'all 0.2s', border: `1px solid ${t.borderLight}` }}><input type="file" style={{ display: 'none' }} accept="image/*" multiple onChange={handleImageUpload}/> Subir</label>
                     </div>
                  </div>
 
-                 <div className="grid grid-cols-1 gap-4">
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 10 }}>
                     {editingProduct.imagenes.map((img, idx) => (
-                       <div key={idx} className="flex items-center gap-4 bg-white/[0.03] p-4 rounded-3xl border border-white/5 group hover:border-emerald-500/30 transition-all">
-                          <div className="w-20 h-20 rounded-2xl overflow-hidden border border-white/10 shrink-0"><img src={img} className="w-full h-full object-cover" /></div>
-                          <div className="flex-1 min-w-0">
-                             <p className="text-[9px] font-black text-white uppercase truncate">Imagen #{idx + 1}</p>
-                             <div className="flex gap-2 mt-3">
-                                <button onClick={() => handleMoveImage(idx, -1)} className="w-9 h-9 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-xl transition-all flex items-center justify-center"><ArrowLeft size={14}/></button>
-                                <button onClick={() => handleMoveImage(idx, 1)} className="w-9 h-9 bg-white/5 hover:bg-emerald-500 hover:text-black rounded-xl transition-all flex items-center justify-center"><ArrowRight size={14}/></button>
-                                <button onClick={() => handleDeleteImage(idx)} className="w-9 h-9 bg-white/5 hover:bg-rose-500 hover:text-white rounded-xl transition-all flex items-center justify-center ml-auto"><Trash2 size={14}/></button>
+                       <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: t.accentSoft, padding: 12, borderRadius: 12, border: `1px solid ${t.border}`, transition: 'all 0.3s' }}>
+                          <div style={{ width: 64, height: 64, borderRadius: 10, overflow: 'hidden', border: `1px solid ${t.borderLight}`, flexShrink: 0 }}><img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                             <p style={{ fontSize: 8, fontWeight: 900, color: t.text, textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Imagen #{idx + 1}</p>
+                             <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                                <button onClick={() => handleMoveImage(idx, -1)} style={{ width: 28, height: 28, backgroundColor: t.accentSoft, color: t.accent, borderRadius: 8, transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, cursor: 'pointer' }}><ArrowLeft size={12}/></button>
+                                <button onClick={() => handleMoveImage(idx, 1)} style={{ width: 28, height: 28, backgroundColor: t.accentSoft, color: t.accent, borderRadius: 8, transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, cursor: 'pointer' }}><ArrowRight size={12}/></button>
+                                <button onClick={() => handleDeleteImage(idx)} style={{ width: 28, height: 28, backgroundColor: t.accentSoft, color: t.danger, borderRadius: 8, transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, cursor: 'pointer', marginLeft: 'auto' }}><Trash2 size={12}/></button>
                              </div>
                           </div>
                        </div>
@@ -300,121 +280,119 @@ const Inventario = ({ settings = {}, isDark = true }) => {
                  </div>
               </div>
 
-              <div className="flex-1 p-14 space-y-12 overflow-y-auto mac-scrollbar bg-gradient-to-b from-[#0a0a0a] to-black">
-                 <header className="flex justify-between items-start">
-                    <div className="flex items-center gap-6">
-                       <div className="w-16 h-16 rounded-[1.5rem] bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-[0_0_40px_rgba(16,185,129,0.1)]"><Layers size={32}/></div>
+              <div style={{ flex: 1, padding: 40, overflowY: 'auto', background: isDark ? `linear-gradient(180deg, ${t.bg} 0%, #0a0a0a 100%)` : `linear-gradient(180deg, #f5f5f7 0%, #ffffff 100%)` }}>
+                 <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                       <div style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: t.accentSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.accent, border: `1px solid ${t.borderLight}` }}><Layers size={28}/></div>
                        <div>
-                          <h3 className="text-4xl font-black text-white uppercase tracking-tighter leading-none">Amazon <span className="text-emerald-500">Merchant Hub</span></h3>
-                          <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.6em] mt-2">Listing Configuration Master • Pro v6.1</p>
+                          <h3 style={{ fontSize: 28, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.03em', lineHeight: 1 }}>Amazon <span style={{ color: t.accent }}>Merchant Hub</span></h3>
+                          <p style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.6em', marginTop: 6 }}>Listing Configuration Master • Pro v6.1</p>
                        </div>
                     </div>
-                    <button onClick={() => setIsModalOpen(false)} className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-neutral-600 hover:text-white hover:bg-rose-500/20 hover:border-rose-500/30 transition-all"><X size={24}/></button>
+                    <button onClick={() => setIsModalOpen(false)} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim, cursor: 'pointer', transition: 'all 0.2s' }}><X size={20}/></button>
                  </header>
 
-                 <section className="space-y-8">
-                    <div className="flex items-center gap-4 border-l-4 border-emerald-500 pl-5"><Tag size={20} className="text-emerald-500"/><span className="text-[12px] font-black text-white uppercase tracking-[0.3em]">Identidad del Listing</span></div>
-                    <div className="grid grid-cols-2 gap-8">
-                       <div className="col-span-2 space-y-3">
-                          <p className="text-[10px] text-neutral-700 font-black uppercase ml-4 tracking-[0.2em]">Título Maestro del Producto</p>
-                          <input type="text" value={editingProduct.nombre || ''} onChange={e=>setEditingProduct({...editingProduct, nombre: e.target.value})} className="w-full bg-white/[0.02] border border-white/5 rounded-[2rem] p-7 text-2xl font-black text-white outline-none focus:border-emerald-500/30 focus:bg-white/[0.04] transition-all shadow-inner" placeholder="Escribe el nombre del activo..." />
+                 <section style={{ marginBottom: 40 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderLeft: `4px solid ${t.accent}`, paddingLeft: 16, marginBottom: 24 }}><Tag size={18} color={t.accent}/><span style={{ fontSize: 11, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.3em' }}>Identidad del Listing</span></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                       <div style={{ gridColumn: 'span 2', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <p style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', marginLeft: 12, letterSpacing: '0.2em' }}>Título Maestro del Producto</p>
+                          <input type="text" value={editingProduct.nombre || ''} onChange={e=>setEditingProduct({...editingProduct, nombre: e.target.value})} style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, fontSize: 20, fontWeight: 900, color: t.text, outline: 'none' }} placeholder="Escribe el nombre del activo..." />
                        </div>
-                       <div className="space-y-3">
-                          <p className="text-[10px] text-neutral-700 font-black uppercase ml-4 tracking-[0.2em]">Categoría Amazon</p>
-                          <div className="relative">
-                             <select value={editingProduct.categoria} onChange={e=>setEditingProduct({...editingProduct, categoria: e.target.value})} className="w-full bg-white/[0.02] border border-white/5 rounded-[1.5rem] p-5 text-xs font-black text-white uppercase outline-none appearance-none cursor-pointer focus:border-emerald-500/30 transition-all">{AMAZON_CATEGORIES.map(c => <option key={c} value={c} className="bg-[#0a0a0a]">{c}</option>)}</select>
-                             <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-600"><Plus size={16}/></div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <p style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', marginLeft: 12, letterSpacing: '0.2em' }}>Categoría Amazon</p>
+                          <div style={{ position: 'relative' }}>
+                             <select value={editingProduct.categoria} onChange={e=>setEditingProduct({...editingProduct, categoria: e.target.value})} style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', fontSize: 10, fontWeight: 900, color: t.text, textTransform: 'uppercase', outline: 'none', appearance: 'none', cursor: 'pointer' }}>{AMAZON_CATEGORIES.map(cat => <option key={cat} value={cat} style={{ backgroundColor: t.panel, color: t.text }}>{cat}</option>)}</select>
+                             <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: t.textDim }}><Plus size={14}/></div>
                           </div>
                        </div>
-                       <div className="space-y-3">
-                          <p className="text-[10px] text-neutral-700 font-black uppercase ml-4 tracking-[0.2em]">Marca / Fabricante</p>
-                          <input type="text" value={editingProduct.marca || ''} onChange={e=>setEditingProduct({...editingProduct, marca: e.target.value})} className="w-full bg-white/[0.02] border border-white/5 rounded-[1.5rem] p-5 text-sm font-black text-emerald-500 outline-none focus:border-emerald-500/30 transition-all" placeholder="SOVEREIGN" />
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <p style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', marginLeft: 12, letterSpacing: '0.2em' }}>Marca / Fabricante</p>
+                          <input type="text" value={editingProduct.marca || ''} onChange={e=>setEditingProduct({...editingProduct, marca: e.target.value})} style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', fontSize: 12, fontWeight: 900, color: t.accent, outline: 'none' }} placeholder="SOVEREIGN" />
                        </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-8">
-                       <div className="bg-white/[0.01] p-6 rounded-[2rem] border border-white/5 flex items-center gap-5 group hover:border-white/10 transition-all">
-                          <div className="w-12 h-12 rounded-xl bg-white/[0.03] flex items-center justify-center text-neutral-700 group-hover:text-white transition-colors"><Barcode size={24}/></div>
-                          <div className="flex-1">
-                             <p className="text-[9px] font-black text-neutral-700 uppercase tracking-widest mb-1">Código de Barras (UPC/EAN)</p>
-                             <input type="text" value={editingProduct.codigo || ''} onChange={e=>setEditingProduct({...editingProduct, codigo: e.target.value})} className="w-full bg-transparent text-sm font-mono font-black text-white outline-none" placeholder="00000000000" />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginTop: 20 }}>
+                       <div style={{ backgroundColor: t.inputBg, padding: 16, borderRadius: 14, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
+                          <div style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.accentSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim }}><Barcode size={20}/></div>
+                          <div style={{ flex: 1 }}>
+                             <p style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Código de Barras (UPC/EAN)</p>
+                             <input type="text" value={editingProduct.codigo || ''} onChange={e=>setEditingProduct({...editingProduct, codigo: e.target.value})} style={{ width: '100%', backgroundColor: 'transparent', fontSize: 12, fontFamily: 'monospace', fontWeight: 900, color: t.text, outline: 'none', border: 'none' }} placeholder="00000000000" />
                           </div>
                        </div>
-                       <div className="bg-white/[0.01] p-6 rounded-[2rem] border border-white/5 flex items-center gap-5 group hover:border-emerald-500/20 transition-all">
-                          <div className="w-12 h-12 rounded-xl bg-emerald-500/5 flex items-center justify-center text-emerald-500/50 group-hover:text-emerald-500 transition-colors"><Hash size={24}/></div>
-                          <div className="flex-1">
-                             <p className="text-[9px] font-black text-neutral-700 uppercase tracking-widest mb-1">SKU Interno (Maestro)</p>
-                             <input type="text" value={editingProduct.sku || ''} onChange={e=>setEditingProduct({...editingProduct, sku: e.target.value})} className="w-full bg-transparent text-sm font-mono font-black text-emerald-500 outline-none" placeholder="SKU-SOV-001" />
+                       <div style={{ backgroundColor: t.inputBg, padding: 16, borderRadius: 14, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', gap: 14 }}>
+                          <div style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.accentSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.accent }}><Hash size={20}/></div>
+                          <div style={{ flex: 1 }}>
+                             <p style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>SKU Interno (Maestro)</p>
+                             <input type="text" value={editingProduct.sku || ''} onChange={e=>setEditingProduct({...editingProduct, sku: e.target.value})} style={{ width: '100%', backgroundColor: 'transparent', fontSize: 12, fontFamily: 'monospace', fontWeight: 900, color: t.accent, outline: 'none', border: 'none' }} placeholder="SKU-SOV-001" />
                           </div>
                        </div>
                     </div>
                  </section>
 
-                 <section className="space-y-8">
-                    <div className="flex items-center gap-4 border-l-4 border-amber-500 pl-5"><DollarSign size={20} className="text-amber-500"/><span className="text-[12px] font-black text-white uppercase tracking-[0.3em]">Finanzas & Disponibilidad</span></div>
-                    <div className="grid grid-cols-3 gap-8">
-                       <div className="bg-white/[0.01] p-8 rounded-[2.5rem] border border-white/5 space-y-4 hover:bg-white/[0.02] transition-all">
-                          <p className="text-[10px] font-black text-neutral-700 uppercase tracking-[0.2em]">Precio de Costo</p>
-                          <div className="flex items-baseline gap-3"><input type="number" value={editingProduct.precio_costo} onChange={e=>setEditingProduct({...editingProduct, precio_costo: e.target.value})} className="w-full bg-transparent text-4xl font-mono font-black text-neutral-700 outline-none" /><span className="text-xs font-black text-neutral-800 uppercase">BS</span></div>
+                 <section style={{ marginBottom: 40 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, borderLeft: `4px solid ${t.accent}`, paddingLeft: 16, marginBottom: 24 }}><DollarSign size={18} color={t.accent}/><span style={{ fontSize: 11, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.3em' }}>Finanzas & Disponibilidad</span></div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
+                       <div style={{ backgroundColor: t.inputBg, padding: 24, borderRadius: 14, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Precio de Costo</p>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><input type="number" value={editingProduct.precio_costo} onChange={e=>setEditingProduct({...editingProduct, precio_costo: e.target.value})} style={{ width: '100%', backgroundColor: 'transparent', fontSize: 28, fontFamily: 'monospace', fontWeight: 900, color: t.textDim, outline: 'none', border: 'none' }} /><span style={{ fontSize: 10, fontWeight: 900, color: t.textDim, textTransform: 'uppercase' }}>BS</span></div>
                        </div>
-                       <div className="bg-emerald-500/[0.02] p-8 rounded-[2.5rem] border border-emerald-500/10 space-y-4 shadow-[0_20px_50px_rgba(16,185,129,0.05)]">
-                          <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Precio de Venta</p>
-                          <div className="flex items-baseline gap-3"><input type="number" value={editingProduct.precio_venta} onChange={e=>setEditingProduct({...editingProduct, precio_venta: e.target.value})} className="w-full bg-transparent text-4xl font-mono font-black text-white outline-none" /><span className="text-xs font-black text-emerald-500 uppercase">BS</span></div>
+                       <div style={{ backgroundColor: t.inputBg, padding: 24, borderRadius: 14, border: `1px solid ${t.borderLight}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <p style={{ fontSize: 9, fontWeight: 900, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Precio de Venta</p>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><input type="number" value={editingProduct.precio_venta} onChange={e=>setEditingProduct({...editingProduct, precio_venta: e.target.value})} style={{ width: '100%', backgroundColor: 'transparent', fontSize: 28, fontFamily: 'monospace', fontWeight: 900, color: t.text, outline: 'none', border: 'none' }} /><span style={{ fontSize: 10, fontWeight: 900, color: t.accent, textTransform: 'uppercase' }}>BS</span></div>
                        </div>
-                       <div className="bg-rose-500/[0.01] p-8 rounded-[2.5rem] border border-rose-500/10 space-y-4">
-                          <p className="text-[10px] font-black text-rose-500/40 uppercase tracking-[0.2em] flex items-center gap-2"><ZapOff size={12}/> Precio Anterior</p>
-                          <div className="flex items-baseline gap-3"><input type="number" value={editingProduct.precio_antes} onChange={e=>setEditingProduct({...editingProduct, precio_antes: e.target.value})} className="w-full bg-transparent text-4xl font-mono font-black text-rose-500/10 line-through outline-none" /><span className="text-xs font-black text-rose-500/10 uppercase">BS</span></div>
+                       <div style={{ backgroundColor: t.inputBg, padding: 24, borderRadius: 14, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 4 }}><ZapOff size={10}/> Precio Anterior</p>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><input type="number" value={editingProduct.precio_antes} onChange={e=>setEditingProduct({...editingProduct, precio_antes: e.target.value})} style={{ width: '100%', backgroundColor: 'transparent', fontSize: 28, fontFamily: 'monospace', fontWeight: 900, color: t.textDim, textDecoration: 'line-through', outline: 'none', border: 'none' }} /><span style={{ fontSize: 10, fontWeight: 900, color: t.textDim, textTransform: 'uppercase' }}>BS</span></div>
                        </div>
                     </div>
-                    <div className="grid grid-cols-4 gap-6">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 14, marginTop: 20 }}>
                        {[
-                         { label: 'Stock Actual', val: editingProduct.stock_actual, icon: BoxIcon, color: 'text-amber-500', field: 'stock_actual', type: 'number' },
-                         { label: 'Ubicación', val: editingProduct.ubicacion, icon: MapPin, color: 'text-white', field: 'ubicacion', type: 'text', placeholder: 'Piso 1' },
-                         { label: 'Color / Versión', val: editingProduct.color, icon: Palette, color: 'text-emerald-500', field: 'color', type: 'text', placeholder: 'Black / Silver' },
-                         { label: 'Condición', val: editingProduct.condicion, icon: Shield, color: 'text-blue-500', field: 'condicion', type: 'select' }
+                         { label: 'Stock Actual', val: editingProduct.stock_actual, icon: BoxIcon, field: 'stock_actual', type: 'number' },
+                         { label: 'Ubicación', val: editingProduct.ubicacion, icon: MapPin, field: 'ubicacion', type: 'text', placeholder: 'Piso 1' },
+                         { label: 'Color / Versión', val: editingProduct.color, icon: Palette, field: 'color', type: 'text', placeholder: 'Black / Silver' },
+                         { label: 'Condición', val: editingProduct.condicion, icon: Shield, field: 'condicion', type: 'select' }
                        ].map((f, i) => (
-                         <div key={i} className="bg-white/[0.01] p-6 rounded-[1.8rem] border border-white/5 space-y-3 group hover:border-white/10 transition-all">
-                            <div className="flex items-center justify-between"><p className="text-[9px] font-black text-neutral-700 uppercase tracking-widest">{f.label}</p><f.icon size={12} className={f.color}/></div>
+                         <div key={i} style={{ backgroundColor: t.inputBg, padding: 14, borderRadius: 12, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}><p style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{f.label}</p><f.icon size={10} color={t.accent}/></div>
                             {f.type === 'select' ? (
-                              <select value={f.val} onChange={e=>setEditingProduct({...editingProduct, [f.field]: e.target.value})} className="w-full bg-transparent text-[11px] font-black text-white uppercase outline-none cursor-pointer"><option value="Nuevo" className="bg-black">Nuevo</option><option value="Usado" className="bg-black">Usado</option><option value="Refurbished" className="bg-black">Renovado</option></select>
+                              <select value={f.val} onChange={e=>setEditingProduct({...editingProduct, [f.field]: e.target.value})} style={{ width: '100%', backgroundColor: 'transparent', fontSize: 10, fontWeight: 900, color: t.text, textTransform: 'uppercase', outline: 'none', border: 'none', cursor: 'pointer' }}><option value="Nuevo" style={{ backgroundColor: t.bg, color: t.text }}>Nuevo</option><option value="Usado" style={{ backgroundColor: t.bg, color: t.text }}>Usado</option><option value="Refurbished" style={{ backgroundColor: t.bg, color: t.text }}>Renovado</option></select>
                             ) : (
-                              <input type={f.type} value={f.val || ''} onChange={e=>setEditingProduct({...editingProduct, [f.field]: e.target.value})} className={`w-full bg-transparent text-sm font-black outline-none ${f.type === 'number' ? 'font-mono ' + f.color : 'text-white'}`} placeholder={f.placeholder} />
+                              <input type={f.type} value={f.val || ''} onChange={e=>setEditingProduct({...editingProduct, [f.field]: e.target.value})} style={{ width: '100%', backgroundColor: 'transparent', fontSize: 12, fontWeight: 900, outline: 'none', border: 'none', color: f.type === 'number' ? t.accent : t.text, fontFamily: f.type === 'number' ? 'monospace' : 'inherit' }} placeholder={f.placeholder} />
                             )}
                          </div>
                        ))}
                     </div>
                  </section>
 
-                 <section className="grid grid-cols-2 gap-10">
-                    <div className="bg-white/[0.01] p-10 rounded-[2.5rem] border border-white/5 space-y-8 shadow-2xl relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 blur-[50px] -mr-16 -mt-16 group-hover:bg-emerald-500/10 transition-all"></div>
-                       <div className="flex items-center gap-4 text-emerald-500"><ShieldCheck size={24}/><span className="text-[12px] font-black text-white uppercase tracking-[0.3em]">Garantía Sovereign</span></div>
-                       <div className="grid grid-cols-2 gap-6">
-                          <div className="space-y-3"><p className="text-[9px] text-neutral-700 font-black uppercase tracking-widest ml-1">Valor Numérico</p><input type="number" value={editingProduct.garantia_num} onChange={e=>setEditingProduct({...editingProduct, garantia_num: e.target.value})} className="w-full bg-black/60 border border-white/10 rounded-2xl p-5 text-center text-lg font-black text-emerald-500 outline-none focus:border-emerald-500/30 shadow-inner" /></div>
-                          <div className="space-y-3"><p className="text-[9px] text-neutral-700 font-black uppercase tracking-widest ml-1">Unidad de Tiempo</p><div className="relative"><select value={editingProduct.garantia_unit} onChange={e=>setEditingProduct({...editingProduct, garantia_unit: e.target.value})} className="w-full bg-black/60 border border-white/10 rounded-2xl p-5 text-[11px] font-black text-white uppercase outline-none appearance-none cursor-pointer focus:border-emerald-500/30 transition-all"><option value="Días" className="bg-black">Días</option><option value="Meses" className="bg-black">Meses</option><option value="Años" className="bg-black">Años</option><option value="Sin Garantía" className="bg-black">Sin Garantía</option></select><div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-700"><ChevronRight size={14}/></div></div></div>
+                 <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 40 }}>
+                    <div style={{ backgroundColor: t.inputBg, padding: 28, borderRadius: 16, border: `1px solid ${t.border}`, position: 'relative', overflow: 'hidden' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: t.accent, marginBottom: 20 }}><ShieldCheck size={20}/><span style={{ fontSize: 11, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.3em' }}>Garantía Sovereign</span></div>
+                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}><p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginLeft: 4 }}>Valor Numérico</p><input type="number" value={editingProduct.garantia_num} onChange={e=>setEditingProduct({...editingProduct, garantia_num: e.target.value})} style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: 14, textAlign: 'center', fontSize: 16, fontWeight: 900, color: t.accent, outline: 'none' }} /></div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}><p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginLeft: 4 }}>Unidad de Tiempo</p><div style={{ position: 'relative' }}><select value={editingProduct.garantia_unit} onChange={e=>setEditingProduct({...editingProduct, garantia_unit: e.target.value})} style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: 14, fontSize: 10, fontWeight: 900, color: t.text, textTransform: 'uppercase', outline: 'none', appearance: 'none', cursor: 'pointer' }}><option value="Días" style={{ backgroundColor: t.bg, color: t.text }}>Días</option><option value="Meses" style={{ backgroundColor: t.bg, color: t.text }}>Meses</option><option value="Años" style={{ backgroundColor: t.bg, color: t.text }}>Años</option><option value="Sin Garantía" style={{ backgroundColor: t.bg, color: t.text }}>Sin Garantía</option></select><div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: t.textDim }}><ChevronRight size={12}/></div></div></div>
                        </div>
                     </div>
-                    <div className="bg-white/[0.01] p-10 rounded-[2.5rem] border border-white/5 space-y-8 shadow-2xl relative overflow-hidden group">
-                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[50px] -mr-16 -mt-16 group-hover:bg-blue-500/10 transition-all"></div>
-                       <div className="flex items-center gap-4 text-white"><Truck size={24}/><span className="text-[12px] font-black text-white uppercase tracking-[0.3em]">Logística Global</span></div>
-                       <div className="space-y-3">
-                          <p className="text-[9px] text-neutral-700 font-black uppercase tracking-widest ml-1">Método de Envío Predefinido</p>
-                          <div className="relative">
-                             <select value={editingProduct.tipo_envio} onChange={e=>setEditingProduct({...editingProduct, tipo_envio: e.target.value})} className="w-full bg-black/60 border border-white/10 rounded-2xl p-5 text-[11px] font-black text-white uppercase outline-none appearance-none cursor-pointer focus:border-white/20 transition-all"><option value="Envío Gratuito" className="bg-black">Envío Gratuito (Prime Exclusive)</option><option value="Costo Adicional" className="bg-black">Costo de Envío Adicional</option></select>
-                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-700"><Plus size={14}/></div>
+                    <div style={{ backgroundColor: t.inputBg, padding: 28, borderRadius: 16, border: `1px solid ${t.border}`, position: 'relative', overflow: 'hidden' }}>
+                       <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: t.text, marginBottom: 20 }}><Truck size={20}/><span style={{ fontSize: 11, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.3em' }}>Logística Global</span></div>
+                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginLeft: 4 }}>Método de Envío Predefinido</p>
+                          <div style={{ position: 'relative' }}>
+                             <select value={editingProduct.tipo_envio} onChange={e=>setEditingProduct({...editingProduct, tipo_envio: e.target.value})} style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: 14, fontSize: 10, fontWeight: 900, color: t.text, textTransform: 'uppercase', outline: 'none', appearance: 'none', cursor: 'pointer' }}><option value="Envío Gratuito" style={{ backgroundColor: t.bg, color: t.text }}>Envío Gratuito (Prime Exclusive)</option><option value="Costo Adicional" style={{ backgroundColor: t.bg, color: t.text }}>Costo de Envío Adicional</option></select>
+                             <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: t.textDim }}><Plus size={14}/></div>
                           </div>
                        </div>
                     </div>
                  </section>
 
-                 <section className="bg-white/[0.01] p-12 rounded-[3.5rem] border border-white/5 space-y-8 shadow-inner group">
-                    <div className="flex justify-between items-center border-l-4 border-white/10 pl-6"><div className="flex items-center gap-5 text-white"><ClipboardList size={22}/><span className="text-[12px] font-black text-white uppercase tracking-[0.3em]">Ficha Técnica Pro (Bullet Points)</span></div></div>
-                    <textarea value={editingProduct.ficha_tecnica || ''} onChange={e=>setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} placeholder="• Característica Maestra 1...&#10;• Característica Maestra 2..." className="w-full bg-transparent text-[13px] font-medium text-neutral-400 outline-none h-60 resize-none leading-relaxed border-l-2 border-emerald-500/10 pl-10 focus:border-emerald-500/40 transition-all placeholder:text-neutral-800"></textarea>
+                 <section style={{ backgroundColor: t.inputBg, padding: 32, borderRadius: 20, border: `1px solid ${t.border}`, marginBottom: 32 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: `4px solid ${t.borderLight}`, paddingLeft: 20, marginBottom: 20 }}><div style={{ display: 'flex', alignItems: 'center', gap: 16, color: t.text }}><ClipboardList size={18}/><span style={{ fontSize: 11, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.3em' }}>Ficha Técnica Pro (Bullet Points)</span></div></div>
+                    <textarea value={editingProduct.ficha_tecnica || ''} onChange={e=>setEditingProduct({...editingProduct, ficha_tecnica: e.target.value})} placeholder="• Característica Maestra 1...&#10;• Característica Maestra 2..." style={{ width: '100%', backgroundColor: 'transparent', fontSize: 12, fontWeight: 500, color: t.textMuted, outline: 'none', height: 200, resize: 'none', lineHeight: '1.8', borderLeft: `2px solid ${t.accentSoft}`, paddingLeft: 32 }}></textarea>
                  </section>
 
-                 <footer className="flex items-center gap-8 pt-12 sticky bottom-0 bg-black/90 backdrop-blur-2xl py-10 border-t border-white/5 z-20">
-                    <button onClick={() => setIsModalOpen(false)} className="px-10 py-6 text-neutral-700 font-black uppercase text-[11px] tracking-[0.3em] hover:text-white transition-all">Descartar Cambios</button>
-                    <button onClick={handleSaveProduct} className="flex-1 py-7 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-[2.5rem] font-black uppercase text-[12px] tracking-[0.6em] shadow-[0_20px_60px_rgba(16,185,129,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-5 group">
-                       <Save size={24} className="group-hover:rotate-12 transition-transform"/> Sincronizar Asset Amazon Pro
+                 <footer style={{ display: 'flex', alignItems: 'center', gap: 24, paddingTop: 32, borderTop: `1px solid ${t.border}`, position: 'sticky', bottom: 0, backgroundColor: t.overlay, backdropFilter: 'blur(24px)', padding: '24px 0' }}>
+                    <button onClick={() => setIsModalOpen(false)} style={{ padding: '10px 28px', color: t.textDim, fontWeight: 900, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.3em', background: 'none', border: 'none', cursor: 'pointer' }}>Descartar Cambios</button>
+                    <button onClick={handleSaveProduct} style={{ flex: 1, padding: '16px 24px', backgroundColor: t.accent, color: '#000', borderRadius: 14, fontWeight: 900, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.4em', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, transition: 'all 0.2s' }}>
+                       <Save size={20}/> Sincronizar Asset Amazon Pro
                     </button>
                  </footer>
               </div>

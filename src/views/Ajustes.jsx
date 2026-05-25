@@ -50,7 +50,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
   const accentColors = [
     { name: 'Sovereign Gold', hex: '#fbbf24' },
     { name: 'Pure White', hex: '#ffffff' },
-    { name: 'Cyber Blue', hex: '#3b82f6' },
+    { name: 'Cyber Blue', hex: '#969696' },
     { name: 'Crimson Red', hex: '#ef4444' },
     { name: 'Emerald Finance', hex: '#10b981' },
     { name: 'Neon Purple', hex: '#a855f7' },
@@ -120,18 +120,15 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
       
       <header className="flex justify-between items-end pb-8 border-b border-white/5">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 rounded-lg bg-white/5 text-neutral-400"><Settings size={20}/></div>
-            <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Ajustador <span className="text-neutral-700">Maestro</span></h2>
-          </div>
-          <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em]">Calibración Global de Infraestructura</p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Ajustes</h2>
+          <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Calibración Global de Infraestructura</p>
         </div>
         <div className="flex items-center gap-4 text-[10px] font-black text-neutral-800 uppercase tracking-widest">
            <ShieldCheck size={16}/> System Secure
         </div>
       </header>
 
-      <section className="bg-[#0a0a0a] border border-white/5 rounded-[32px] p-8 shadow-2xl relative overflow-hidden group">
+      <section className="bg-[#202022] border border-white/5 rounded-[32px] p-8 shadow-2xl relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><Cloud size={100}/></div>
         <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
            <div className="flex items-center gap-6">
@@ -162,7 +159,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
       </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <section className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl relative overflow-hidden">
+        <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl relative overflow-hidden">
           <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-2 flex items-center gap-3"><Palette size={20} className="text-neutral-700"/> Motor Estético</h3>
           <div className="grid grid-cols-4 gap-3">
             {accentColors.map(color => (
@@ -176,17 +173,17 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
           </div>
         </section>
 
-        <section className={`border-2 rounded-[28px] p-8 space-y-8 shadow-2xl transition-all duration-500 ${settings.isMobileMode ? 'bg-white border-white text-black' : 'bg-[#0a0a0a] border-white/5 text-white'}`}>
+        <section className={`border-2 rounded-[28px] p-8 space-y-8 shadow-2xl transition-all duration-500 ${settings.isMobileMode ? 'bg-white border-white text-black' : 'bg-[#202022] border-white/5 text-white'}`}>
           <h3 className="text-xl font-black uppercase tracking-tighter flex items-center gap-3"><Smartphone size={20}/> Transmutador Móvil</h3>
           <div className="flex items-center justify-between">
             <p className="text-xs font-black uppercase">Optimización Táctil</p>
-            <button onClick={() => updateSetting('isMobileMode', !settings.isMobileMode)} className={`w-16 h-8 rounded-full relative transition-all ${settings.isMobileMode ? 'bg-black' : 'bg-white/10'}`}>
+            <button onClick={() => updateSetting('isMobileMode', !settings.isMobileMode)} className={`w-16 h-8 rounded-full relative transition-all ${settings.isMobileMode ? 'bg-[#141414]' : 'bg-white/10'}`}>
               <div className={`absolute top-1 w-6 h-6 rounded-full transition-all ${settings.isMobileMode ? 'right-1 bg-white' : 'left-1 bg-neutral-700'}`}></div>
             </button>
           </div>
         </section>
 
-        <section className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl md:col-span-2">
+        <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl md:col-span-2">
           <div className="flex items-center justify-between">
              <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><Cpu size={20} className="text-emerald-500"/> Bóveda de Inteligencia</h3>
              <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
@@ -195,7 +192,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
              </div>
           </div>
 
-          <div className="flex bg-black rounded-2xl p-1.5 border border-white/10 max-w-xs">
+          <div className="flex bg-[#141414] rounded-2xl p-1.5 border border-white/10 max-w-xs">
             {[
               { id: 'gemini', label: 'Google', Icon: GoogleLogo },
               { id: 'deepseek', label: 'DeepSeek', Icon: DeepSeekLogo }
@@ -226,7 +223,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                       id="ai-key-input"
                       defaultValue={settings.aiProvider === 'gemini' ? settings.geminiKey : settings.deepseekKey}
                       placeholder={`Pegar llave de ${settings.aiProvider}...`} 
-                      className="w-full bg-black border border-white/5 rounded-2xl p-5 text-[10px] text-white font-mono outline-none focus:border-white/20 transition-all pr-12 shadow-inner"
+                      className="w-full bg-[#141414] border border-white/5 rounded-2xl p-5 text-[10px] text-white font-mono outline-none focus:border-white/20 transition-all pr-12 shadow-inner"
                     />
                   </div>
 
@@ -314,13 +311,13 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
           </div>
         </section>
 
-        <section className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl">
+        <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl">
           <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><Building2 size={20}/> Identidad</h3>
-          <input type="text" value={settings.studioName} onChange={e => updateSetting('studioName', e.target.value)} className="w-full bg-black border border-white/5 rounded-2xl p-4 text-sm text-white font-bold outline-none"/>
+          <input type="text" value={settings.studioName} onChange={e => updateSetting('studioName', e.target.value)} className="w-full bg-[#141414] border border-white/5 rounded-2xl p-4 text-sm text-white font-bold outline-none"/>
           <button onClick={handleExportBackup} className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[10px] font-black uppercase text-emerald-500 flex items-center justify-center gap-3"><Download size={16}/> Exportar Backup</button>
         </section>
 
-        <section className="bg-[#0a0a0a] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl">
+        <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl">
           <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><Database size={20}/> Mantenimiento</h3>
           <button className="w-full p-6 bg-rose-500/5 border border-rose-500/10 rounded-[32px] flex items-center justify-between group">
             <div className="text-left"><p className="text-xs font-black text-rose-500 uppercase">Limpiar Logs</p></div>

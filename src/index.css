@@ -1,6 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===== DARK ELEGANT GRAY DESIGN SYSTEM ===== */
+/* Monochromatic dark gray palette — bg: #141414, panel: #202022 */
 
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
@@ -12,6 +17,21 @@
   50% { transform: translateY(-5px); }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 .animate-bounce-subtle {
   animation: bounce-subtle 2s infinite ease-in-out;
 }
@@ -20,15 +40,23 @@
   color-scheme: dark;
 }
 
-body, input, select, textarea, button {
+*, *::before, *::after {
   margin: 0;
-  background-color: #0c0c0e;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Ocultar scrollbars por defecto */
+body {
+  background-color: #141414 !important;
+  font-family: 'Space Grotesk', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #d4d4d4;
+  line-height: 1.5;
+  overflow: hidden;
+}
+
+/* Hide default scrollbars */
 * {
   scrollbar-width: none;
 }
@@ -40,7 +68,7 @@ body, input, select, textarea, button {
 /* Mac Scrollbar Style */
 .mac-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
 .mac-scrollbar::-webkit-scrollbar {
@@ -54,11 +82,132 @@ body, input, select, textarea, button {
 }
 
 .mac-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
 }
 
-/* --- MEETING STUDIO TOOLTIP (EL GLOBITO) --- */
+.mac-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ===== TYPOGRAPHY ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #e0e0e0;
+}
+
+/* ===== INPUTS ===== */
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+input[type="url"],
+select,
+textarea {
+  background-color: #28282b !important;
+  border: 1px solid #2e2e30 !important;
+  color: #d4d4d4 !important;
+  border-radius: 12px !important;
+  padding: 0.625rem 1rem !important;
+  font-size: 0.8125rem !important;
+  font-family: 'Space Grotesk', 'Inter', sans-serif !important;
+  transition: all 0.2s ease !important;
+  outline: none !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #a0a0a0 !important;
+  box-shadow: 0 0 0 3px rgba(160, 160, 160, 0.12), inset 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #707070 !important;
+  font-weight: 400 !important;
+}
+
+select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  padding-right: 36px !important;
+}
+
+/* ===== BUTTONS ===== */
+button {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background-color: #a0a0a0 !important;
+  color: #141414 !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  padding: 0.625rem 1.5rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary:hover {
+  background-color: #bbbbbb !important;
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+  color: #a0a0a0 !important;
+  border: 1px solid #2e2e30 !important;
+  border-radius: 9999px !important;
+  padding: 0.625rem 1.5rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  transition: all 0.2s ease !important;
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 255, 255, 0.07) !important;
+  color: #d4d4d4 !important;
+}
+
+/* ===== CARDS ===== */
+.premium-card {
+  background-color: #202022 !important;
+  border: 1px solid #2e2e30 !important;
+  border-radius: 16px !important;
+  transition: all 0.2s ease;
+}
+
+.premium-card:hover {
+  border-color: #3a3a3d !important;
+}
+
+/* ===== ANIMATIONS ===== */
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.4s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease-out forwards;
+}
+
+/* ===== MEETING STUDIO TOOLTIP ===== */
 .annotated-text-pending {
   background-color: rgba(245, 158, 11, 0.4);
   border-radius: 3px;
@@ -85,7 +234,7 @@ body, input, select, textarea, button {
   bottom: calc(100% + 6px);
   left: 50%;
   transform: translateX(-50%);
-  background: #18181b;
+  background: #202022;
   color: #f4f4f5;
   padding: 6px 10px;
   font-size: 11px;
@@ -106,7 +255,7 @@ body, input, select, textarea, button {
   left: 50%;
   transform: translateX(-50%);
   border: 4px solid transparent;
-  border-top-color: #18181b;
+  border-top-color: #202022;
   z-index: 50;
 }
 
@@ -146,7 +295,7 @@ body, input, select, textarea, button {
   border-radius: 0 1rem 1rem 0;
 }
 
-/* --- SOVEREIGN AI MARKDOWN STYLES --- */
+/* ===== AI MARKDOWN STYLES ===== */
 .ai-markdown-content {
   line-height: 1.6;
 }
@@ -210,112 +359,18 @@ body, input, select, textarea, button {
   margin-bottom: 0.75rem;
 }
 
-/* OVERRIDES PARA DISEÑO PREMIUM INSPIRADO EN LAS IMÁGENES DE REFERENCIA (GRAPHITE PRO) */
-
-/* 1. Normalización Tipográfica Absoluta: Una sola tipografía, pesos regulares y elegantes, sin textos excesivamente grandes */
-* {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+/* ===== CUSTOM SCROLLBAR ===== */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
-
-body, input, select, textarea, button, p, span, td, li, a, div {
-  font-weight: 400 !important; /* Peso regular para todo el texto de lectura */
-  letter-spacing: -0.01em !important;
+::-webkit-scrollbar-track {
+  background: #141414;
 }
-
-h1, h2, h3, h4, h5, h6, strong, .font-bold, .font-semibold, .font-black, .font-extrabold {
-  font-weight: 500 !important; /* Peso medio (regular/semi-bold) elegante, evitando fuentes ultra-gruesas */
-  letter-spacing: -0.015em !important;
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
 }
-
-/* Redimensionar y normalizar textos gigantes para mantener calma visual y simetría */
-h1, .text-4xl, .text-3xl {
-  font-size: 1.35rem !important;
-}
-h2, .text-2xl {
-  font-size: 1.15rem !important;
-}
-h3, .text-xl, .text-lg {
-  font-size: 0.95rem !important;
-}
-.text-\[35px\], .text-\[40px\], .text-\[44px\], .text-\[30px\] {
-  font-size: 1.25rem !important;
-}
-
-/* 2. Paleta de Colores "Graphite Pro" (Negro grafito profundo, eliminando pizarra y tonos muy claros) */
-.bg-\[\#121212\], .bg-background, body {
-  background-color: #08080a !important; /* Fondo de la aplicación (gris/negro profundo) */
-}
-
-.bg-sidebar {
-  background-color: #09090b !important; /* Fondo de la barra lateral (negro sólido) */
-}
-
-.bg-\[\#0a0a0a\], .bg-card, .premium-card {
-  background-color: #131417 !important; /* Fondo de tarjetas y paneles */
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  box-shadow: 
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.04), 
-    0 10px 40px -10px rgba(0, 0, 0, 0.4), 
-    0 1px 2px rgba(0, 0, 0, 0.2) !important; /* Sombras muy suaves y profundas */
-}
-
-/* 3. Bordes finos, consistentes y muy tenues en la paleta Graphite */
-.border-white\/5, .border-white\/\[0\.05\], .border-white\/\[0\.04\] {
-  border-color: rgba(255, 255, 255, 0.05) !important;
-}
-.border-white\/10 {
-  border-color: rgba(255, 255, 255, 0.07) !important;
-}
-.border-white\/20 {
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-/* 4. Consistencia de Espaciados y Márgenes ("Aire" Visual) */
-tr.hover\:bg-white\/\[0\.02\] td, 
-tr.group td {
-  padding-top: 1.15rem !important;
-  padding-bottom: 1.15rem !important;
-  vertical-align: middle !important;
-}
-
-.space-y-4 > * + * {
-  margin-top: 0.65rem !important;
-}
-
-/* Padding uniforme y biselado en cajas de entrada (Inputs) */
-input[type="text"], input[type="password"], input[type="number"], select, textarea {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.02) !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
-  background-color: rgba(255, 255, 255, 0.02) !important;
-  padding: 0.8rem 1.1rem !important;
-  border-radius: 12px !important;
-  font-size: 0.75rem !important;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
-  border-color: rgba(255, 255, 255, 0.15) !important;
-  background-color: rgba(255, 255, 255, 0.035) !important;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(255, 255, 255, 0.04) !important;
-}
-
-/* 5. Dropdowns y botones con el mismo look Graphite */
-.premium-dropdown {
-  background: linear-gradient(180deg, #1d1e22 0%, #121316 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.35) !important;
-  border-radius: 10px !important;
-}
-
-/* Transiciones suaves globales */
-button, a, .group, .transition-all {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-/* Ajustes de contraste para textos secundarios y placeholders */
-.text-neutral-500 {
-  color: rgba(255, 255, 255, 0.45) !important;
-}
-.text-neutral-600 {
-  color: rgba(255, 255, 255, 0.3) !important;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
 }

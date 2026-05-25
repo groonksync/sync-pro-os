@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Menu, Search, HelpCircle, Settings, ChevronLeft, ChevronRight, 
-  Plus, X, CheckCircle2, Clock, MapPin, Grid, RefreshCw, ChevronDown, Check, 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Menu, Search, HelpCircle, Settings, ChevronLeft, ChevronRight,
+  Plus, X, CheckCircle2, Clock, MapPin, Grid, RefreshCw, ChevronDown, Check,
   Calendar as CalendarIcon, Filter, Layers, Zap, Target, Star, MoreHorizontal
 } from 'lucide-react';
 import { getCalendarList, getCalendarEvents, createCalendarEvent } from '../lib/googleApi';
+import { getTheme } from '../lib/theme';
 
-const GoogleCalendar = ({ token, user }) => {
+const GoogleCalendar = ({ token, user, settings, isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [calendarList, setCalendarList] = useState([]);
   const [selectedCalendars, setSelectedCalendars] = useState([]);
   const [events, setEvents] = useState([]);
@@ -36,10 +38,10 @@ const GoogleCalendar = ({ token, user }) => {
     try {
       const list = await getCalendarList(token);
       setCalendarList(list);
-      const initialSelected = list.filter(c => c.selected).map(c => c.id);
+      const initialSelected = list.filter(c => t.selected).map(c => t.id);
       setSelectedCalendars(initialSelected.length > 0 ? initialSelected : ['primary']);
       
-      const writeable = list.filter(c => c.accessRole === 'owner' || c.accessRole === 'writer');
+      const writeable = list.filter(c => t.accessRole === 'owner' || t.accessRole === 'writer');
       setTargetCalendarId(writeable.length > 0 ? writeable[0].id : 'primary');
     } catch (error) {
       console.error('Error loading data:', error);
@@ -112,7 +114,7 @@ const GoogleCalendar = ({ token, user }) => {
     const days = [];
 
     for (let i = firstDay - 1; i >= 0; i--) {
-      days.push(<div key={`prev-${i}`} className="h-full border-r border-b border-white/5 bg-white/[0.02] p-2 opacity-20"><span className="text-[10px] text-neutral-400">{prevMonthDays - i}</span></div>);
+      days.push(<div key={`prev-${i}`} className="h-full border-r border-b p-2 opacity-20" style={{ borderColor: t.border, backgroundColor: t.accentSoft }}><span style={{ fontSize: 9, color: t.textMuted }}>{prevMonthDays - i}</span></div>);
     }
     
     for (let d = 1; d <= daysInMonth; d++) {
@@ -121,13 +123,13 @@ const GoogleCalendar = ({ token, user }) => {
       const dayEvents = events.filter(e => new Date(e.start.dateTime || e.start.date).toDateString() === dayDate.toDateString());
 
       days.push(
-        <div key={d} className={`h-full border-r border-b border-white/5 p-1 flex flex-col relative hover:bg-white/[0.03] transition-all ${isToday ? 'bg-blue-500/5' : ''}`}>
+        <div key={d} className="h-full border-r border-b p-1 flex flex-col relative" style={{ borderColor: t.border, backgroundColor: isToday ? t.accentSoft : 'transparent' }}>
           <div className="flex justify-center mb-1">
-            <span className={`text-[11px] font-bold w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-blue-600 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]' : 'text-neutral-500'}`}>{d}</span>
+            <span style={{ fontSize: 10, fontWeight: 700, width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', backgroundColor: isToday ? t.accent : 'transparent', color: isToday ? '#000' : t.textMuted }}>{d}</span>
           </div>
           <div className="flex-1 space-y-0.5 overflow-hidden">
             {dayEvents.map((event, idx) => (
-              <div key={idx} className="text-[9px] px-2 py-0.5 rounded truncate font-black text-white shadow-sm cursor-pointer hover:scale-[1.02] transition-transform" style={{ backgroundColor: event.backgroundColor || '#2563eb' }} title={event.summary}>
+              <div key={idx} className="text-[9px] px-2 py-0.5 rounded truncate font-black text-white shadow-sm cursor-pointer" style={{ backgroundColor: event.backgroundColor || t.accent }} title={event.summary}>
                 {event.summary || '(Sin título)'}
               </div>
             ))}
@@ -139,46 +141,38 @@ const GoogleCalendar = ({ token, user }) => {
   };
 
   return (
-    <div className="flex-1 h-full flex flex-col bg-[#121212] text-neutral-200 overflow-hidden font-sans">
+    <div className="flex-1 h-full flex flex-col overflow-hidden font-sans" style={{ backgroundColor: t.bg, color: t.text }}>
       
-      {/* HEADER EXECUTIVE */}
-      <header className="h-20 flex items-center justify-between px-10 border-b border-white/5 bg-[#121212]">
-        <div className="flex items-center gap-8">
-          <div className="flex items-center gap-4">
-             <div className="w-10 h-10 bg-[#1a1a1a] rounded-2xl flex items-center justify-center border border-white/5 shadow-xl">
-                <CalendarIcon className="text-blue-500" size={20}/>
-             </div>
-             <div>
-                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-white">Sovereign <span className="text-neutral-600">Scheduler</span></h2>
-                <div className="flex items-center gap-2 mt-1">
-                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                   <p className="text-[7px] text-emerald-500 font-black uppercase tracking-[0.3em]">Real-time Google Sync</p>
-                </div>
-             </div>
+      {/* HEADER */}
+      <header className="h-16 flex items-center justify-between px-6" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.bg }}>
+        <div className="flex items-center gap-6">
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Calendario</h2>
+            <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Google Sync</p>
           </div>
           
-          <div className="flex items-center gap-1 ml-6 bg-black/40 p-1.5 rounded-2xl border border-white/5 shadow-inner">
-            <button onClick={() => setCurrentDate(new Date())} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/5 text-white transition-all">Hoy</button>
-            <div className="w-px h-4 bg-white/10 mx-2"></div>
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} className="p-2 hover:bg-white/5 rounded-lg text-neutral-400 transition-all"><ChevronLeft size={16}/></button>
-            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} className="p-2 hover:bg-white/5 rounded-lg text-neutral-400 transition-all"><ChevronRight size={16}/></button>
-            <span className="text-xs font-black mx-4 text-white uppercase tracking-[0.2em] min-w-[140px] text-center">
+          <div className="flex items-center gap-1" style={{ backgroundColor: t.panel, padding: 4, borderRadius: 12, border: `1px solid ${t.border}` }}>
+            <button onClick={() => setCurrentDate(new Date())} style={{ padding: '6px 16px', borderRadius: 10, fontSize: 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#fff', background: 'none', border: 'none', cursor: 'pointer' }}>Hoy</button>
+            <div style={{ width: 1, height: 14, backgroundColor: t.borderLight, margin: '0 6px' }}></div>
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1))} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: t.textMuted }}><ChevronLeft size={14}/></button>
+            <button onClick={() => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1))} style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: t.textMuted }}><ChevronRight size={14}/></button>
+            <span style={{ fontSize: 11, fontWeight: 900, margin: '0 12px', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.15em', minWidth: 120, textAlign: 'center' }}>
               {currentDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
-           <button onClick={loadInitialData} className="p-3 bg-[#1a1a1a] rounded-2xl border border-white/5 hover:bg-white/5 text-neutral-400 transition-all shadow-xl">
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>
+        <div className="flex items-center gap-4">
+           <button onClick={loadInitialData} style={{ padding: 10, backgroundColor: t.panel, borderRadius: 12, border: `1px solid ${t.border}`, color: t.textMuted, cursor: 'pointer' }}>
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''}/>
            </button>
-           <div className="h-10 w-px bg-white/10"></div>
-           <div className="flex items-center gap-4">
+           <div style={{ width: 1, height: 28, backgroundColor: t.borderLight }}></div>
+           <div className="flex items-center gap-3">
               <div className="text-right">
-                 <p className="text-[10px] font-black text-white uppercase tracking-widest">{user?.name || 'Director'}</p>
-                 <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest">Master Node</p>
+                 <p style={{ fontSize: 9, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.12em' }}>{user?.name || 'Usuario'}</p>
+                 <p style={{ fontSize: 7, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Sincronizado</p>
               </div>
-              <div className="w-10 h-10 rounded-2xl bg-[#1a1a1a] border border-white/5 flex items-center justify-center text-white font-black text-sm shadow-xl">
+              <div style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: 14 }}>
                  {user?.name?.charAt(0) || 'G'}
               </div>
            </div>
@@ -187,138 +181,138 @@ const GoogleCalendar = ({ token, user }) => {
 
       <div className="flex-1 flex overflow-hidden">
         
-        {/* PANEL IZQUIERDO: PRODUCTIVIDAD */}
-        <aside className="w-72 flex flex-col p-8 border-r border-white/5 bg-[#121212]">
-           <button onClick={() => setIsModalOpen(true)} className="w-full flex items-center justify-center gap-4 py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-blue-500 transition-all mb-10 active:scale-95">
-              <Plus size={20} strokeWidth={3}/> Nuevo Evento
+        {/* PANEL IZQUIERDO */}
+        <aside className="w-60 flex flex-col p-6" style={{ borderRight: `1px solid ${t.border}`, backgroundColor: t.bg }}>
+           <button onClick={() => setIsModalOpen(true)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 0', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.2em', border: 'none', cursor: 'pointer', marginBottom: 24 }}>
+              <Plus size={18} strokeWidth={3}/> Nuevo Evento
            </button>
 
-           <div className="space-y-8">
+           <div className="space-y-6">
               <div>
-                 <h3 className="text-[9px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Zap size={12} className="text-amber-500"/> Atajos Rápidos</h3>
+                 <h3 style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Zap size={10} color={t.accent}/> Atajos Rápidos</h3>
                  <div className="space-y-2">
                     <button 
                       onClick={() => handleQuickAdd('client')}
-                      className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all group"
+                      className="w-full flex items-center gap-3 p-3 transition-all group" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, borderRadius: 10 }}
                     >
-                       <Star size={14} className="text-blue-500 group-hover:scale-110 transition-transform"/>
-                       <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Sesión con Cliente</span>
+                       <Star size={12} color={t.accent}/>
+                       <span style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Sesión con Cliente</span>
                     </button>
                     <button 
                       onClick={() => handleQuickAdd('deepwork')}
-                      className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl transition-all group"
+                      className="w-full flex items-center gap-3 p-3 transition-all group" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, borderRadius: 10 }}
                     >
-                       <Layers size={14} className="text-emerald-500 group-hover:scale-110 transition-transform"/>
-                       <span className="text-[9px] font-black text-neutral-400 uppercase tracking-widest">Deep Work Edition</span>
+                       <Layers size={12} color={t.accent}/>
+                       <span style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Deep Work Edition</span>
                     </button>
                  </div>
               </div>
 
               <div>
-                 <h3 className="text-[9px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><Target size={12} className="text-red-500"/> Objetivo del Día</h3>
-                 <div className="bg-gradient-to-br from-blue-600/10 to-transparent p-4 rounded-2xl border border-blue-500/10">
-                    <p className="text-[10px] font-bold text-neutral-300 leading-relaxed italic">"Tu tiempo es el activo más caro. Úsalo para crear, no para gestionar."</p>
+                 <h3 style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Target size={10} color={t.accent}/> Objetivo del Día</h3>
+                 <div style={{ backgroundColor: t.accentSoft, padding: 14, borderRadius: 12, border: `1px solid ${t.borderLight}` }}>
+                    <p style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, lineHeight: 1.5, fontStyle: 'italic' }}>"Tu tiempo es el activo más caro. Úsalo para crear, no para gestionar."</p>
                  </div>
               </div>
            </div>
         </aside>
 
         {/* MAIN CALENDAR GRID */}
-        <main className="flex-1 flex flex-col overflow-hidden bg-[#121212]">
-          <div className="grid grid-cols-7 h-12 border-b border-white/5 bg-black/40">
+        <main className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: t.bg }}>
+          <div className="grid grid-cols-7 h-10" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.panel }}>
             {['DOM', 'LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB'].map(day => (
-              <div key={day} className="flex items-center justify-center text-[10px] font-black text-neutral-500 tracking-[0.25em]">{day}</div>
+              <div key={day} className="flex items-center justify-center" style={{ fontSize: 9, fontWeight: 900, color: t.textDim, letterSpacing: '0.2em' }}>{day}</div>
             ))}
           </div>
-          <div className="flex-1 grid grid-cols-7 grid-rows-5 overflow-hidden border-l border-white/5">
+          <div className="flex-1 grid grid-cols-7 grid-rows-5 overflow-hidden" style={{ borderLeft: `1px solid ${t.border}` }}>
             {loading && events.length === 0 ? (
-              <div className="col-span-7 row-span-5 flex flex-col items-center justify-center bg-black/40 backdrop-blur-md z-10">
-                 <RefreshCw className="text-blue-500 animate-spin mb-4" size={32}/>
-                 <p className="text-[9px] text-neutral-500 font-black uppercase tracking-[0.4em]">Engine Synchronizing...</p>
+              <div className="col-span-7 row-span-5 flex flex-col items-center justify-center">
+                 <RefreshCw style={{ color: t.accent, marginBottom: 12 }} className="animate-spin" size={28}/>
+                 <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.3em' }}>Sincronizando...</p>
               </div>
             ) : renderCalendar()}
           </div>
         </main>
 
-        {/* PANEL DERECHO: FILTROS (CALENDARIOS) */}
-        <aside className="w-72 flex flex-col p-6 border-l border-white/5 bg-[#121212] overflow-y-auto mac-scrollbar">
-           <h3 className="text-[10px] font-black text-neutral-600 uppercase tracking-[0.2em] mb-6 flex items-center gap-2"><Filter size={14} className="text-blue-500"/> Capas de Tiempo</h3>
-           <div className="space-y-2">
-              {calendarList.length === 0 && <p className="text-[9px] text-neutral-700 font-bold uppercase italic text-center py-4">No se detectaron capas de calendario.</p>}
+        {/* PANEL DERECHO */}
+        <aside className="w-60 flex flex-col p-5 overflow-y-auto mac-scrollbar" style={{ borderLeft: `1px solid ${t.border}`, backgroundColor: t.bg }}>
+           <h3 style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}><Filter size={12} color={t.accent}/> Calendarios</h3>
+           <div className="space-y-1.5">
+              {calendarList.length === 0 && <p style={{ fontSize: 8, color: t.textDim, fontWeight: 700, textTransform: 'uppercase', textAlign: 'center', padding: 16 }}>No hay calendarios disponibles.</p>}
               {calendarList.map(cal => (
                  <div 
                    key={cal.id} 
                    onClick={() => setSelectedCalendars(prev => prev.includes(cal.id) ? prev.filter(i => i !== cal.id) : [...prev, cal.id])}
-                   className={`flex items-center justify-between p-3 rounded-2xl border transition-all cursor-pointer group ${selectedCalendars.includes(cal.id) ? 'bg-white/[0.03] border-white/10' : 'bg-transparent border-transparent'}`}
+                   className="flex items-center justify-between p-3 transition-all cursor-pointer"
+                   style={{ backgroundColor: selectedCalendars.includes(cal.id) ? t.accentSoft : 'transparent', borderRadius: 10, border: `1px solid ${selectedCalendars.includes(cal.id) ? t.borderLight : 'transparent'}` }}
                  >
-                    <div className="flex items-center gap-3">
-                       <div className={`w-4 h-4 rounded-lg flex items-center justify-center transition-all ${selectedCalendars.includes(cal.id) ? 'shadow-lg' : 'opacity-40'}`} style={{ backgroundColor: cal.backgroundColor }}>
-                          {selectedCalendars.includes(cal.id) && <Check size={10} className="text-white"/>}
+                    <div className="flex items-center gap-2.5">
+                       <div style={{ width: 14, height: 14, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: cal.backgroundColor, opacity: selectedCalendars.includes(cal.id) ? 1 : 0.4 }}>
+                          {selectedCalendars.includes(cal.id) && <Check size={8} color="#fff"/>}
                        </div>
-                       <span className={`text-[10px] font-black uppercase tracking-widest truncate max-w-[140px] transition-colors ${selectedCalendars.includes(cal.id) ? 'text-white' : 'text-neutral-600 group-hover:text-neutral-400'}`}>{cal.summary}</span>
+                       <span style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: selectedCalendars.includes(cal.id) ? '#fff' : t.textDim, overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>{cal.summary}</span>
                     </div>
-                    {cal.accessRole === 'owner' && <div className="w-1 h-1 rounded-full bg-blue-500"></div>}
+                    {cal.accessRole === 'owner' && <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: t.accent }}></div>}
                  </div>
               ))}
            </div>
         </aside>
       </div>
 
-      {/* MODAL EXECUTIVE CREATOR */}
+      {/* MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6 bg-black/90 backdrop-blur-xl">
-          <div className="bg-[#0f0f0f] w-full max-w-lg rounded-[32px] shadow-[0_40px_120px_rgba(0,0,0,1)] overflow-hidden border border-white/10 animate-in zoom-in-95 duration-300">
-            <header className="flex justify-between items-center px-8 py-6 border-b border-white/5 bg-white/[0.02]">
-               <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-emerald-500/10 rounded-xl flex items-center justify-center">
-                     <Plus className="text-emerald-500" size={16}/>
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6" style={{ backgroundColor: 'rgba(20,20,20,0.9)', backdropFilter: 'blur(16px)' }}>
+          <div style={{ backgroundColor: t.panel, width: '100%', maxWidth: 480, borderRadius: 20, border: `1px solid ${t.borderLight}`, overflow: 'hidden' }}>
+            <header className="flex justify-between items-center px-6 py-5" style={{ borderBottom: `1px solid ${t.border}` }}>
+               <div className="flex items-center gap-2.5">
+                  <div style={{ width: 28, height: 28, backgroundColor: t.accentSoft, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                     <Plus color={t.accent} size={14}/>
                   </div>
-                  <h3 className="text-[11px] font-black text-white uppercase tracking-[0.2em]">Agendar Nueva Sesión</h3>
+                  <h3 style={{ fontSize: 10, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Nuevo Evento</h3>
                </div>
-               <button onClick={() => setIsModalOpen(false)} className="text-neutral-500 hover:text-white transition-colors"><X size={24}/></button>
+               <button onClick={() => setIsModalOpen(false)} style={{ color: t.textDim, background: 'none', border: 'none', cursor: 'pointer' }}><X size={20}/></button>
             </header>
             
-            <form onSubmit={handleCreateEvent} className="p-8 space-y-6">
-               <div className="space-y-2">
-                  <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest ml-1">¿Qué vamos a hacer?</label>
-                  <input type="text" required placeholder="Título del evento empresarial" value={title} onChange={e => setTitle(e.target.value)} className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 px-6 text-sm font-bold text-white outline-none focus:border-blue-500/50 transition-all placeholder-neutral-800 shadow-inner"/>
+            <form onSubmit={handleCreateEvent} className="p-6 space-y-5">
+               <div className="space-y-1.5">
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.12em', marginLeft: 4 }}>Título</label>
+                  <input type="text" required placeholder="Título del evento" value={title} onChange={e => setTitle(e.target.value)} 
+                    style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '12px 16px', fontSize: 12, fontWeight: 700, color: '#fff', outline: 'none' }}/>
                </div>
                
-               <div className="space-y-2">
-                 <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest ml-1">Calendario de Destino</label>
-                 <div className="relative group">
-                    <select 
-                      value={targetCalendarId} 
-                      onChange={(e) => setTargetCalendarId(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/5 rounded-2xl py-4 px-6 text-[10px] font-black uppercase tracking-widest text-white outline-none appearance-none cursor-pointer focus:border-blue-500/50 transition-all"
-                    >
-                      {calendarList.length === 0 && <option value="primary">Cargando calendarios...</option>}
-                      {calendarList.map(cal => (
-                        <option key={cal.id} value={cal.id} className="bg-neutral-900 text-white font-sans">{cal.summary} {cal.accessRole === 'owner' ? '(Principal)' : ''}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={14} className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-600 pointer-events-none group-hover:text-blue-500 transition-colors"/>
-                 </div>
+               <div className="space-y-1.5">
+                 <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.12em', marginLeft: 4 }}>Calendario</label>
+                 <select 
+                   value={targetCalendarId} 
+                   onChange={(e) => setTargetCalendarId(e.target.value)}
+                   style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '12px 16px', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#fff', outline: 'none', appearance: 'none' }}
+                 >
+                   {calendarList.length === 0 && <option value="primary">Cargando calendarios...</option>}
+                   {calendarList.map(cal => (
+                     <option key={cal.id} value={cal.id} className="bg-neutral-900 text-white">{cal.summary}</option>
+                   ))}
+                 </select>
                </div>
 
                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                     <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest ml-1">Fecha</label>
-                     <div className="flex items-center gap-3 bg-white/[0.03] border border-white/5 p-4 rounded-2xl">
-                       <Clock size={16} className="text-blue-500"/>
-                       <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-transparent text-xs font-bold text-white outline-none w-full [color-scheme:dark]"/>
+                  <div className="space-y-1.5">
+                     <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.12em', marginLeft: 4 }}>Fecha</label>
+                     <div className="flex items-center gap-2" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, padding: '10px 14px', borderRadius: 10 }}>
+                       <Clock size={14} color={t.accent}/>
+                       <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ backgroundColor: 'transparent', fontSize: 11, fontWeight: 700, color: '#fff', outline: 'none', width: '100%', border: 'none' }}/>
                      </div>
                   </div>
-                  <div className="space-y-2">
-                     <label className="text-[9px] font-black text-neutral-600 uppercase tracking-widest ml-1">Hora Inicio</label>
-                     <div className="flex items-center gap-3 bg-white/[0.03] border border-white/5 p-4 rounded-2xl">
-                       <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} className="bg-transparent text-xs font-bold text-white outline-none w-full [color-scheme:dark]"/>
+                  <div className="space-y-1.5">
+                     <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.12em', marginLeft: 4 }}>Inicio</label>
+                     <div style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, padding: '10px 14px', borderRadius: 10 }}>
+                       <input type="time" value={startTime} onChange={e => setStartTime(e.target.value)} style={{ backgroundColor: 'transparent', fontSize: 11, fontWeight: 700, color: '#fff', outline: 'none', width: '100%', border: 'none' }}/>
                      </div>
                   </div>
                </div>
 
-               <button type="submit" disabled={loading} className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-[20px] text-[10px] font-black uppercase tracking-[0.3em] hover:from-blue-500 hover:to-blue-600 transition-all flex items-center justify-center gap-4 shadow-[0_20px_40px_rgba(37,99,235,0.2)] mt-8 disabled:opacity-50 disabled:cursor-not-allowed">
-                 {loading ? <RefreshCw className="animate-spin" size={18}/> : <CheckCircle2 size={18}/>} 
+               <button type="submit" disabled={loading}
+                 style={{ width: '100%', padding: '14px 0', backgroundColor: t.accent, color: '#000', borderRadius: 14, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                 {loading ? <RefreshCw className="animate-spin" size={16}/> : <CheckCircle2 size={16}/>} 
                  {loading ? 'Sincronizando...' : 'Confirmar en Google Calendar'}
                </button>
             </form>

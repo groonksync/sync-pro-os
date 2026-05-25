@@ -77,8 +77,8 @@ const Recibos = ({ data, setData }) => {
         <>
           <header className="mb-6 flex justify-between items-center">
             <div>
-              <h2 className="text-2xl font-light text-white tracking-tight">Recibos</h2>
-              <p className="text-[11px] text-neutral-500 uppercase tracking-widest mt-1">Gestión y emisión de comprobantes de pago</p>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Recibos</h2>
+              <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Gestión y emisión de comprobantes de pago</p>
             </div>
             <button onClick={() => setView('create')}
               className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5">
@@ -106,10 +106,10 @@ const Recibos = ({ data, setData }) => {
           </div>
 
           {/* Tabla */}
-          <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-xl overflow-hidden">
+          <div className="bg-[#202022] border border-white/[0.05] rounded-xl overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-black/40 border-b border-white/[0.05]">
+                <tr className="bg-[#141414]/40 border-b border-white/[0.05]">
                   <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest"># Recibo</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Cliente / Concepto</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Fecha</th>
@@ -164,7 +164,7 @@ const Recibos = ({ data, setData }) => {
           <div className="flex items-center gap-2 mb-4 text-xs text-neutral-500 cursor-pointer hover:text-white w-max" onClick={() => setView('list')}>
             <ArrowLeft size={12}/> Volver a Recibos
           </div>
-          <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-xl p-8">
+          <div className="bg-[#202022] border border-white/[0.05] rounded-xl p-8">
             <h2 className="text-2xl font-light text-white tracking-tight mb-1 flex items-center gap-2">
               <FileText size={20} className="text-amber-500"/> Nuevo Recibo
             </h2>
@@ -173,29 +173,29 @@ const Recibos = ({ data, setData }) => {
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Cliente *</label>
                 <input type="text" value={form.cliente} onChange={e => setForm({...form, cliente: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50" placeholder="Nombre del cliente" autoFocus/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50" placeholder="Nombre del cliente" autoFocus/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Concepto *</label>
                 <input type="text" value={form.concepto} onChange={e => setForm({...form, concepto: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Ej: Edición de video — Boda"/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Ej: Edición de video — Boda"/>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Monto ($) *</label>
                   <input type="number" value={form.monto} onChange={e => setForm({...form, monto: e.target.value})}
-                    className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0.00"/>
+                    className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0.00"/>
                 </div>
                 <div>
                   <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Fecha</label>
                   <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})}
-                    className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none"/>
+                    className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none"/>
                 </div>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Notas adicionales</label>
                 <textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none min-h-[60px] resize-none" placeholder="Opcional..."/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none min-h-[60px] resize-none" placeholder="Opcional..."/>
               </div>
             </div>
             <button onClick={handleCreate} disabled={loading || !form.cliente || !form.monto}

@@ -1,5 +1,5 @@
 // Sovereign OS - System Updated: 2026-05-01
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import CommandCenter from './views/CommandCenter';
 import MeetingStudio from './views/MeetingStudio';
@@ -20,6 +20,7 @@ import PublicCatalog from './views/PublicCatalog';
 import BovedaPass from './views/BovedaPass';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { supabase } from './lib/supabaseClient';
+import { getTheme } from './lib/theme';
 
 const App = () => {
   // Detectar si estamos en la vista de Portal del Cliente
@@ -237,9 +238,9 @@ const App = () => {
         case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} />;
         case 'notas': return <Notas isDark={isDarkMode} />;
         case 'boveda': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;
-        case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} />;
-        case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} />;
-        case 'papelera': return <TrashView settings={appSettings} />;
+        case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} isDark={isDarkMode} />;
+        case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} isDark={isDarkMode} />;
+        case 'papelera': return <TrashView settings={appSettings} isDark={isDarkMode} />;
         case 'configuracion': return (
           <Ajustes 
             settings={appSettings} 
@@ -272,12 +273,16 @@ const App = () => {
 
   // EFECTO DE TEMA GLOBAL
   useEffect(() => {
-    document.body.style.backgroundColor = isDarkMode ? '#0c0c0e' : '#f8f9fa';
+    const theme = getTheme(isDarkMode);
+    document.body.style.backgroundColor = theme.bg;
   }, [isDarkMode]);
+
+  const globalTheme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
 
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
-      <div className={`flex h-screen w-full ${isDarkMode ? 'bg-[#121212] text-white' : 'bg-neutral-50 text-neutral-900'} font-sans selection:bg-emerald-500 selection:text-black overflow-hidden transition-colors duration-500 ${appSettings.interfaceDensity}`}>
+      <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-500 ${appSettings.interfaceDensity}`}
+        style={{ backgroundColor: globalTheme.bg, color: globalTheme.text }}>
         <Sidebar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 

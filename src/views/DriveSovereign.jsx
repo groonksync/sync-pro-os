@@ -1,25 +1,28 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Cloud, Folder, File, FileText, Image as ImageIcon, Video, ChevronRight, Search, Download, ExternalLink, Plus, ArrowLeft, MoreVertical, RefreshCw, Trash2, Upload, Grid, List, AlignJustify, X, CheckCircle2, AlertCircle, FolderPlus } from 'lucide-react';
 import { getDriveFiles, createDriveFolder, uploadFileToDrive, downloadDriveFile, deleteDriveFile } from '../lib/googleApi';
+import { getTheme } from '../lib/theme';
 
-const ICON = (mimeType, size = 24) => {
-  if (mimeType === 'application/vnd.google-apps.folder') return <Folder className="text-amber-400" size={size} />;
-  if (mimeType?.includes('image')) return <ImageIcon className="text-emerald-400" size={size} />;
-  if (mimeType?.includes('video')) return <Video className="text-rose-400" size={size} />;
-  if (mimeType?.includes('pdf') || mimeType?.includes('document')) return <FileText className="text-blue-400" size={size} />;
-  return <File className="text-neutral-500" size={size} />;
+const ICON = (mimeType, size = 24, isDark = true) => {
+  const theme = getTheme(isDark);
+  if (mimeType === 'application/vnd.google-apps.folder') return <Folder color={theme.accent} size={size} />;
+  if (mimeType?.includes('image')) return <ImageIcon color={theme.accent} size={size} />;
+  if (mimeType?.includes('video')) return <Video color={theme.accent} size={size} />;
+  if (mimeType?.includes('pdf') || mimeType?.includes('document')) return <FileText color={theme.textMuted} size={size} />;
+  return <File color={theme.textMuted} size={size} />;
 };
 
 const fmtSize = (b) => { if (!b) return '--'; const k=1024,s=['B','KB','MB','GB'],i=Math.floor(Math.log(b)/Math.log(k)); return parseFloat((b/Math.pow(k,i)).toFixed(1))+' '+s[i]; };
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '--';
 
-export default function DriveSovereign({ token, user, onLoginSuccess }) {
+export default function DriveSovereign({ token, user, onLoginSuccess, isDark = true }) {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [files, setFiles] = useState([]);
   const [folder, setFolder] = useState({ id: 'root', name: 'Mi Unidad' });
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [view, setView] = useState('grid'); // grid | list | detail
+  const [view, setView] = useState('grid');
   const [selected, setSelected] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);
@@ -86,98 +89,114 @@ export default function DriveSovereign({ token, user, onLoginSuccess }) {
 
   if (!token) return (
     <div className="flex items-center justify-center h-full">
-      <div className="p-10 bg-[#0a0a0a] border border-white/5 rounded-[40px] text-center max-w-md w-full">
-        <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-8 border border-white/10"><Cloud size={40} className="text-neutral-400"/></div>
-        <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">Drive Sovereign</h2>
-        <p className="text-xs text-neutral-500 mb-10">Conecta tu cuenta para acceder a tu unidad de Google Drive.</p>
-        <p className="text-[9px] text-neutral-600 uppercase tracking-widest">Vincula tu cuenta desde Configuración</p>
+      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 40, textAlign: 'center', maxWidth: 400, width: '100%' }}>
+        <div style={{ width: 72, height: 72, backgroundColor: t.accentSoft, borderRadius: 16, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}><Cloud size={40} color={t.textMuted}/></div>
+        <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '-0.03em', marginBottom: 12 }}>Almacenamiento</h2>
+        <p style={{ fontSize: 12, color: t.textMuted, marginBottom: 32 }}>Conecta tu cuenta para acceder a tu unidad de Google Drive.</p>
+        <p style={{ fontSize: 9, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Vincula tu cuenta desde Configuración</p>
       </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col h-full w-full animate-in fade-in duration-500 relative bg-[#121212]"
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-500 relative"
+      style={{ backgroundColor: t.bg }}
       onDragOver={e => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={onDrop}
     >
       {/* DRAG OVERLAY */}
       {dragging && (
-        <div className="absolute inset-0 z-50 bg-blue-600/20 border-4 border-dashed border-blue-500 rounded-3xl flex items-center justify-center">
-          <div className="text-center"><Upload size={48} className="text-blue-400 mx-auto mb-4"/><p className="text-xl font-black text-white">Suelta para subir a Drive</p></div>
+        <div className="absolute inset-0 z-50 rounded-3xl flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(160,160,160,0.10)', border: '3px dashed rgba(160,160,160,0.5)' }}>
+          <div className="text-center"><Upload size={48} color={t.accent} className="mx-auto mb-4"/><p style={{ fontSize: 18, fontWeight: 900, color: '#fff' }}>Suelta para subir a Drive</p></div>
         </div>
       )}
 
       {/* TOAST */}
       {toast && (
-        <div className={`fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border text-sm font-bold animate-in slide-in-from-top-2 duration-300 ${toast.type === 'err' ? 'bg-red-950 border-red-800 text-red-200' : 'bg-emerald-950 border-emerald-800 text-emerald-200'}`}>
+        <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border text-sm font-bold animate-in slide-in-from-top-2 duration-300"
+          style={toast.type === 'err' ? { backgroundColor: '#2a0f0f', borderColor: '#5c1a1a', color: '#f0b0b0' } : { backgroundColor: '#1a2a1a', borderColor: '#1a5c1a', color: '#b0f0b0' }}>
           {toast.type === 'err' ? <AlertCircle size={16}/> : <CheckCircle2 size={16}/>} {toast.msg}
         </div>
       )}
 
       {/* HEADER */}
-      <header className="mb-10 flex justify-between items-center border-b border-white/5 pb-10">
+      <header className="mb-6 flex justify-between items-center" style={{ borderBottom: `1px solid ${t.border}`, paddingBottom: 24 }}>
         <div>
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-[#1a1a1a] rounded-xl border border-white/5"><Cloud size={18} className="text-blue-500"/></div>
-            <h2 className="text-3xl font-black text-white uppercase tracking-tighter">Drive <span className="text-neutral-700">Sovereign</span></h2>
-          </div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Almacenamiento</h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Google Drive integrado</p>
           {/* BREADCRUMB */}
           <div className="flex items-center gap-2">
             {breadcrumb.map((b, i) => (
               <React.Fragment key={i}>
-                <button onClick={() => { if (i < breadcrumb.length-1) { setFolder(b); setHistory(breadcrumb.slice(0,i)); }}} className={`text-[9px] font-black uppercase tracking-[0.2em] transition-colors ${i === breadcrumb.length-1 ? 'text-blue-500' : 'text-neutral-600 hover:text-neutral-300'}`}>{b.name}</button>
-                {i < breadcrumb.length-1 && <ChevronRight size={10} className="text-neutral-800"/>}
+                <button onClick={() => { if (i < breadcrumb.length-1) { setFolder(b); setHistory(breadcrumb.slice(0,i)); }}}
+                  style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: i === breadcrumb.length-1 ? t.accent : t.textDim, transition: 'color 0.2s' }}>{b.name}</button>
+                {i < breadcrumb.length-1 && <ChevronRight size={10} color={t.textDim}/>}
               </React.Fragment>
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {/* SEARCH */}
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={14}/>
-            <input type="text" placeholder="FILTRAR BÓVEDA..." value={search} onChange={e => setSearch(e.target.value)} className="bg-[#1a1a1a] border border-white/5 rounded-2xl py-3 pl-12 pr-6 text-[10px] font-black uppercase tracking-widest text-white outline-none focus:border-blue-500/30 w-64 transition-all"/>
+            <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={14}/>
+            <input type="text" placeholder="FILTRAR..." value={search} onChange={e => setSearch(e.target.value)}
+              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12, padding: '10px 12px 10px 36px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', outline: 'none', width: 200 }}/>
           </div>
 
           {/* VIEW TOGGLE */}
-          <div className="flex bg-[#1a1a1a] rounded-2xl border border-white/5 p-1">
+          <div className="flex" style={{ backgroundColor: t.panel, borderRadius: 12, border: `1px solid ${t.border}`, padding: 3 }}>
             {[['grid', Grid],['list', List],['detail', AlignJustify]].map(([v, Icon]) => (
-              <button key={v} onClick={() => setView(v)} className={`p-2.5 rounded-xl transition-all ${view===v ? 'bg-blue-500 text-white shadow-lg' : 'text-neutral-600 hover:text-neutral-400'}`}><Icon size={14}/></button>
+              <button key={v} onClick={() => setView(v)}
+                style={{ padding: 8, borderRadius: 10, transition: 'all 0.2s', backgroundColor: view===v ? t.accent : 'transparent', color: view===v ? '#000' : t.textDim }}>
+                <Icon size={14}/>
+              </button>
             ))}
           </div>
 
-          <div className="h-8 w-px bg-white/10 mx-2"></div>
+          <div style={{ width: 1, height: 28, backgroundColor: t.borderLight, margin: '0 8px' }}></div>
 
           {/* ACTIONS */}
-          <button onClick={() => setNewFolderMode(true)} className="flex items-center gap-3 px-6 py-3 bg-[#1a1a1a] border border-white/5 rounded-2xl text-[9px] font-black uppercase tracking-widest text-neutral-300 hover:bg-white/5 transition-all">
-            <FolderPlus size={16}/> Carpeta
+          <button onClick={() => setNewFolderMode(true)}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: t.textMuted }}>
+            <FolderPlus size={14}/> Carpeta
           </button>
-          <button onClick={() => fileInputRef.current.click()} className="flex items-center gap-3 px-8 py-3 bg-blue-600 rounded-2xl text-[9px] font-black uppercase tracking-widest text-white hover:bg-blue-500 transition-all shadow-xl">
-            <Upload size={16}/> Subir
+          <button onClick={() => fileInputRef.current.click()}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', backgroundColor: t.accent, border: 'none', borderRadius: 12, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#000' }}>
+            <Upload size={14}/> Subir
           </button>
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={e => handleUpload(e.target.files)}/>
-          <button onClick={() => load()} className="p-3 bg-[#1a1a1a] rounded-2xl border border-white/5 hover:bg-white/5 text-neutral-500 transition-all">
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>
+          <button onClick={() => load()}
+            style={{ padding: 10, backgroundColor: t.panel, borderRadius: 12, border: `1px solid ${t.border}`, color: t.textMuted }}>
+            <RefreshCw size={14} className={loading ? 'animate-spin' : ''}/>
           </button>
         </div>
       </header>
 
       {/* NEW FOLDER INPUT */}
       {newFolderMode && (
-        <div className="flex items-center gap-3 mb-4 p-4 bg-white/5 rounded-2xl border border-white/10">
-          <FolderPlus size={16} className="text-amber-400"/>
-          <input autoFocus type="text" placeholder="Nombre de la carpeta..." value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => { if(e.key==='Enter') handleNewFolder(); if(e.key==='Escape') setNewFolderMode(false); }} className="flex-1 bg-transparent outline-none text-sm text-white placeholder-neutral-700"/>
-          <button onClick={handleNewFolder} className="px-4 py-1.5 bg-amber-500 text-black text-[9px] font-black uppercase rounded-lg">Crear</button>
-          <button onClick={() => setNewFolderMode(false)} className="text-neutral-600 hover:text-white"><X size={16}/></button>
+        <div className="flex items-center gap-3 mb-4" style={{ padding: 12, backgroundColor: t.accentSoft, borderRadius: 12, border: `1px solid ${t.borderLight}` }}>
+          <FolderPlus size={14} color={t.accent}/>
+          <input autoFocus type="text" placeholder="Nombre de la carpeta..." value={newFolderName} onChange={e => setNewFolderName(e.target.value)} onKeyDown={e => { if(e.key==='Enter') handleNewFolder(); if(e.key==='Escape') setNewFolderMode(false); }}
+            style={{ flex: 1, backgroundColor: 'transparent', outline: 'none', fontSize: 13, color: '#fff', border: 'none' }}/>
+          <button onClick={handleNewFolder}
+            style={{ padding: '6px 14px', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', borderRadius: 8, border: 'none' }}>Crear</button>
+          <button onClick={() => setNewFolderMode(false)} style={{ color: t.textDim, background: 'none', border: 'none', cursor: 'pointer' }}><X size={14}/></button>
         </div>
       )}
 
       {/* UPLOAD PROGRESS */}
       {uploading && (
-        <div className="mb-4 p-4 bg-blue-900/20 border border-blue-500/20 rounded-2xl">
-          <div className="flex justify-between text-[9px] font-black uppercase mb-2"><span className="text-blue-400">Subiendo archivos...</span><span className="text-white">{uploadPct}%</span></div>
-          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden"><div className="h-full bg-blue-500 transition-all rounded-full" style={{ width: `${uploadPct}%` }}></div></div>
+        <div className="mb-4" style={{ padding: 12, backgroundColor: t.accentSoft, borderRadius: 12, border: `1px solid ${t.borderLight}` }}>
+          <div className="flex justify-between" style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', marginBottom: 6 }}>
+            <span style={{ color: t.accent }}>Subiendo archivos...</span>
+            <span style={{ color: '#fff' }}>{uploadPct}%</span>
+          </div>
+          <div style={{ height: 4, backgroundColor: t.border, borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{ height: '100%', backgroundColor: t.accent, borderRadius: 4, width: `${uploadPct}%`, transition: 'width 0.3s' }}></div>
+          </div>
         </div>
       )}
 
@@ -185,42 +204,46 @@ export default function DriveSovereign({ token, user, onLoginSuccess }) {
       <div className={`flex-1 overflow-hidden ${view === 'detail' ? 'flex gap-4' : ''}`}>
         <div className={`${view === 'detail' ? 'flex-1' : 'h-full'} overflow-y-auto mac-scrollbar pr-2`}>
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-32 gap-4">
-              <RefreshCw size={32} className="text-neutral-700 animate-spin"/>
-              <p className="text-[9px] text-neutral-700 font-black uppercase tracking-widest">Cargando desde Google Drive...</p>
+            <div className="flex flex-col items-center justify-center py-24 gap-3">
+              <RefreshCw size={28} color={t.textDim} className="animate-spin"/>
+              <p style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Cargando desde Google Drive...</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-32 border border-dashed border-white/5 rounded-3xl">
-              <Cloud size={40} className="text-neutral-800 mb-4"/>
-              <p className="text-neutral-600 text-sm font-medium">{search ? 'Sin resultados' : 'Carpeta vacía — arrastra archivos aquí'}</p>
+            <div className="flex flex-col items-center justify-center py-24"
+              style={{ border: `1px dashed ${t.border}`, borderRadius: 16 }}>
+              <Cloud size={36} color={t.textDim} style={{ marginBottom: 12 }}/>
+              <p style={{ color: t.textMuted, fontSize: 13, fontWeight: 500 }}>{search ? 'Sin resultados' : 'Carpeta vacía — arrastra archivos aquí'}</p>
             </div>
           ) : view === 'grid' ? (
-            /* ── GRID VIEW ── */
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            /* GRID VIEW */
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {filtered.map(f => (
                 <div key={f.id} onDoubleClick={() => f.mimeType === 'application/vnd.google-apps.folder' ? navigate({id:f.id,name:f.name}) : setSelected(f)}
                   onClick={() => setSelected(f)}
-                  className={`bg-[#1a1a1a] border rounded-[2rem] p-6 hover:border-blue-500/30 transition-all group cursor-pointer relative ${selected?.id===f.id ? 'border-blue-500/50 bg-blue-500/5' : 'border-white/5 shadow-2xl'}`}>
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="p-4 bg-black/40 rounded-2xl border border-white/5 group-hover:scale-110 transition-transform duration-500 shadow-inner">{ICON(f.mimeType, 28)}</div>
-                    <button onClick={e => { e.stopPropagation(); setMenuFile(menuFile?.id===f.id ? null : f); }} className="opacity-0 group-hover:opacity-100 p-2 hover:bg-white/5 rounded-xl text-neutral-600 hover:text-white transition-all"><MoreVertical size={16}/></button>
+                  style={{ backgroundColor: t.panel, border: `1px solid ${selected?.id===f.id ? t.accent + '80' : t.border}`, borderRadius: 14, padding: 16, cursor: 'pointer', transition: 'all 0.2s' }}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div style={{ padding: 12, backgroundColor: t.accentSoft, borderRadius: 12 }}>{ICON(f.mimeType, 24, isDark)}</div>
+                    <button onClick={e => { e.stopPropagation(); setMenuFile(menuFile?.id===f.id ? null : f); }}
+                      className="opacity-0 group-hover:opacity-100" style={{ padding: 6, background: 'none', border: 'none', cursor: 'pointer', color: t.textDim }}>
+                      <MoreVertical size={14}/>
+                    </button>
                   </div>
-                  <p className="text-[12px] font-black text-white uppercase tracking-widest truncate mb-1">{f.name}</p>
-                  <p className="text-[9px] text-neutral-600 font-bold uppercase">{fmtSize(f.size)}</p>
+                  <p style={{ fontSize: 11, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.08em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: 2 }}>{f.name}</p>
+                  <p style={{ fontSize: 8, color: t.textDim, fontWeight: 700, textTransform: 'uppercase' }}>{fmtSize(f.size)}</p>
                   {menuFile?.id === f.id && (
-                    <div className="absolute top-2 right-8 z-30 bg-[#1a1a1a] border border-white/10 rounded-xl shadow-2xl p-1.5 min-w-[140px]">
-                      {f.mimeType !== 'application/vnd.google-apps.folder' && <button onClick={e=>{e.stopPropagation();handleDownload(f);setMenuFile(null);}} className="w-full flex items-center gap-2 px-3 py-2 text-[10px] text-neutral-300 hover:bg-white/5 rounded-lg"><Download size={12}/>Descargar</button>}
-                      <button onClick={e=>{e.stopPropagation();window.open(f.webViewLink,'_blank');setMenuFile(null);}} className="w-full flex items-center gap-2 px-3 py-2 text-[10px] text-neutral-300 hover:bg-white/5 rounded-lg"><ExternalLink size={12}/>Abrir en Drive</button>
-                      <button onClick={e=>{e.stopPropagation();handleDelete(f);setMenuFile(null);}} className="w-full flex items-center gap-2 px-3 py-2 text-[10px] text-red-400 hover:bg-red-500/10 rounded-lg"><Trash2 size={12}/>Eliminar</button>
+                    <div style={{ position: 'absolute', top: 8, right: 32, zIndex: 30, backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: 10, boxShadow: '0 8px 32px rgba(0,0,0,0.5)', padding: 6, minWidth: 130 }}>
+                      {f.mimeType !== 'application/vnd.google-apps.folder' && <button onClick={e=>{e.stopPropagation();handleDownload(f);setMenuFile(null);}} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', fontSize: 9, color: t.textMuted, background: 'none', border: 'none', cursor: 'pointer', borderRadius: 8 }}><Download size={12}/>Descargar</button>}
+                      <button onClick={e=>{e.stopPropagation();window.open(f.webViewLink,'_blank');setMenuFile(null);}} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', fontSize: 9, color: t.textMuted, background: 'none', border: 'none', cursor: 'pointer', borderRadius: 8 }}><ExternalLink size={12}/>Abrir en Drive</button>
+                      <button onClick={e=>{e.stopPropagation();handleDelete(f);setMenuFile(null);}} style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '8px 10px', fontSize: 9, color: '#e04a4a', background: 'none', border: 'none', cursor: 'pointer', borderRadius: 8 }}><Trash2 size={12}/>Eliminar</button>
                     </div>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            /* ── LIST / DETAIL VIEW ── */
-            <div className="border border-white/5 rounded-2xl overflow-hidden">
-              <div className="grid grid-cols-12 px-4 py-2 bg-white/[0.02] border-b border-white/5 text-[9px] font-black text-neutral-600 uppercase tracking-widest">
+            /* LIST / DETAIL VIEW */
+            <div style={{ border: `1px solid ${t.border}`, borderRadius: 12, overflow: 'hidden' }}>
+              <div className="grid grid-cols-12 px-4 py-2" style={{ backgroundColor: t.accentSoft, borderBottom: `1px solid ${t.border}`, fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.15em' }}>
                 <span className="col-span-6">Nombre</span>
                 <span className="col-span-2">Tipo</span>
                 <span className="col-span-2">Tamaño</span>
@@ -230,17 +253,18 @@ export default function DriveSovereign({ token, user, onLoginSuccess }) {
               {filtered.map(f => (
                 <div key={f.id} onDoubleClick={() => f.mimeType==='application/vnd.google-apps.folder' ? navigate({id:f.id,name:f.name}) : null}
                   onClick={() => setSelected(f)}
-                  className={`grid grid-cols-12 px-4 py-3 border-b border-white/[0.03] hover:bg-white/[0.03] transition-all cursor-pointer group items-center ${selected?.id===f.id ? 'bg-blue-500/5 border-blue-500/20' : ''}`}>
+                  className="grid grid-cols-12 px-4 py-3 items-center cursor-pointer"
+                  style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: selected?.id===f.id ? t.accentSoft : 'transparent' }}>
                   <div className="col-span-6 flex items-center gap-3">
-                    {ICON(f.mimeType, 16)}
-                    <span className="text-[11px] font-bold text-white truncate">{f.name}</span>
+                    {ICON(f.mimeType, 16, isDark)}
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.name}</span>
                   </div>
-                  <span className="col-span-2 text-[9px] text-neutral-600 truncate">{f.mimeType.split('/').pop().split('.').pop()}</span>
-                  <span className="col-span-2 text-[9px] text-neutral-600">{fmtSize(f.size)}</span>
-                  <span className="col-span-1 text-[9px] text-neutral-600">{fmtDate(f.modifiedTime)}</span>
-                  <div className="col-span-1 flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    {f.mimeType!=='application/vnd.google-apps.folder' && <button onClick={e=>{e.stopPropagation();handleDownload(f);}} className="p-1.5 hover:bg-white/10 rounded-lg text-neutral-600 hover:text-white"><Download size={12}/></button>}
-                    <button onClick={e=>{e.stopPropagation();handleDelete(f);}} className="p-1.5 hover:bg-red-500/10 rounded-lg text-neutral-600 hover:text-red-400"><Trash2 size={12}/></button>
+                  <span className="col-span-2" style={{ fontSize: 8, color: t.textDim }}>{f.mimeType.split('/').pop().split('.').pop()}</span>
+                  <span className="col-span-2" style={{ fontSize: 8, color: t.textDim }}>{fmtSize(f.size)}</span>
+                  <span className="col-span-1" style={{ fontSize: 8, color: t.textDim }}>{fmtDate(f.modifiedTime)}</span>
+                  <div className="col-span-1 flex justify-end gap-1">
+                    {f.mimeType!=='application/vnd.google-apps.folder' && <button onClick={e=>{e.stopPropagation();handleDownload(f);}} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: t.textDim }}><Download size={12}/></button>}
+                    <button onClick={e=>{e.stopPropagation();handleDelete(f);}} style={{ padding: 4, background: 'none', border: 'none', cursor: 'pointer', color: t.textDim }}><Trash2 size={12}/></button>
                   </div>
                 </div>
               ))}
@@ -250,24 +274,33 @@ export default function DriveSovereign({ token, user, onLoginSuccess }) {
 
         {/* DETAIL PANEL */}
         {view === 'detail' && selected && (
-          <div className="w-72 bg-[#0a0a0a] border border-white/5 rounded-3xl p-6 flex flex-col gap-4 shrink-0">
+          <div style={{ width: 260, backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 16, padding: 20, display: 'flex', flexDirection: 'column', gap: 12, flexShrink: 0 }}>
             <div className="flex justify-between items-center">
-              <span className="text-[9px] font-black text-neutral-600 uppercase tracking-widest">Detalle</span>
-              <button onClick={() => setSelected(null)} className="text-neutral-600 hover:text-white"><X size={14}/></button>
+              <span style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Detalle</span>
+              <button onClick={() => setSelected(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: t.textDim }}><X size={14}/></button>
             </div>
-            <div className="flex flex-col items-center py-6 gap-3">
-              {ICON(selected.mimeType, 48)}
-              <p className="text-sm font-bold text-white text-center leading-snug">{selected.name}</p>
+            <div className="flex flex-col items-center py-4 gap-3">
+              {ICON(selected.mimeType, 40, isDark)}
+              <p style={{ fontSize: 13, fontWeight: 700, color: '#fff', textAlign: 'center' }}>{selected.name}</p>
             </div>
-            <div className="space-y-3 text-[10px]">
-              <div className="flex justify-between"><span className="text-neutral-600 font-bold uppercase">Tamaño</span><span className="text-white font-bold">{fmtSize(selected.size)}</span></div>
-              <div className="flex justify-between"><span className="text-neutral-600 font-bold uppercase">Modificado</span><span className="text-white font-bold">{fmtDate(selected.modifiedTime)}</span></div>
-              <div className="flex justify-between"><span className="text-neutral-600 font-bold uppercase">Tipo</span><span className="text-white font-bold truncate max-w-[120px] text-right">{selected.mimeType.split('/').pop()}</span></div>
+            <div className="space-y-2" style={{ fontSize: 9 }}>
+              <div className="flex justify-between"><span style={{ color: t.textDim, fontWeight: 700, textTransform: 'uppercase' }}>Tamaño</span><span style={{ color: '#fff', fontWeight: 700 }}>{fmtSize(selected.size)}</span></div>
+              <div className="flex justify-between"><span style={{ color: t.textDim, fontWeight: 700, textTransform: 'uppercase' }}>Modificado</span><span style={{ color: '#fff', fontWeight: 700 }}>{fmtDate(selected.modifiedTime)}</span></div>
+              <div className="flex justify-between"><span style={{ color: t.textDim, fontWeight: 700, textTransform: 'uppercase' }}>Tipo</span><span style={{ color: '#fff', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 120 }}>{selected.mimeType.split('/').pop()}</span></div>
             </div>
             <div className="mt-auto space-y-2">
-              <button onClick={() => window.open(selected.webViewLink,'_blank')} className="w-full py-3 bg-white/5 border border-white/5 rounded-2xl text-[9px] font-black uppercase text-white hover:bg-white/10 transition-all flex items-center justify-center gap-2"><ExternalLink size={13}/>Abrir en Drive</button>
-              {selected.mimeType!=='application/vnd.google-apps.folder' && <button onClick={()=>handleDownload(selected)} className="w-full py-3 bg-blue-600 rounded-2xl text-[9px] font-black uppercase text-white hover:bg-blue-500 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.25)]"><Download size={13}/>Descargar</button>}
-              <button onClick={()=>handleDelete(selected)} className="w-full py-3 bg-red-600/10 border border-red-500/10 rounded-2xl text-[9px] font-black uppercase text-red-400 hover:bg-red-500/20 transition-all flex items-center justify-center gap-2"><Trash2 size={13}/>Eliminar</button>
+              <button onClick={() => window.open(selected.webViewLink,'_blank')}
+                style={{ width: '100%', padding: 12, backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, borderRadius: 12, fontSize: 8, fontWeight: 900, textTransform: 'uppercase', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <ExternalLink size={13}/>Abrir en Drive
+              </button>
+              {selected.mimeType!=='application/vnd.google-apps.folder' && <button onClick={()=>handleDownload(selected)}
+                style={{ width: '100%', padding: 12, backgroundColor: t.accent, border: 'none', borderRadius: 12, fontSize: 8, fontWeight: 900, textTransform: 'uppercase', color: '#000', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Download size={13}/>Descargar
+              </button>}
+              <button onClick={()=>handleDelete(selected)}
+                style={{ width: '100%', padding: 12, backgroundColor: 'rgba(224,74,74,0.08)', border: '1px solid rgba(224,74,74,0.15)', borderRadius: 12, fontSize: 8, fontWeight: 900, textTransform: 'uppercase', color: '#e04a4a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Trash2 size={13}/>Eliminar
+              </button>
             </div>
           </div>
         )}

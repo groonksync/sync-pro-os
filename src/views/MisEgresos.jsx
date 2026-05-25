@@ -69,8 +69,8 @@ const MisEgresos = ({ data, setData }) => {
     <div className="animate-in fade-in duration-300 max-w-[1200px] w-full">
       <header className="mb-6 flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-light text-white tracking-tight">Mis Egresos</h2>
-          <p className="text-[11px] text-neutral-500 uppercase tracking-widest mt-1">Control de gastos y balance mensual</p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Mis Egresos</h2>
+          <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Control de gastos y balance mensual</p>
         </div>
         <button onClick={() => setShowForm(!showForm)}
           className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5">
@@ -104,7 +104,7 @@ const MisEgresos = ({ data, setData }) => {
       <div className="grid grid-cols-12 gap-5 mb-6">
         {/* Gastos por categoría */}
         {porCategoria.length > 0 && (
-          <div className="col-span-4 bg-[#0a0a0a] border border-white/[0.05] rounded-xl p-5">
+          <div className="col-span-4 bg-[#202022] border border-white/[0.05] rounded-xl p-5">
             <p className="text-[11px] text-neutral-500 uppercase tracking-widest mb-4">Por Categoría</p>
             <div className="space-y-3">
               {porCategoria.map(cat => {
@@ -129,35 +129,35 @@ const MisEgresos = ({ data, setData }) => {
 
         {/* Formulario si está abierto */}
         {showForm && (
-          <div className="col-span-8 bg-[#0a0a0a] border border-amber-500/20 rounded-xl p-5 animate-in fade-in duration-200">
+          <div className="col-span-8 bg-[#202022] border border-amber-500/20 rounded-xl p-5 animate-in fade-in duration-200">
             <h3 className="text-[11px] text-amber-500 uppercase tracking-widest font-bold mb-4">Nuevo Egreso</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2">
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Descripción *</label>
                 <input type="text" value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Ej: Adobe Creative Cloud" autoFocus/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Ej: Adobe Creative Cloud" autoFocus/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Categoría</label>
                 <select value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none cursor-pointer">
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none cursor-pointer">
                   {CATEGORIAS.map(c => <option key={c.label}>{c.label}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Monto ($) *</label>
                 <input type="number" value={form.monto} onChange={e => setForm({...form, monto: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0.00"/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0.00"/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Fecha</label>
                 <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none"/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none"/>
               </div>
               <div>
                 <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Notas</label>
                 <input type="text" value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
-                  className="w-full bg-black/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none" placeholder="Opcional..."/>
+                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none" placeholder="Opcional..."/>
               </div>
             </div>
             <div className="flex justify-end gap-3 mt-4">
@@ -172,10 +172,10 @@ const MisEgresos = ({ data, setData }) => {
       </div>
 
       {/* Tabla de egresos */}
-      <div className="bg-[#0a0a0a] border border-white/[0.05] rounded-xl overflow-hidden">
+      <div className="bg-[#202022] border border-white/[0.05] rounded-xl overflow-hidden">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-black/40 border-b border-white/[0.05]">
+            <tr className="bg-[#141414]/40 border-b border-white/[0.05]">
               <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Descripción</th>
               <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Categoría</th>
               <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Fecha</th>

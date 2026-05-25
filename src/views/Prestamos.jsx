@@ -1,15 +1,52 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Plus, ChevronRight, ArrowLeft, Save, FileSignature, Smartphone, DollarSign, 
-  ExternalLink, User, CreditCard, ArrowRight, ShieldCheck, CalendarDays, CheckCircle2
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Plus, ChevronRight, ArrowLeft, Save, FileSignature, Smartphone, DollarSign,
+  ExternalLink, User, CreditCard, ArrowRight, ShieldCheck, CalendarDays, CheckCircle2,
+  Check, X, AlertCircle
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
+
+const toastStyles = {
+  success: { bg: 'rgba(78, 201, 176, 0.10)', border: 'rgba(78, 201, 176, 0.30)', icon: CheckCircle2, color: '#4ec9b0' },
+  error: { bg: 'rgba(241, 76, 76, 0.10)', border: 'rgba(241, 76, 76, 0.30)', icon: AlertCircle, color: '#f14c4c' }
+};
+
+const ToastNotification = ({ message, type = 'success', onClose, isDark }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const { bg, border, icon: Icon, color } = toastStyles[type] || toastStyles.success;
+  
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed top-6 right-6 z-[9999] animate-in slide-in-from-right-4 fade-in duration-300">
+      <div style={{ backgroundColor: bg, borderColor: border }} className="border rounded-2xl px-5 py-4 shadow-2xl flex items-center gap-4 backdrop-blur-xl min-w-[300px]">
+        <div style={{ backgroundColor: `${color}15`, color }} className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+          <Icon size={16} />
+        </div>
+        <p style={{ color: t.text }} className="text-xs font-medium flex-1">{message}</p>
+        <button onClick={onClose} style={{ color: t.textDim }} className="hover:text-white transition-colors shrink-0">
+          <X size={14} />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSelection }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [prestamoView, setPrestamoView] = useState('list'); 
   const [activePrestamo, setActivePrestamo] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState(null);
   const isMobile = settings?.isMobileMode;
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type, key: Date.now() });
+  };
 
   useEffect(() => {
     if (preSelectedId && data?.prestamos) {
@@ -27,20 +64,39 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   const closePrestamo = async () => { try { if (activePrestamo) await handleSave(); } finally { setPrestamoView('list'); setActivePrestamo(null); } };
 
   const createPrestamo = () => {
-    const newP = { id: Date.now().toString(), nombre: '', ci: '', telefono: '', capital: 0, interes: 5, moneda: 'BOB', inicio: new Date().toISOString().split('T')[0], fin: new Date(new Date().setMonth(new Date().getMonth() + 6)).toISOString().split('T')[0], estado: 'Activo', garantia: '', drive_contrato: '', drive_fotos: '', pagos: [] };
+    const today = new Date();
+    const firstPayment = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    const newP = { 
+      id: crypto.randomUUID(), nombre: '', ci: '', telefono: '', capital: 0, interes: 5, 
+      moneda: 'BOB', 
+      inicio: today.toISOString().split('T')[0], 
+      fin: new Date(today.setMonth(today.getMonth() + 6)).toISOString().split('T')[0], 
+      estado: 'Activo', garantia: '', drive_contrato: '', drive_fotos: '', pagos: [] 
+    };
     setActivePrestamo(newP); setPrestamoView('detail');
   };
 
   const handleSave = async () => {
     if (!activePrestamo) return; setLoading(true);
+    const isNew = !data?.prestamos?.some(p => p.id === activePrestamo.id);
     try {
       const payload = { ...activePrestamo, capital: parseFloat(activePrestamo.capital) || 0, interes: parseFloat(activePrestamo.interes) || 0 };
       const { error } = await supabase.from('prestamos').upsert(payload);
       if (error) throw error;
       const current = Array.isArray(data?.prestamos) ? data.prestamos : [];
-      const updated = current.some(p => p.id === activePrestamo.id) ? current.map(p => p.id === activePrestamo.id ? activePrestamo : p) : [...current, activePrestamo];
+      const updated = current.some(p => p.id === activePrestamo.id) 
+        ? current.map(p => p.id === activePrestamo.id ? activePrestamo : p) 
+        : [...current, activePrestamo];
       setData({...data, prestamos: updated});
-    } catch (e) { alert('Error: ' + e.message); } finally { setLoading(false); }
+      
+      if (isNew) {
+        showToast(`Nuevo prestamista "${activePrestamo.nombre || 'Sin nombre'}" registrado con éxito`, 'success');
+      } else {
+        showToast(`Cambios guardados correctamente`, 'success');
+      }
+    } catch (e) { 
+      showToast('Error: ' + e.message, 'error');
+    } finally { setLoading(false); }
   };
 
   const togglePago = (mes) => {
@@ -50,13 +106,26 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
     setActivePrestamo({ ...activePrestamo, pagos: newPagos });
   };
 
+  /**
+   * Genera la línea de tiempo de pagos.
+   * El primer pago debe ser un mes después de la fecha de inicio,
+   * porque el dinero se entrega hoy y se cobra el primer mes al cumplirse 30 días.
+   * Ej: Si prestas el 25 de mayo, el primer pago es el 25 de junio.
+   */
   const generateTimeline = () => {
     if (!activePrestamo?.inicio || !activePrestamo?.fin) return [];
-    const start = new Date(activePrestamo.inicio); const end = new Date(activePrestamo.fin);
+    const start = new Date(activePrestamo.inicio);
+    const end = new Date(activePrestamo.fin);
     if (isNaN(start.getTime()) || isNaN(end.getTime())) return [];
-    const months = []; let current = new Date(start.getFullYear(), start.getMonth(), 1);
+    
+    const months = [];
+    let current = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+    
     while (current <= new Date(end.getFullYear(), end.getMonth(), 1)) {
-      months.push({ key: `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`, label: current.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }) });
+      months.push({ 
+        key: `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`, 
+        label: current.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }) 
+      });
       current.setMonth(current.getMonth() + 1);
     }
     return months;
@@ -65,148 +134,384 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
 
   return (
-    <div className={`flex flex-col h-full w-full animate-in fade-in duration-500 ${isMobile ? 'pb-20' : ''}`}>
-      {prestamoView === 'list' ? (
-        <div className="animate-in fade-in duration-300">
-          <header className={`mb-10 flex ${isMobile ? 'flex-col gap-6 text-center' : 'justify-between items-end'}`}>
-            <div className={isMobile ? 'w-full' : ''}>
-              <h2 className={`text-3xl md:text-4xl font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-tighter`}>Cartera de Préstamos</h2>
-              <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.4em] mt-2 flex items-center justify-center md:justify-start gap-2">
-                <ShieldCheck size={14} /> Gestión de Capital Asegurado
-              </p>
-            </div>
-            <button onClick={createPrestamo} className={`bg-blue-600 text-white text-[11px] font-black rounded-2xl md:rounded-[2rem] hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95 uppercase tracking-widest ${isMobile ? 'w-full py-6' : 'px-8 py-4'}`}>
-              <Plus size={18} strokeWidth={4} /> Nuevo Registro Maestro
-            </button>
-          </header>
+    <>
+      {toast && (
+        <ToastNotification
+          key={toast.key}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+          isDark={isDark}
+        />
+      )}
+      <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
+        {prestamoView === 'list' ? (
+          <div className="animate-in fade-in duration-300">
+            <header style={{
+              display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'flex-end',
+              gap: '16px', marginBottom: '32px',
+            }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Cartera de Préstamos</h2>
+                <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Gestión de Capital</p>
+              </div>
+              <button 
+                onClick={createPrestamo} 
+                style={{
+                  backgroundColor: t.accent, color: 'white', border: 'none',
+                  borderRadius: '9999px', padding: isMobile ? '14px 24px' : '10px 20px',
+                  fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
+                }}
+                onMouseEnter={e => e.target.style.backgroundColor = t.accentHover}
+                onMouseLeave={e => e.target.style.backgroundColor = t.accent}
+              >
+                <Plus size={16} strokeWidth={3} /> Nuevo Registro
+              </button>
+            </header>
 
-          <div className={`${isMobile ? 'space-y-4' : `${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border rounded-[28px] overflow-hidden shadow-2xl`}`}>
-            {!isMobile ? (
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className={`${isDark ? 'bg-black/60 border-white/5' : 'bg-neutral-50 border-neutral-100'} border-b`}>
-                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Acreditado</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest text-center">Periodo (Inicio/Fin)</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Capital</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest">Interés</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-neutral-500 uppercase tracking-widest text-right">Acción</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {prestamosList.map(p => (
-                    <tr key={p.id} onClick={() => openPrestamo(p)} className={`border-b ${isDark ? 'border-white/5 hover:bg-white/5' : 'border-neutral-50 hover:bg-neutral-50'} transition-all cursor-pointer group`}>
-                      <td className="px-8 py-5">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-10 h-10 rounded-xl ${isDark ? 'bg-white/5 text-neutral-400' : 'bg-neutral-100 text-neutral-500'} flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all`}><User size={18} /></div>
-                          <div>
-                            <p className={`text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-tight`}>{p.nombre || 'Sin Nombre'}</p>
-                            <div className="flex items-center gap-2 mt-1">
-                               <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${p.estado === 'Finalizado' ? 'bg-emerald-500/10 text-emerald-500' : p.estado === 'En Mora' ? 'bg-rose-500/10 text-rose-500' : 'bg-blue-500/10 text-blue-500'}`}>
-                                 {p.estado || 'Activo'}
-                               </span>
+            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+              {!isMobile ? (
+                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Acreditado</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Periodo</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Capital</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Interés</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {prestamosList.map(p => (
+                      <tr key={p.id} onClick={() => openPrestamo(p)} 
+                        style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <td style={{ padding: '16px 24px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent }}>
+                              <User size={16} />
+                            </div>
+                            <div>
+                              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre || 'Sin Nombre'}</p>
+                              <span style={{
+                                fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em',
+                                padding: '2px 8px', borderRadius: '9999px',
+                                backgroundColor: p.estado === 'Finalizado' ? 'rgba(16, 185, 129, 0.10)' : p.estado === 'En Mora' ? 'rgba(239, 68, 68, 0.10)' : t.accentSoft,
+                                color: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
+                              }}>
+                                {p.estado || 'Activo'}
+                              </span>
                             </div>
                           </div>
+                        </td>
+                        <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 500, color: t.textMuted }}>
+                            {p.inicio ? new Date(p.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+                            {parseFloat(p.capital).toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>{p.moneda}</span>
+                          </p>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
+                            {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span style={{ fontSize: '9px', color: t.accent }}>{p.moneda}</span>
+                          </p>
+                        </td>
+                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                          <button style={{
+                            padding: '8px', borderRadius: '8px', border: 'none',
+                            backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                            opacity: 0, transition: 'all 0.2s',
+                          }}
+                          className="group-hover:opacity-100"
+                          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
+                          >
+                            <FileSignature size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div>
+                  {prestamosList.map(p => (
+                    <div key={p.id} onClick={() => openPrestamo(p)} 
+                      style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent }}>
+                          <User size={20} />
                         </div>
-                      </td>
-                      <td className="px-8 py-5 text-center">
-                        <div className="inline-flex flex-col items-center">
-                           <span className="text-[10px] font-mono text-neutral-500 font-bold">{p.inicio || '---'}</span>
-                           <ArrowRight size={10} className="text-neutral-800 my-1"/>
-                           <span className="text-[10px] font-mono text-rose-500 font-bold">{p.fin || '---'}</span>
+                        <div>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre}</p>
+                          <p style={{ fontSize: '10px', fontWeight: 600, color: t.accent, marginTop: '2px' }}>
+                            {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} {p.moneda}
+                          </p>
                         </div>
-                      </td>
-                      <td className="px-8 py-5"><p className={`text-base font-mono font-black ${isDark ? 'text-white' : 'text-neutral-900'}`}>{parseFloat(p.capital).toLocaleString()} <span className="text-[10px] opacity-40 font-sans">{p.moneda}</span></p></td>
-                      <td className="px-8 py-5"><p className="text-base font-mono text-emerald-500 font-black">{(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span className="text-[10px] opacity-40 font-sans">{p.moneda}</span></p></td>
-                      <td className="px-8 py-5 text-right"><div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity"><button className="p-3 bg-blue-600 text-white rounded-xl shadow-lg active:scale-95 transition-all"><FileSignature size={18} /></button></div></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className="grid grid-cols-1 gap-4">
-                {prestamosList.map(p => (
-                  <div key={p.id} onClick={() => openPrestamo(p)} className={`${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border p-6 rounded-[2rem] flex justify-between items-center active:scale-95 transition-all shadow-lg`}>
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-600/10 text-blue-500 flex items-center justify-center"><User size={24}/></div>
-                      <div>
-                        <p className={`text-sm font-black ${isDark ? 'text-white' : 'text-neutral-900'} uppercase tracking-tight`}>{p.nombre}</p>
-                        <p className="text-[10px] text-emerald-500 font-black uppercase tracking-widest mt-1">{(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} {p.moneda}</p>
                       </div>
+                      <ChevronRight size={18} color={t.textDim} />
                     </div>
-                    <FileSignature size={20} className="text-blue-600"/>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="animate-in slide-in-from-right-8 duration-500">
-          <div className="flex items-center gap-2 mb-10 text-[10px] text-neutral-500 cursor-pointer hover:text-white w-max transition-colors group font-black uppercase tracking-[0.3em]" onClick={closePrestamo}><ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Volver a la Cartera</div>
-          <header className={`mb-12 flex ${isMobile ? 'flex-col gap-8' : 'flex-row justify-between items-center gap-8'}`}>
-            <div className={`flex ${isMobile ? 'flex-col items-center text-center gap-6' : 'items-center gap-6'}`}>
-              <div className={`${isDark ? 'bg-white/5' : 'bg-neutral-100'} w-20 h-20 rounded-3xl flex items-center justify-center border ${isDark ? 'border-white/5' : 'border-neutral-200'}`}><User size={40} className={isDark ? 'text-white' : 'text-neutral-900'} /></div>
-              <div className={isMobile ? 'w-full' : ''}>
-                <input type="text" value={activePrestamo.nombre} onChange={e=>setActivePrestamo({...activePrestamo, nombre: e.target.value})} className={`${isMobile ? 'text-2xl text-center' : 'text-4xl'} font-black ${isDark ? 'text-white' : 'text-neutral-900'} bg-transparent outline-none w-full border-b-2 border-transparent focus:border-blue-500/30 transition-colors tracking-tighter uppercase`} placeholder="Nombre Cliente" />
-                <div className={`flex items-center gap-4 mt-4 ${isMobile ? 'justify-center flex-wrap' : ''}`}>
-                  <div className={`${isDark ? 'bg-white/5 border-white/5' : 'bg-neutral-50 border-neutral-200'} flex items-center gap-2 px-4 py-2 rounded-xl border`}><FileSignature size={14} className="text-neutral-500" /><input type="text" value={activePrestamo.ci} onChange={e=>setActivePrestamo({...activePrestamo, ci: e.target.value})} className={`bg-transparent outline-none w-24 text-[10px] ${isDark ? 'text-white' : 'text-neutral-900'} font-black`} placeholder="CI..."/></div>
-                  <div className={`${isDark ? 'bg-white/5 border-white/5' : 'bg-neutral-50 border-neutral-200'} flex items-center gap-2 px-4 py-2 rounded-xl border`}><Smartphone size={14} className="text-neutral-500" /><input type="text" value={activePrestamo.telefono} onChange={e=>setActivePrestamo({...activePrestamo, telefono: e.target.value})} className={`bg-transparent outline-none w-24 text-[10px] ${isDark ? 'text-white' : 'text-neutral-900'} font-black`} placeholder="WA..."/></div>
-                  <select value={activePrestamo.estado} onChange={e=>setActivePrestamo({...activePrestamo, estado: e.target.value})} className={`${isDark ? 'bg-white/5 border-white/5 text-blue-400' : 'bg-neutral-50 border-neutral-200 text-blue-600'} px-4 py-2 rounded-xl border text-[10px] font-black uppercase outline-none`}><option value="Activo">Activo</option><option value="En Mora">En Mora</option><option value="Finalizado">Finalizado</option></select>
+        ) : (
+          <div className="animate-in slide-in-from-right-8 duration-500">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px', cursor: 'pointer' }}
+              onClick={closePrestamo}>
+              <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ArrowLeft size={14} /> Volver
+              </span>
+            </div>
+            
+            <header style={{
+              display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center',
+              gap: '24px', marginBottom: '40px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                  <User size={28} color={t.accent} />
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    value={activePrestamo.nombre} 
+                    onChange={e => setActivePrestamo({...activePrestamo, nombre: e.target.value})} 
+                    style={{
+                      fontSize: '1.25rem', fontWeight: 700, color: t.text,
+                      background: 'transparent', border: 'none', outline: 'none',
+                      width: '100%', letterSpacing: '-0.02em',
+                    }}
+                    placeholder="Nombre del Cliente" 
+                  />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '9999px' }}>
+                      <FileSignature size={12} color={t.textDim} /> 
+                      <input type="text" value={activePrestamo.ci} 
+                        onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})} 
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="CI..." />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '9999px' }}>
+                      <Smartphone size={12} color={t.textDim} />
+                      <input type="text" value={activePrestamo.telefono}
+                        onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="WA..." />
+                    </div>
+                    <select value={activePrestamo.estado} 
+                      onChange={e => setActivePrestamo({...activePrestamo, estado: e.target.value})}
+                      style={{
+                        padding: '6px 12px', borderRadius: '9999px', fontSize: '10px', fontWeight: 600,
+                        textTransform: 'uppercase', border: `1px solid ${t.border}`,
+                        backgroundColor: t.input, color: t.accent, outline: 'none',
+                      }}>
+                      <option value="Activo">Activo</option>
+                      <option value="En Mora">En Mora</option>
+                      <option value="Finalizado">Finalizado</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <button 
+                onClick={handleSave} 
+                disabled={loading}
+                style={{
+                  backgroundColor: t.accent, color: 'white', border: 'none',
+                  borderRadius: '9999px', padding: isMobile ? '14px 24px' : '10px 20px',
+                  fontSize: '11px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: '8px', transition: 'all 0.2s', opacity: loading ? 0.6 : 1,
+                  width: isMobile ? '100%' : 'auto',
+                }}
+                onMouseEnter={e => { if (!loading) e.target.style.backgroundColor = t.accentHover; }}
+                onMouseLeave={e => { if (!loading) e.target.style.backgroundColor = t.accent; }}
+              >
+                <Save size={16} /> {loading ? 'Guardando...' : 'Guardar'}
+              </button>
+            </header>
+
+            <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`}>
+              {/* LEFT COLUMN - Timeline & Contract */}
+              <div className={`${isMobile ? '' : 'col-span-8'} space-y-6`}>
+                {/* PAYMENT TIMELINE */}
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+                  <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <CalendarDays size={14} color={t.accent} /> Cronograma de Cobros
+                  </h3>
+                  <p style={{ fontSize: '10px', fontWeight: 500, color: t.textDim, marginBottom: '16px' }}>
+                    <span style={{ color: t.accent }}>⏱️</span> Primer pago: un mes después de la fecha de inicio
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
+                    {generateTimeline().map((mes) => {
+                      const isPaid = (activePrestamo.pagos || []).includes(mes.key);
+                      return (
+                        <div 
+                          key={mes.key} 
+                          onClick={() => togglePago(mes.key)} 
+                          style={{
+                            padding: '14px', borderRadius: '12px', cursor: 'pointer',
+                            transition: 'all 0.2s', position: 'relative', overflow: 'hidden',
+                            backgroundColor: isPaid ? 'rgba(16, 185, 129, 0.08)' : t.input,
+                            border: `1px solid ${isPaid ? 'rgba(16, 185, 129, 0.30)' : t.border}`,
+                          }}
+                          onMouseEnter={e => { if (!isPaid) e.currentTarget.style.borderColor = t.accent; }}
+                          onMouseLeave={e => { if (!isPaid) e.currentTarget.style.borderColor = t.border; }}
+                        >
+                          <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: isPaid ? t.success : t.textMuted }}>
+                            {mes.label}
+                          </span>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: isPaid ? t.success : t.text, marginTop: '4px' }}>
+                            {(parseFloat(activePrestamo.capital) * (parseFloat(activePrestamo.interes) / 100)).toLocaleString()} {activePrestamo.moneda}
+                          </p>
+                          {isPaid && <CheckCircle2 size={16} style={{ position: 'absolute', top: '12px', right: '12px', color: t.success }} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* CONTRACT & GUARANTEE */}
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+                  <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                    <ShieldCheck size={14} color={t.accent} /> Contrato y Garantía
+                  </h3>
+                  <textarea value={activePrestamo.garantia} 
+                    onChange={e => setActivePrestamo({...activePrestamo, garantia: e.target.value})} 
+                    style={{
+                      width: '100%', height: '120px', padding: '14px', fontSize: '12px',
+                      backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                      borderRadius: '12px', outline: 'none', resize: 'none', transition: 'border 0.2s',
+                    }}
+                    onFocus={e => { e.target.style.borderColor = t.accent; }}
+                    onBlur={e => { e.target.style.borderColor = t.border; }}
+                    placeholder="Detalles de la garantía (Ej: Auto, Título de propiedad, etc.)" />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Link Contrato Drive</label>
+                      <input type="text" value={activePrestamo.drive_contrato} 
+                        onChange={e => setActivePrestamo({...activePrestamo, drive_contrato: e.target.value})} 
+                        style={{
+                          width: '100%', padding: '10px 14px', fontSize: '10px',
+                          backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                          borderRadius: '10px', outline: 'none', transition: 'border 0.2s',
+                        }}
+                        onFocus={e => { e.target.style.borderColor = t.accent; }}
+                        onBlur={e => { e.target.style.borderColor = t.border; }}
+                        placeholder="https://drive.google.com/..." />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Link Fotos Respaldo</label>
+                      <input type="text" value={activePrestamo.drive_fotos} 
+                        onChange={e => setActivePrestamo({...activePrestamo, drive_fotos: e.target.value})} 
+                        style={{
+                          width: '100%', padding: '10px 14px', fontSize: '10px',
+                          backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                          borderRadius: '10px', outline: 'none', transition: 'border 0.2s',
+                        }}
+                        onFocus={e => { e.target.style.borderColor = t.accent; }}
+                        onBlur={e => { e.target.style.borderColor = t.border; }}
+                        placeholder="https://photos.app.goo.gl/..." />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT COLUMN - Capital & Period */}
+              <div className={`${isMobile ? '' : 'col-span-4'} space-y-6`}>
+                {/* CAPITAL & INTEREST */}
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '12px' }}>Capital Invertido</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
+                    <DollarSign size={18} color={t.textDim} />
+                    <input type="number" value={activePrestamo.capital} 
+                      onChange={e => setActivePrestamo({...activePrestamo, capital: e.target.value})} 
+                      style={{
+                        background: 'transparent', border: 'none', outline: 'none',
+                        fontSize: '1.5rem', fontWeight: 700, color: t.text, width: '100%',
+                        fontFamily: 'monospace',
+                      }} />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px' }}>
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Interés (%)</label>
+                      <input type="number" value={activePrestamo.interes} 
+                        onChange={e => setActivePrestamo({...activePrestamo, interes: e.target.value})} 
+                        style={{
+                          width: '100%', padding: '12px', fontSize: '1rem', fontFamily: 'monospace',
+                          backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.accent,
+                          borderRadius: '10px', outline: 'none', fontWeight: 600,
+                        }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Moneda</label>
+                      <select value={activePrestamo.moneda} 
+                        onChange={e => setActivePrestamo({...activePrestamo, moneda: e.target.value})} 
+                        style={{
+                          width: '100%', padding: '12px', fontSize: '14px', fontWeight: 600,
+                          backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                          borderRadius: '10px', outline: 'none',
+                        }}>
+                        <option value="BOB">BOB</option>
+                        <option value="USD">USD</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ paddingTop: '12px', marginTop: '12px', borderTop: `1px solid ${t.border}` }}>
+                    <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, marginBottom: '6px' }}>Interés Mensual Calculado</p>
+                    <p style={{ fontSize: '1.125rem', fontWeight: 600, color: t.accent, margin: 0 }}>
+                      {(parseFloat(activePrestamo.capital) * (parseFloat(activePrestamo.interes) / 100) || 0).toLocaleString()} {activePrestamo.moneda}
+                    </p>
+                  </div>
+                </div>
+
+                {/* PERIOD */}
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+                  <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '16px' }}>Periodo del Préstamo</label>
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginBottom: '6px' }}>Fecha Inicio</p>
+                    <input type="date" value={activePrestamo.inicio} 
+                      onChange={e => setActivePrestamo({...activePrestamo, inicio: e.target.value})} 
+                      style={{
+                        width: '100%', padding: '10px 14px', fontSize: '12px',
+                        backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                        borderRadius: '10px', outline: 'none', transition: 'border 0.2s',
+                      }}
+                      onFocus={e => { e.target.style.borderColor = t.accent; }}
+                      onBlur={e => { e.target.style.borderColor = t.border; }} />
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginBottom: '6px' }}>Fecha Vencimiento</p>
+                    <input type="date" value={activePrestamo.fin} 
+                      onChange={e => setActivePrestamo({...activePrestamo, fin: e.target.value})} 
+                      style={{
+                        width: '100%', padding: '10px 14px', fontSize: '12px',
+                        backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                        borderRadius: '10px', outline: 'none', transition: 'border 0.2s',
+                      }}
+                      onFocus={e => { e.target.style.borderColor = t.accent; }}
+                      onBlur={e => { e.target.style.borderColor = t.border; }} />
+                  </div>
+                  <div style={{ paddingTop: '12px', borderTop: `1px solid ${t.border}` }}>
+                    <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, marginBottom: '4px' }}>Primer Cobro</p>
+                    <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
+                      {activePrestamo.inicio ? new Date(new Date(activePrestamo.inicio).setMonth(new Date(activePrestamo.inicio).getMonth() + 1)).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-            <button onClick={handleSave} className={`bg-blue-600 text-white text-[11px] font-black rounded-2xl md:rounded-[2rem] hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-2xl active:scale-95 uppercase tracking-widest ${isMobile ? 'w-full py-6' : 'px-8 py-4'}`}><Save size={20}/> Guardar Maestro</button>
-          </header>
-          <div className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`}>
-            <div className={`${isMobile ? '' : 'col-span-8'} space-y-8`}>
-              <div className={`${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border rounded-[28px] p-8 shadow-2xl`}>
-                 <h3 className="text-xs font-black tracking-[0.2em] uppercase text-neutral-500 flex items-center gap-3 mb-8"><CalendarDays size={18} /> Cronograma de Cobros</h3>
-                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {generateTimeline().map((mes) => {
-                    const isPaid = (activePrestamo.pagos || []).includes(mes.key);
-                    return (
-                      <div key={mes.key} onClick={() => togglePago(mes.key)} className={`p-5 rounded-3xl border-2 cursor-pointer transition-all flex flex-col gap-2 relative overflow-hidden group ${isPaid ? 'bg-emerald-500/10 border-emerald-500/20' : `${isDark ? 'bg-black/40 border-white/5 hover:border-blue-500/30' : 'bg-neutral-50 border-neutral-200 hover:border-blue-500/50'}`}`}>
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${isPaid ? 'text-emerald-500' : 'text-neutral-400'}`}>{mes.label}</span>
-                        <p className={`text-sm font-mono font-bold ${isPaid ? (isDark ? 'text-white' : 'text-neutral-900') : 'text-neutral-400 group-hover:text-blue-500'}`}>{(parseFloat(activePrestamo.capital) * (parseFloat(activePrestamo.interes) / 100)).toLocaleString()} {activePrestamo.moneda}</p>
-                        {isPaid && <CheckCircle2 size={16} className="absolute top-4 right-4 text-emerald-500" />}
-                      </div>
-                    );
-                  })}
-                 </div>
-              </div>
-              
-              <div className={`${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border rounded-[28px] p-8 shadow-2xl`}>
-                 <h3 className="text-xs font-black tracking-[0.2em] uppercase text-neutral-500 flex items-center gap-3 mb-6"><CheckCircle2 size={18}/> Datos del Contrato y Garantía</h3>
-                 <textarea value={activePrestamo.garantia} onChange={e=>setActivePrestamo({...activePrestamo, garantia: e.target.value})} className={`w-full h-32 bg-transparent border-2 ${isDark ? 'border-white/5 text-white' : 'border-neutral-100 text-neutral-900'} rounded-3xl p-6 text-xs outline-none focus:border-blue-500/30 transition-all font-medium`} placeholder="Escribe aquí los detalles de la garantía (Ej: Auto, Título de propiedad, etc.)"></textarea>
-                 <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div><label className="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2 block">Link Contrato Drive</label><input type="text" value={activePrestamo.drive_contrato} onChange={e=>setActivePrestamo({...activePrestamo, drive_contrato: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 text-white' : 'bg-neutral-50 text-neutral-900'} p-4 rounded-xl text-[10px] outline-none border border-transparent focus:border-blue-500/20`} placeholder="https://drive.google.com/..."/></div>
-                    <div><label className="text-[8px] font-black text-neutral-500 uppercase tracking-widest mb-2 block">Link Fotos Respaldo</label><input type="text" value={activePrestamo.drive_fotos} onChange={e=>setActivePrestamo({...activePrestamo, drive_fotos: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 text-white' : 'bg-neutral-50 text-neutral-900'} p-4 rounded-xl text-[10px] outline-none border border-transparent focus:border-blue-500/20`} placeholder="https://photos.app.goo.gl/..."/></div>
-                 </div>
-              </div>
-            </div>
-            
-            <div className={`${isMobile ? '' : 'col-span-4'} space-y-6`}>
-               <div className={`${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border rounded-[28px] p-8 shadow-2xl space-y-6`}>
-                  <label className="text-[10px] text-neutral-500 block mb-4 font-black uppercase tracking-widest">Capital Invertido</label>
-                  <div className={`flex items-center gap-4 ${isDark ? 'bg-white/5 border-white/5' : 'bg-neutral-50 border-neutral-200'} p-6 rounded-[24px] border`}><DollarSign className="text-neutral-400" size={24}/><input type="number" value={activePrestamo.capital} onChange={e=>setActivePrestamo({...activePrestamo, capital: e.target.value})} className={`bg-transparent text-4xl font-mono ${isDark ? 'text-white' : 'text-neutral-900'} outline-none w-full font-black tracking-tighter`} /></div>
-                  <div className="grid grid-cols-2 gap-4">
-                     <div><label className="text-[9px] text-neutral-500 block mb-2 font-black uppercase tracking-widest">Interés (%)</label><input type="number" value={activePrestamo.interes} onChange={e=>setActivePrestamo({...activePrestamo, interes: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 border-white/5 text-emerald-500' : 'bg-neutral-50 border-neutral-200 text-emerald-600'} rounded-2xl p-4 text-2xl font-mono outline-none font-black`} /></div>
-                     <div><label className="text-[9px] text-neutral-500 block mb-2 font-black uppercase tracking-widest">Moneda</label><select value={activePrestamo.moneda} onChange={e=>setActivePrestamo({...activePrestamo, moneda: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 border-white/10 text-white' : 'bg-neutral-50 border-neutral-200 text-neutral-900'} rounded-2xl p-4 text-xl font-bold outline-none appearance-none`}><option value="BOB">BOB</option><option value="USD">USD</option></select></div>
-                  </div>
-               </div>
-
-               <div className={`${isDark ? 'bg-black/20 border-white/5' : 'bg-white border-neutral-200'} border rounded-[28px] p-8 shadow-2xl space-y-6`}>
-                  <label className="text-[10px] text-neutral-500 block mb-4 font-black uppercase tracking-widest">Periodo del Préstamo</label>
-                  <div className="space-y-4">
-                    <div><p className="text-[8px] text-neutral-600 uppercase font-black mb-2 tracking-widest">Fecha Inicio</p><input type="date" value={activePrestamo.inicio} onChange={e=>setActivePrestamo({...activePrestamo, inicio: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 text-white' : 'bg-neutral-50 text-neutral-900'} p-4 rounded-xl text-xs outline-none`}/></div>
-                    <div><p className="text-[8px] text-neutral-600 uppercase font-black mb-2 tracking-widest">Fecha Vencimiento</p><input type="date" value={activePrestamo.fin} onChange={e=>setActivePrestamo({...activePrestamo, fin: e.target.value})} className={`w-full ${isDark ? 'bg-white/5 text-white' : 'bg-neutral-50 text-neutral-900'} p-4 rounded-xl text-xs outline-none`}/></div>
-                  </div>
-               </div>
-            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   );
 };
 export default Prestamos;

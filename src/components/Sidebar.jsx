@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   Calendar, 
@@ -29,8 +29,10 @@ import {
   StickyNote,
   ShieldCheck
 } from 'lucide-react';
+import { getTheme } from '../lib/theme';
 
 const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isCollapsed, setIsCollapsed, isDark, setIsDark }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [hoveredItem, setHoveredItem] = useState(null);
 
   const handleOpenCatalog = () => {
@@ -43,49 +45,43 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
     { id: 'inventario', label: 'Inventario Pro', icon: Package },
     { id: 'pagos', label: 'Mis Egresos', icon: Wallet },
     { id: 'editor', label: 'Editor de Video', icon: Video, count: counts?.meetings },
-    { id: 'drive-sovereign', label: 'Drive Sovereign', icon: Cloud },
-    { id: 'calendar', label: 'Google Calendar', icon: Calendar },
+    { id: 'drive-sovereign', label: 'Almacenamiento', icon: Cloud },
+    { id: 'calendar', label: 'Calendario', icon: Calendar },
     { id: 'recordatorios', label: 'Recordatorios', icon: Bell, count: counts?.notificaciones },
     { id: 'notas', label: 'Notas', icon: StickyNote },
-    { id: 'boveda', label: 'Bóveda Pass', icon: ShieldCheck },
+    { id: 'boveda', label: 'Contraseñas', icon: ShieldCheck },
     { id: 'papelera', label: 'Papelera', icon: Trash2 },
   ];
 
-  const accentStyle = {
-    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-    color: isDark ? '#ffffff' : '#000000',
-    border: isDark ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
-  };
-
-  // NAVEGACIÓN MÓVIL ULTRA-REFINADA (ESTILO ISLA)
+  // Mobile navigation
   if (settings.isMobileMode) {
     return (
       <div className="fixed bottom-4 inset-x-4 z-[1000] animate-in slide-in-from-bottom-8 duration-700">
-        <nav className={`h-16 ${isDark ? 'bg-[#1a1a1a]/80 border-white/5' : 'bg-white/80 border-neutral-200'} backdrop-blur-2xl border rounded-3xl flex items-center justify-around px-2 shadow-2xl`}>
+        <nav className="h-16 bg-[#252526]/90 border border-[#3c3c3c] backdrop-blur-2xl rounded-full flex items-center justify-around px-2 shadow-2xl">
           {menuItems.slice(0, 5).map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className="relative flex flex-col items-center justify-center w-12 h-12 transition-all active:scale-75"
             >
-              <div className={`transition-all duration-300 ${activeTab === item.id ? 'text-white' : 'text-neutral-500'}`} style={activeTab === item.id ? { color: settings.accentColor } : {}}>
+              <div className={`transition-all duration-300 ${activeTab === item.id ? 'text-white' : 'text-[#6e6e6e]'}`} style={activeTab === item.id ? { color: t.accent } : {}}>
                 <item.icon size={18} strokeWidth={activeTab === item.id ? 2.5 : 2} />
               </div>
               {activeTab === item.id && (
-                <div className="absolute -bottom-1 w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: settings.accentColor }}></div>
+                <div className="absolute -bottom-1 w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: t.accent }}></div>
               )}
             </button>
           ))}
-          <div className="w-px h-6 bg-white/10 mx-1"></div>
+          <div className="w-px h-6 bg-[#3c3c3c] mx-1"></div>
           <button 
             onClick={() => setActiveTab('configuracion')} 
             className="relative flex flex-col items-center justify-center w-12 h-12 transition-all active:scale-75"
           >
-             <div className={`transition-all duration-300 ${activeTab === 'configuracion' ? 'text-white' : 'text-neutral-500'}`} style={activeTab === 'configuracion' ? { color: settings.accentColor } : {}}>
+             <div className={`transition-all duration-300 ${activeTab === 'configuracion' ? 'text-white' : 'text-[#6e6e6e]'}`} style={activeTab === 'configuracion' ? { color: t.accent } : {}}>
                 <Settings size={18} />
              </div>
              {activeTab === 'configuracion' && (
-                <div className="absolute -bottom-1 w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: settings.accentColor }}></div>
+                <div className="absolute -bottom-1 w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: t.accent }}></div>
              )}
           </button>
         </nav>
@@ -93,138 +89,186 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
     );
   }
 
+  // Unified handler for menu item hover
+  const handleItemMouseEnter = (e, itemId, isActive) => {
+    setHoveredItem(itemId);
+    if (!isActive) e.currentTarget.style.backgroundColor = t.hover;
+  };
+  const handleItemMouseLeave = (e, isActive) => {
+    setHoveredItem(null);
+    if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
+  };
+
   return (
-    <div className={`${isCollapsed ? 'w-24' : 'w-64'} ${isDark ? 'bg-[#09090b] border-white/5' : 'bg-white border-neutral-200'} border-r flex flex-col h-full py-8 px-4 transition-all duration-700 ease-in-out overflow-visible relative group/sidebar`}>
-      
-      {/* BOTÓN DE COLAPSO PROFESIONAL */}
+    <div 
+      className={`${isCollapsed ? 'w-20' : 'w-64'} flex flex-col h-full py-6 px-3 transition-all duration-500 ease-in-out overflow-visible relative group/sidebar border-r`}
+      style={{ backgroundColor: t.bg, borderColor: t.border }}
+    >
+      {/* Collapse button */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className={`absolute -right-4 top-12 w-8 h-8 ${isDark ? 'bg-[#121212] text-neutral-500 hover:text-white' : 'bg-white text-neutral-400 hover:text-black'} rounded-xl flex items-center justify-center shadow-2xl border border-white/10 z-[100] transition-all duration-500 hover:scale-110 active:scale-90`}
+        className="absolute -right-3 top-12 w-6 h-6 rounded-full flex items-center justify-center z-[100] transition-all duration-300 hover:scale-110 active:scale-90"
+        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textMuted }}
       >
-        {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+        {isCollapsed ? <PanelLeftOpen size={12} /> : <PanelLeftClose size={12} />}
       </button>
 
-      {/* LOGO */}
-      <div className="mb-10 px-2 flex items-center gap-4">
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-lg" style={{ backgroundColor: settings.accentColor }}>
-          <Zap size={18} className={(settings.accentColor === '#ffffff') ? 'text-black' : 'text-white'} fill="currentColor" />
+      {/* Logo */}
+      <div className="mb-8 px-2 flex items-center gap-3">
+        <div 
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ backgroundColor: t.accentSoft }}
+        >
+          <Zap size={18} color={t.accent} fill={t.accent} />
         </div>
         {!isCollapsed && (
           <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-            <h1 className={`text-sm font-black uppercase tracking-[0.3em] ${isDark ? 'text-white' : 'text-neutral-900'}`}>Sync Pro</h1>
-            <p className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest">Sovereign OS</p>
+            <h1 className="text-sm font-bold tracking-tight" style={{ color: t.text }}>Sovereign OS</h1>
+            <p className="text-[10px] font-medium" style={{ color: t.textDim }}>Panel de Control</p>
           </div>
         )}
       </div>
 
-      {/* NAVEGACIÓN PRINCIPAL */}
-      <nav className="flex-1 space-y-2">
-        {menuItems.map((item) => (
+      {/* Main Navigation */}
+      <nav className="flex-1 space-y-1">
+        {menuItems.map((item) => {
+          const isActive = activeTab === item.id;
+          return (
           <div key={item.id} className="relative flex items-center">
             <button
               onClick={() => setActiveTab(item.id)}
-              onMouseEnter={() => setHoveredItem(item.id)}
-              onMouseLeave={() => setHoveredItem(null)}
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-4'} py-3 rounded-2xl transition-all duration-300 relative group/item ${
-                activeTab === item.id ? 'shadow-2xl' : `${isDark ? 'text-neutral-500 hover:text-white hover:bg-white/5' : 'text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100'}`
-              }`}
-              style={activeTab === item.id ? accentStyle : {}}
+              onMouseEnter={(e) => handleItemMouseEnter(e, item.id, isActive)}
+              onMouseLeave={(e) => handleItemMouseLeave(e, isActive)}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'} py-2.5 rounded-xl transition-all duration-200 relative group/item`}
+              style={{
+                backgroundColor: isActive ? t.accentSoft : 'transparent',
+                color: isActive ? t.accent : t.textMuted,
+              }}
             >
-              <div className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-4'}`}>
-                <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} className="shrink-0" />
+              <div className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-3'}`}>
+                <div 
+                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200"
+                  style={{
+                    backgroundColor: isActive ? t.accentSoft : 'transparent',
+                  }}
+                >
+                  <item.icon size={16} strokeWidth={isActive ? 2.5 : 2} />
+                </div>
                 {!isCollapsed && (
-                  <span className={`text-[11px] font-black uppercase tracking-widest transition-all duration-500 animate-in fade-in slide-in-from-left-2`}>
+                  <span className="text-[11px] font-medium transition-all duration-200">
                     {item.label}
                   </span>
                 )}
               </div>
               
               {!isCollapsed && item.count > 0 && (
-                <span className={`text-[9px] px-2 py-0.5 rounded-full font-black ${
-                  activeTab === item.id ? 'bg-black/20 text-black' : 'bg-neutral-500/10 text-neutral-500 group-hover/item:bg-neutral-500/20'
-                }`}>
+                <span 
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: isActive ? t.accentSoft : 'rgba(255,255,255,0.04)',
+                    color: isActive ? t.accent : t.textDim,
+                  }}
+                >
                   {item.count}
                 </span>
               )}
 
               {isCollapsed && item.count > 0 && (
-                <div className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border border-[#121212] animate-pulse"></div>
+                <div className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: t.accent }}></div>
               )}
             </button>
 
             {isCollapsed && hoveredItem === item.id && (
-              <div className={`absolute left-[85px] z-[200] px-4 py-2 ${isDark ? 'bg-white text-black' : 'bg-neutral-900 text-white'} text-[9px] font-black uppercase tracking-widest rounded-xl shadow-2xl animate-in fade-in slide-in-from-left-4 duration-300 pointer-events-none whitespace-nowrap border border-white/20 backdrop-blur-md`}>
+              <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap pointer-events-none animate-in fade-in slide-in-from-left-2 duration-200"
+                style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
                 {item.label}
-                <div className={`absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 ${isDark ? 'bg-white' : 'bg-neutral-900'} rotate-45`}></div>
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </nav>
 
-      {/* ACCIONES INFERIORES */}
-      <div className="mt-auto space-y-4 pt-6 border-t border-white/5">
+      {/* Bottom Actions */}
+      <div className="mt-auto space-y-1 pt-4" style={{ borderTop: `1px solid ${t.border}` }}>
         
-        {/* BOTÓN DE TEMA */}
+        {/* Theme Toggle */}
         <div className="relative flex items-center">
           <button 
             onClick={() => setIsDark(!isDark)}
-            onMouseEnter={() => setHoveredItem('theme-tip')}
-            onMouseLeave={() => setHoveredItem(null)}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-4 px-4'} py-3 rounded-2xl transition-all ${isDark ? 'text-neutral-500 hover:text-amber-400 hover:bg-white/5' : 'text-neutral-400 hover:text-blue-600 hover:bg-neutral-100'}`}
+            onMouseEnter={(e) => { setHoveredItem('theme-tip'); e.currentTarget.style.backgroundColor = t.hover; }}
+            onMouseLeave={(e) => { setHoveredItem(null); e.currentTarget.style.backgroundColor = 'transparent'; }}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all`}
+            style={{ color: t.textMuted }}
           >
-            {isDark ? <Sun size={20} className="shrink-0" /> : <Moon size={20} className="shrink-0" />}
-            {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest animate-in fade-in duration-500">{isDark ? 'Modo Día' : 'Modo Noche'}</span>}
+            {isDark ? <Sun size={16} className="shrink-0" /> : <Moon size={16} className="shrink-0" />}
+            {!isCollapsed && <span className="text-[11px] font-medium">{isDark ? 'Modo Día' : 'Modo Noche'}</span>}
           </button>
           {isCollapsed && hoveredItem === 'theme-tip' && (
-            <div className={`absolute left-[85px] z-[200] px-4 py-2 ${isDark ? 'bg-amber-400 text-black' : 'bg-blue-600 text-white'} text-[9px] font-black uppercase tracking-widest rounded-xl shadow-xl animate-in fade-in slide-in-from-left-4 duration-300 pointer-events-none whitespace-nowrap`}>
+            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap"
+              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
                {isDark ? 'Modo Día' : 'Modo Noche'}
             </div>
           )}
         </div>
 
+        {/* Catalog */}
         <div className="relative flex items-center">
           <button 
             onClick={handleOpenCatalog}
-            onMouseEnter={() => setHoveredItem('catalogo-tip')}
-            onMouseLeave={() => setHoveredItem(null)}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-4 px-4'} py-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl text-blue-500 hover:bg-blue-600 hover:text-white transition-all shadow-lg group shadow-blue-500/5`}
+            onMouseEnter={(e) => { setHoveredItem('catalogo-tip'); e.currentTarget.style.backgroundColor = t.hoverActive; }}
+            onMouseLeave={(e) => { setHoveredItem(null); e.currentTarget.style.backgroundColor = t.accentSoft; }}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all`}
+            style={{ backgroundColor: t.accentSoft, color: t.accent, border: `1px solid ${t.border}` }}
           >
-            <ShoppingBag size={20} className="shrink-0" />
-            {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest animate-in fade-in duration-500">Catálogo</span>}
+            <ShoppingBag size={16} className="shrink-0" />
+            {!isCollapsed && <span className="text-[11px] font-medium">Catálogo</span>}
           </button>
           {isCollapsed && hoveredItem === 'catalogo-tip' && (
-            <div className="absolute left-[85px] z-[200] px-4 py-2 bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded-xl shadow-xl animate-in fade-in slide-in-from-left-4 duration-300 pointer-events-none whitespace-nowrap">Ver Catálogo</div>
+            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap"
+              style={{ backgroundColor: t.accent, color: '#1e1e1e' }}>Ver Catálogo</div>
           )}
         </div>
 
+        {/* Google User */}
         {googleUser && (
-          <div className="relative flex items-center">
-            <div className={`w-full flex items-center ${isCollapsed ? 'justify-center p-0 bg-transparent border-0' : `gap-3 px-4 py-3 ${isDark ? 'bg-white/5 border-white/5' : 'bg-neutral-100 border-neutral-200'} rounded-2xl border`} transition-all`}>
-              <img src={googleUser.picture} alt="Profile" className="w-8 h-8 rounded-full border border-white/10 shrink-0" />
+          <div className="relative flex items-center mt-2">
+            <div className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl`}
+              style={{ backgroundColor: t.hover, border: `1px solid ${t.border}` }}>
+              <img 
+                src={googleUser.picture} 
+                alt="" 
+                className="w-7 h-7 rounded-full shrink-0"
+                style={{ border: `1px solid ${t.borderLight}` }}
+              />
               {!isCollapsed && (
-                <div className="overflow-hidden animate-in fade-in duration-500">
-                  <p className={`text-[10px] font-black ${isDark ? 'text-white' : 'text-neutral-900'} truncate`}>{googleUser.name}</p>
-                  <p className="text-[7px] text-neutral-500 font-bold truncate uppercase tracking-widest">Google Active</p>
+                <div className="overflow-hidden">
+                  <p className="text-[11px] font-medium truncate" style={{ color: t.text }}>{googleUser.name}</p>
+                  <p className="text-[9px]" style={{ color: t.textDim }}>Conectado</p>
                 </div>
               )}
             </div>
           </div>
         )}
 
+        {/* Settings */}
         <div className="relative flex items-center">
           <button 
             onClick={() => setActiveTab('configuracion')}
-            onMouseEnter={() => setHoveredItem('config-tip')}
-            onMouseLeave={() => setHoveredItem(null)}
-            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-4 px-4'} py-3 rounded-2xl transition-all ${activeTab === 'configuracion' ? 'shadow-xl' : `${isDark ? 'text-neutral-600 hover:text-white hover:bg-white/5' : 'text-neutral-400 hover:text-neutral-900 hover:bg-neutral-100'}`}`}
-            style={activeTab === 'configuracion' ? accentStyle : {}}
+            onMouseEnter={(e) => { setHoveredItem('config-tip'); if (activeTab !== 'configuracion') e.currentTarget.style.backgroundColor = t.hover; }}
+            onMouseLeave={(e) => { setHoveredItem(null); if (activeTab !== 'configuracion') e.currentTarget.style.backgroundColor = 'transparent'; }}
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all`}
+            style={{
+              backgroundColor: activeTab === 'configuracion' ? t.accentSoft : 'transparent',
+              color: activeTab === 'configuracion' ? t.accent : t.textMuted,
+            }}
           >
-            <Settings size={20} className="shrink-0" />
-            {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest animate-in fade-in duration-500">Configuración</span>}
+            <Settings size={16} className="shrink-0" />
+            {!isCollapsed && <span className="text-[11px] font-medium">Configuración</span>}
           </button>
           {isCollapsed && hoveredItem === 'config-tip' && (
-            <div className={`absolute left-[85px] z-[200] px-4 py-2 ${isDark ? 'bg-white text-black' : 'bg-neutral-900 text-white'} text-[9px] font-black uppercase tracking-widest rounded-xl shadow-xl animate-in fade-in slide-in-from-left-4 duration-300 pointer-events-none whitespace-nowrap`}>Ajustes</div>
+            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap"
+              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>Ajustes</div>
           )}
         </div>
       </div>

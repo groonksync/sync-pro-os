@@ -18,7 +18,7 @@ const ActionCard = ({ action, data, isDark, onConfirm, onCancel }) => {
   const configs = {
     'CREATE_REMINDER': { icon: <Brain size={18}/>, label: 'Nuevo Recordatorio', button: 'Crear Recordatorio', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', fields: [ { k: 'Título', v: data.titulo }, { k: 'Monto', v: (data.monto || 0) + ' BS' }, { k: 'Contacto', v: data.nombre_contacto || 'N/A' }, { k: 'Ciclo', v: data.recurrencia || 'Único' } ] },
     'CREATE_PRODUCT': { icon: <Package size={18}/>, label: 'Nuevo Producto', button: 'Crear Producto', color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', fields: [ { k: 'Nombre', v: data.nombre }, { k: 'Venta', v: (data.precio_venta || 0) + ' BS' }, { k: 'Stock', v: data.stock_actual || 0 } ] },
-    'CREATE_LOAN': { icon: <Briefcase size={18}/>, label: 'Nuevo Préstamo', button: 'Registrar Préstamo', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)', fields: [ { k: 'Cliente', v: data.nombre }, { k: 'Capital', v: data.capital + ' BS' }, { k: 'Interés', v: data.interes + '%' } ] },
+    'CREATE_LOAN': { icon: <Briefcase size={18}/>, label: 'Nuevo Préstamo', button: 'Registrar Préstamo', color: '#969696', bg: 'rgba(255, 255, 255, 0.08)', fields: [ { k: 'Cliente', v: data.nombre }, { k: 'Capital', v: data.capital + ' BS' }, { k: 'Interés', v: data.interes + '%' } ] },
     'CREATE_EXPENSE': { icon: <AlertCircle size={18}/>, label: 'Nuevo Egreso', button: 'Registrar Egreso', color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.1)', fields: [ { k: 'Concepto', v: data.nombre }, { k: 'Monto', v: data.monto + ' BS' }, { k: 'Fecha', v: data.fecha_pago } ] },
   };
 
@@ -276,7 +276,7 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
     <>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-500 shadow-2xl active:scale-95 group overflow-hidden ${isOpen ? 'px-5 py-4 rounded-full bg-rose-500' : 'px-6 py-4 rounded-[1.5rem] bg-[#0a0a0a] border border-white/10 hover:border-emerald-500/30'}`}
+        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-500 shadow-2xl active:scale-95 group overflow-hidden ${isOpen ? 'px-5 py-4 rounded-full bg-rose-500' : 'px-6 py-4 rounded-[1.5rem] bg-[#202022] border border-white/10 hover:border-emerald-500/30'}`}
       >
         <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
         {isOpen ? (
@@ -292,7 +292,7 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-32 right-8 w-[92vw] md:w-[450px] h-[75vh] md:h-[650px] bg-[#0a0a0a] border border-white/10 rounded-[3.5rem] z-[1000] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-300 overflow-hidden">
+        <div className="fixed bottom-32 right-8 w-[92vw] md:w-[450px] h-[75vh] md:h-[650px] bg-[#202022] border border-white/10 rounded-[3.5rem] z-[1000] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-300 overflow-hidden">
            <header className="p-8 border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-4">
                  <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
@@ -349,8 +349,8 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
               {isThinking && <div className="flex items-center gap-3 animate-pulse px-2"><Loader2 className="animate-spin text-emerald-500" size={16}/><span className="text-[10px] font-black text-emerald-500 uppercase">Procesando...</span></div>}
            </div>
 
-           <footer className="p-8 bg-black/20 border-t border-white/5 space-y-4">
-              <div className="relative bg-[#050505] border border-white/10 rounded-[2.5rem] p-2 flex items-center">
+           <footer className="p-8 bg-[#141414]/20 border-t border-white/5 space-y-4">
+              <div className="relative bg-[#141414] border border-white/10 rounded-[2.5rem] p-2 flex items-center">
                  <label className="w-10 h-10 flex items-center justify-center text-neutral-700 hover:text-emerald-500 cursor-pointer transition-all"><input type="file" multiple className="hidden" onChange={handleFileUpload}/><Paperclip size={18}/></label>
                  <button onClick={toggleListening} className={`w-10 h-10 flex items-center justify-center rounded-2xl ${isListening ? 'bg-blue-500 text-white animate-pulse' : 'text-neutral-700'}`}><Sparkles size={18} /></button>
                  <button onClick={toggleRecording} className={`w-10 h-10 flex items-center justify-center rounded-2xl ${isRecording ? 'bg-rose-500 text-white animate-pulse' : 'text-neutral-700'}`}><Mic size={18} /></button>

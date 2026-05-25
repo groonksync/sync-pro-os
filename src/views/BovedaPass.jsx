@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Key, 
-  Lock, 
-  Unlock, 
-  Search, 
-  Plus, 
-  Eye, 
-  EyeOff, 
-  Copy, 
-  Check, 
-  Trash2, 
-  ShieldAlert, 
-  Globe, 
-  ShieldCheck, 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Key,
+  Lock,
+  Unlock,
+  Search,
+  Plus,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
+  Trash2,
+  ShieldAlert,
+  Globe,
+  ShieldCheck,
   Database,
   ExternalLink,
   ChevronRight,
@@ -22,16 +22,16 @@ import {
 } from 'lucide-react';
 import CryptoJS from 'crypto-js';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
 
 const BovedaPass = ({ settings, isDark }) => {
-  // --- Estados de Desbloqueo Bóveda ---
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [masterPassword, setMasterPassword] = useState('');
   const [isMasterPasswordCreated, setIsMasterPasswordCreated] = useState(() => {
     return !!localStorage.getItem('sovereign_boveda_master_hash');
   });
   
-  // --- Estados de Datos ---
   const [credentials, setCredentials] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Todos');
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,10 +40,8 @@ const BovedaPass = ({ settings, isDark }) => {
   const [copiedSql, setCopiedSql] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
   
-  // --- Estados para Revelado temporal ---
-  const [visiblePasswords, setVisiblePasswords] = useState({}); // { [id]: boolean }
+  const [visiblePasswords, setVisiblePasswords] = useState({});
   
-  // --- Modales y Generación de Passwords ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [newCred, setNewCred] = useState({
@@ -55,7 +53,6 @@ const BovedaPass = ({ settings, isDark }) => {
     notas: ''
   });
   
-  // Parámetros del Generador
   const [genLength, setGenLength] = useState(16);
   const [genUpper, setGenUpper] = useState(true);
   const [genNumbers, setGenNumbers] = useState(true);
@@ -63,21 +60,6 @@ const BovedaPass = ({ settings, isDark }) => {
 
   const categories = ['Todos', 'General', 'Sitios Web', 'Redes Sociales', 'Finanzas', 'Servidores', 'Otros'];
 
-  const sqlSchemaCode = `-- SOVEREIGN STUDIO - BÓVEDA PASS MIGRACIÓN
-CREATE TABLE IF NOT EXISTS boveda_pass (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    sitio_web TEXT NOT NULL,
-    url TEXT,
-    usuario TEXT NOT NULL,
-    contrasena TEXT NOT NULL, -- Guardada encriptada con AES-256 (CryptoJS) en cliente
-    categoria TEXT DEFAULT 'General',
-    notas TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
-);
-ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
-
-  // --- Carga Inicial de Datos (Sólo tras desbloquear) ---
   useEffect(() => {
     if (isUnlocked && masterPassword) {
       fetchCredentials();
@@ -96,26 +78,19 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
       if (error) throw error;
 
       if (data) {
-        // Desencriptar contraseñas en memoria
         const decryptedData = data.map(item => {
           try {
             const bytes = CryptoJS.AES.decrypt(item.contrasena, masterPassword);
             const decryptedPass = bytes.toString(CryptoJS.enc.Utf8);
-            return {
-              ...item,
-              contrasena_plana: decryptedPass || 'Error de Desencriptación'
-            };
+            return { ...item, contrasena_plana: decryptedPass || 'Error de Desencriptación' };
           } catch (e) {
-            return {
-              ...item,
-              contrasena_plana: 'Error: Master Password incorrecta'
-            };
+            return { ...item, contrasena_plana: 'Error: Master Password incorrecta' };
           }
         });
         setCredentials(decryptedData);
       }
     } catch (e) {
-      console.warn("Bóveda Pass: tabla Supabase no detectada, utilizando fallback de localStorage.");
+      console.warn("Contraseñas: tabla Supabase no detectada, utilizando fallback de localStorage.");
       setDbError(true);
       
       const localCreds = localStorage.getItem('sovereign_creds');
@@ -125,15 +100,9 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
           try {
             const bytes = CryptoJS.AES.decrypt(item.contrasena, masterPassword);
             const decryptedPass = bytes.toString(CryptoJS.enc.Utf8);
-            return {
-              ...item,
-              contrasena_plana: decryptedPass || 'Error de Desencriptación'
-            };
+            return { ...item, contrasena_plana: decryptedPass || 'Error de Desencriptación' };
           } catch (err) {
-            return {
-              ...item,
-              contrasena_plana: 'Error: Master Password incorrecta'
-            };
+            return { ...item, contrasena_plana: 'Error: Master Password incorrecta' };
           }
         });
         setCredentials(decryptedData);
@@ -142,11 +111,8 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
     setLoading(false);
   };
 
-  // --- Gestión de Master Password ---
   const handleCreateMasterPassword = () => {
     if (!masterPassword.trim()) return;
-    
-    // Guardar hash para validación futura
     const hash = CryptoJS.SHA256(masterPassword).toString();
     localStorage.setItem('sovereign_boveda_master_hash', hash);
     setIsMasterPasswordCreated(true);
@@ -156,7 +122,6 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
   const handleUnlockBoveda = () => {
     const savedHash = localStorage.getItem('sovereign_boveda_master_hash');
     const inputHash = CryptoJS.SHA256(masterPassword).toString();
-    
     if (savedHash === inputHash) {
       setIsUnlocked(true);
     } else {
@@ -164,7 +129,6 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
     }
   };
 
-  // --- Operaciones de Credenciales ---
   const handleSaveCredential = async () => {
     if (!newCred.sitio_web || !newCred.usuario || !newCred.contrasena) {
       alert("Por favor completa los campos de Sitio Web, Usuario y Contraseña.");
@@ -173,7 +137,6 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
 
     setLoading(true);
     try {
-      // 1. Cifrar la contraseña
       const encryptedPassword = CryptoJS.AES.encrypt(newCred.contrasena, masterPassword).toString();
       
       const payload = {
@@ -187,41 +150,24 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
 
       let returnedId = 'local-' + Date.now();
 
-      // 2. Guardar en Supabase o en local
       if (!dbError) {
         const { data, error } = await supabase
           .from('boveda_pass')
           .insert(payload)
           .select();
-        
         if (error) throw error;
         if (data && data[0]) returnedId = data[0].id;
       }
 
-      // 3. Actualizar estado local
-      const newLocalItem = {
-        ...payload,
-        id: returnedId,
-        contrasena_plana: newCred.contrasena
-      };
-
+      const newLocalItem = { ...payload, id: returnedId, contrasena_plana: newCred.contrasena };
       const updatedList = [newLocalItem, ...credentials];
       setCredentials(updatedList);
 
-      // Si es offline/local, persistir el batch cifrado completo en localStorage
       if (dbError) {
         localStorage.setItem('sovereign_creds', JSON.stringify(updatedList));
       }
 
-      // Resetear formulario
-      setNewCred({
-        sitio_web: '',
-        url: '',
-        usuario: '',
-        contrasena: '',
-        categoria: 'General',
-        notas: ''
-      });
+      setNewCred({ sitio_web: '', url: '', usuario: '', contrasena: '', categoria: 'General', notas: '' });
       setIsModalOpen(false);
     } catch (e) {
       alert("Error al guardar credencial: " + e.message);
@@ -230,13 +176,11 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
   };
 
   const handleDeleteCredential = async (id) => {
-    if (!confirm("¿Eliminar esta credencial de forma permanente de tu bóveda?")) return;
-    
+    if (!confirm("¿Eliminar esta credencial de forma permanente?")) return;
     setLoading(true);
     try {
       if (!dbError) {
-        // Enviar a papelera antes de borrar
-        const target = credentials.find(c => c.id === id);
+        const target = credentials.find(c => t.id === id);
         if (target) {
           await supabase.from('papelera').insert({
             nombre_item: `${target.sitio_web} (${target.usuario})`,
@@ -244,12 +188,10 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
             datos_originales: target,
             expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
           });
-          
           await supabase.from('boveda_pass').delete().eq('id', id);
         }
       } else {
-        // Papelera local
-        const target = credentials.find(c => c.id === id);
+        const target = credentials.find(c => t.id === id);
         if (target) {
           const localTrash = JSON.parse(localStorage.getItem('sovereign_local_trash') || '[]');
           localTrash.push({
@@ -264,144 +206,93 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
         }
       }
 
-      const updated = credentials.filter(c => c.id !== id);
+      const updated = credentials.filter(c => t.id !== id);
       setCredentials(updated);
-      
-      if (dbError) {
-        localStorage.setItem('sovereign_creds', JSON.stringify(updated));
-      }
+      if (dbError) localStorage.setItem('sovereign_creds', JSON.stringify(updated));
     } catch (e) {
       alert("Error al eliminar: " + e.message);
     }
     setLoading(false);
   };
 
-  // --- Generador de Contraseñas Seguras ---
   const generatePassword = () => {
     let charset = "abcdefghijklmnopqrstuvwxyz";
     if (genUpper) charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     if (genNumbers) charset += "0123456789";
     if (genSymbols) charset += "!@#$%^&*()_+~`|}{[]:;?><,./-=";
-
     let pass = "";
-    for (let i = 0; i < genLength; i++) {
-      pass += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-    
+    for (let i = 0; i < genLength; i++) pass += charset.charAt(Math.floor(Math.random() * charset.length));
     setNewCred(prev => ({ ...prev, contrasena: pass }));
   };
 
-  // --- Utilidades ---
   const copyToClipboard = (text, id) => {
     navigator.clipboard.writeText(text);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const copySqlToClipboard = () => {
-    navigator.clipboard.writeText(sqlSchemaCode);
-    setCopiedSql(true);
-    setTimeout(() => setCopiedSql(false), 2000);
-  };
-
   const togglePasswordVisibility = (id) => {
-    setVisiblePasswords(prev => ({
-      ...prev,
-      [id]: !prev[id]
-    }));
+    setVisiblePasswords(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // --- Filtrado ---
   const filteredCreds = credentials.filter(c => {
-    const matchCategory = activeCategory === 'Todos' || c.categoria === activeCategory;
-    const matchSearch = c.sitio_web.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        c.usuario.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        (c.notas && c.notas.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchCategory = activeCategory === 'Todos' || t.categoria === activeCategory;
+    const matchSearch = t.sitio_web.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        t.usuario.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (t.notas && t.notas.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchCategory && matchSearch;
   });
 
-  // --- PANTALLA 1: LOCK / SETUP MASTER PASSWORD ---
+  // LOCK SCREEN
   if (!isUnlocked) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] w-full max-w-lg mx-auto p-6 animate-in fade-in zoom-in-95 duration-500">
-        
-        {/* LOGO HUD BÓVEDA */}
-        <div className="mb-10 text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-rose-500/10 rounded-[2rem] flex items-center justify-center text-rose-500 border border-rose-500/20 shadow-2xl shadow-rose-500/10 mb-6">
-            <Lock size={32} className="animate-pulse" />
+        <div className="mb-8 text-center flex flex-col items-center">
+          <div style={{ width: 56, height: 56, backgroundColor: t.accentSoft, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.borderLight}`, marginBottom: 20 }}>
+            <Lock size={28} color={t.accent} />
           </div>
-          <h2 className="text-3xl font-black text-white tracking-tighter uppercase leading-none">Bóveda <span className="text-neutral-800">Pass</span></h2>
-          <p className="text-[9px] text-neutral-600 font-black uppercase tracking-[0.25em] mt-3">Encriptación simétrica AES-256 en cliente</p>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>Contraseñas</h2>
+          <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 8 }}>Encriptación AES-256 en cliente</p>
         </div>
 
-        {/* TARJETA DE ACCESO GLASSMORPHIC */}
-        <div className="w-full bg-[#080808]/80 border border-white/5 rounded-[2.5rem] p-8 backdrop-blur-3xl shadow-2xl flex flex-col gap-6 relative overflow-hidden">
-          
-          <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full filter blur-2xl pointer-events-none" />
-
+        <div className="w-full" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 20, padding: 28 }}>
           {isMasterPasswordCreated ? (
-            // INGRESO LLAVE MAESTRA
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div>
-                <h4 className="text-xs font-black text-white uppercase tracking-wider mb-2">Desbloquear Bóveda</h4>
-                <p className="text-[9px] text-neutral-500 font-black uppercase tracking-wider leading-relaxed">
-                  Ingresa tu Llave Maestra local. Las contraseñas se desencriptarán en memoria de inmediato.
+                <h4 style={{ fontSize: 12, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Desbloquear Bóveda</h4>
+                <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.5 }}>
+                  Ingresa tu Llave Maestra local.
                 </p>
               </div>
-
-              <div className="relative">
-                <input
-                  type="password"
-                  placeholder="LLAVE MAESTRA"
-                  value={masterPassword}
-                  onChange={e => setMasterPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleUnlockBoveda()}
-                  className="w-full bg-[#040404] border border-white/5 focus:border-rose-500 rounded-2xl py-4 px-6 text-sm font-black uppercase tracking-widest text-center text-white placeholder-neutral-700 outline-none transition-all"
-                />
-              </div>
-
-              <button
-                onClick={handleUnlockBoveda}
-                className="w-full py-4 bg-rose-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 transition-all shadow-xl shadow-rose-500/20 flex items-center justify-center gap-2"
-              >
-                <Unlock size={14} /> Desbloquear Bóveda
+              <input type="password" placeholder="LLAVE MAESTRA" value={masterPassword}
+                onChange={e => setMasterPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleUnlockBoveda()}
+                style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', color: '#fff', outline: 'none' }}/>
+              <button onClick={handleUnlockBoveda}
+                style={{ width: '100%', padding: '14px 0', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <Unlock size={14}/> Desbloquear
               </button>
             </div>
           ) : (
-            // CREACIÓN INICIAL DE LLAVE MAESTRA
-            <div className="space-y-6">
-              <div className="p-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl flex items-start gap-3">
-                <ShieldAlert className="text-rose-500 shrink-0 mt-0.5" size={16} />
-                <div className="space-y-1">
-                  <h5 className="text-[10px] font-black text-rose-500 uppercase tracking-widest">Atención: Criptografía Extrema</h5>
-                  <p className="text-[8px] text-neutral-500 font-bold uppercase leading-normal">
-                    Tus contraseñas se encriptarán del lado del cliente. Si olvidas esta Llave Maestra, tus datos serán irrecuperables. Sync Pro OS no almacena tu llave maestra.
+            <div className="space-y-5">
+              <div style={{ padding: 12, backgroundColor: t.accentSoft, borderRadius: 12, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                <ShieldAlert color={t.accent} size={14} style={{ marginTop: 2 }}/>
+                <div>
+                  <h5 style={{ fontSize: 9, fontWeight: 900, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Criptografía Extrema</h5>
+                  <p style={{ fontSize: 7, color: t.textDim, fontWeight: 700, textTransform: 'uppercase', lineHeight: 1.5, marginTop: 4 }}>
+                    Tus contraseñas se encriptan en cliente. Si olvidas tu Llave Maestra, los datos serán irrecuperables.
                   </p>
                 </div>
               </div>
-
               <div>
-                <h4 className="text-xs font-black text-white uppercase tracking-wider mb-2">Configurar Llave Maestra</h4>
-                <p className="text-[9px] text-neutral-500 font-black uppercase tracking-wider leading-relaxed">
-                  Crea una contraseña maestra ultra fuerte. Se utilizará como semilla criptográfica AES-256.
-                </p>
+                <h4 style={{ fontSize: 12, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Configurar Llave Maestra</h4>
+                <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Crea una contraseña maestra ultra fuerte.</p>
               </div>
-
-              <div className="relative">
-                <input
-                  type="password"
-                  placeholder="NUEVA LLAVE MAESTRA"
-                  value={masterPassword}
-                  onChange={e => setMasterPassword(e.target.value)}
-                  className="w-full bg-[#040404] border border-white/5 focus:border-rose-500 rounded-2xl py-4 px-6 text-sm font-black uppercase tracking-widest text-center text-white placeholder-neutral-700 outline-none transition-all"
-                />
-              </div>
-
-              <button
-                onClick={handleCreateMasterPassword}
-                className="w-full py-4 bg-emerald-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2"
-              >
-                <ShieldCheck size={14} /> Crear & Desbloquear
+              <input type="password" placeholder="NUEVA LLAVE MAESTRA" value={masterPassword}
+                onChange={e => setMasterPassword(e.target.value)}
+                style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', color: '#fff', outline: 'none' }}/>
+              <button onClick={handleCreateMasterPassword}
+                style={{ width: '100%', padding: '14px 0', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                <ShieldCheck size={14}/> Crear & Desbloquear
               </button>
             </div>
           )}
@@ -410,353 +301,250 @@ ALTER TABLE boveda_pass DISABLE ROW LEVEL SECURITY;`;
     );
   }
 
-  // --- PANTALLA 2: VISTA PRINCIPAL DE LA BÓVEDA ---
+  // MAIN VIEW
   return (
     <div className="flex flex-col h-[calc(100vh-6rem)] w-full max-w-[1400px] mx-auto animate-in fade-in duration-500 overflow-hidden">
       
-      {/* ALERTA DE CONFIGURACIÓN DE BASE DE DATOS */}
+      {/* DB ALERT */}
       {dbError && (
-        <div className="mb-6 p-4 bg-[#f43f5e]/5 border border-[#f43f5e]/10 rounded-3xl flex items-center justify-between text-xs text-[#f43f5e] font-black uppercase tracking-wider backdrop-blur-md animate-bounce">
-          <div className="flex items-center gap-3">
-            <AlertCircle size={18} />
-            <span>Bóveda local activa (localStorage). Para sincronizar de forma segura y encriptada en la nube, ejecuta el esquema SQL en Supabase.</span>
+        <div className="mb-4 flex items-center justify-between" style={{ padding: '10px 14px', backgroundColor: t.accentSoft, borderRadius: 12, border: `1px solid ${t.borderLight}`, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.accent }}>
+          <div className="flex items-center gap-2">
+            <AlertCircle size={14} />
+            <span>Bóveda local activa (localStorage).</span>
           </div>
-          <button 
-            onClick={copySqlToClipboard}
-            className="px-4 py-2 bg-[#f43f5e]/10 border border-[#f43f5e]/20 rounded-xl hover:bg-[#f43f5e] hover:text-black transition-all flex items-center gap-1.5"
-          >
-            {copiedSql ? <Check size={14} /> : <Copy size={14} />}
-            {copiedSql ? 'Copiado' : 'Copiar SQL'}
-          </button>
         </div>
       )}
 
-      {/* HEADER HUD */}
-      <header className="flex justify-between items-end mb-8 border-b border-white/5 pb-6">
+      {/* HEADER */}
+      <header className="flex justify-between items-end mb-6" style={{ borderBottom: `1px solid ${t.border}`, paddingBottom: 16 }}>
         <div>
-          <div className="flex items-center gap-4 mb-2">
-            <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500 border border-rose-500/20 shadow-lg shadow-rose-500/10">
-              <Key size={24}/>
-            </div>
-            <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">Credenciales <span className="text-neutral-800">Bóveda</span></h2>
-          </div>
-          <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em] mt-3">Encriptación AES-256 militar en cliente</p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Contraseñas</h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Encriptación AES-256</p>
         </div>
 
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-8 py-4 bg-rose-500 text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-rose-600 transition-all shadow-xl shadow-rose-500/20 flex items-center gap-2"
-          >
-            <Plus size={18}/> Agregar Llave
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsModalOpen(true)}
+            style={{ padding: '10px 20px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.12em', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Plus size={16}/> Agregar Llave
           </button>
         </div>
       </header>
 
-      {/* ÁREA DE CONTENIDO */}
-      <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
+      {/* CONTENT */}
+      <div className="flex-1 flex gap-4 overflow-hidden min-h-0">
         
-        {/* TABS DE CATEGORÍA (Lateral o vertical) */}
-        <div className="w-64 bg-[#080808]/80 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-6 min-h-0 backdrop-blur-3xl">
-          <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest">Categorías</h4>
-          <div className="space-y-1.5">
+        {/* CATEGORIES */}
+        <div className="w-56" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <h4 style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Categorías</h4>
+          <div className="space-y-1">
             {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`w-full text-left px-4 py-3 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all border ${
-                  activeCategory === cat ? 'bg-white/5 border-white/10 text-white shadow-xl' : 'border-transparent text-neutral-500 hover:text-white hover:bg-white/[0.01]'
-                }`}
-              >
+              <button key={cat} onClick={() => setActiveCategory(cat)}
+                style={{ width: '100%', textAlign: 'left', padding: '10px 14px', borderRadius: 10, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', border: 'none', cursor: 'pointer', backgroundColor: activeCategory === cat ? t.accentSoft : 'transparent', color: activeCategory === cat ? t.accent : t.textDim }}>
                 {cat}
               </button>
             ))}
           </div>
-
-          <div className="mt-auto p-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl flex items-center gap-3">
-            <ShieldCheck className="text-rose-500 shrink-0" size={16} />
-            <span className="text-[8px] font-black uppercase text-neutral-500 tracking-wider leading-normal">
-              Semilla de cifrado activa
+          <div className="mt-auto p-3" style={{ backgroundColor: t.accentSoft, borderRadius: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ShieldCheck color={t.accent} size={12}/>
+            <span style={{ fontSize: 7, fontWeight: 900, textTransform: 'uppercase', color: t.textDim, letterSpacing: '0.08em' }}>
+              Cifrado activo AES-256
             </span>
           </div>
         </div>
 
-        {/* LISTADO DE CREDENCIALES */}
-        <div className="flex-1 bg-[#080808]/80 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-6 min-h-0 backdrop-blur-3xl">
+        {/* CREDENTIALS LIST */}
+        <div className="flex-1" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
           
-          {/* Barra de Búsqueda */}
+          {/* Search */}
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-700" size={16} />
-            <input
-              type="text"
-              placeholder="Buscar por sitio, usuario, notas..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-[#040404] border border-white/5 hover:border-white/10 focus:border-rose-500 rounded-2xl py-4 pl-12 pr-4 text-xs font-black uppercase tracking-wider text-white placeholder-neutral-700 outline-none transition-all"
-            />
+            <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={14} />
+            <input type="text" placeholder="Buscar por sitio, usuario, notas..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+              style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 12px 10px 36px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', outline: 'none' }}/>
           </div>
 
-          {/* Grilla de Credenciales */}
+          {/* Grid */}
           <div className="flex-1 overflow-y-auto mac-scrollbar pr-1">
             {filteredCreds.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {filteredCreds.map(item => (
-                  <div 
-                    key={item.id} 
-                    className="bg-[#040404] border border-white/5 hover:border-white/15 rounded-[2rem] p-6 transition-all group flex flex-col relative overflow-hidden"
-                  >
-                    {/* Header Credencial */}
-                    <div className="flex justify-between items-start gap-4 mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white/5 border border-white/5 rounded-xl flex items-center justify-center text-neutral-600 shrink-0">
-                          <Globe size={18} />
+                  <div key={item.id}
+                    style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: 14, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                    
+                    {/* Header */}
+                    <div className="flex justify-between items-start gap-3 mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <div style={{ width: 36, height: 36, backgroundColor: t.panel, borderRadius: 10, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Globe size={16} color={t.textMuted} />
                         </div>
                         <div>
-                          <span className="text-[7px] font-black uppercase text-neutral-600 tracking-wider block mb-0.5">{item.categoria}</span>
-                          <h4 className="text-xs font-black text-white uppercase tracking-tight truncate max-w-[150px]">{item.sitio_web}</h4>
+                          <span style={{ fontSize: 6, fontWeight: 900, textTransform: 'uppercase', color: t.textDim, letterSpacing: '0.1em', display: 'block', marginBottom: 2 }}>{item.categoria}</span>
+                          <h4 style={{ fontSize: 11, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.03em', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 130 }}>{item.sitio_web}</h4>
                         </div>
                       </div>
-
-                      <button
-                        onClick={() => handleDeleteCredential(item.id)}
-                        className="p-2 bg-white/5 rounded-xl border border-white/5 text-neutral-700 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20 opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                      >
-                        <Trash2 size={12} />
+                      <button onClick={() => handleDeleteCredential(item.id)}
+                        style={{ padding: 6, backgroundColor: t.panel, borderRadius: 8, border: `1px solid ${t.border}`, cursor: 'pointer', color: t.textDim }}>
+                        <Trash2 size={10} />
                       </button>
                     </div>
 
-                    {/* Campos de datos */}
-                    <div className="space-y-3 mb-6 bg-[#080808]/80 border border-white/5 p-4 rounded-2xl">
+                    {/* Fields */}
+                    <div className="space-y-2.5" style={{ backgroundColor: t.panel, padding: 10, borderRadius: 10, border: `1px solid ${t.border}`, marginBottom: 10 }}>
                       
-                      {/* Usuario */}
+                      {/* User */}
                       <div>
-                        <span className="text-[7px] font-black uppercase text-neutral-700 tracking-wider block mb-1">Usuario / Correo</span>
+                        <span style={{ fontSize: 6, fontWeight: 900, textTransform: 'uppercase', color: t.textDim, letterSpacing: '0.12em', display: 'block', marginBottom: 3 }}>Usuario / Correo</span>
                         <div className="flex justify-between items-center gap-2">
-                          <span className="text-[10px] font-bold text-neutral-400 select-all truncate">{item.usuario}</span>
-                          <button
-                            onClick={() => copyToClipboard(item.usuario, item.id + '-user')}
-                            className="p-1.5 bg-white/5 rounded-lg border border-white/5 text-neutral-600 hover:text-white hover:bg-white/10 transition-all shrink-0"
-                          >
-                            {copiedId === item.id + '-user' ? <Check size={10} className="text-emerald-500" /> : <Copy size={10} />}
+                          <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.usuario}</span>
+                          <button onClick={() => copyToClipboard(item.usuario, item.id + '-user')}
+                            style={{ padding: 4, backgroundColor: t.bg, borderRadius: 6, border: `1px solid ${t.border}`, cursor: 'pointer', color: t.textDim }}>
+                            {copiedId === item.id + '-user' ? <Check size={8} color={t.accent}/> : <Copy size={8}/>}
                           </button>
                         </div>
                       </div>
 
-                      {/* Contraseña */}
+                      {/* Password */}
                       <div>
-                        <span className="text-[7px] font-black uppercase text-neutral-700 tracking-wider block mb-1">Contraseña</span>
+                        <span style={{ fontSize: 6, fontWeight: 900, textTransform: 'uppercase', color: t.textDim, letterSpacing: '0.12em', display: 'block', marginBottom: 3 }}>Contraseña</span>
                         <div className="flex justify-between items-center gap-2">
-                          <input
-                            type={visiblePasswords[item.id] ? 'text' : 'password'}
-                            value={item.contrasena_plana}
-                            readOnly
-                            className="bg-transparent border-0 text-[10px] font-mono text-rose-500 outline-none w-full select-all"
-                          />
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              onClick={() => togglePasswordVisibility(item.id)}
-                              className="p-1.5 bg-white/5 rounded-lg border border-white/5 text-neutral-600 hover:text-white hover:bg-white/10 transition-all"
-                            >
-                              {visiblePasswords[item.id] ? <EyeOff size={10} /> : <Eye size={10} />}
+                          <input type={visiblePasswords[item.id] ? 'text' : 'password'} value={item.contrasena_plana} readOnly
+                            style={{ backgroundColor: 'transparent', border: 'none', fontSize: 9, fontFamily: 'monospace', color: t.accent, outline: 'none', width: '100%' }}/>
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => togglePasswordVisibility(item.id)}
+                              style={{ padding: 4, backgroundColor: t.bg, borderRadius: 6, border: `1px solid ${t.border}`, cursor: 'pointer', color: t.textDim }}>
+                              {visiblePasswords[item.id] ? <EyeOff size={8}/> : <Eye size={8}/>}
                             </button>
-                            <button
-                              onClick={() => copyToClipboard(item.contrasena_plana, item.id + '-pass')}
-                              className="p-1.5 bg-white/5 rounded-lg border border-white/5 text-neutral-600 hover:text-white hover:bg-white/10 transition-all"
-                            >
-                              {copiedId === item.id + '-pass' ? <Check size={10} className="text-emerald-500" /> : <Copy size={10} />}
+                            <button onClick={() => copyToClipboard(item.contrasena_plana, item.id + '-pass')}
+                              style={{ padding: 4, backgroundColor: t.bg, borderRadius: 6, border: `1px solid ${t.border}`, cursor: 'pointer', color: t.textDim }}>
+                              {copiedId === item.id + '-pass' ? <Check size={8} color={t.accent}/> : <Copy size={8}/>}
                             </button>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Notas y Enlaces */}
+                    {/* Notes */}
                     {item.notas && (
-                      <p className="text-[9px] font-semibold text-neutral-600 line-clamp-2 leading-relaxed lowercase mb-4 border-t border-white/5 pt-3">
+                      <p style={{ fontSize: 8, fontWeight: 600, color: t.textDim, lineHeight: 1.4, marginBottom: 8, borderTop: `1px solid ${t.border}`, paddingTop: 8 }}>
                         {item.notas}
                       </p>
                     )}
 
+                    {/* URL */}
                     {item.url && (
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="mt-auto py-2.5 bg-white/5 border border-white/5 hover:border-white/15 rounded-xl text-[8px] font-black uppercase tracking-widest text-neutral-500 hover:text-white transition-all flex items-center justify-center gap-1.5"
-                      >
-                        <ExternalLink size={10} /> Abrir Enlace
+                      <a href={item.url} target="_blank" rel="noreferrer"
+                        style={{ marginTop: 'auto', padding: '8px 0', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textMuted, textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                        <ExternalLink size={8}/> Abrir Enlace
                       </a>
                     )}
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="py-24 text-center border border-dashed border-white/5 rounded-[2.5rem] bg-white/[0.01]">
-                <Key size={36} className="text-neutral-800 mx-auto mb-4" />
-                <h5 className="text-xs font-black text-white uppercase tracking-wider">No hay credenciales</h5>
-                <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mt-1">Crea una llave o cambia el filtro de categoría</p>
+              <div className="py-20 text-center" style={{ border: `1px dashed ${t.border}`, borderRadius: 14 }}>
+                <Key size={32} color={t.textDim} className="mx-auto mb-3" />
+                <h5 style={{ fontSize: 11, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>No hay contraseñas</h5>
+                <p style={{ fontSize: 7, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: 4 }}>Agrega una llave o cambia el filtro</p>
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* MODAL NUEVA CREDENCIAL */}
+      {/* MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[2000] animate-in fade-in duration-300">
-          <div className="bg-[#080808] border border-white/10 rounded-[3rem] p-8 w-full max-w-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto mac-scrollbar">
-            <h4 className="text-lg font-black text-white uppercase tracking-wider mb-6 flex items-center gap-3">
-              <Key className="text-rose-500" /> Nueva Credencial Segura
+        <div className="fixed inset-0 flex items-center justify-center z-[2000]" style={{ backgroundColor: 'rgba(20,20,20,0.8)', backdropFilter: 'blur(12px)' }}>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: 20, padding: 24, width: '100%', maxWidth: 640, maxHeight: '85vh', overflowY: 'auto' }}>
+            <h4 style={{ fontSize: 16, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Key color={t.accent} size={18}/> Nueva Contraseña
             </h4>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Columna Formulario */}
-              <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Left */}
+              <div className="space-y-3">
                 <div>
-                  <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 block">Nombre del Sitio</label>
-                  <input
-                    type="text"
-                    value={newCred.sitio_web}
-                    onChange={e => setNewCred(prev => ({ ...prev, sitio_web: e.target.value }))}
-                    placeholder="Ej. Supabase, Instagram, Servidor..."
-                    className="w-full bg-[#040404] border border-white/5 focus:border-rose-500 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white placeholder-neutral-700 outline-none transition-all"
-                  />
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, display: 'block' }}>Nombre del Sitio</label>
+                  <input type="text" value={newCred.sitio_web} onChange={e => setNewCred(prev => ({ ...prev, sitio_web: e.target.value }))} placeholder="Ej. Supabase, Instagram..."
+                    style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 14px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', outline: 'none' }}/>
                 </div>
-
                 <div>
-                  <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 block">URL del Sitio</label>
-                  <input
-                    type="url"
-                    value={newCred.url}
-                    onChange={e => setNewCred(prev => ({ ...prev, url: e.target.value }))}
-                    placeholder="https://..."
-                    className="w-full bg-[#040404] border border-white/5 focus:border-rose-500 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white placeholder-neutral-700 outline-none transition-all"
-                  />
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, display: 'block' }}>URL</label>
+                  <input type="url" value={newCred.url} onChange={e => setNewCred(prev => ({ ...prev, url: e.target.value }))} placeholder="https://..."
+                    style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 14px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', outline: 'none' }}/>
                 </div>
-
                 <div>
-                  <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 block">Usuario / Email</label>
-                  <input
-                    type="text"
-                    value={newCred.usuario}
-                    onChange={e => setNewCred(prev => ({ ...prev, usuario: e.target.value }))}
-                    placeholder="Ej. admin@studio.com"
-                    className="w-full bg-[#040404] border border-white/5 focus:border-rose-500 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white placeholder-neutral-700 outline-none transition-all"
-                  />
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, display: 'block' }}>Usuario / Email</label>
+                  <input type="text" value={newCred.usuario} onChange={e => setNewCred(prev => ({ ...prev, usuario: e.target.value }))} placeholder="Ej. admin@studio.com"
+                    style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 14px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', outline: 'none' }}/>
                 </div>
-
-                <div className="relative">
-                  <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 block">Contraseña</label>
-                  <input
-                    type="text"
-                    value={newCred.contrasena}
-                    onChange={e => setNewCred(prev => ({ ...prev, contrasena: e.target.value }))}
-                    placeholder="Escribe o genera una clave..."
-                    className="w-full bg-[#040404] border border-white/5 focus:border-rose-500 rounded-xl py-3 px-4 text-xs font-black text-rose-500 placeholder-neutral-700 outline-none transition-all"
-                  />
+                <div>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, display: 'block' }}>Contraseña</label>
+                  <input type="text" value={newCred.contrasena} onChange={e => setNewCred(prev => ({ ...prev, contrasena: e.target.value }))} placeholder="Escribe o genera..."
+                    style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 14px', fontSize: 10, fontWeight: 900, color: t.accent, outline: 'none' }}/>
                 </div>
               </div>
 
-              {/* Columna Generador & Metadata */}
-              <div className="space-y-4">
+              {/* Right */}
+              <div className="space-y-3">
                 <div>
-                  <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 block">Categoría</label>
-                  <select
-                    value={newCred.categoria}
-                    onChange={e => setNewCred(prev => ({ ...prev, categoria: e.target.value }))}
-                    className="w-full bg-[#040404] border border-white/5 hover:border-white/10 rounded-xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white outline-none cursor-pointer"
-                  >
-                    {categories.filter(c => c !== 'Todos').map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, display: 'block' }}>Categoría</label>
+                  <select value={newCred.categoria} onChange={e => setNewCred(prev => ({ ...prev, categoria: e.target.value }))}
+                    style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 14px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', outline: 'none' }}>
+                    {categories.filter(c => c !== 'Todos').map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
 
-                {/* Generador de contraseñas */}
-                <div className="bg-[#040404] border border-white/5 p-4 rounded-2xl">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[8px] font-black uppercase text-neutral-500 tracking-wider flex items-center gap-1.5">
-                      <Sliders size={12} /> Generador Inteligente
+                {/* Password Generator */}
+                <div style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, padding: 12, borderRadius: 12 }}>
+                  <div className="flex justify-between items-center mb-2">
+                    <span style={{ fontSize: 7, fontWeight: 900, textTransform: 'uppercase', color: t.textDim, letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Sliders size={10}/> Generador
                     </span>
-                    <button
-                      onClick={generatePassword}
-                      className="px-2.5 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-500 hover:bg-rose-500 hover:text-black rounded-lg text-[8px] font-black uppercase tracking-wider transition-all"
-                    >
-                      Generar Clave
+                    <button onClick={generatePassword}
+                      style={{ padding: '6px 12px', backgroundColor: t.accentSoft, border: `1px solid ${t.borderLight}`, color: t.accent, borderRadius: 8, fontSize: 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', cursor: 'pointer' }}>
+                      Generar
                     </button>
                   </div>
-
-                  <div className="space-y-3">
-                    {/* Longitud */}
+                  <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span className="text-[8px] font-bold text-neutral-600 uppercase">Longitud ({genLength})</span>
-                      <input
-                        type="range"
-                        min="8"
-                        max="32"
-                        value={genLength}
-                        onChange={e => setGenLength(parseInt(e.target.value))}
-                        className="w-24 accent-rose-500"
-                      />
+                      <span style={{ fontSize: 7, fontWeight: 700, color: t.textDim, textTransform: 'uppercase' }}>Longitud ({genLength})</span>
+                      <input type="range" min="8" max="32" value={genLength} onChange={e => setGenLength(parseInt(e.target.value))}
+                        style={{ width: 80, accentColor: t.accent }}/>
                     </div>
-
-                    {/* Checkboxes de parámetros */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <label className="flex items-center gap-1.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={genUpper}
-                          onChange={e => setGenUpper(e.target.checked)}
-                          className="rounded border-white/5 bg-transparent text-rose-500 focus:ring-0 w-3 h-3"
-                        />
-                        <span className="text-[7px] font-black text-neutral-600 uppercase">MAYÚS</span>
+                    <div className="grid grid-cols-3 gap-1">
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" checked={genUpper} onChange={e => setGenUpper(e.target.checked)}
+                          style={{ accentColor: t.accent, width: 10, height: 10 }}/>
+                        <span style={{ fontSize: 6, fontWeight: 900, color: t.textDim, textTransform: 'uppercase' }}>MAYÚS</span>
                       </label>
-                      <label className="flex items-center gap-1.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={genNumbers}
-                          onChange={e => setGenNumbers(e.target.checked)}
-                          className="rounded border-white/5 bg-transparent text-rose-500 focus:ring-0 w-3 h-3"
-                        />
-                        <span className="text-[7px] font-black text-neutral-600 uppercase">NÚM</span>
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" checked={genNumbers} onChange={e => setGenNumbers(e.target.checked)}
+                          style={{ accentColor: t.accent, width: 10, height: 10 }}/>
+                        <span style={{ fontSize: 6, fontWeight: 900, color: t.textDim, textTransform: 'uppercase' }}>NÚM</span>
                       </label>
-                      <label className="flex items-center gap-1.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={genSymbols}
-                          onChange={e => setGenSymbols(e.target.checked)}
-                          className="rounded border-white/5 bg-transparent text-rose-500 focus:ring-0 w-3 h-3"
-                        />
-                        <span className="text-[7px] font-black text-neutral-600 uppercase">SÍMB</span>
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="checkbox" checked={genSymbols} onChange={e => setGenSymbols(e.target.checked)}
+                          style={{ accentColor: t.accent, width: 10, height: 10 }}/>
+                        <span style={{ fontSize: 6, fontWeight: 900, color: t.textDim, textTransform: 'uppercase' }}>SÍMB</span>
                       </label>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-1.5 block">Notas Adicionales</label>
-                  <textarea
-                    value={newCred.notas}
-                    onChange={e => setNewCred(prev => ({ ...prev, notas: e.target.value }))}
-                    placeholder="Pines de recuperación, respuestas de seguridad..."
-                    rows="2"
-                    className="w-full bg-[#040404] border border-white/5 focus:border-rose-500 rounded-xl py-3 px-4 text-xs font-semibold text-neutral-200 placeholder-neutral-700 outline-none transition-all resize-none font-mono"
-                  />
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, display: 'block' }}>Notas</label>
+                  <textarea value={newCred.notas} onChange={e => setNewCred(prev => ({ ...prev, notas: e.target.value }))} placeholder="Pines de recuperación..." rows="2"
+                    style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 14px', fontSize: 10, fontWeight: 600, color: t.text, outline: 'none', resize: 'none', fontFamily: 'monospace' }}/>
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-4 pt-6 border-t border-white/5 mt-6">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="flex-1 py-4 bg-white/5 border border-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-neutral-400 transition-all"
-              >
+            <div className="flex gap-3 pt-4" style={{ borderTop: `1px solid ${t.border}`, marginTop: 16 }}>
+              <button onClick={() => setIsModalOpen(false)}
+                style={{ flex: 1, padding: '12px 0', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: t.textMuted, cursor: 'pointer' }}>
                 Cancelar
               </button>
-              <button
-                onClick={handleSaveCredential}
-                className="flex-1 py-4 bg-rose-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 transition-all shadow-xl shadow-rose-500/20"
-              >
+              <button onClick={handleSaveCredential}
+                style={{ flex: 1, padding: '12px 0', backgroundColor: t.accent, border: 'none', borderRadius: 12, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', color: '#000', cursor: 'pointer' }}>
                 Cifrar & Guardar
               </button>
             </div>

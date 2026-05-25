@@ -46,7 +46,7 @@ const ClientPortal = ({ portalId }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center">
         <div className="w-16 h-1 bg-white/10 overflow-hidden rounded-full mb-4">
           <div className="w-full h-full bg-amber-500 animate-[loading_1.5s_infinite]"></div>
         </div>
@@ -63,7 +63,7 @@ const ClientPortal = ({ portalId }) => {
 
   if (!client) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-10 text-center">
+      <div className="min-h-screen bg-[#141414] flex flex-col items-center justify-center p-10 text-center">
         <Zap size={48} className="text-rose-500 mb-6 opacity-20"/>
         <h1 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Acceso Denegado</h1>
         <p className="text-neutral-600 text-sm max-w-xs uppercase font-bold tracking-widest leading-relaxed">
@@ -74,9 +74,9 @@ const ClientPortal = ({ portalId }) => {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-amber-500 selection:text-black pb-20">
+    <div className="min-h-screen bg-[#141414] text-white font-sans selection:bg-amber-500 selection:text-black pb-20">
       {/* HUD HEADER */}
-      <header className="fixed top-0 inset-x-0 z-50 bg-black/60 backdrop-blur-2xl border-b border-white/5 px-10 py-6 flex justify-between items-center">
+      <header className="fixed top-0 inset-x-0 z-50 bg-[#141414]/60 backdrop-blur-2xl border-b border-white/5 px-10 py-6 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner">
             <ShieldCheck size={20} className="text-emerald-500"/>
@@ -92,7 +92,7 @@ const ClientPortal = ({ portalId }) => {
              <span className="text-[8px] font-black uppercase tracking-widest text-neutral-400">Sistema Online</span>
           </div>
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 p-[1px]">
-             <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+             <div className="w-full h-full rounded-full bg-[#141414] flex items-center justify-center overflow-hidden">
                 {client.foto_url ? <img src={client.foto_url} className="w-full h-full object-cover" /> : <Zap size={14}/>}
              </div>
           </div>
@@ -121,11 +121,11 @@ const ClientPortal = ({ portalId }) => {
         {/* PROYECTOS GRID */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {sessions.map((session, idx) => (
-            <div key={session.id} className="bg-[#0a0a0a] border border-white/5 rounded-[3rem] overflow-hidden flex flex-col group hover:border-white/20 transition-all duration-500 shadow-2xl">
+            <div key={session.id} className="bg-[#202022] border border-white/5 rounded-[3rem] overflow-hidden flex flex-col group hover:border-white/20 transition-all duration-500 shadow-2xl">
               {/* VIDEO PREVIEW (PLACEHOLDER OR REAL) */}
-              <div className="aspect-video bg-neutral-900 relative overflow-hidden flex items-center justify-center group-hover:bg-black transition-all">
+              <div className="aspect-video bg-neutral-900 relative overflow-hidden flex items-center justify-center group-hover:bg-[#141414] transition-all">
                 <Video size={48} className="text-neutral-800 group-hover:scale-110 transition-all duration-700"/>
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-transparent to-transparent opacity-60"></div>
                 <div className="absolute bottom-8 left-8 right-8 flex justify-between items-end">
                    <div>
                      <p className="text-[9px] text-neutral-500 font-black uppercase tracking-widest mb-1">{session.categoria || 'Producción'}</p>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   FolderPlus, 
   Plus, 
@@ -7,59 +7,60 @@ import {
   Trash2, 
   Edit3, 
   Eye, 
-  CheckSquare, 
   Clock, 
   Sparkles,
-  Save, 
-  Share2, 
-  ChevronRight, 
   BookOpen, 
   Calendar,
   AlertCircle,
   Check,
   Copy,
   ChevronDown,
-  Paperclip,
-  Maximize2
+  Folder,
+  FileText,
+  Tag,
+  MoreHorizontal,
+  List,
+  Grid
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
 
 const Notas = ({ settings, isDark }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   // --- Estados de Datos ---
   const [notas, setNotas] = useState([]);
   const [folders, setFolders] = useState([
-    { id: 'all', nombre: 'Todas las Notas', isSystem: true, color: '#ffffff' },
-    { id: 'favs', nombre: 'Favoritos', isSystem: true, color: '#f59e0b' },
-    { id: 'folder-personal', nombre: 'Personal', color: '#10b981' },
-    { id: 'folder-trabajo', nombre: 'Trabajo', color: '#3b82f6' },
-    { id: 'folder-ideas', nombre: 'Ideas & Presets', color: '#a855f7' }
+    { id: 'all', nombre: 'Todas las Notas', isSystem: true, color: t.accent },
+    { id: 'favs', nombre: 'Favoritos', isSystem: true, color: '#eab308' },
+    { id: 'folder-personal', nombre: 'Personal', color: '#4ec9b0' },
+    { id: 'folder-trabajo', nombre: 'Trabajo', color: t.accent },
+    { id: 'folder-ideas', nombre: 'Ideas', color: '#a855f7' }
   ]);
   
   // --- Estados de Navegación y Filtros ---
   const [activeFolderId, setActiveFolderId] = useState('all');
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('todos'); // 'todos', 'pendiente', 'proceso', 'completado'
-  const [editMode, setEditMode] = useState('write'); // 'write', 'preview'
+  const [statusFilter, setStatusFilter] = useState('todos');
+  const [editMode, setEditMode] = useState('write');
   
   // --- Modales y Formularios ---
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [newFolderColor, setNewFolderColor] = useState('#10b981');
+  const [newFolderColor, setNewFolderColor] = useState('#4ec9b0');
   
-  // --- Estados de Estado de Red / DB ---
+  // --- Estados de Red / DB ---
   const [dbError, setDbError] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [saveStatus, setSaveStatus] = useState('synced'); // 'synced', 'saving', 'error'
+  const [saveStatus, setSaveStatus] = useState('synced');
   const [copiedSql, setCopiedSql] = useState(false);
-  
-  // --- Ref de Debounce para guardado ---
-  const autoSaveTimer = useRef(null);
 
-  // SQL Script para copiar en caso de error
-  const sqlSchemaCode = `-- SOVEREIGN STUDIO - NOTAS MIGRACIÓN
+  const autoSaveTimer = useRef(null);
+  const searchInputRef = useRef(null);
+
+  const sqlSchemaCode = `-- SOVEREIGN STUDIO - NOTAS SCHEMA
 CREATE TABLE IF NOT EXISTS notas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     titulo TEXT DEFAULT 'Sin Título',
@@ -69,13 +70,14 @@ CREATE TABLE IF NOT EXISTS notas (
     parent_id UUID REFERENCES notas(id) ON DELETE CASCADE,
     favorito BOOLEAN DEFAULT false,
     fecha_evento DATE,
-    color TEXT DEFAULT '#10b981',
+    color TEXT DEFAULT '#4ec9b0',
     estado TEXT DEFAULT 'pendiente',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
+
 ALTER TABLE notas ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
+CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
 
   // --- Carga Inicial ---
   useEffect(() => {
@@ -86,7 +88,6 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
     setLoading(true);
     setDbError(false);
     try {
-      // Intentar cargar de Supabase
       const { data: dbNotas, error: notasError } = await supabase
         .from('notas')
         .select('*')
@@ -95,33 +96,30 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
       if (notasError) throw notasError;
 
       if (dbNotas) {
-        // Dividir notas y carpetas reales guardadas en DB
         const dbFolders = dbNotas.filter(n => n.is_folder);
         const dbPlainNotas = dbNotas.filter(n => !n.is_folder);
 
-        // Actualizar carpetas (combinando del sistema y de DB)
         const sysFolders = [
-          { id: 'all', nombre: 'Todas las Notas', isSystem: true, color: '#ffffff' },
-          { id: 'favs', nombre: 'Favoritos', isSystem: true, color: '#f59e0b' }
+          { id: 'all', nombre: 'Todas las Notas', isSystem: true, color: t.accent },
+          { id: 'favs', nombre: 'Favoritos', isSystem: true, color: '#eab308' }
         ];
         
         const customFoldersFromDb = dbFolders.map(f => ({
           id: f.id,
           nombre: f.titulo,
-          color: f.color || '#10b981',
+          color: f.color || '#4ec9b0',
           isSystem: false
         }));
 
         setFolders([...sysFolders, ...customFoldersFromDb]);
 
-        // Formatear notas para UI
         const formattedPlainNotas = dbPlainNotas.map(n => ({
           id: n.id,
           titulo: n.titulo || 'Sin Título',
           contenido: Array.isArray(n.contenido) ? (n.contenido[0]?.text || '') : (typeof n.contenido === 'string' ? n.contenido : ''),
           folderId: n.parent_id || 'all',
           favorito: n.favorito || false,
-          color: n.color || '#10b981',
+          color: n.color || '#4ec9b0',
           estado: n.estado || 'pendiente',
           fecha_evento: n.fecha_evento || null,
           updated_at: n.updated_at
@@ -134,10 +132,9 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
         }
       }
     } catch (error) {
-      console.warn("Supabase no configurado para notas, recurriendo a localStorage fallback. Detalles:", error.message);
+      console.warn("Supabase no disponible, usando localStorage:", error.message);
       setDbError(true);
       
-      // Fallback a localStorage
       const localNotas = localStorage.getItem('sovereign_notas');
       const localFolders = localStorage.getItem('sovereign_folders');
 
@@ -151,14 +148,13 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
           setActiveNoteId(parsed[0].id);
         }
       } else {
-        // Crear nota demo inicial si está vacío
         const demoNote = {
           id: 'demo-1',
-          titulo: 'Bienvenido a Notas Pro 🚀',
-          contenido: '# Bienvenido a tu Bóveda de Notas\n\nEste es un clon súper avanzado de **Apple Notes** desarrollado en un estilo **HUD Glassmorphism** prémium.\n\n### Características:\n1. **Editor Markdown**: Escribe en texto enriquecido usando código estándar.\n2. **Estados del Negocio**: Filtra tareas como `pendiente`, `en proceso` o `completado` con bordes visuales neon.\n3. **Cifrado local & Sincronización**: Fallback inmediato si no hay internet.\n\nPrueba a modificar este texto en la columna de la derecha.',
+          titulo: 'Bienvenido a Notas',
+          contenido: '# Bienvenido a tu Bóveda de Notas\n\nSistema de notas avanzado con Markdown.\n\n### Características:\n1. **Editor Markdown** en tiempo real\n2. **Estados**: pendiente, en proceso, completado\n3. **Carpetas** personalizables\n4. **Favoritos** y filtros\n5. **Sincronización** con Supabase\n\nEdita este texto para empezar.',
           folderId: 'folder-personal',
           favorito: true,
-          color: '#10b981',
+          color: '#4ec9b0',
           estado: 'pendiente',
           fecha_evento: new Date().toISOString().split('T')[0],
           updated_at: new Date().toISOString()
@@ -171,23 +167,19 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
     setLoading(false);
   };
 
-  // --- Auto Guardado con Debounce ---
+  // --- Auto Guardado ---
   const triggerAutoSave = (updatedNotasList) => {
     setSaveStatus('saving');
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     
     autoSaveTimer.current = setTimeout(async () => {
-      // 1. Guardar localmente
       localStorage.setItem('sovereign_notas', JSON.stringify(updatedNotasList));
       localStorage.setItem('sovereign_folders', JSON.stringify(folders));
 
-      // 2. Si no hay error de DB, guardar en Supabase
       if (!dbError) {
         try {
-          // Guardar todas las notas modificadas una por una o en batch
-          // Para mayor seguridad en esta versión personal, sincronizamos la base completa o realizamos upsert de las notas activas
           const batch = updatedNotasList.map(n => ({
-            id: n.id.startsWith('demo-') ? undefined : n.id, // dejar que Supabase cree el UUID si es temporal
+            id: n.id.startsWith('demo-') ? undefined : n.id,
             titulo: n.titulo,
             contenido: typeof n.contenido === 'string' ? n.contenido : JSON.stringify(n.contenido),
             is_folder: false,
@@ -199,7 +191,6 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
             updated_at: new Date().toISOString()
           }));
 
-          // Filtrar items sin ID definidos
           const upsertBatch = batch.filter(b => b.id);
           if (upsertBatch.length > 0) {
             const { error } = await supabase.from('notas').upsert(upsertBatch);
@@ -207,11 +198,10 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
           }
           setSaveStatus('synced');
         } catch (e) {
-          console.error("Fallo de sync automática con Supabase:", e);
+          console.error("Sync error:", e);
           setSaveStatus('error');
         }
       } else {
-        // En modo local siempre queda sincronizado en caché local
         setSaveStatus('synced');
       }
     }, 1000);
@@ -225,7 +215,7 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
       contenido: '',
       folderId: activeFolderId === 'all' || activeFolderId === 'favs' ? 'all' : activeFolderId,
       favorito: activeFolderId === 'favs',
-      color: '#10b981',
+      color: '#4ec9b0',
       estado: 'pendiente',
       fecha_evento: null,
       updated_at: new Date().toISOString()
@@ -255,7 +245,6 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
     if (!confirm(`¿Mover "${target.titulo}" a la Papelera?`)) return;
 
     try {
-      // Enviar a papelera de Supabase si está disponible
       if (!dbError) {
         await supabase.from('papelera').insert({
           nombre_item: target.titulo,
@@ -266,7 +255,6 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
         
         await supabase.from('notas').delete().eq('id', noteId);
       } else {
-        // Fallback local: Papelera en localStorage
         const localTrash = JSON.parse(localStorage.getItem('sovereign_local_trash') || '[]');
         localTrash.push({
           id: 'trash-' + Date.now(),
@@ -328,28 +316,24 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
     setActiveFolderId(newFolderId);
   };
 
-  // --- Utilidades ---
   const copySqlToClipboard = () => {
     navigator.clipboard.writeText(sqlSchemaCode);
     setCopiedSql(true);
     setTimeout(() => setCopiedSql(false), 2000);
   };
 
-  // --- Filtrado Inteligente de Notas ---
+  // --- Filtrado ---
   const activeNote = notas.find(n => n.id === activeNoteId);
   
   const filteredNotas = notas.filter(note => {
-    // 1. Filtro por Carpeta Activa
     if (activeFolderId === 'favs') {
       if (!note.favorito) return false;
     } else if (activeFolderId !== 'all') {
       if (note.folderId !== activeFolderId) return false;
     }
 
-    // 2. Filtro por Estado
     if (statusFilter !== 'todos' && note.estado !== statusFilter) return false;
 
-    // 3. Filtro por Búsqueda
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       const matchTitle = note.titulo.toLowerCase().includes(q);
@@ -360,367 +344,445 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
     return true;
   });
 
+  const getEstadoColor = (estado) => {
+    switch (estado) {
+      case 'pendiente': return '#eab308';
+      case 'proceso': return t.accent;
+      case 'completado': return '#4ec9b0';
+      default: return t.textDim;
+    }
+  };
+
+  const getEstadoLabel = (estado) => {
+    switch (estado) {
+      case 'pendiente': return 'Pendiente';
+      case 'proceso': return 'En Proceso';
+      case 'completado': return 'Completado';
+      default: return estado;
+    }
+  };
+
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] w-full max-w-[1800px] mx-auto animate-in fade-in duration-500 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-5rem)] w-full max-w-[1600px] mx-auto animate-in fade-in duration-300 overflow-hidden px-1">
       
-      {/* ALERTA DE CONFIGURACIÓN DE BASE DE DATOS */}
+      {/* HEADER */}
+      <header className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: t.border }}>
+        <div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Notas</h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Editor Markdown</p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {/* Sync Status */}
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+            <span className={`w-1.5 h-1.5 rounded-full ${
+              saveStatus === 'synced' ? 'bg-emerald-500' :
+              saveStatus === 'saving' ? 'bg-amber-500 animate-pulse' : 'bg-rose-500 animate-ping'
+            }`} />
+            <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
+              {saveStatus === 'synced' ? 'Sincronizado' :
+               saveStatus === 'saving' ? 'Guardando...' : 'Error'}
+            </span>
+          </div>
+
+          <button
+            onClick={handleCreateNote}
+            className="px-5 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all flex items-center gap-2"
+            style={{ backgroundColor: t.accent, color: t.bg, border: `1px solid transparent` }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
+          >
+            <Plus size={14} /> Nueva Nota
+          </button>
+        </div>
+      </header>
+
+      {/* DB ALERT */}
       {dbError && (
-        <div className="mb-6 p-4 bg-[#f43f5e]/5 border border-[#f43f5e]/10 rounded-3xl flex items-center justify-between text-xs text-[#f43f5e] font-black uppercase tracking-wider backdrop-blur-md animate-bounce">
-          <div className="flex items-center gap-3">
-            <AlertCircle size={18} />
-            <span>Base de datos local activa (Modo Offline/localStorage). Para sincronizar la nube en Supabase, ejecuta el esquema SQL.</span>
+        <div className="mb-3 p-3 rounded-xl flex items-center justify-between text-[10px] font-semibold tracking-wide"
+          style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', color: '#ef4444' }}
+        >
+          <div className="flex items-center gap-2">
+            <AlertCircle size={14} />
+            <span>Modo offline — Datos guardados localmente. Para sincronizar, ejecuta el SQL en Supabase.</span>
           </div>
           <button 
             onClick={copySqlToClipboard}
-            className="px-4 py-2 bg-[#f43f5e]/10 border border-[#f43f5e]/20 rounded-xl hover:bg-[#f43f5e] hover:text-black transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5"
+            style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
           >
-            {copiedSql ? <Check size={14} /> : <Copy size={14} />}
+            {copiedSql ? <Check size={12} /> : <Copy size={12} />}
             {copiedSql ? 'Copiado' : 'Copiar SQL'}
           </button>
         </div>
       )}
 
-      {/* HEADER HUD */}
-      <header className="flex justify-between items-end mb-8 border-b border-white/5 pb-6">
-        <div>
-          <div className="flex items-center gap-4 mb-2">
-            <div className="p-3 bg-emerald-500/10 rounded-2xl text-emerald-500 border border-emerald-500/20 shadow-lg shadow-emerald-500/10">
-              <BookOpen size={24}/>
-            </div>
-            <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">Bloc Notas <span className="text-neutral-800">Pro</span></h2>
-          </div>
-          <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em] mt-3">Espacio creativo enriquecido en Markdown</p>
-        </div>
+      {/* MAIN 3-COLUMN GRID */}
+      <div className="flex-1 grid grid-cols-[220px_1fr_1fr] gap-4 overflow-hidden min-h-0">
 
-        <div className="flex items-center gap-4">
-          {/* Indicador de Auto Guardado */}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-[#080808]/80 border border-white/5 rounded-full">
-            <span className={`w-2 h-2 rounded-full ${
-              saveStatus === 'synced' ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 
-              saveStatus === 'saving' ? 'bg-amber-500 animate-pulse' : 'bg-rose-500 animate-ping'
-            }`} />
-            <span className="text-[8px] font-black uppercase text-neutral-500 tracking-wider">
-              {saveStatus === 'synced' ? 'Sincronizado' : 
-               saveStatus === 'saving' ? 'Guardando...' : 'Error de Sync'}
-            </span>
-          </div>
+        {/* COLUMN 1: FOLDERS + FILTERS */}
+        <div className="flex flex-col gap-3 overflow-y-auto min-h-0 rounded-xl p-3 scrollbar-thin"
+          style={{ backgroundColor: c.panel, border: `1px solid ${t.border}` }}>
 
-          <button 
-            onClick={handleCreateNote}
-            className="px-8 py-4 bg-emerald-500 text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/20 flex items-center gap-2"
-          >
-            <Plus size={18}/> Nueva Nota
-          </button>
-        </div>
-      </header>
-
-      {/* ÁREA DE TRABAJO EN 3 COLUMNAS */}
-      <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
-        
-        {/* COLUMNA 1: CARPETAS Y FILTROS (Ancho: 1/5) */}
-        <div className="w-1/5 bg-[#080808]/80 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-6 min-h-0 overflow-y-auto mac-scrollbar backdrop-blur-3xl">
+          {/* Folders Section */}
           <div>
-            <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-4">Carpetas</h4>
-            <div className="space-y-1.5">
-              {folders.map(folder => (
-                <button
-                  key={folder.id}
-                  onClick={() => setActiveFolderId(folder.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all text-left group ${
-                    activeFolderId === folder.id ? 'bg-white/5 border border-white/10 text-white' : 'text-neutral-500 hover:text-white hover:bg-white/[0.02] border border-transparent'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 truncate">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: folder.color }} />
-                    <span className="text-[11px] font-black uppercase tracking-wider truncate">{folder.nombre}</span>
-                  </div>
-                  <span className="text-[8px] bg-white/5 px-2 py-0.5 rounded-full font-black text-neutral-600 group-hover:text-white transition-all">
-                    {folder.id === 'all' ? notas.length : 
-                     folder.id === 'favs' ? notas.filter(n => n.favorito).length : 
-                     notas.filter(n => n.folderId === folder.id).length}
-                  </span>
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-2.5 px-1">
+              <h4 className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: t.textDim }}>Carpetas</h4>
+              <button
+                onClick={() => setIsNewFolderModalOpen(true)}
+                className="p-1 rounded-md transition-all"
+                style={{ color: t.textDim }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentSoft; e.currentTarget.style.color = t.accent; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = t.textDim; }}
+              >
+                <FolderPlus size={14} />
+              </button>
+            </div>
+            <div className="space-y-0.5">
+              {folders.map(folder => {
+                const count = folder.id === 'all' ? notas.length : 
+                  folder.id === 'favs' ? notas.filter(n => n.favorito).length : 
+                  notas.filter(n => n.folderId === folder.id).length;
+                return (
+                  <button
+                    key={folder.id}
+                    onClick={() => setActiveFolderId(folder.id)}
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-all text-[11px]"
+                    style={{
+                      backgroundColor: activeFolderId === folder.id ? t.accentSoft : 'transparent',
+                      border: `1px solid ${activeFolderId === folder.id ? t.borderLight : 'transparent'}`,
+                      color: activeFolderId === folder.id ? t.text : t.textDim
+                    }}
+                    onMouseEnter={e => { if (activeFolderId !== folder.id) e.currentTarget.style.backgroundColor = t.hover; }}
+                    onMouseLeave={e => { if (activeFolderId !== folder.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: folder.color }} />
+                      <span className="truncate font-medium">{folder.nombre}</span>
+                    </div>
+                    {count > 0 && (
+                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ backgroundColor: t.accentSoft, color: t.textDim }}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div className="mt-4">
-            <button
-              onClick={() => setIsNewFolderModalOpen(true)}
-              className="w-full py-3 bg-white/5 hover:bg-emerald-500 hover:text-black border border-white/5 hover:border-emerald-500 rounded-2xl text-[9px] font-black uppercase tracking-widest text-neutral-400 transition-all flex items-center justify-center gap-2"
-            >
-              <FolderPlus size={14} /> Nueva Carpeta
-            </button>
-          </div>
-
-          {/* Filtro por estado del negocio */}
-          <div className="border-t border-white/5 pt-6">
-            <h4 className="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-4">Filtrar Estado</h4>
-            <div className="space-y-2">
-              {['todos', 'pendiente', 'proceso', 'completado'].map(st => (
+          {/* Status Filter */}
+          <div className="pt-2 border-t" style={{ borderColor: t.border }}>
+            <h4 className="text-[9px] font-semibold uppercase tracking-widest mb-2.5 px-1" style={{ color: t.textDim }}>Estado</h4>
+            <div className="space-y-0.5">
+              {[
+                { key: 'todos', label: 'Todos' },
+                { key: 'pendiente', label: 'Pendiente' },
+                { key: 'proceso', label: 'En Proceso' },
+                { key: 'completado', label: 'Completado' },
+              ].map(st => (
                 <button
-                  key={st}
-                  onClick={() => setStatusFilter(st)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-xl transition-all border ${
-                    statusFilter === st ? 'bg-white/5 border-white/15 text-white' : 'border-transparent text-neutral-600 hover:text-white'
-                  }`}
+                  key={st.key}
+                  onClick={() => setStatusFilter(st.key)}
+                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all text-[10px] font-medium"
+                  style={{
+                    backgroundColor: statusFilter === st.key ? t.accentSoft : 'transparent',
+                    border: `1px solid ${statusFilter === st.key ? t.borderLight : 'transparent'}`,
+                    color: statusFilter === st.key ? t.text : t.textDim
+                  }}
+                  onMouseEnter={e => { if (statusFilter !== st.key) e.currentTarget.style.backgroundColor = t.hover; }}
+                  onMouseLeave={e => { if (statusFilter !== st.key) e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <span className={`w-2.5 h-2.5 rounded-md border ${
-                    st === 'todos' ? 'bg-white border-white/20' :
-                    st === 'pendiente' ? 'bg-[#f59e0b]/10 border-[#f59e0b]' :
-                    st === 'proceso' ? 'bg-[#3b82f6]/10 border-[#3b82f6]' :
-                    'bg-[#10b981]/10 border-[#10b981]'
-                  }`} />
-                  <span className="text-[9px] font-black uppercase tracking-widest">{st}</span>
+                  <span className="w-2 h-2 rounded-sm" style={{
+                    backgroundColor: st.key === 'todos' ? t.accent :
+                      st.key === 'pendiente' ? '#eab308' :
+                      st.key === 'proceso' ? t.accent : '#4ec9b0',
+                    opacity: 0.6
+                  }} />
+                  {st.label}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* COLUMNA 2: LISTADO DE NOTAS (Ancho: 2/5) */}
-        <div className="w-2/5 bg-[#080808]/80 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-6 min-h-0 backdrop-blur-3xl">
-          {/* Barra de Búsqueda */}
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-700" size={16} />
+        {/* COLUMN 2: NOTE LIST */}
+        <div className="flex flex-col gap-3 overflow-hidden min-h-0 rounded-xl p-3"
+          style={{ backgroundColor: c.panel, border: `1px solid ${t.border}` }}>
+
+          {/* Search */}
+          <div className="relative shrink-0">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: t.textDim }} />
             <input
+              ref={searchInputRef}
               type="text"
-              placeholder="Buscar notas por título o texto..."
+              placeholder="Buscar notas..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-[#040404]/90 border border-white/5 hover:border-white/10 focus:border-emerald-500 rounded-2xl py-4 pl-12 pr-4 text-xs font-black uppercase tracking-wider text-white placeholder-neutral-700 outline-none transition-all"
+              className="w-full rounded-lg py-2 pl-9 pr-3 text-xs outline-none transition-all"
+              style={{
+                backgroundColor: t.surface,
+                border: `1px solid ${t.border}`,
+                color: t.text,
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = t.accent; }}
+              onBlur={e => { e.currentTarget.style.borderColor = t.border; }}
             />
           </div>
 
-          {/* Listado de Notas */}
-          <div className="flex-1 overflow-y-auto mac-scrollbar pr-1 space-y-4">
-            {filteredNotas.length > 0 ? (
+          {/* Note List */}
+          <div className="flex-1 overflow-y-auto min-h-0 space-y-2 scrollbar-thin pr-0.5">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
+              </div>
+            ) : filteredNotas.length > 0 ? (
               filteredNotas.map(note => {
                 const folder = folders.find(f => f.id === note.folderId);
+                const estadoColor = getEstadoColor(note.estado);
                 return (
                   <div
                     key={note.id}
                     onClick={() => setActiveNoteId(note.id)}
-                    className={`p-5 rounded-[2rem] border transition-all cursor-pointer flex flex-col relative overflow-hidden group ${
-                      activeNoteId === note.id ? 'bg-[#0f1d18]/40 border-emerald-500/30' : 'bg-[#040404] border-white/5 hover:border-white/15'
-                    }`}
+                    className="p-3 rounded-xl transition-all cursor-pointer border"
+                    style={{
+                      backgroundColor: activeNoteId === note.id ? t.accentSoft : 'transparent',
+                      borderColor: activeNoteId === note.id ? t.borderLight : 'transparent',
+                    }}
+                    onMouseEnter={e => {
+                      if (activeNoteId !== note.id) {
+                        e.currentTarget.style.backgroundColor = t.hover;
+                        e.currentTarget.style.borderColor = t.border;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (activeNoteId !== note.id) {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                        e.currentTarget.style.borderColor = 'transparent';
+                      }
+                    }}
                   >
-                    {/* Indicador de Estado lateral */}
-                    <div className="absolute inset-y-0 left-0 w-1.5 transition-all" style={{ 
-                      backgroundColor: note.estado === 'pendiente' ? '#f59e0b' : 
-                                      note.estado === 'proceso' ? '#3b82f6' : '#10b981' 
-                    }} />
-
-                    {/* Fila superior: Título, Estrella y Categoría */}
-                    <div className="flex justify-between items-start gap-4 mb-3">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-[7px] font-black uppercase text-neutral-600 tracking-wider">
-                            {folder ? folder.nombre : 'Sin Carpeta'}
-                          </span>
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: note.color }} />
-                        </div>
-                        <h4 className="text-sm font-black text-white uppercase tracking-tight truncate max-w-[200px]">
-                          {note.titulo}
-                        </h4>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        {note.favorito && <Star size={12} className="text-amber-400 fill-amber-400" />}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteNote(note.id);
-                          }}
-                          className="p-2 bg-white/5 rounded-xl border border-white/5 text-neutral-700 hover:text-rose-500 hover:bg-rose-500/10 hover:border-rose-500/20 opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
+                    {/* Status line */}
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: estadoColor }} />
+                      <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
+                        {folder ? folder.nombre : 'General'}
+                      </span>
+                      {note.favorito && <Star size={9} style={{ color: '#eab308', fill: '#eab308' }} />}
                     </div>
 
-                    {/* Fila Media: Snippet de Markdown */}
-                    <p className="text-[10px] text-neutral-600 line-clamp-2 mb-4 leading-normal font-bold lowercase">
-                      {note.contenido.replace(/[#*`>_\-]/g, '').substring(0, 100) || 'Sin contenido adicional...'}
+                    {/* Title + action */}
+                    <div className="flex items-start justify-between gap-2">
+                      <h4 className="text-[12px] font-semibold truncate" style={{ color: t.text }}>
+                        {note.titulo}
+                      </h4>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteNote(note.id);
+                        }}
+                        className="p-1 rounded-md opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                        style={{ color: t.textDim }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.15)'; e.currentTarget.style.color = '#ef4444'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = t.textDim; }}
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+
+                    {/* Preview */}
+                    <p className="text-[10px] leading-relaxed mt-1.5 line-clamp-2" style={{ color: t.textDim }}>
+                      {note.contenido.replace(/[#*`>_\-]/g, '').substring(0, 120) || 'Sin contenido'}
                     </p>
 
-                    {/* Fila Inferior: Fecha y Tags */}
-                    <div className="flex justify-between items-center mt-auto border-t border-white/5 pt-3">
-                      <div className="flex items-center gap-1.5 text-neutral-700">
+                    {/* Footer */}
+                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t" style={{ borderColor: t.border }}>
+                      <div className="flex items-center gap-1.5 text-[9px]" style={{ color: t.textDim }}>
                         <Clock size={10} />
-                        <span className="text-[8px] font-black uppercase">
-                          {new Date(note.updated_at).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
-                        </span>
+                        {new Date(note.updated_at).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
                       </div>
-
-                      {/* Estatus Badge */}
-                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${
-                        note.estado === 'pendiente' ? 'bg-[#f59e0b]/5 border-[#f59e0b]/20 text-[#f59e0b]' :
-                        note.estado === 'proceso' ? 'bg-[#3b82f6]/5 border-[#3b82f6]/20 text-[#3b82f6]' :
-                        'bg-[#10b981]/5 border-[#10b981]/20 text-[#10b981]'
-                      }`}>
-                        {note.estado}
+                      <span className="text-[8px] font-semibold uppercase px-2 py-0.5 rounded-md" style={{
+                        backgroundColor: `${estadoColor}15`,
+                        color: estadoColor,
+                        border: `1px solid ${estadoColor}30`
+                      }}>
+                        {getEstadoLabel(note.estado)}
                       </span>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="py-24 text-center border border-dashed border-white/5 rounded-[2.5rem] bg-white/[0.01]">
-                <BookOpen size={36} className="text-neutral-800 mx-auto mb-4" />
-                <h5 className="text-xs font-black text-white uppercase tracking-wider">No se encontraron notas</h5>
-                <p className="text-[8px] text-neutral-600 font-black uppercase tracking-widest mt-1">Crea una nota o cambia los filtros</p>
+              <div className="flex flex-col items-center justify-center py-20 text-center">
+                <FileText size={32} style={{ color: t.textDim }} className="mb-3" />
+                <p className="text-xs font-medium" style={{ color: t.textMuted }}>No se encontraron notas</p>
+                <p className="text-[10px] mt-1" style={{ color: t.textDim }}>Crea una nota o cambia los filtros</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* COLUMNA 3: EDITOR EXPANDIDO (Ancho: 2/5) */}
-        <div className="flex-1 bg-[#080808]/80 border border-white/5 rounded-[2.5rem] p-6 flex flex-col gap-6 min-h-0 backdrop-blur-3xl">
+        {/* COLUMN 3: EDITOR */}
+        <div className="flex flex-col overflow-hidden min-h-0 rounded-xl p-3"
+          style={{ backgroundColor: c.panel, border: `1px solid ${t.border}` }}>
+          
           {activeNote ? (
-            <div className="flex-1 flex flex-col min-h-0 gap-6">
+            <div className="flex-1 flex flex-col min-h-0 gap-3">
               
-              {/* METADATA Y ACCIONES DE LA NOTA ACTIVA */}
-              <div className="flex flex-col gap-4 border-b border-white/5 pb-6">
-                
-                {/* Fila 1: Selector de Carpeta, Favorito y Color */}
-                <div className="flex justify-between items-center gap-4">
-                  <div className="flex items-center gap-3">
-                    {/* Carpeta */}
-                    <div className="relative">
-                      <select
-                        value={activeNote.folderId}
-                        onChange={e => handleUpdateNoteField(activeNote.id, 'folderId', e.target.value)}
-                        className="bg-[#040404] border border-white/5 hover:border-white/10 rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white outline-none cursor-pointer appearance-none pr-8"
-                      >
-                        {folders.filter(f => !f.isSystem).map(f => (
-                          <option key={f.id} value={f.id}>{f.nombre}</option>
-                        ))}
-                        <option value="all">Suelto (General)</option>
-                      </select>
-                      <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 pointer-events-none" />
-                    </div>
-
-                    {/* Estado */}
-                    <div className="relative">
-                      <select
-                        value={activeNote.estado}
-                        onChange={e => handleUpdateNoteField(activeNote.id, 'estado', e.target.value)}
-                        className="bg-[#040404] border border-white/5 hover:border-white/10 rounded-xl px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white outline-none cursor-pointer appearance-none pr-8"
-                      >
-                        <option value="pendiente">Pendiente</option>
-                        <option value="proceso">En Proceso</option>
-                        <option value="completado">Completado</option>
-                      </select>
-                      <ChevronDown size={10} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 pointer-events-none" />
-                    </div>
-
-                    {/* Selector de Color */}
-                    <div className="flex items-center gap-1.5 bg-[#040404] border border-white/5 rounded-xl px-2.5 py-1.5">
-                      {['#10b981', '#3b82f6', '#ef4444', '#eab308', '#a855f7', '#f43f5e'].map(c => (
-                        <button
-                          key={c}
-                          onClick={() => handleUpdateNoteField(activeNote.id, 'color', c)}
-                          className={`w-3.5 h-3.5 rounded-full transition-all border ${
-                            activeNote.color === c ? 'border-white scale-110 shadow-[0_0_6px_rgba(255,255,255,0.4)]' : 'border-transparent'
-                          }`}
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {/* Favorito Toggle */}
-                    <button
-                      onClick={() => handleUpdateNoteField(activeNote.id, 'favorito', !activeNote.favorito)}
-                      className={`p-2.5 rounded-xl border transition-all ${
-                        activeNote.favorito ? 'bg-amber-400/10 border-amber-400/30 text-amber-400' : 'bg-white/5 border-white/5 text-neutral-600 hover:text-white'
-                      }`}
+              {/* Note Metadata Bar */}
+              <div className="flex items-center justify-between gap-2 pb-3 border-b shrink-0" style={{ borderColor: t.border }}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Folder selector */}
+                  <div className="relative">
+                    <select
+                      value={activeNote.folderId}
+                      onChange={e => handleUpdateNoteField(activeNote.id, 'folderId', e.target.value)}
+                      className="appearance-none rounded-lg px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-6"
+                      style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.text }}
                     >
-                      <Star size={16} className={activeNote.favorito ? 'fill-amber-400' : ''} />
-                    </button>
+                      {folders.filter(f => !f.isSystem).map(f => (
+                        <option key={f.id} value={f.id}>{f.nombre}</option>
+                      ))}
+                      <option value="all">General</option>
+                    </select>
+                    <ChevronDown size={9} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textDim }} />
                   </div>
-                </div>
 
-                {/* Fila 2: Inputs de Titulo y Fecha de Evento */}
-                <div className="flex gap-4 items-center">
-                  <input
-                    type="text"
-                    value={activeNote.titulo}
-                    onChange={e => handleUpdateNoteField(activeNote.id, 'titulo', e.target.value)}
-                    placeholder="Título de la Nota"
-                    className="flex-1 bg-[#040404] border border-white/5 focus:border-emerald-500 rounded-2xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white placeholder-neutral-700 outline-none transition-all"
-                  />
+                  {/* Status selector */}
+                  <div className="relative">
+                    <select
+                      value={activeNote.estado}
+                      onChange={e => handleUpdateNoteField(activeNote.id, 'estado', e.target.value)}
+                      className="appearance-none rounded-lg px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-6"
+                      style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.text }}
+                    >
+                      <option value="pendiente">Pendiente</option>
+                      <option value="proceso">En Proceso</option>
+                      <option value="completado">Completado</option>
+                    </select>
+                    <ChevronDown size={9} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textDim }} />
+                  </div>
 
-                  {/* Fecha de evento */}
-                  <div className="flex items-center gap-2 bg-[#040404] border border-white/5 rounded-2xl px-3 py-2">
-                    <Calendar size={14} className="text-neutral-600" />
+                  {/* Color picker */}
+                  <div className="flex items-center gap-1 rounded-lg px-2 py-1.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                    {['#4ec9b0', t.accent, '#ef4444', '#eab308', '#a855f7', '#f43f5e'].map(color => (
+                      <button
+                        key={color}
+                        onClick={() => handleUpdateNoteField(activeNote.id, 'color', color)}
+                        className="w-3 h-3 rounded-full transition-all"
+                        style={{
+                          backgroundColor: color,
+                          border: activeNote.color === color ? `2px solid ${t.text}` : '2px solid transparent',
+                          transform: activeNote.color === color ? 'scale(1.15)' : 'scale(1)'
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Date */}
+                  <div className="flex items-center gap-1.5 rounded-lg px-2 py-1.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                    <Calendar size={12} style={{ color: t.textDim }} />
                     <input
                       type="date"
                       value={activeNote.fecha_evento || ''}
                       onChange={e => handleUpdateNoteField(activeNote.id, 'fecha_evento', e.target.value || null)}
-                      className="bg-transparent border-0 text-[10px] font-black uppercase text-white outline-none max-w-[110px]"
+                      className="bg-transparent border-0 text-[9px] font-semibold outline-none w-[90px]"
+                      style={{ color: t.text }}
                     />
                   </div>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {/* Favorite toggle */}
+                  <button
+                    onClick={() => handleUpdateNoteField(activeNote.id, 'favorito', !activeNote.favorito)}
+                    className="p-1.5 rounded-lg transition-all"
+                    style={{
+                      backgroundColor: activeNote.favorito ? 'rgba(234,179,8,0.12)' : 'transparent',
+                      border: `1px solid ${activeNote.favorito ? 'rgba(234,179,8,0.25)' : 'transparent'}`,
+                      color: activeNote.favorito ? '#eab308' : t.textDim
+                    }}
+                    onMouseEnter={e => { if (!activeNote.favorito) e.currentTarget.style.backgroundColor = t.hover; }}
+                    onMouseLeave={e => { if (!activeNote.favorito) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <Star size={13} className={activeNote.favorito ? 'fill-[#eab308]' : ''} />
+                  </button>
                 </div>
               </div>
 
-              {/* EDITOR E INTERRUPTOR DE VISTA PREVIA */}
-              <div className="flex-1 flex flex-col min-h-0">
-                {/* Pestañas de Modo */}
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex bg-[#040404] border border-white/5 p-1 rounded-xl">
-                    <button
-                      onClick={() => setEditMode('write')}
-                      className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                        editMode === 'write' ? 'bg-white text-black' : 'text-neutral-500 hover:text-white'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5"><Edit3 size={10} /> Editor</span>
-                    </button>
-                    <button
-                      onClick={() => setEditMode('preview')}
-                      className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${
-                        editMode === 'preview' ? 'bg-white text-black' : 'text-neutral-500 hover:text-white'
-                      }`}
-                    >
-                      <span className="flex items-center gap-1.5"><Eye size={10} /> Vista Previa</span>
-                    </button>
+              {/* Title Input */}
+              <input
+                type="text"
+                value={activeNote.titulo}
+                onChange={e => handleUpdateNoteField(activeNote.id, 'titulo', e.target.value)}
+                placeholder="Título de la Nota"
+                className="w-full bg-transparent border-0 text-base font-semibold outline-none px-0 py-0 shrink-0"
+                style={{ color: t.text }}
+              />
+
+              {/* Editor Tabs */}
+              <div className="flex items-center justify-between shrink-0">
+                <div className="flex rounded-lg p-0.5 gap-0.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                  <button
+                    onClick={() => setEditMode('write')}
+                    className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: editMode === 'write' ? t.accent : 'transparent',
+                      color: editMode === 'write' ? t.bg : t.textDim
+                    }}
+                  >
+                    <span className="flex items-center gap-1"><Edit3 size={10} /> Editar</span>
+                  </button>
+                  <button
+                    onClick={() => setEditMode('preview')}
+                    className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
+                    style={{
+                      backgroundColor: editMode === 'preview' ? t.accent : 'transparent',
+                      color: editMode === 'preview' ? t.bg : t.textDim
+                    }}
+                  >
+                    <span className="flex items-center gap-1"><Eye size={10} /> Vista</span>
+                  </button>
+                </div>
+                <span className="text-[8px] font-medium" style={{ color: t.textDim }}>Markdown</span>
+              </div>
+
+              {/* Editor / Preview */}
+              <div className="flex-1 min-h-0 rounded-xl overflow-hidden" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                {editMode === 'write' ? (
+                  <textarea
+                    value={activeNote.contenido}
+                    onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
+                    placeholder="Escribe en Markdown..."
+                    className="w-full h-full p-4 bg-transparent text-xs leading-relaxed outline-none border-0 resize-none font-mono"
+                    style={{ color: t.textMuted }}
+                  />
+                ) : (
+                  <div className="h-full overflow-y-auto p-4 prose prose-invert max-w-none text-xs leading-relaxed markdown-preview scrollbar-thin"
+                    style={{ color: t.textMuted }}>
+                    {activeNote.contenido ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {activeNote.contenido}
+                      </ReactMarkdown>
+                    ) : (
+                      <p className="text-center py-16 text-[10px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
+                        Sin contenido para previsualizar
+                      </p>
+                    )}
                   </div>
-
-                  <span className="text-[8px] font-bold text-neutral-600 uppercase tracking-widest">Markdown Soportado</span>
-                </div>
-
-                {/* Editor Textarea o Render de Markdown */}
-                <div className="flex-1 min-h-0 bg-[#040404]/90 border border-white/5 rounded-[2rem] overflow-hidden flex flex-col">
-                  {editMode === 'write' ? (
-                    <textarea
-                      value={activeNote.contenido}
-                      onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
-                      placeholder="Escribe algo increíble usando Markdown..."
-                      className="flex-1 w-full p-6 bg-transparent text-neutral-200 text-xs font-semibold leading-relaxed outline-none border-0 resize-none font-mono"
-                    />
-                  ) : (
-                    <div className="flex-1 overflow-y-auto mac-scrollbar p-6 prose prose-invert max-w-none text-xs text-neutral-300 font-semibold leading-relaxed markdown-preview">
-                      {activeNote.contenido ? (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {activeNote.contenido}
-                        </ReactMarkdown>
-                      ) : (
-                        <p className="text-neutral-600 font-black uppercase text-[10px] tracking-widest text-center py-20">Nada que mostrar en la vista previa</p>
-                      )}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
 
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center py-40 text-center border border-dashed border-white/5 rounded-[2.5rem]">
-              <Sparkles size={48} className="text-neutral-800 mb-6" />
-              <h4 className="text-sm font-black text-white uppercase tracking-wider">Sin nota activa</h4>
-              <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mt-2 max-w-xs leading-normal">
-                Selecciona una nota de la columna central o crea una nota nueva para comenzar.
+            /* Empty State */
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <Sparkles size={36} style={{ color: t.textDim }} className="mb-4" />
+              <h4 className="text-sm font-semibold" style={{ color: t.textMuted }}>Selecciona una nota</h4>
+              <p className="text-[10px] mt-1.5 max-w-xs leading-relaxed" style={{ color: t.textDim }}>
+                Elige una nota de la lista o crea una nueva para empezar a escribir.
               </p>
             </div>
           )}
@@ -728,54 +790,66 @@ CREATE POLICY "Permitir todo" ON notas FOR ALL USING (true) WITH CHECK (true);`;
 
       </div>
 
-      {/* MODAL DE NUEVA CARPETA */}
+      {/* NEW FOLDER MODAL */}
       {isNewFolderModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-[2000] animate-in fade-in duration-300">
-          <div className="bg-[#080808] border border-white/10 rounded-[3rem] p-8 w-full max-w-md shadow-2xl relative">
-            <h4 className="text-lg font-black text-white uppercase tracking-wider mb-6 flex items-center gap-3">
-              <FolderPlus className="text-emerald-500" /> Crear Carpeta
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center animate-in fade-in duration-200"
+          style={{ backgroundColor: 'rgba(20,20,20,0.85)', backdropFilter: 'blur(8px)' }}>
+          <div className="rounded-2xl p-6 w-full max-w-sm shadow-2xl" style={{ backgroundColor: c.panel, border: `1px solid ${t.borderLight}` }}>
+            <h4 className="text-sm font-semibold mb-5 flex items-center gap-2" style={{ color: t.text }}>
+              <FolderPlus size={18} style={{ color: t.accent }} /> Nueva Carpeta
             </h4>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
-                <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-2 block">Nombre de la Carpeta</label>
+                <label className="text-[9px] font-semibold uppercase tracking-widest mb-1.5 block" style={{ color: t.textDim }}>Nombre</label>
                 <input
                   type="text"
                   value={newFolderName}
                   onChange={e => setNewFolderName(e.target.value)}
                   placeholder="Ej. Finanzas, Recetas..."
-                  className="w-full bg-[#040404] border border-white/5 focus:border-emerald-500 rounded-2xl py-3 px-4 text-xs font-black uppercase tracking-wider text-white placeholder-neutral-700 outline-none transition-all"
+                  className="w-full rounded-lg py-2.5 px-3 text-xs outline-none transition-all"
+                  style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.text }}
+                  onFocus={e => { e.currentTarget.style.borderColor = t.accent; }}
+                  onBlur={e => { e.currentTarget.style.borderColor = t.border; }}
                 />
               </div>
 
               <div>
-                <label className="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-2 block">Color de Etiqueta</label>
+                <label className="text-[9px] font-semibold uppercase tracking-widest mb-1.5 block" style={{ color: t.textDim }}>Color</label>
                 <div className="flex gap-2">
-                  {['#10b981', '#3b82f6', '#ef4444', '#eab308', '#a855f7', '#f43f5e', '#ffffff'].map(c => (
+                  {['#4ec9b0', t.accent, '#ef4444', '#eab308', '#a855f7', '#f43f5e', t.text].map(color => (
                     <button
-                      key={c}
-                      onClick={() => setNewFolderColor(c)}
-                      className={`w-6 h-6 rounded-full border transition-all ${
-                        newFolderColor === c ? 'border-white scale-110' : 'border-transparent'
-                      }`}
-                      style={{ backgroundColor: c }}
+                      key={color}
+                      onClick={() => setNewFolderColor(color)}
+                      className="w-5 h-5 rounded-full transition-all"
+                      style={{
+                        backgroundColor: color,
+                        border: newFolderColor === color ? `2px solid ${t.text}` : '2px solid transparent',
+                        transform: newFolderColor === color ? 'scale(1.2)' : 'scale(1)'
+                      }}
                     />
                   ))}
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setIsNewFolderModalOpen(false)}
-                  className="flex-1 py-4 bg-white/5 border border-white/5 hover:bg-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-neutral-400 transition-all"
+                  className="flex-1 py-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all"
+                  style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.textDim }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentSoft; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.surface; }}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleCreateFolder}
-                  className="flex-1 py-4 bg-emerald-500 text-black rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-emerald-500/20"
+                  className="flex-1 py-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all"
+                  style={{ backgroundColor: t.accent, color: t.bg }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
                 >
-                  Crear Carpeta
+                  Crear
                 </button>
               </div>
             </div>

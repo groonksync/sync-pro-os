@@ -1,21 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Trash2, 
-  RotateCcw, 
-  Trash, 
-  Clock, 
-  RefreshCw, 
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Trash2,
+  RotateCcw,
+  Trash,
+  Clock,
+  RefreshCw,
   AlertCircle,
   XCircle,
   CheckCircle2,
-  HardDrive
+  HardDrive,
+  Landmark,
+  Bell,
+  StickyNote,
+  Key,
+  Video,
+  Package,
+  CreditCard,
+  Users
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
 
-const TrashView = ({ settings }) => {
+const getIconForType = (tipo, isDark = true) => {
+  const theme = getTheme(isDark);
+  const props = { size: 20, color: theme.accent };
+  switch(tipo) {
+    case 'prestamo': return <Landmark {...props}/>;
+    case 'recordatorio': return <Bell {...props}/>;
+    case 'nota': return <StickyNote {...props}/>;
+    case 'credencial': return <Key {...props}/>;
+    case 'cliente': return <Users {...props}/>;
+    case 'sesion': return <Video {...props}/>;
+    case 'reunion': return <Video {...props}/>;
+    case 'producto': return <Package {...props}/>;
+    case 'servicio': return <CreditCard {...props}/>;
+    default: return <HardDrive {...props}/>;
+  }
+};
+
+const getLabelForType = (tipo) => {
+  const map = {
+    'prestamo': 'Préstamo',
+    'recordatorio': 'Recordatorio',
+    'nota': 'Nota',
+    'credencial': 'Credencial',
+    'cliente': 'Cliente',
+    'sesion': 'Sesión',
+    'reunion': 'Reunión',
+    'producto': 'Producto',
+    'servicio': 'Servicio'
+  };
+  return map[tipo] || tipo || 'Item';
+};
+
+const TrashView = ({ settings, isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dbError, setDbError] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg, type = 'ok') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500); };
 
   useEffect(() => {
     fetchTrashItems();
@@ -77,14 +122,19 @@ const TrashView = ({ settings }) => {
     
     setLoading(true);
     try {
-      // Caso 1: Item local (ID empieza por trash- o dbError es true)
+      // Item local (ID empieza por trash- o dbError es true)
       if (item.id.toString().startsWith('trash-') || dbError) {
-        if (item.tipo_dato === 'nota') {
-          const localNotas = JSON.parse(localStorage.getItem('sovereign_notas') || '[]');
-          localStorage.setItem('sovereign_notas', JSON.stringify([item.datos_originales, ...localNotas]));
-        } else if (item.tipo_dato === 'credencial') {
-          const localCreds = JSON.parse(localStorage.getItem('sovereign_creds') || '[]');
-          localStorage.setItem('sovereign_creds', JSON.stringify([item.datos_originales, ...localCreds]));
+        // Determinar la key de localStorage según el tipo
+        let storageKey = '';
+        if (item.tipo_dato === 'nota') storageKey = 'sovereign_notas';
+        else if (item.tipo_dato === 'credencial') storageKey = 'sovereign_creds';
+        else if (item.tipo_dato === 'recordatorio') storageKey = 'sovereign_recordatorios';
+        else if (item.tipo_dato === 'prestamo') storageKey = 'sovereign_prestamos';
+        else if (item.tipo_dato === 'producto') storageKey = 'sovereign_productos';
+
+        if (storageKey) {
+          const localData = JSON.parse(localStorage.getItem(storageKey) || '[]');
+          localStorage.setItem(storageKey, JSON.stringify([item.datos_originales, ...localData]));
         }
 
         // Eliminar de papelera local
@@ -93,29 +143,34 @@ const TrashView = ({ settings }) => {
         localStorage.setItem('sovereign_local_trash', JSON.stringify(updatedTrash));
         
         setItems(prev => prev.filter(i => i.id !== item.id));
-        alert('Item restaurado localmente con éxito.');
+        showToast('Item restaurado localmente', 'ok');
       } else {
-        // Caso 2: Supabase
-        let tableName = '';
-        if (item.tipo_dato === 'cliente') tableName = 'clientes_editor';
-        if (item.tipo_dato === 'sesion') tableName = 'reuniones';
-        if (item.tipo_dato === 'nota') tableName = 'notas';
-        if (item.tipo_dato === 'credencial') tableName = 'boveda_pass';
-
+        // Supabase — mapear tipo_dato → tabla
+        const tableMap = {
+          'cliente': 'clientes_editor',
+          'sesion': 'reuniones',
+          'reunion': 'reuniones',
+          'nota': 'notas',
+          'credencial': 'boveda_pass',
+          'prestamo': 'prestamos',
+          'recordatorio': 'recordatorios',
+          'producto': 'productos',
+          'servicio': 'servicios'
+        };
+        
+        const tableName = tableMap[item.tipo_dato];
         if (tableName) {
-          // Insertar de nuevo en la tabla original
           const { error: restoreError } = await supabase.from(tableName).insert(item.datos_originales);
           if (restoreError) throw restoreError;
 
-          // Borrar de la papelera
           await supabase.from('papelera').delete().eq('id', item.id);
           
           setItems(prev => prev.filter(i => i.id !== item.id));
-          alert('Item restaurado en la nube con éxito.');
+          showToast('Item restaurado en la nube', 'ok');
         }
       }
     } catch (e) {
-      alert(`Error al restaurar: ${e.message}`);
+      showToast(`Error al restaurar: ${e.message}`, 'err');
     }
     setLoading(false);
   };
@@ -133,9 +188,9 @@ const TrashView = ({ settings }) => {
         await supabase.from('papelera').delete().eq('id', item.id);
       }
       setItems(prev => prev.filter(i => i.id !== item.id));
-      alert('Eliminado permanentemente.');
+      showToast('Eliminado permanentemente', 'ok');
     } catch (e) {
-      alert(e.message);
+      showToast(e.message, 'err');
     }
     setLoading(false);
   };
@@ -145,18 +200,14 @@ const TrashView = ({ settings }) => {
     
     setLoading(true);
     try {
-      // Vaciar local
       localStorage.removeItem('sovereign_local_trash');
-
-      // Vaciar Supabase
       if (!dbError) {
         await supabase.from('papelera').delete().neq('id', '00000000-0000-0000-0000-000000000000');
       }
-
       setItems([]);
-      alert('Papelera vaciada.');
+      showToast('Papelera vaciada', 'ok');
     } catch (e) {
-      alert(e.message);
+      showToast(e.message, 'err');
     }
     setLoading(false);
   };
@@ -168,84 +219,84 @@ const TrashView = ({ settings }) => {
   };
 
   return (
-    <div className="flex flex-col h-full max-w-[1400px] w-full animate-in fade-in duration-500 p-8">
-      <header className="flex justify-between items-end mb-10 border-b border-white/5 pb-8">
+    <div className="flex flex-col h-full max-w-[1400px] w-full animate-in fade-in duration-500" style={{ padding: '0 4px' }}>
+      
+      {/* TOAST */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border text-sm font-bold animate-in slide-in-from-top-2 duration-300"
+          style={toast.type === 'err' ? { backgroundColor: '#2a0f0f', borderColor: '#5c1a1a', color: '#f0b0b0' } : { backgroundColor: '#1a2a1a', borderColor: '#1a5c1a', color: '#b0f0b0' }}>
+          {toast.type === 'err' ? <AlertCircle size={16}/> : <CheckCircle2 size={16}/>} {toast.msg}
+        </div>
+      )}
+
+      <header className="flex justify-between items-end mb-6" style={{ borderBottom: `1px solid ${t.border}`, paddingBottom: 16 }}>
         <div>
-          <div className="flex items-center gap-4 mb-2">
-            <div className="p-3 bg-rose-500/10 rounded-2xl text-rose-500 border border-rose-500/20 shadow-lg shadow-rose-500/10">
-              <Trash2 size={24}/>
-            </div>
-            <h2 className="text-4xl font-black text-white tracking-tighter uppercase leading-none">Papelera <span className="text-neutral-800">Sovereign</span></h2>
-          </div>
-          <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.3em] mt-3">Los items se borran definitivamente tras 30 días</p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Papelera</h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Los items se borran definitivamente tras 30 días</p>
         </div>
 
-        <div className="flex gap-4">
-           <button 
-             onClick={fetchTrashItems}
-             className="p-4 bg-white/5 border border-white/10 rounded-2xl text-neutral-500 hover:text-white transition-all"
-           >
-             <RefreshCw size={20} className={loading ? 'animate-spin' : ''}/>
+        <div className="flex gap-3">
+           <button onClick={fetchTrashItems}
+             style={{ padding: 12, backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12, color: t.textMuted, cursor: 'pointer' }}>
+             <RefreshCw size={16} className={loading ? 'animate-spin' : ''}/>
            </button>
-           <button 
-             onClick={emptyTrash}
-             disabled={items.length === 0}
-             className="px-8 py-4 bg-rose-500 text-black rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-rose-600 transition-all shadow-xl shadow-rose-500/20 disabled:opacity-30 flex items-center gap-3"
-           >
-             <Trash size={18}/> Vaciar Papelera
+           <button onClick={emptyTrash} disabled={items.length === 0}
+             style={{ padding: '10px 24px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, opacity: items.length === 0 ? 0.3 : 1 }}>
+             <Trash size={16}/> Vaciar Papelera
            </button>
         </div>
       </header>
 
       <div className="flex-1 overflow-y-auto mac-scrollbar pr-4">
         {loading && items.length === 0 ? (
-          <div className="py-40 flex flex-col items-center justify-center gap-4">
-            <RefreshCw size={40} className="text-neutral-800 animate-spin" />
-            <p className="text-[10px] text-neutral-700 font-black uppercase tracking-widest">Escaneando archivos borrados...</p>
+          <div className="py-32 flex flex-col items-center justify-center gap-3">
+            <RefreshCw size={36} color={t.textDim} className="animate-spin" />
+            <p style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Escaneando archivos borrados...</p>
           </div>
         ) : items.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {items.map(item => (
-              <div key={item.id} className="bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-6 hover:border-white/20 transition-all group flex flex-col relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-4 opacity-50 group-hover:opacity-100 transition-opacity">
-                   <div className="flex items-center gap-1.5 px-2.5 py-1 bg-rose-500/10 rounded-full border border-rose-500/20">
-                     <Clock size={10} className="text-rose-500" />
-                     <span className="text-[9px] font-black text-rose-500 uppercase">{getDaysLeft(item.expira_el)} días</span>
+              <div key={item.id}
+                style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 16, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                
+                {/* Days badge */}
+                <div className="flex justify-end mb-3">
+                   <div className="flex items-center gap-1.5" style={{ padding: '4px 8px', backgroundColor: t.accentSoft, borderRadius: 20, border: `1px solid ${t.borderLight}` }}>
+                     <Clock size={8} color={t.accent} />
+                     <span style={{ fontSize: 8, fontWeight: 900, color: t.accent, textTransform: 'uppercase' }}>{getDaysLeft(item.expira_el)} días</span>
                    </div>
                 </div>
 
-                <div className="flex items-center gap-4 mb-6">
-                   <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-neutral-700">
-                      {item.tipo_dato === 'cliente' ? <RotateCcw size={24}/> : <HardDrive size={24}/>}
+                {/* Icon & Name */}
+                <div className="flex items-center gap-3 mb-4">
+                   <div style={{ width: 40, height: 40, backgroundColor: t.accentSoft, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {getIconForType(item.tipo_dato, isDark)}
                    </div>
                    <div>
-                      <p className="text-[9px] font-black text-neutral-700 uppercase tracking-widest mb-1">{item.tipo_dato}</p>
-                      <h4 className="text-sm font-black text-white uppercase truncate max-w-[150px]">{item.nombre_item}</h4>
+                      <p style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 2 }}>{getLabelForType(item.tipo_dato)}</p>
+                      <h4 style={{ fontSize: 12, fontWeight: 900, color: '#fff', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160 }}>{item.nombre_item}</h4>
                    </div>
                 </div>
 
-                <div className="mt-auto pt-6 border-t border-white/5 flex gap-3">
-                   <button 
-                     onClick={() => restoreItem(item)}
-                     className="flex-1 py-3 bg-white/5 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:bg-emerald-500 hover:text-black hover:border-emerald-500 transition-all flex items-center justify-center gap-2"
-                   >
-                     <RefreshCw size={14}/> Restaurar
+                {/* Actions */}
+                <div className="flex gap-2" style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, marginTop: 'auto' }}>
+                   <button onClick={() => restoreItem(item)}
+                     style={{ flex: 1, padding: '8px 0', backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, borderRadius: 10, fontSize: 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                     <RotateCcw size={10}/> Restaurar
                    </button>
-                   <button 
-                     onClick={() => deleteForever(item)}
-                     className="p-3 bg-white/5 border border-white/5 rounded-xl text-neutral-700 hover:bg-rose-500 hover:text-white transition-all flex items-center justify-center"
-                   >
-                     <Trash size={16}/>
+                   <button onClick={() => deleteForever(item)}
+                     style={{ padding: '8px 10px', backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, borderRadius: 10, cursor: 'pointer', color: t.textDim }}>
+                     <Trash size={12}/>
                    </button>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="py-40 flex flex-col items-center justify-center border border-dashed border-white/5 rounded-[40px] bg-white/[0.01]">
-            <CheckCircle2 size={48} className="text-neutral-900 mb-6" />
-            <h3 className="text-xl font-black text-white uppercase tracking-tighter">Papelera Impecable</h3>
-            <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mt-2">No hay archivos ni datos en el limbo</p>
+          <div className="py-32 flex flex-col items-center justify-center" style={{ border: `1px dashed ${t.border}`, borderRadius: 16 }}>
+            <CheckCircle2 size={40} color={t.textDim} style={{ marginBottom: 16 }} />
+            <h3 style={{ fontSize: 16, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '-0.02em' }}>Papelera Vacía</h3>
+            <p style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: 6 }}>No hay archivos ni datos en el limbo</p>
           </div>
         )}
       </div>

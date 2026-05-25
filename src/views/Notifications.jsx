@@ -35,10 +35,8 @@ const Notifications = ({ data }) => {
   return (
     <div className="flex flex-col h-full max-w-[1000px] w-full animate-in fade-in duration-500">
       <header className="mb-8">
-        <h2 className="text-3xl font-light text-white tracking-tight flex items-center gap-3">
-          <Bell className="text-neutral-400" size={28} /> Notificaciones de Cobro
-        </h2>
-        <p className="text-[11px] text-neutral-500 uppercase tracking-widest mt-1">Seguimiento de vencimientos (Ciclos de 30 días)</p>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Notificaciones de Cobro</h2>
+        <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Seguimiento de vencimientos (Ciclos de 30 días)</p>
       </header>
 
       <div className="grid gap-4">
@@ -47,7 +45,7 @@ const Notifications = ({ data }) => {
             <div key={n.id} className={`p-5 rounded-xl border flex items-center justify-between group transition-all duration-300 ${
               n.type === 'today' 
                 ? 'bg-white/10 border-white/20' 
-                : 'bg-[#0a0a0a] border-white/[0.05] hover:border-white/10'
+                : 'bg-[#202022] border-white/[0.05] hover:border-white/10'
             }`}>
               <div className="flex items-center gap-5">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
