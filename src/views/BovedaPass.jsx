@@ -246,27 +246,27 @@ const BovedaPass = ({ settings, isDark }) => {
   // LOCK SCREEN
   if (!isUnlocked) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] w-full max-w-lg mx-auto p-6 animate-in fade-in zoom-in-95 duration-500">
+      <div className="flex flex-col items-center justify-center min-h-[calc(100vh-12rem)] w-full max-w-lg mx-auto p-6 animate-in fade-in zoom-in-95 duration-500" style={{ backgroundColor: t.bg, borderRadius: 16 }}>
         <div className="mb-8 text-center flex flex-col items-center">
           <div style={{ width: 56, height: 56, backgroundColor: t.accentSoft, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.borderLight}`, marginBottom: 20 }}>
             <Lock size={28} color={t.accent} />
           </div>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>Contraseñas</h2>
-          <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 8 }}>Encriptación AES-256 en cliente</p>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1 }}>Contraseñas</h2>
+          <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 8 }}>Cifrado AES-256 en Cliente</p>
         </div>
 
         <div className="w-full" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 20, padding: 28 }}>
           {isMasterPasswordCreated ? (
             <div className="space-y-5">
               <div>
-                <h4 style={{ fontSize: 12, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Desbloquear Bóveda</h4>
+                <h4 style={{ fontSize: 12, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Desbloquear Bóveda</h4>
                 <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', lineHeight: 1.5 }}>
                   Ingresa tu Llave Maestra local.
                 </p>
               </div>
               <input type="password" placeholder="LLAVE MAESTRA" value={masterPassword}
                 onChange={e => setMasterPassword(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleUnlockBoveda()}
-                style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', color: '#fff', outline: 'none' }}/>
+                style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', color: t.text, outline: 'none' }}/>
               <button onClick={handleUnlockBoveda}
                 style={{ width: '100%', padding: '14px 0', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 <Unlock size={14}/> Desbloquear
@@ -279,17 +279,17 @@ const BovedaPass = ({ settings, isDark }) => {
                 <div>
                   <h5 style={{ fontSize: 9, fontWeight: 900, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Criptografía Extrema</h5>
                   <p style={{ fontSize: 7, color: t.textDim, fontWeight: 700, textTransform: 'uppercase', lineHeight: 1.5, marginTop: 4 }}>
-                    Tus contraseñas se encriptan en cliente. Si olvidas tu Llave Maestra, los datos serán irrecuperables.
+                    Tus contraseñas se cifran en cliente. Si olvidas tu Llave Maestra, los datos serán irrecuperables.
                   </p>
                 </div>
               </div>
               <div>
-                <h4 style={{ fontSize: 12, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Configurar Llave Maestra</h4>
+                <h4 style={{ fontSize: 12, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Configurar Llave Maestra</h4>
                 <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Crea una contraseña maestra ultra fuerte.</p>
               </div>
               <input type="password" placeholder="NUEVA LLAVE MAESTRA" value={masterPassword}
                 onChange={e => setMasterPassword(e.target.value)}
-                style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', color: '#fff', outline: 'none' }}/>
+                style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 20px', fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', textAlign: 'center', color: t.text, outline: 'none' }}/>
               <button onClick={handleCreateMasterPassword}
                 style={{ width: '100%', padding: '14px 0', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 9, textTransform: 'uppercase', letterSpacing: '0.12em', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                 <ShieldCheck size={14}/> Crear & Desbloquear
@@ -303,7 +303,7 @@ const BovedaPass = ({ settings, isDark }) => {
 
   // MAIN VIEW
   return (
-    <div className="flex flex-col h-[calc(100vh-6rem)] w-full max-w-[1400px] mx-auto animate-in fade-in duration-500 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-6rem)] w-full max-w-[1400px] mx-auto animate-in fade-in duration-500 overflow-hidden" style={{ paddingLeft: '1.5rem', paddingRight: '1.5rem' }}>
       
       {/* DB ALERT */}
       {dbError && (
@@ -316,10 +316,10 @@ const BovedaPass = ({ settings, isDark }) => {
       )}
 
       {/* HEADER */}
-      <header className="flex justify-between items-end mb-6" style={{ borderBottom: `1px solid ${t.border}`, paddingBottom: 16 }}>
+      <header className="flex justify-between items-end mb-6" style={{ paddingBottom: 16 }}>
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Contraseñas</h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Encriptación AES-256</p>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Gestor Seguro de Llaves</p>
         </div>
 
         <div className="flex items-center gap-3">

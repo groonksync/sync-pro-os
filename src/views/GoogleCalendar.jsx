@@ -144,11 +144,11 @@ const GoogleCalendar = ({ token, user, settings, isDark = true }) => {
     <div className="flex-1 h-full flex flex-col overflow-hidden font-sans" style={{ backgroundColor: t.bg, color: t.text }}>
       
       {/* HEADER */}
-      <header className="h-16 flex items-center justify-between px-6" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.bg }}>
+      <header className="h-16 flex items-center justify-between px-6" style={{ backgroundColor: t.bg }}>
         <div className="flex items-center gap-6">
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Calendario</h2>
-            <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Google Sync</p>
+            <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Sincronización de Eventos</p>
           </div>
           
           <div className="flex items-center gap-1" style={{ backgroundColor: t.panel, padding: 4, borderRadius: 12, border: `1px solid ${t.border}` }}>

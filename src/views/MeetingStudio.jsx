@@ -1148,8 +1148,7 @@ const ProjectEngineView = ({ isDark = true }) => {
 
   return (
     <div className="flex-grow flex-shrink min-h-0 flex flex-col p-5 lg:p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-700 overflow-y-auto mac-scrollbar">
-       <header className="flex flex-col md:flex-row md:items-center justify-between pb-5 gap-4"
-         style={{ borderBottom: `1px solid ${t.border}` }}>
+       <header className="flex flex-col md:flex-row md:items-center justify-between pb-5 gap-4">
           <div>
              <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2.5" style={{ color: 'white' }}>
                 Edición de Video

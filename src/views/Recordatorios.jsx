@@ -144,10 +144,10 @@ const Recordatorios = ({ settings, isDark }) => {
   return (
     <div className="h-full w-full flex flex-col">
       {/* HEADER */}
-      <header className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: t.border }}>
+      <header className="flex items-center justify-between mb-4 pb-3">
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Recordatorios</h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Sistema de Gestión de Tareas</p>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Gestión de Tareas y Recordatorios</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}

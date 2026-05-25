@@ -363,13 +363,13 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] w-full max-w-[1600px] mx-auto animate-in fade-in duration-300 overflow-hidden px-1">
+    <div className="flex flex-col h-[calc(100vh-5rem)] w-full max-w-[1600px] mx-auto animate-in fade-in duration-300 overflow-hidden px-6">
       
       {/* HEADER */}
-      <header className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: t.border }}>
+      <header className="flex items-center justify-between mb-4 pb-3">
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Notas</h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Editor Markdown</p>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Editor de Texto Markdown</p>
         </div>
 
         <div className="flex items-center gap-3">

@@ -122,10 +122,10 @@ export default function DriveSovereign({ token, user, onLoginSuccess, isDark = t
       )}
 
       {/* HEADER */}
-      <header className="mb-6 flex justify-between items-center" style={{ borderBottom: `1px solid ${t.border}`, paddingBottom: 24 }}>
+      <header className="mb-6 flex justify-between items-center" style={{ paddingBottom: 24 }}>
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Almacenamiento</h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Google Drive integrado</p>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Nube Digital Segura</p>
           {/* BREADCRUMB */}
           <div className="flex items-center gap-2">
             {breadcrumb.map((b, i) => (
