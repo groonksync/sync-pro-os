@@ -110,7 +110,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 14px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '9999px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 14px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <ActiveAILogo />
               <div>
@@ -123,13 +123,13 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
             <button 
               onClick={fetchAiBalance} 
               className={isRefreshing ? 'animate-spin' : ''}
-              style={{ padding: '4px', borderRadius: '8px', border: 'none', background: 'transparent', color: t.textDim, cursor: 'pointer' }}
+              style={{ padding: '4px', borderRadius: '12px', border: 'none', background: 'transparent', color: t.textDim, cursor: 'pointer' }}
             >
               <RefreshCw size={12} />
             </button>
           </div>
           
-          <div style={{ padding: '8px 14px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '9999px' }}>
+          <div style={{ padding: '8px 14px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
             <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Sistema</p>
             <p style={{ fontSize: '11px', fontWeight: 600, color: t.success, marginTop: '2px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.success, display: 'inline-block' }}></span>
@@ -141,7 +141,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
 
       {/* PRESTAMISTAS RECIENTES */}
       {nuevosPrestamistas.length > 0 && (
-        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+        <div style={{ marginBottom: '24px', padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
             <UserPlus size={16} color={t.accent} />
             <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text, margin: 0 }}>
@@ -165,7 +165,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
                 onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.backgroundColor = t.input; }}
               >
                 <div style={{
-                  width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center',
+                  width: '32px', height: '32px', borderRadius: '12px', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', fontSize: '11px', fontWeight: 700,
                   backgroundColor: t.accentSoft, color: t.accent,
                 }}>
@@ -189,12 +189,12 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
 
       {/* FILA 1: KPIs PRINCIPALES */}
       <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2'}`} style={{ marginBottom: '24px' }}>
-        <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+        <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft }}>
               <Wallet size={18} color={t.accent} />
             </div>
-            <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 10px', borderRadius: '9999px', backgroundColor: t.accentSoft, color: t.accent }}>
+            <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 10px', borderRadius: '12px', backgroundColor: t.accentSoft, color: t.accent }}>
               Capital
             </span>
           </div>
@@ -208,14 +208,14 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
           </div>
         </div>
 
-        <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+        <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft }}>
               <Package size={18} color={t.accent} />
             </div>
             <span style={{
               fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
-              padding: '4px 10px', borderRadius: '9999px',
+              padding: '4px 10px', borderRadius: '12px',
               backgroundColor: stockBajo.length > 0 ? 'rgba(239, 68, 68, 0.10)' : t.accentSoft,
               color: stockBajo.length > 0 ? t.danger : t.accent,
             }}>
@@ -236,7 +236,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
       {/* FILA 2: RENDIMIENTO + TAREAS */}
       <section className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`} style={{ marginBottom: '24px' }}>
          
-         <div className={`${isMobile ? '' : 'col-span-7'}`} style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+         <div className={`${isMobile ? '' : 'col-span-7'}`} style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
             <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${t.border}` }}>
                <div>
                   <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text, margin: 0 }}>Rendimiento Operativo</h3>
@@ -264,7 +264,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
                               <td style={{ padding: '14px 20px' }}>
                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <div style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, backgroundColor: t.accentSoft, color: t.accent }}>
+                                    <div style={{ width: '32px', height: '32px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 700, backgroundColor: t.accentSoft, color: t.accent }}>
                                        {p.nombre?.charAt(0) || '?'}
                                     </div>
                                     <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre}</p>
@@ -300,7 +300,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
          </div>
 
          <div className={`${isMobile ? '' : 'col-span-5'} space-y-4`}>
-            <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+            <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                   <Bell size={14} color={t.warning} /> Pulso de Tareas
                </h3>
@@ -308,7 +308,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
                   {tareasPendientes.slice(0, 3).map(task => (
                     <div key={task.id} style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '12px', borderRadius: '10px',
+                      padding: '12px', borderRadius: '12px',
                       backgroundColor: t.input, border: `1px solid ${t.border}`,
                       transition: 'all 0.2s',
                     }}
@@ -334,7 +334,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
                </div>
             </div>
 
-            <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+            <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                <h3 style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                   <Video size={14} color={t.accent} /> Cola de Producción
                </h3>
@@ -344,8 +344,8 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
                      <p style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, marginTop: '4px' }}>{listaVideos.length}</p>
                   </div>
                   <div style={{ flex: 1 }}>
-                     <div style={{ height: '6px', borderRadius: '9999px', overflow: 'hidden', backgroundColor: t.input, marginBottom: '8px' }}>
-                        <div style={{ height: '100%', width: '66%', borderRadius: '9999px', backgroundColor: t.accent }}></div>
+                     <div style={{ height: '6px', borderRadius: '12px', overflow: 'hidden', backgroundColor: t.input, marginBottom: '8px' }}>
+                        <div style={{ height: '100%', width: '66%', borderRadius: '12px', backgroundColor: t.accent }}></div>
                      </div>
                      <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Capacidad de Renderizado</p>
                   </div>
@@ -365,7 +365,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [], productos: [
          ].map(item => (
             <div key={item.label} style={{
               padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
-              backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px',
+              backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px',
               transition: 'all 0.2s',
             }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hoverActive; }}>

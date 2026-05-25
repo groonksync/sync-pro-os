@@ -100,7 +100,7 @@ const BovedaSoberana = () => {
     <div className="flex h-full w-full flex-col bg-[#141414] font-sans text-white overflow-hidden animate-in fade-in duration-700">
       <header className="px-8 py-6 border-b border-white/5 bg-[#202022]/50 backdrop-blur-md flex items-center justify-between shrink-0">
          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]"><ShieldCheck size={28}/></div>
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.1)]"><ShieldCheck size={28}/></div>
             <div><h1 className="text-xl font-black uppercase tracking-tight">Bóveda Soberana</h1><p className="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Seguridad Grado Militar AES-256</p></div>
          </div>
          <div className="flex items-center gap-4">
@@ -140,10 +140,10 @@ const BovedaSoberana = () => {
       {mostrarModalLlave && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#141414]/95 backdrop-blur-xl">
            <div className="max-w-md w-full p-12 text-center space-y-8">
-              <div className="w-24 h-24 rounded-3xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 mx-auto animate-pulse"><Fingerprint size={48}/></div>
+              <div className="w-24 h-24 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 mx-auto animate-pulse"><Fingerprint size={48}/></div>
               <div><h2 className="text-2xl font-black text-white uppercase">Acceso Blindado</h2><p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mt-2">Introduce tu Llave Maestra</p></div>
-              <input type="password" value={llaveMaestra} onChange={e=>setLlaveMaestra(e.target.value)} placeholder="Llave..." autoFocus onKeyDown={e => e.key === 'Enter' && (setDesbloqueada(true), setMostrarModalLlave(false))} className="w-full bg-[#202022] border border-white/10 rounded-2xl p-5 text-center text-white text-lg font-black outline-none focus:border-emerald-500/50"/>
-              <button onClick={() => { setDesbloqueada(true); setMostrarModalLlave(false); }} className="w-full py-5 bg-emerald-500 text-black font-black uppercase tracking-widest rounded-2xl">Desbloquear</button>
+              <input type="password" value={llaveMaestra} onChange={e=>setLlaveMaestra(e.target.value)} placeholder="Llave..." autoFocus onKeyDown={e => e.key === 'Enter' && (setDesbloqueada(true), setMostrarModalLlave(false))} className="w-full bg-[#202022] border border-white/10 rounded-xl p-5 text-center text-white text-lg font-black outline-none focus:border-emerald-500/50"/>
+              <button onClick={() => { setDesbloqueada(true); setMostrarModalLlave(false); }} className="w-full py-5 bg-emerald-500 text-black font-black uppercase tracking-widest rounded-xl">Desbloquear</button>
            </div>
         </div>
       )}
@@ -169,16 +169,16 @@ const VaultCard = ({ item, onDelete, alDescifrar }) => {
     return <Globe size={24}/>;
   };
   return (
-    <div className="group bg-[#202022] border border-white/5 rounded-3xl p-6 hover:border-emerald-500/30 transition-all flex flex-col justify-between relative overflow-hidden h-[240px]">
-       <button onClick={onDelete} className="absolute top-4 right-4 p-2 bg-rose-500/10 text-rose-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={12}/></button>
+    <div className="group bg-[#202022] border border-white/5 rounded-xl p-6 hover:border-emerald-500/30 transition-all flex flex-col justify-between relative overflow-hidden h-[240px]">
+       <button onClick={onDelete} className="absolute top-4 right-4 p-2 bg-rose-500/10 text-rose-500 rounded-xl opacity-0 group-hover:opacity-100 transition-all"><Trash2 size={12}/></button>
        <div className="space-y-4">
           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-emerald-500 border border-white/5">{getIcon(item.titulo)}</div>
+             <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center text-emerald-500 border border-white/5">{getIcon(item.titulo)}</div>
              <div className="truncate flex-1"><h4 className="text-sm font-black text-white uppercase truncate">{item.titulo}</h4><p className="text-[8px] font-black text-neutral-600 uppercase">{data.categoria}</p></div>
           </div>
           <div className="space-y-3 pt-4 border-t border-white/5">
              <div><p className="text-[8px] font-black text-neutral-600 uppercase mb-1">Usuario</p><p className="text-[11px] font-bold text-neutral-300 truncate">{data.usuario}</p></div>
-             <div><p className="text-[8px] font-black text-neutral-600 uppercase mb-1">Pass</p><div className="flex items-center justify-between gap-2 bg-white/2 rounded-lg p-2 border border-white/5"><p className="text-[11px] font-mono text-emerald-500 truncate">{mask ? '••••••••' : alDescifrar(data.value)}</p><button onClick={() => setMask(!mask)} className="text-neutral-500">{mask ? <Eye size={12}/> : <EyeOff size={12}/>}</button></div></div>
+             <div><p className="text-[8px] font-black text-neutral-600 uppercase mb-1">Pass</p><div className="flex items-center justify-between gap-2 bg-white/2 rounded-xl p-2 border border-white/5"><p className="text-[11px] font-mono text-emerald-500 truncate">{mask ? '••••••••' : alDescifrar(data.value)}</p><button onClick={() => setMask(!mask)} className="text-neutral-500">{mask ? <Eye size={12}/> : <EyeOff size={12}/>}</button></div></div>
           </div>
        </div>
     </div>
@@ -189,7 +189,7 @@ const ModalNueva = ({ onClose, onSave, catalogo }) => {
   const [nueva, setNueva] = useState({ sitio: '', usuario: '', password: '', categoria: 'pass', plan: '' });
   return (
     <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-[#141414]/80 backdrop-blur-md p-8">
-       <div className="bg-[#141414] border border-white/10 rounded-3xl w-full max-w-lg overflow-hidden">
+       <div className="bg-[#141414] border border-white/10 rounded-xl w-full max-w-lg overflow-hidden">
           <div className="p-8 border-b border-white/5 flex items-center justify-between bg-[#202022]/50"><h3 className="text-lg font-black uppercase">Nueva Entrada</h3><button onClick={onClose} className="text-neutral-500 hover:text-white"><Shield size={20}/></button></div>
           <div className="p-8 space-y-6">
              <select value={nueva.categoria} onChange={e=>setNueva({...nueva, categoria: e.target.value})} className="w-full bg-[#202022] border border-white/10 rounded-xl p-4 text-[11px] text-white">
@@ -204,7 +204,7 @@ const ModalNueva = ({ onClose, onSave, catalogo }) => {
                 <input value={nueva.usuario} onChange={e=>setNueva({...nueva, usuario: e.target.value})} className="bg-[#202022] border border-white/10 rounded-xl p-4 text-[11px] text-white" placeholder="Usuario..."/>
                 <input type="password" value={nueva.password} onChange={e=>setNueva({...nueva, password: e.target.value})} className="bg-[#202022] border border-white/10 rounded-xl p-4 text-[11px] text-white" placeholder="Pass..."/>
              </div>
-             <button onClick={() => onSave(nueva)} className="w-full py-5 bg-emerald-500 text-black font-black uppercase rounded-2xl">Blindar Entrada</button>
+             <button onClick={() => onSave(nueva)} className="w-full py-5 bg-emerald-500 text-black font-black uppercase rounded-xl">Blindar Entrada</button>
           </div>
        </div>
     </div>

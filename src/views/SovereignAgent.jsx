@@ -276,7 +276,7 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
     <>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-500 shadow-2xl active:scale-95 group overflow-hidden ${isOpen ? 'px-5 py-4 rounded-full bg-rose-500' : 'px-6 py-4 rounded-[1.5rem] bg-[#202022] border border-white/10 hover:border-emerald-500/30'}`}
+        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-500 shadow-2xl active:scale-95 group overflow-hidden ${isOpen ? 'px-5 py-4 rounded-xl bg-rose-500' : 'px-6 py-4 rounded-xl bg-[#202022] border border-white/10 hover:border-emerald-500/30'}`}
       >
         <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
         {isOpen ? (
@@ -295,7 +295,7 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
         <div className="fixed bottom-32 right-8 w-[92vw] md:w-[450px] h-[75vh] md:h-[650px] bg-[#202022] border border-white/10 rounded-[3.5rem] z-[1000] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-300 overflow-hidden">
            <header className="p-8 border-b border-white/5 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10">
+                 <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
                     <ActiveLogo />
                  </div>
                  <div>
@@ -328,14 +328,14 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
                          {m.role === 'agent' ? <div className="scale-75"><ActiveLogo /></div> : <User size={16}/>}
                       </div>
                       <div className="space-y-3">
-                         <div className={`p-5 rounded-2xl md:rounded-[1.8rem] text-[12px] leading-relaxed ${m.role === 'agent' ? 'bg-white/[0.03] text-neutral-200' : 'bg-emerald-500 text-black font-black'}`}>
+                         <div className={`p-5 rounded-xl md:rounded-[1.8rem] text-[12px] leading-relaxed ${m.role === 'agent' ? 'bg-white/[0.03] text-neutral-200' : 'bg-emerald-500 text-black font-black'}`}>
                             {m.role === 'agent' ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown> : m.content}
                          </div>
                          {m.files && (
                            <div className="flex gap-2 flex-wrap">
                               {m.files.map((f, fi) => (
                                 <div key={fi} className="p-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2">
-                                   {f.type?.startsWith('image/') ? <img src={f.base64} className="w-10 h-10 object-cover rounded-lg" /> : <Paperclip size={14} className="text-neutral-500"/>}
+                                   {f.type?.startsWith('image/') ? <img src={f.base64} className="w-10 h-10 object-cover rounded-xl" /> : <Paperclip size={14} className="text-neutral-500"/>}
                                    <span className="text-[8px] text-neutral-500 font-black uppercase truncate max-w-[80px]">{f.name}</span>
                                 </div>
                               ))}
@@ -350,18 +350,18 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
            </div>
 
            <footer className="p-8 bg-[#141414]/20 border-t border-white/5 space-y-4">
-              <div className="relative bg-[#141414] border border-white/10 rounded-[2.5rem] p-2 flex items-center">
+              <div className="relative bg-[#141414] border border-white/10 rounded-xl p-2 flex items-center">
                  <label className="w-10 h-10 flex items-center justify-center text-neutral-700 hover:text-emerald-500 cursor-pointer transition-all"><input type="file" multiple className="hidden" onChange={handleFileUpload}/><Paperclip size={18}/></label>
-                 <button onClick={toggleListening} className={`w-10 h-10 flex items-center justify-center rounded-2xl ${isListening ? 'bg-blue-500 text-white animate-pulse' : 'text-neutral-700'}`}><Sparkles size={18} /></button>
-                 <button onClick={toggleRecording} className={`w-10 h-10 flex items-center justify-center rounded-2xl ${isRecording ? 'bg-rose-500 text-white animate-pulse' : 'text-neutral-700'}`}><Mic size={18} /></button>
+                 <button onClick={toggleListening} className={`w-10 h-10 flex items-center justify-center rounded-xl ${isListening ? 'bg-blue-500 text-white animate-pulse' : 'text-neutral-700'}`}><Sparkles size={18} /></button>
+                 <button onClick={toggleRecording} className={`w-10 h-10 flex items-center justify-center rounded-xl ${isRecording ? 'bg-rose-500 text-white animate-pulse' : 'text-neutral-700'}`}><Mic size={18} /></button>
                  <input type="text" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder={isListening ? "Escuchando..." : isRecording ? "Grabando..." : "Comando maestro..."} className={`flex-1 bg-transparent py-4 text-xs font-bold outline-none px-4 ${isRecording ? 'text-rose-500 animate-pulse' : 'text-white'}`} />
                  
                  {isRecording ? (
-                   <button onClick={toggleRecording} className="w-12 h-12 rounded-[1.5rem] flex items-center justify-center bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.5)] animate-pulse">
+                   <button onClick={toggleRecording} className="w-12 h-12 rounded-xl flex items-center justify-center bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.5)] animate-pulse">
                      <Square size={16} fill="currentColor"/>
                    </button>
                  ) : (
-                   <button onClick={handleSend} className={`w-12 h-12 rounded-[1.5rem] flex items-center justify-center transition-all ${input.trim() || uploadedFiles.length > 0 ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-white/5 text-neutral-800'}`}>
+                   <button onClick={handleSend} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${input.trim() || uploadedFiles.length > 0 ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-white/5 text-neutral-800'}`}>
                      <Send size={18}/>
                    </button>
                  )}

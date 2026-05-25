@@ -374,8 +374,8 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
 
         <div className="flex items-center gap-3">
           {/* Sync Status */}
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-            <span className={`w-1.5 h-1.5 rounded-full ${
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+            <span className={`w-1.5 h-1.5 rounded-xl ${
               saveStatus === 'synced' ? 'bg-emerald-500' :
               saveStatus === 'saving' ? 'bg-amber-500 animate-pulse' : 'bg-rose-500 animate-ping'
             }`} />
@@ -408,7 +408,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
           </div>
           <button 
             onClick={copySqlToClipboard}
-            className="px-3 py-1.5 rounded-lg text-[9px] font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-xl text-[9px] font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5"
             style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
             onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.2)'; }}
             onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
@@ -449,7 +449,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                   <button
                     key={folder.id}
                     onClick={() => setActiveFolderId(folder.id)}
-                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-lg transition-all text-[11px]"
+                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl transition-all text-[11px]"
                     style={{
                       backgroundColor: activeFolderId === folder.id ? t.accentSoft : 'transparent',
                       border: `1px solid ${activeFolderId === folder.id ? t.borderLight : 'transparent'}`,
@@ -459,7 +459,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                     onMouseLeave={e => { if (activeFolderId !== folder.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
                     <div className="flex items-center gap-2 truncate">
-                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: folder.color }} />
+                      <span className="w-1.5 h-1.5 rounded-xl shrink-0" style={{ backgroundColor: folder.color }} />
                       <span className="truncate font-medium">{folder.nombre}</span>
                     </div>
                     {count > 0 && (
@@ -486,7 +486,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                 <button
                   key={st.key}
                   onClick={() => setStatusFilter(st.key)}
-                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg transition-all text-[10px] font-medium"
+                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all text-[10px] font-medium"
                   style={{
                     backgroundColor: statusFilter === st.key ? t.accentSoft : 'transparent',
                     border: `1px solid ${statusFilter === st.key ? t.borderLight : 'transparent'}`,
@@ -521,7 +521,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
               placeholder="Buscar notas..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg py-2 pl-9 pr-3 text-xs outline-none transition-all"
+              className="w-full rounded-xl py-2 pl-9 pr-3 text-xs outline-none transition-all"
               style={{
                 backgroundColor: t.surface,
                 border: `1px solid ${t.border}`,
@@ -536,7 +536,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
           <div className="flex-1 overflow-y-auto min-h-0 space-y-2 scrollbar-thin pr-0.5">
             {loading ? (
               <div className="flex items-center justify-center py-16">
-                <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
+                <div className="w-5 h-5 border-2 rounded-xl animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
               </div>
             ) : filteredNotas.length > 0 ? (
               filteredNotas.map(note => {
@@ -566,7 +566,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                   >
                     {/* Status line */}
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="w-1 h-1 rounded-full" style={{ backgroundColor: estadoColor }} />
+                      <span className="w-1 h-1 rounded-xl" style={{ backgroundColor: estadoColor }} />
                       <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
                         {folder ? folder.nombre : 'General'}
                       </span>
@@ -639,7 +639,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                     <select
                       value={activeNote.folderId}
                       onChange={e => handleUpdateNoteField(activeNote.id, 'folderId', e.target.value)}
-                      className="appearance-none rounded-lg px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-6"
+                      className="appearance-none rounded-xl px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-6"
                       style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.text }}
                     >
                       {folders.filter(f => !f.isSystem).map(f => (
@@ -655,7 +655,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                     <select
                       value={activeNote.estado}
                       onChange={e => handleUpdateNoteField(activeNote.id, 'estado', e.target.value)}
-                      className="appearance-none rounded-lg px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-6"
+                      className="appearance-none rounded-xl px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-6"
                       style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.text }}
                     >
                       <option value="pendiente">Pendiente</option>
@@ -666,12 +666,12 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                   </div>
 
                   {/* Color picker */}
-                  <div className="flex items-center gap-1 rounded-lg px-2 py-1.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                  <div className="flex items-center gap-1 rounded-xl px-2 py-1.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                     {['#4ec9b0', t.accent, '#ef4444', '#eab308', '#a855f7', '#f43f5e'].map(color => (
                       <button
                         key={color}
                         onClick={() => handleUpdateNoteField(activeNote.id, 'color', color)}
-                        className="w-3 h-3 rounded-full transition-all"
+                        className="w-3 h-3 rounded-xl transition-all"
                         style={{
                           backgroundColor: color,
                           border: activeNote.color === color ? `2px solid ${t.text}` : '2px solid transparent',
@@ -682,7 +682,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                   </div>
 
                   {/* Date */}
-                  <div className="flex items-center gap-1.5 rounded-lg px-2 py-1.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                  <div className="flex items-center gap-1.5 rounded-xl px-2 py-1.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                     <Calendar size={12} style={{ color: t.textDim }} />
                     <input
                       type="date"
@@ -698,7 +698,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                   {/* Favorite toggle */}
                   <button
                     onClick={() => handleUpdateNoteField(activeNote.id, 'favorito', !activeNote.favorito)}
-                    className="p-1.5 rounded-lg transition-all"
+                    className="p-1.5 rounded-xl transition-all"
                     style={{
                       backgroundColor: activeNote.favorito ? 'rgba(234,179,8,0.12)' : 'transparent',
                       border: `1px solid ${activeNote.favorito ? 'rgba(234,179,8,0.25)' : 'transparent'}`,
@@ -724,7 +724,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
 
               {/* Editor Tabs */}
               <div className="flex items-center justify-between shrink-0">
-                <div className="flex rounded-lg p-0.5 gap-0.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                <div className="flex rounded-xl p-0.5 gap-0.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                   <button
                     onClick={() => setEditMode('write')}
                     className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
@@ -794,7 +794,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
       {isNewFolderModalOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center animate-in fade-in duration-200"
           style={{ backgroundColor: 'rgba(20,20,20,0.85)', backdropFilter: 'blur(8px)' }}>
-          <div className="rounded-2xl p-6 w-full max-w-sm shadow-2xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
+          <div className="rounded-xl p-6 w-full max-w-sm shadow-2xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
             <h4 className="text-sm font-semibold mb-5 flex items-center gap-2" style={{ color: t.text }}>
               <FolderPlus size={18} style={{ color: t.accent }} /> Nueva Carpeta
             </h4>
@@ -807,7 +807,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                   value={newFolderName}
                   onChange={e => setNewFolderName(e.target.value)}
                   placeholder="Ej. Finanzas, Recetas..."
-                  className="w-full rounded-lg py-2.5 px-3 text-xs outline-none transition-all"
+                  className="w-full rounded-xl py-2.5 px-3 text-xs outline-none transition-all"
                   style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.text }}
                   onFocus={e => { e.currentTarget.style.borderColor = t.accent; }}
                   onBlur={e => { e.currentTarget.style.borderColor = t.border; }}
@@ -821,7 +821,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                     <button
                       key={color}
                       onClick={() => setNewFolderColor(color)}
-                      className="w-5 h-5 rounded-full transition-all"
+                      className="w-5 h-5 rounded-xl transition-all"
                       style={{
                         backgroundColor: color,
                         border: newFolderColor === color ? `2px solid ${t.text}` : '2px solid transparent',
@@ -835,7 +835,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setIsNewFolderModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all"
+                  className="flex-1 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all"
                   style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.textDim }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentSoft; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.surface; }}
@@ -844,7 +844,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                 </button>
                 <button
                   onClick={handleCreateFolder}
-                  className="flex-1 py-2.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all"
+                  className="flex-1 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all"
                   style={{ backgroundColor: t.accent, color: t.bg }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}

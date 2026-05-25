@@ -182,7 +182,7 @@ const Recordatorios = ({ settings, isDark }) => {
         <div className="flex p-1 rounded-xl w-full md:w-auto overflow-x-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
           {['Todos', 'Tarea', 'Compra', 'Idea', 'Nota'].map(f => (
             <button key={f} onClick={() => setActiveFilter(f)}
-              className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all whitespace-nowrap"
+              className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap"
               style={{
                 backgroundColor: activeFilter === f ? t.accent : 'transparent',
                 color: activeFilter === f ? '#000000' : t.textDim,
@@ -212,7 +212,7 @@ const Recordatorios = ({ settings, isDark }) => {
       <div className="flex-1 overflow-y-auto mac-scrollbar space-y-4">
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
+            <div className="w-5 h-5 border-2 rounded-xl animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
           </div>
         ) : (
           categories.map(cat => {
@@ -220,7 +220,7 @@ const Recordatorios = ({ settings, isDark }) => {
             if (items.length === 0) return null;
             return (
               <section key={cat.key} className="space-y-3">
-                <div className="flex items-center gap-3 px-3 py-2 rounded-lg" style={{ backgroundColor: t.accentSoft }}>
+                <div className="flex items-center gap-3 px-3 py-2 rounded-xl" style={{ backgroundColor: t.accentSoft }}>
                   <cat.icon size={14} color={t.accent} />
                   <h3 className="text-[9px] font-black uppercase tracking-[0.2em]" style={{ color: t.text }}>{cat.label}</h3>
                 </div>
@@ -242,7 +242,7 @@ const Recordatorios = ({ settings, isDark }) => {
       {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4" style={{ backgroundColor: t.overlay, backdropFilter: 'blur(24px)' }}>
-          <div className="w-full max-w-lg rounded-2xl p-6 animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
+          <div className="w-full max-w-lg rounded-xl p-6 animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
             <header className="flex justify-between items-center mb-6">
                <div>
                  <h3 className="text-lg font-black text-white uppercase tracking-tight">Nuevo <span style={{ color: t.accent }}>Recordatorio</span></h3>
@@ -323,15 +323,15 @@ const Recordatorios = ({ settings, isDark }) => {
                    <input type="text" value={nuevaSubtarea}
                     onChange={e => setNuevaSubtarea(e.target.value)}
                     placeholder="Añadir ítem..."
-                    className="flex-1 rounded-lg px-3.5 py-2.5 text-xs outline-none"
+                    className="flex-1 rounded-xl px-3.5 py-2.5 text-xs outline-none"
                     style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}
                     onKeyDown={e => e.key === 'Enter' && addSubtarea()}
                    />
-                   <button onClick={addSubtarea} className="p-2.5 rounded-lg transition-all" style={{ backgroundColor: t.accent, color: '#000000' }}><Plus size={14}/></button>
+                   <button onClick={addSubtarea} className="p-2.5 rounded-xl transition-all" style={{ backgroundColor: t.accent, color: '#000000' }}><Plus size={14}/></button>
                 </div>
                 <div className="space-y-1.5 max-h-32 overflow-y-auto mac-scrollbar pr-1">
                    {subtareasTemp.map(st => (
-                     <div key={st.id} className="flex items-center justify-between p-2.5 rounded-lg" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                     <div key={st.id} className="flex items-center justify-between p-2.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                         <span className="text-[9px] font-bold" style={{ color: t.textMuted }}>{st.texto}</span>
                         <button onClick={() => setSubtareasTemp(subtareasTemp.filter(i => i.id !== st.id))} className="transition-all" style={{ color: t.textDim }}>
                           <Trash2 size={12}/>
@@ -413,7 +413,7 @@ const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDar
             }}>
               {r.titulo}
             </h4>
-            <div className="px-2 py-0.5 rounded-lg border text-[7px] font-black uppercase tracking-widest shrink-0 ml-2" style={{ color: pc.color, backgroundColor: pc.bg, borderColor: pc.border }}>
+            <div className="px-2 py-0.5 rounded-xl border text-[7px] font-black uppercase tracking-widest shrink-0 ml-2" style={{ color: pc.color, backgroundColor: pc.bg, borderColor: pc.border }}>
               {r.prioridad}
             </div>
           </div>
@@ -421,12 +421,12 @@ const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDar
           {(r.nombre_contacto || r.monto > 0) && (
             <div className="flex flex-wrap gap-2 mb-2.5">
               {r.nombre_contacto && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-bold uppercase" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textMuted }}>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-xl text-[8px] font-bold uppercase" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textMuted }}>
                   <User size={8} color={t.accent} /> {r.nombre_contacto}
                 </div>
               )}
               {r.monto > 0 && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.text }}>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-xl text-[8px] font-black uppercase" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.text }}>
                   <TrendingUp size={8} color={t.accent} /> {r.monto} BS
                 </div>
               )}

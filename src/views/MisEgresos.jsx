@@ -116,9 +116,9 @@ const MisEgresos = ({ data, setData }) => {
                       <span className={`text-[10px] font-bold flex items-center gap-1.5 ${cat.color}`}><Icon size={10}/>{cat.label}</span>
                       <span className="text-[10px] text-neutral-400 font-mono">${cat.total.toLocaleString('en', { maximumFractionDigits: 0 })}</span>
                     </div>
-                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                      <div className="h-full bg-current rounded-full transition-all duration-500" style={{ width: `${pct}%`, color: 'inherit' }}
-                        className={`h-full rounded-full transition-all duration-500 ${cat.color.replace('text-', 'bg-').replace('400', '400/60')}`}/>
+                    <div className="h-1 bg-white/5 rounded-xl overflow-hidden">
+                      <div className="h-full bg-current rounded-xl transition-all duration-500" style={{ width: `${pct}%`, color: 'inherit' }}
+                        className={`h-full rounded-xl transition-all duration-500 ${cat.color.replace('text-', 'bg-').replace('400', '400/60')}`}/>
                     </div>
                   </div>
                 );

@@ -107,7 +107,7 @@ export default function DriveSovereign({ token, user, onLoginSuccess, isDark = t
     >
       {/* DRAG OVERLAY */}
       {dragging && (
-        <div className="absolute inset-0 z-50 rounded-3xl flex items-center justify-center"
+        <div className="absolute inset-0 z-50 rounded-xl flex items-center justify-center"
           style={{ backgroundColor: 'rgba(160,160,160,0.10)', border: '3px dashed rgba(160,160,160,0.5)' }}>
           <div className="text-center"><Upload size={48} color={t.accent} className="mx-auto mb-4"/><p style={{ fontSize: 18, fontWeight: 900, color: '#fff' }}>Suelta para subir a Drive</p></div>
         </div>
@@ -115,7 +115,7 @@ export default function DriveSovereign({ token, user, onLoginSuccess, isDark = t
 
       {/* TOAST */}
       {toast && (
-        <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl border text-sm font-bold animate-in slide-in-from-top-2 duration-300"
+        <div className="fixed top-6 right-6 z-[9999] flex items-center gap-3 px-5 py-4 rounded-xl shadow-2xl border text-sm font-bold animate-in slide-in-from-top-2 duration-300"
           style={toast.type === 'err' ? { backgroundColor: '#2a0f0f', borderColor: '#5c1a1a', color: '#f0b0b0' } : { backgroundColor: '#1a2a1a', borderColor: '#1a5c1a', color: '#b0f0b0' }}>
           {toast.type === 'err' ? <AlertCircle size={16}/> : <CheckCircle2 size={16}/>} {toast.msg}
         </div>

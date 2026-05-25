@@ -60,14 +60,14 @@ const Pagos = ({ servicios = [], onRefresh }) => {
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Gestión de Egresos</h2>
           <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Control de gastos personales y suscripciones digitales</p>
         </div>
-        <button onClick={openNew} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-lg border border-white/10 transition-all flex items-center gap-2">
+        <button onClick={openNew} className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl border border-white/10 transition-all flex items-center gap-2">
           <Plus size={16} /> Registrar Egreso
         </button>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {servicios.map(s => (
-          <div key={s.id} className="bg-[#202022] border border-white/[0.05] rounded-2xl p-5 hover:border-white/20 transition-all group relative">
+          <div key={s.id} className="bg-[#202022] border border-white/[0.05] rounded-xl p-5 hover:border-white/20 transition-all group relative">
             <div className="flex justify-between items-start mb-4">
               <div className="p-3 rounded-xl bg-white/5 text-neutral-400 group-hover:bg-white/10 group-hover:text-white transition-all">
                 {s.metodo === 'Tarjeta' ? <CreditCard size={20} /> : s.metodo === 'Banco' ? <Landmark size={20} /> : <Banknote size={20} />}
@@ -91,7 +91,7 @@ const Pagos = ({ servicios = [], onRefresh }) => {
             </div>
 
             {s.notas && (
-              <div className="mt-4 p-3 bg-white/[0.02] border border-white/5 rounded-lg">
+              <div className="mt-4 p-3 bg-white/[0.02] border border-white/5 rounded-xl">
                 <p className="text-[10px] text-neutral-500 italic flex gap-2"><FileText size={12}/> {s.notas}</p>
               </div>
             )}
@@ -101,7 +101,7 @@ const Pagos = ({ servicios = [], onRefresh }) => {
 
       {isEditing && (
         <div className="fixed inset-0 bg-[#141414]/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#202022] border border-white/10 w-full max-w-[500px] rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-[#202022] border border-white/10 w-full max-w-[500px] rounded-xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-white">Configurar Egreso</h3>
               <button onClick={() => setIsEditing(false)} className="text-neutral-500 hover:text-white transition-colors"><X size={20}/></button>
@@ -147,7 +147,7 @@ const Pagos = ({ servicios = [], onRefresh }) => {
                     <button 
                       key={m}
                       onClick={() => setActiveService({...activeService, metodo: m})}
-                      className={`py-2 text-[10px] font-bold rounded-lg border transition-all ${
+                      className={`py-2 text-[10px] font-bold rounded-xl border transition-all ${
                         activeService.metodo === m ? 'bg-white text-black border-white' : 'bg-white/5 text-neutral-500 border-white/10'
                       }`}
                     >
@@ -181,7 +181,7 @@ const Pagos = ({ servicios = [], onRefresh }) => {
               <button 
                 onClick={handleSave}
                 disabled={loading}
-                className="w-full py-4 bg-white text-black font-bold rounded-2xl hover:bg-neutral-200 transition-all flex items-center justify-center gap-2"
+                className="w-full py-4 bg-white text-black font-bold rounded-xl hover:bg-neutral-200 transition-all flex items-center justify-center gap-2"
               >
                 <Save size={18} /> {loading ? 'Guardando...' : 'Guardar Egreso'}
               </button>

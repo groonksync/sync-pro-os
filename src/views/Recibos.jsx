@@ -279,7 +279,7 @@ const Recibos = ({ data, setData }) => {
 
             {/* Notas */}
             {activeRecibo.notas && (
-              <div className="bg-neutral-50 rounded-lg p-4 mb-8">
+              <div className="bg-neutral-50 rounded-xl p-4 mb-8">
                 <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold mb-1">Notas</p>
                 <p className="text-xs text-neutral-600">{activeRecibo.notas}</p>
               </div>

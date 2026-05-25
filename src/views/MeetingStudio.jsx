@@ -249,17 +249,17 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
                <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '2px', fontWeight: 500 }}>Sistema de producción audiovisual</p>
             </div>
             <div className="flex rounded-xl p-0.5" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                <button onClick={() => setViewState('client-list')} className="px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                <button onClick={() => setViewState('client-list')} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
                     backgroundColor: viewState.includes('client') || viewState === 'session' ? t.accent : 'transparent',
                     color: viewState.includes('client') || viewState === 'session' ? '#000000' : t.textDim,
                   }}>Clientes</button>
-                <button onClick={() => setViewState('agency-hub')} className="px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                <button onClick={() => setViewState('agency-hub')} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
                     backgroundColor: viewState.includes('agency') ? t.accent : 'transparent',
                     color: viewState.includes('agency') ? '#000000' : t.textDim,
                   }}>Agencia Pro</button>
-                <button onClick={() => setViewState('project-engine')} className="px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                <button onClick={() => setViewState('project-engine')} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
                     backgroundColor: viewState === 'project-engine' ? t.accent : 'transparent',
                     color: viewState === 'project-engine' ? '#000000' : t.textDim,
@@ -267,8 +267,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
             </div>
          </div>
          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-               <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.accent }}></div>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+               <div className="w-1.5 h-1.5 rounded-xl" style={{ backgroundColor: t.accent }}></div>
                <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.accent }}>System Ready</span>
             </div>
             <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
@@ -431,7 +431,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
                </button>
             </header>
 
-            <div className="grid grid-cols-4 gap-2 p-2 rounded-2xl shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+            <div className="grid grid-cols-4 gap-2 p-2 rounded-xl shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                {['Básico', 'Intermedio', 'Avanzado', 'Personalizado'].map(p => {
                  const count = agencyClients.filter(cl => cl.plan === p).length;
                  return (
@@ -450,16 +450,16 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
             <div className="space-y-5">
               <div className="flex items-center justify-between px-3">
                 <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: 'white' }}>
-                  <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.accent }}></div>
+                  <div className="w-1.5 h-1.5 rounded-xl" style={{ backgroundColor: t.accent }}></div>
                   Strategic Graphical Timeline
                 </h3>
                 <div className="flex gap-3">
-                  <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.accent }}></div><span className="text-[7px] font-black uppercase" style={{ color: t.textDim }}>On Time</span></div>
-                  <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: t.textDim }}></div><span className="text-[7px] font-black uppercase" style={{ color: t.textDim }}>Critical</span></div>
+                  <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-xl" style={{ backgroundColor: t.accent }}></div><span className="text-[7px] font-black uppercase" style={{ color: t.textDim }}>On Time</span></div>
+                  <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-xl" style={{ backgroundColor: t.textDim }}></div><span className="text-[7px] font-black uppercase" style={{ color: t.textDim }}>Critical</span></div>
                 </div>
               </div>
 
-              <div className="p-5 rounded-2xl mac-scrollbar overflow-x-auto" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+              <div className="p-5 rounded-xl mac-scrollbar overflow-x-auto" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                 <div className="min-w-[900px] space-y-4">
                   {filteredAgencyClients.map((company, idx) => {
                     const meta = company.metadata || {};
@@ -477,8 +477,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
                         </div>
 
                         <div className="flex-1 flex items-center gap-3">
-                          <div className="flex-1 h-2 rounded-full overflow-hidden relative" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                            <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000" style={{ width: `${30 + (idx * 15) % 70}%`, backgroundColor: t.accent }}></div>
+                          <div className="flex-1 h-2 rounded-xl overflow-hidden relative" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                            <div className="absolute inset-y-0 left-0 rounded-xl transition-all duration-1000" style={{ width: `${30 + (idx * 15) % 70}%`, backgroundColor: t.accent }}></div>
                           </div>
                           <span className="text-[8px] font-mono font-black" style={{ color: t.textMuted }}>{30 + (idx * 15) % 70}%</span>
                         </div>
@@ -486,7 +486,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
                         <div className="flex items-center gap-4 shrink-0">
                            <div className="flex gap-1.5">
                              {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
-                               <div key={red} className="w-7 h-7 rounded-lg flex items-center justify-center"
+                               <div key={red} className="w-7 h-7 rounded-xl flex items-center justify-center"
                                  style={{
                                    border: meta.redes?.[red] ? `1px solid ${t.accent}66` : `1px solid ${t.border}`,
                                    backgroundColor: meta.redes?.[red] ? t.accentSoft : 'transparent',
@@ -563,15 +563,15 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-500">
            <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.accentSoft, borderBottom: `1px solid ${t.border}` }}>
               <div className="flex items-center gap-4">
-                <button onClick={() => setViewState('agency-session')} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
+                <button onClick={() => setViewState('agency-session')} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
                   <ArrowLeft size={18} color={t.textMuted}/>
                 </button>
                 <h3 className="text-sm font-black uppercase" style={{ color: 'white' }}>{activeStrategy.titulo_estrategia}</h3>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-3 px-4 py-1.5 rounded-lg text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
+                <div className="flex items-center gap-3 px-4 py-1.5 rounded-xl text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
                   {formatTime(time)}
-                  <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: t.accent }}>
+                  <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accent }}>
                     {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
                   </button>
                 </div>
@@ -588,7 +588,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
                 </div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                    <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-lg text-[9px] font-black transition-all"
+                    <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-xl text-[9px] font-black transition-all"
                       style={{
                         backgroundColor: btn === '=' ? t.accent : 'rgba(255,255,255,0.05)',
                         color: btn === '=' ? '#000000' : t.textMuted,
@@ -622,15 +622,15 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-500">
           <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.accentSoft, borderBottom: `1px solid ${t.border}` }}>
             <div className="flex items-center gap-4">
-              <button onClick={saveMeeting} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
+              <button onClick={saveMeeting} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
                 <ArrowLeft size={18} color={t.textMuted}/>
               </button>
               <h3 className="text-sm font-black uppercase" style={{ color: 'white' }}>{activeMeeting.session_title}</h3>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3 px-4 py-1.5 rounded-lg text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
+              <div className="flex items-center gap-3 px-4 py-1.5 rounded-xl text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
                 {formatTime(time)}
-                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: t.accent }}>
+                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accent }}>
                   {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
                 </button>
               </div>
@@ -647,7 +647,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
               </div>
               <div className="grid grid-cols-4 gap-1.5">
                 {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                  <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-lg text-[9px] font-black transition-all"
+                  <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-xl text-[9px] font-black transition-all"
                     style={{
                       backgroundColor: btn === '=' ? t.accent : 'rgba(255,255,255,0.05)',
                       color: btn === '=' ? '#000000' : t.textMuted,
@@ -680,11 +680,11 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
       {isClientModalOpen && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 animate-in zoom-in duration-300"
           style={{ backgroundColor: 'rgba(20, 20, 20, 0.95)', backdropFilter: 'blur(24px)' }}>
-           <div className="w-full max-w-lg p-6 space-y-5 shadow-2xl rounded-2xl"
+           <div className="w-full max-w-lg p-6 space-y-5 shadow-2xl rounded-xl"
              style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
                 <div className="flex justify-between items-center">
                    <h3 className="text-xl font-black uppercase tracking-tight" style={{ color: 'white' }}>Nuevo <span style={{ color: t.accent }}>Registro</span></h3>
-                   <button onClick={() => setIsClientModalOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
+                   <button onClick={() => setIsClientModalOpen(false)} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
                      <X size={18} color={t.textMuted}/>
                    </button>
                 </div>
@@ -735,14 +735,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
       {isCompanyModalOpen && (
         <div className="fixed inset-0 z-[800] flex items-center justify-center p-6 animate-in zoom-in duration-300"
           style={{ backgroundColor: 'rgba(20, 20, 20, 0.95)', backdropFilter: 'blur(24px)' }}>
-           <div className="w-full max-w-2xl overflow-hidden shadow-2xl rounded-2xl"
+           <div className="w-full max-w-2xl overflow-hidden shadow-2xl rounded-xl"
              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
               <header className="px-6 py-5 flex justify-between items-center" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
                  <div>
                    <h3 className="text-xl font-black uppercase tracking-tight" style={{ color: 'white' }}>Strategic <span style={{ color: t.accent }}>Link</span></h3>
                    <p className="text-[7px] font-black uppercase tracking-[0.3em] mt-0.5" style={{ color: t.textDim }}>Agency Connection Node</p>
                  </div>
-                 <button onClick={() => setIsCompanyModalOpen(false)} className="w-8 h-8 rounded-full flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
+                 <button onClick={() => setIsCompanyModalOpen(false)} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
                    <X size={18} color={t.textMuted}/>
                  </button>
               </header>
@@ -795,7 +795,7 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
                     <div className="space-y-3 animate-in fade-in duration-500">
                        {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
                           <div key={red} className="flex items-center gap-3 p-2 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                             <div className="w-10 h-10 rounded-lg flex items-center justify-center shadow-lg" style={{ backgroundColor: t.accentSoft }}>
+                             <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: t.accentSoft }}>
                                 {red === 'instagram' && <Instagram size={18} color={t.accent}/>}
                                 {red === 'tiktok' && <TiktokIcon size={18} color={t.accent}/>}
                                 {red === 'facebook' && <Facebook size={18} color={t.accent}/>}
@@ -810,12 +810,12 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
 
                  {agencyTab === 'cm' && (
                     <div className="space-y-4 animate-in fade-in duration-500">
-                       <div className="p-4 rounded-2xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                       <div className="p-4 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                          <p className="text-[8px] font-black uppercase mb-1 tracking-widest" style={{ color: t.accent }}>Security Protocol</p>
                          <p className="text-[9px] font-bold uppercase leading-relaxed tracking-wider" style={{ color: t.textDim }}>Las credenciales se encriptan y se almacenan exclusivamente para gestión de Community Manager.</p>
                        </div>
                        {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
-                          <div key={red} className="space-y-2 p-4 rounded-2xl shadow-inner" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                          <div key={red} className="space-y-2 p-4 rounded-xl shadow-inner" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                              <h4 className="text-[8px] font-black uppercase tracking-[0.15em] flex items-center gap-2" style={{ color: t.accent }}>
                                 {red === 'instagram' && <Instagram size={10}/>}
                                 {red === 'tiktok' && <TiktokIcon size={10}/>}
@@ -1161,7 +1161,7 @@ const ProjectEngineView = () => {
           <div className="flex rounded-xl p-0.5 shadow-lg" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
              <button 
                 onClick={() => setActiveTab('estructurador')}
-                className={`px-6 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2`}
+                className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2`}
                 style={{
                   backgroundColor: activeTab === 'estructurador' ? t.accent : 'transparent',
                   color: activeTab === 'estructurador' ? '#000000' : t.textDim,
@@ -1171,7 +1171,7 @@ const ProjectEngineView = () => {
              </button>
              <button 
                 onClick={() => setActiveTab('suite')}
-                className={`px-6 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2`}
+                className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2`}
                 style={{
                   backgroundColor: activeTab === 'suite' ? t.accent : 'transparent',
                   color: activeTab === 'suite' ? '#000000' : t.textDim,
@@ -1190,7 +1190,7 @@ const ProjectEngineView = () => {
                 <div className="p-5 rounded-xl shadow-lg flex flex-col space-y-4"
                   style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                    <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                          <FolderOpen size={16} color={t.textMuted}/>
                       </div>
                       <div>
@@ -1226,7 +1226,7 @@ const ProjectEngineView = () => {
                 <div className="p-5 rounded-xl shadow-lg flex flex-col space-y-4"
                   style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                    <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                          <Folder size={16} color={t.textMuted}/>
                       </div>
                       <div>
@@ -1264,7 +1264,7 @@ const ProjectEngineView = () => {
                 <div className="p-5 rounded-xl shadow-lg space-y-4"
                   style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                    <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                          <Layers size={16} color={t.textMuted}/>
                       </div>
                       <div>
@@ -1330,7 +1330,7 @@ const ProjectEngineView = () => {
                     <div className="space-y-4">
                        <div className="flex items-center justify-between pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
                           <div className="flex items-center gap-2">
-                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: t.accent }}></div>
+                             <div className="w-2 h-2 rounded-xl" style={{ backgroundColor: t.accent }}></div>
                              <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: 'white' }}>Consola de Inyección</span>
                           </div>
                           <span className="px-2 py-0.5 rounded text-[7px] font-bold uppercase tracking-wider"
@@ -1396,31 +1396,31 @@ const ProjectEngineView = () => {
                        <div className="space-y-1.5">
                           <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Módulos Auxiliares</p>
                           <div className="flex flex-wrap gap-1.5">
-                             <span className="px-2 py-0.5 rounded-lg text-[7px] font-black tracking-widest uppercase"
+                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
                                style={{
                                  backgroundColor: incSFX ? t.surface : t.accentSoft,
                                  border: `1px solid ${t.border}`,
                                  color: incSFX ? t.textMuted : t.textDim,
                                }}>Audio SFX</span>
-                             <span className="px-2 py-0.5 rounded-lg text-[7px] font-black tracking-widest uppercase"
+                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
                                style={{
                                  backgroundColor: incLogos ? t.surface : t.accentSoft,
                                  border: `1px solid ${t.border}`,
                                  color: incLogos ? t.textMuted : t.textDim,
                                }}>Logotipos</span>
-                             <span className="px-2 py-0.5 rounded-lg text-[7px] font-black tracking-widest uppercase"
+                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
                                style={{
                                  backgroundColor: incMOGRTs ? t.surface : t.accentSoft,
                                  border: `1px solid ${t.border}`,
                                  color: incMOGRTs ? t.textMuted : t.textDim,
                                }}>MOGRTs Pro</span>
-                             <span className="px-2 py-0.5 rounded-lg text-[7px] font-black tracking-widest uppercase"
+                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
                                style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
                                video subfolders</span>
-                             <span className="px-2 py-0.5 rounded-lg text-[7px] font-black tracking-widest uppercase"
+                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
                                style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
                                imágenes/png</span>
-                             <span className="px-2 py-0.5 rounded-lg text-[7px] font-black tracking-widest uppercase"
+                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
                                style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
                                ia subfolders</span>
                           </div>
@@ -1440,7 +1440,7 @@ const ProjectEngineView = () => {
                           }}
                        >
                           {isGenerating ? (
-                             <><div className="w-3.5 h-3.5 border-2 rounded-full animate-spin" style={{ borderColor: t.accent, borderTopColor: 'transparent' }}></div> Inyectando...</>
+                             <><div className="w-3.5 h-3.5 border-2 rounded-xl animate-spin" style={{ borderColor: t.accent, borderTopColor: 'transparent' }}></div> Inyectando...</>
                           ) : !destinationPath ? (
                              <>Vincula el disco duro para estructurar</>
                           ) : (
@@ -1466,7 +1466,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Monitor size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1478,7 +1478,7 @@ const ProjectEngineView = () => {
                      <div className="space-y-1">
                         <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Preset de Compresión</p>
                         <select value={compPreset} onChange={e=>setCompPreset(e.target.value)}
-                          className="w-full rounded-lg p-2.5 text-[9px] outline-none cursor-pointer"
+                          className="w-full rounded-xl p-2.5 text-[9px] outline-none cursor-pointer"
                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
                            <option value="tiktok">TikTok / Reels 1080p (45MB)</option>
                            <option value="preview">Client Preview 720p (22MB)</option>
@@ -1497,7 +1497,7 @@ const ProjectEngineView = () => {
                               <span>Procesando...</span>
                               <span>{compProgress}%</span>
                            </div>
-                           <div className="w-full rounded-full h-1 overflow-hidden" style={{ backgroundColor: t.accentSoft }}>
+                           <div className="w-full rounded-xl h-1 overflow-hidden" style={{ backgroundColor: t.accentSoft }}>
                               <div className="h-full transition-all duration-200" style={{ width: `${compProgress}%`, backgroundColor: t.accent }}></div>
                            </div>
                         </div>
@@ -1523,7 +1523,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <CalcIcon size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1536,7 +1536,7 @@ const ProjectEngineView = () => {
                         <div className="space-y-1">
                            <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Resolución</span>
                            <select value={calcRes} onChange={e=>setCalcRes(e.target.value)}
-                             className="w-full rounded-lg p-2 text-[9px] outline-none"
+                             className="w-full rounded-xl p-2 text-[9px] outline-none"
                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
                               <option value="1080p">1080p</option>
                               <option value="4K">4K UHD</option>
@@ -1545,7 +1545,7 @@ const ProjectEngineView = () => {
                         <div className="space-y-1">
                            <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>FPS</span>
                            <select value={calcFps} onChange={e=>setCalcFps(parseInt(e.target.value))}
-                             className="w-full rounded-lg p-2 text-[9px] outline-none"
+                             className="w-full rounded-xl p-2 text-[9px] outline-none"
                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
                               <option value="24">24 fps</option>
                               <option value="30">30 fps</option>
@@ -1555,7 +1555,7 @@ const ProjectEngineView = () => {
                         <div className="space-y-1">
                            <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Dur. (min)</span>
                            <input type="number" value={calcMin} onChange={e=>setCalcMin(parseInt(e.target.value) || 1)}
-                             className="w-full rounded-lg p-2 text-[9px] outline-none"
+                             className="w-full rounded-xl p-2 text-[9px] outline-none"
                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
                         </div>
                      </div>
@@ -1579,7 +1579,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Clock size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1591,7 +1591,7 @@ const ProjectEngineView = () => {
                      <div className="space-y-1">
                         <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>FPS</span>
                         <select value={fpsVal} onChange={e=>{setFpsVal(parseInt(e.target.value)); handleTcToFrames(tcInput, parseInt(e.target.value)); handleFramesToTc(framesInput, parseInt(e.target.value));}}
-                          className="w-full rounded-lg p-2.5 text-[9px] outline-none"
+                          className="w-full rounded-xl p-2.5 text-[9px] outline-none"
                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
                            <option value="24">24 fps (Cine)</option>
                            <option value="25">25 fps (PAL)</option>
@@ -1603,14 +1603,14 @@ const ProjectEngineView = () => {
                         <div className="space-y-1">
                            <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>TC → Frames</span>
                            <input type="text" value={tcInput} onChange={e=>{setTcInput(e.target.value); handleTcToFrames(e.target.value, fpsVal);}}
-                             className="w-full rounded-lg p-1.5 text-[9px] font-mono outline-none"
+                             className="w-full rounded-xl p-1.5 text-[9px] font-mono outline-none"
                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
                            <p className="text-[8px] font-mono" style={{ color: t.accent }}>{framesOutput} frames</p>
                         </div>
                         <div className="space-y-1">
                            <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Frames → TC</span>
                            <input type="number" value={framesInput} onChange={e=>{setFramesInput(parseInt(e.target.value) || 0); handleFramesToTc(parseInt(e.target.value) || 0, fpsVal);}}
-                             className="w-full rounded-lg p-1.5 text-[9px] font-mono outline-none"
+                             className="w-full rounded-xl p-1.5 text-[9px] font-mono outline-none"
                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
                            <p className="text-[8px] font-mono" style={{ color: t.accent }}>{tcOutput}</p>
                         </div>
@@ -1625,7 +1625,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Edit3 size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1652,7 +1652,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Type size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1664,32 +1664,32 @@ const ProjectEngineView = () => {
                      <div className="space-y-1">
                         <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Cliente</span>
                         <input type="text" value={nomClient} onChange={e=>setNomClient(e.target.value)}
-                          className="w-full rounded-lg p-2 text-[9px] outline-none"
+                          className="w-full rounded-xl p-2 text-[9px] outline-none"
                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
                      </div>
                      <div className="space-y-1">
                         <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Proyecto</span>
                         <input type="text" value={nomProj} onChange={e=>setNomProj(e.target.value)}
-                          className="w-full rounded-lg p-2 text-[9px] outline-none"
+                          className="w-full rounded-xl p-2 text-[9px] outline-none"
                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
                      </div>
                      <div className="space-y-1">
                         <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Versión</span>
                         <input type="text" value={nomVer} onChange={e=>setNomVer(e.target.value)}
-                          className="w-full rounded-lg p-2 text-[9px] outline-none"
+                          className="w-full rounded-xl p-2 text-[9px] outline-none"
                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
                      </div>
                      <div className="space-y-1">
                         <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Orientación</span>
                         <select value={nomAspect} onChange={e=>setNomAspect(e.target.value)}
-                          className="w-full rounded-lg p-2 text-[9px] outline-none"
+                          className="w-full rounded-xl p-2 text-[9px] outline-none"
                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
                            <option value="H">Horizontal</option>
                            <option value="V">Vertical</option>
                         </select>
                      </div>
                   </div>
-                  <div className="p-2.5 rounded-lg" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                  <div className="p-2.5 rounded-xl" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
                      <p className="text-[6px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.textDim }}>Nombre Final:</p>
                      <p className="text-[8px] font-mono font-black break-all select-all" style={{ color: t.accent }}>{finalNamingResult}.mp4</p>
                   </div>
@@ -1706,7 +1706,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Search size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1716,11 +1716,11 @@ const ProjectEngineView = () => {
                   </div>
                   <div className="space-y-1.5">
                      <input type="text" value={shortcutQuery} onChange={e=>setShortcutQuery(e.target.value)} placeholder="Buscar atajo..."
-                       className="w-full rounded-lg p-2.5 text-[9px] outline-none"
+                       className="w-full rounded-xl p-2.5 text-[9px] outline-none"
                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
                      <div className="space-y-1.5 max-h-[120px] overflow-y-auto mac-scrollbar pr-1">
                         {filteredShortcuts.map((s, idx) => (
-                           <div key={idx} className="flex items-center justify-between text-[8px] p-2 rounded-lg"
+                           <div key={idx} className="flex items-center justify-between text-[8px] p-2 rounded-xl"
                              style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                               <div className="min-w-0 flex-1">
                                  <p className="font-bold truncate" style={{ color: 'white' }}>{s.desc}</p>
@@ -1741,7 +1741,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Highlighter size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1750,7 +1750,7 @@ const ProjectEngineView = () => {
                      </div>
                   </div>
                   <div className="space-y-2.5">
-                     <div className="flex justify-between items-center p-0.5 rounded-lg text-[7px] font-black uppercase tracking-wider"
+                     <div className="flex justify-between items-center p-0.5 rounded-xl text-[7px] font-black uppercase tracking-wider"
                        style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                         {['916', '11', '239'].map(mode => (
                            <button key={mode} onClick={() => setCropGuide(mode)}
@@ -1797,7 +1797,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Layers size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1808,17 +1808,17 @@ const ProjectEngineView = () => {
                   <div className="space-y-2">
                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Se copiarán al estructurar:</p>
                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center p-2.5 rounded-lg" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                        <div className="flex justify-between items-center p-2.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                            <span className="text-[8px] font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'white' }}>
                              <Music size={10} color={t.accent}/> Sound Effects</span>
                            <span className="text-[7px] font-bold uppercase" style={{ color: t.accent }}>Incluido</span>
                         </div>
-                        <div className="flex justify-between items-center p-2.5 rounded-lg" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                        <div className="flex justify-between items-center p-2.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                            <span className="text-[8px] font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'white' }}>
                              <Palette size={10} color={t.textDim}/> Logotipos</span>
                            <span className="text-[7px] font-bold uppercase" style={{ color: t.textDim }}>No</span>
                         </div>
-                        <div className="flex justify-between items-center p-2.5 rounded-lg" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                        <div className="flex justify-between items-center p-2.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                            <span className="text-[8px] font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'white' }}>
                              <Scissors size={10} color={t.textDim}/> Lower Thirds</span>
                            <span className="text-[7px] font-bold uppercase" style={{ color: t.textDim }}>No</span>
@@ -1834,7 +1834,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Cloud size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1850,7 +1850,7 @@ const ProjectEngineView = () => {
                               <span>Comprimiendo...</span>
                               <span>{zipProgress}%</span>
                            </div>
-                           <div className="w-full rounded-full h-1 overflow-hidden" style={{ backgroundColor: t.accentSoft }}>
+                           <div className="w-full rounded-xl h-1 overflow-hidden" style={{ backgroundColor: t.accentSoft }}>
                               <div className="h-full transition-all duration-200" style={{ width: `${zipProgress}%`, backgroundColor: t.accent }}></div>
                            </div>
                         </div>
@@ -1876,7 +1876,7 @@ const ProjectEngineView = () => {
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
+                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
                        <Cpu size={16} color={t.accent}/>
                      </div>
                      <div>
@@ -1885,12 +1885,12 @@ const ProjectEngineView = () => {
                      </div>
                   </div>
                   <div className="space-y-3">
-                     <div className="flex justify-between items-center p-3 rounded-lg" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                     <div className="flex justify-between items-center p-3 rounded-xl" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
                         <div>
                            <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Caché (Adobe)</p>
                            <p className="text-base font-black font-mono" style={{ color: 'white' }}>{ssdCacheSize.toFixed(1)} GB</p>
                         </div>
-                        <div className="w-9 h-9 rounded-full flex items-center justify-center text-[9px] font-bold font-mono"
+                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[9px] font-bold font-mono"
                           style={{ border: `2px solid ${t.accent}4D`, color: t.accent }}>98%</div>
                      </div>
                      {isCleaningCache && (

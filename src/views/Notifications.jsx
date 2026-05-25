@@ -48,7 +48,7 @@ const Notifications = ({ data }) => {
                 : 'bg-[#202022] border-white/[0.05] hover:border-white/10'
             }`}>
               <div className="flex items-center gap-5">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
                   n.type === 'today' ? 'bg-white text-black' : 'bg-white/5 text-neutral-400'
                 }`}>
                   {n.type === 'today' ? <AlertCircle size={24} /> : <Calendar size={20} />}
@@ -78,14 +78,14 @@ const Notifications = ({ data }) => {
                     {n.nextBillingDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
                   </p>
                 </div>
-                <div className="p-2 rounded-full bg-white/5 text-neutral-500 group-hover:text-white group-hover:bg-white/10 transition-all cursor-pointer">
+                <div className="p-2 rounded-xl bg-white/5 text-neutral-500 group-hover:text-white group-hover:bg-white/10 transition-all cursor-pointer">
                   <ChevronRight size={20} />
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="py-20 flex flex-col items-center justify-center border border-dashed border-white/10 rounded-2xl bg-white/[0.01]">
+          <div className="py-20 flex flex-col items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
             <Bell size={48} className="text-neutral-800 mb-4" />
             <p className="text-neutral-500 text-sm">No hay cobros pendientes para los próximos días.</p>
           </div>

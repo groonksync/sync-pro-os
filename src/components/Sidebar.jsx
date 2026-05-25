@@ -57,7 +57,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
   if (settings.isMobileMode) {
     return (
       <div className="fixed bottom-4 inset-x-4 z-[1000] animate-in slide-in-from-bottom-8 duration-700">
-        <nav className="h-16 bg-[#252526]/90 border border-[#3c3c3c] backdrop-blur-2xl rounded-full flex items-center justify-around px-2 shadow-2xl">
+        <nav className="h-16 bg-[#252526]/90 border border-[#3c3c3c] backdrop-blur-2xl rounded-xl flex items-center justify-around px-2 shadow-2xl">
           {menuItems.slice(0, 5).map((item) => (
             <button
               key={item.id}
@@ -68,7 +68,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
                 <item.icon size={18} strokeWidth={activeTab === item.id ? 2.5 : 2} />
               </div>
               {activeTab === item.id && (
-                <div className="absolute -bottom-1 w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: t.accent }}></div>
+                <div className="absolute -bottom-1 w-1 h-1 rounded-xl animate-pulse" style={{ backgroundColor: t.accent }}></div>
               )}
             </button>
           ))}
@@ -81,7 +81,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
                 <Settings size={18} />
              </div>
              {activeTab === 'configuracion' && (
-                <div className="absolute -bottom-1 w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: t.accent }}></div>
+                <div className="absolute -bottom-1 w-1 h-1 rounded-xl animate-pulse" style={{ backgroundColor: t.accent }}></div>
              )}
           </button>
         </nav>
@@ -107,7 +107,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
       {/* Collapse button */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-12 w-6 h-6 rounded-full flex items-center justify-center z-[100] transition-all duration-300 hover:scale-110 active:scale-90"
+        className="absolute -right-3 top-12 w-6 h-6 rounded-xl flex items-center justify-center z-[100] transition-all duration-300 hover:scale-110 active:scale-90"
         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textMuted }}
       >
         {isCollapsed ? <PanelLeftOpen size={12} /> : <PanelLeftClose size={12} />}
@@ -147,7 +147,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
             >
               <div className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-3'}`}>
                 <div 
-                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all duration-200"
+                  className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200"
                   style={{
                     backgroundColor: isActive ? t.accentSoft : 'transparent',
                   }}
@@ -163,7 +163,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
               
               {!isCollapsed && item.count > 0 && (
                 <span 
-                  className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                  className="text-[10px] font-semibold px-2 py-0.5 rounded-xl"
                   style={{
                     backgroundColor: isActive ? t.accentSoft : 'rgba(255,255,255,0.04)',
                     color: isActive ? t.accent : t.textDim,
@@ -174,12 +174,12 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
               )}
 
               {isCollapsed && item.count > 0 && (
-                <div className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: t.accent }}></div>
+                <div className="absolute top-1 right-1 w-2 h-2 rounded-xl" style={{ backgroundColor: t.accent }}></div>
               )}
             </button>
 
             {isCollapsed && hoveredItem === item.id && (
-              <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap pointer-events-none animate-in fade-in slide-in-from-left-2 duration-200"
+              <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-xl text-[10px] font-medium whitespace-nowrap pointer-events-none animate-in fade-in slide-in-from-left-2 duration-200"
                 style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
                 {item.label}
               </div>
@@ -205,7 +205,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
             {!isCollapsed && <span className="text-[11px] font-medium">{isDark ? 'Modo Día' : 'Modo Noche'}</span>}
           </button>
           {isCollapsed && hoveredItem === 'theme-tip' && (
-            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap"
+            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-xl text-[10px] font-medium whitespace-nowrap"
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
                {isDark ? 'Modo Día' : 'Modo Noche'}
             </div>
@@ -225,7 +225,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
             {!isCollapsed && <span className="text-[11px] font-medium">Catálogo</span>}
           </button>
           {isCollapsed && hoveredItem === 'catalogo-tip' && (
-            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap"
+            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-xl text-[10px] font-medium whitespace-nowrap"
               style={{ backgroundColor: t.accent, color: '#1e1e1e' }}>Ver Catálogo</div>
           )}
         </div>
@@ -238,7 +238,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
               <img 
                 src={googleUser.picture} 
                 alt="" 
-                className="w-7 h-7 rounded-full shrink-0"
+                className="w-7 h-7 rounded-xl shrink-0"
                 style={{ border: `1px solid ${t.borderLight}` }}
               />
               {!isCollapsed && (
@@ -267,7 +267,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
             {!isCollapsed && <span className="text-[11px] font-medium">Configuración</span>}
           </button>
           {isCollapsed && hoveredItem === 'config-tip' && (
-            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-lg text-[10px] font-medium whitespace-nowrap"
+            <div className="absolute left-[75px] z-[200] px-3 py-1.5 rounded-xl text-[10px] font-medium whitespace-nowrap"
               style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>Ajustes</div>
           )}
         </div>

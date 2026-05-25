@@ -23,8 +23,8 @@ const ToastNotification = ({ message, type = 'success', onClose, isDark }) => {
 
   return (
     <div className="fixed top-6 right-6 z-[9999] animate-in slide-in-from-right-4 fade-in duration-300">
-      <div style={{ backgroundColor: bg, borderColor: border }} className="border rounded-2xl px-5 py-4 shadow-2xl flex items-center gap-4 backdrop-blur-xl min-w-[300px]">
-        <div style={{ backgroundColor: `${color}15`, color }} className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0">
+      <div style={{ backgroundColor: bg, borderColor: border }} className="border rounded-xl px-5 py-4 shadow-2xl flex items-center gap-4 backdrop-blur-xl min-w-[300px]">
+        <div style={{ backgroundColor: `${color}15`, color }} className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
           <Icon size={16} />
         </div>
         <p style={{ color: t.text }} className="text-xs font-medium flex-1">{message}</p>
@@ -160,7 +160,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 onClick={createPrestamo} 
                 style={{
                   backgroundColor: t.accent, color: 'white', border: 'none',
-                  borderRadius: '9999px', padding: isMobile ? '14px 24px' : '10px 20px',
+                  borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
                   fontSize: '11px', fontWeight: 600, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
@@ -172,7 +172,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               </button>
             </header>
 
-            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
+            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               {!isMobile ? (
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                   <thead>
@@ -193,14 +193,14 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       >
                         <td style={{ padding: '16px 24px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent }}>
                               <User size={16} />
                             </div>
                             <div>
                               <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre || 'Sin Nombre'}</p>
                               <span style={{
                                 fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em',
-                                padding: '2px 8px', borderRadius: '9999px',
+                                padding: '2px 8px', borderRadius: '12px',
                                 backgroundColor: p.estado === 'Finalizado' ? 'rgba(16, 185, 129, 0.10)' : p.estado === 'En Mora' ? 'rgba(239, 68, 68, 0.10)' : t.accentSoft,
                                 color: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
                               }}>
@@ -226,7 +226,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                         </td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                           <button style={{
-                            padding: '8px', borderRadius: '8px', border: 'none',
+                            padding: '8px', borderRadius: '12px', border: 'none',
                             backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
                             opacity: 0, transition: 'all 0.2s',
                           }}
@@ -278,7 +278,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               gap: '24px', marginBottom: '40px',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '56px', height: '56px', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                   <User size={28} color={t.accent} />
                 </div>
                 <div>
@@ -294,13 +294,13 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     placeholder="Nombre del Cliente" 
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '9999px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                       <FileSignature size={12} color={t.textDim} /> 
                       <input type="text" value={activePrestamo.ci} 
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})} 
                         style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="CI..." />
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '9999px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                       <Smartphone size={12} color={t.textDim} />
                       <input type="text" value={activePrestamo.telefono}
                         onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
@@ -309,7 +309,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     <select value={activePrestamo.estado} 
                       onChange={e => setActivePrestamo({...activePrestamo, estado: e.target.value})}
                       style={{
-                        padding: '6px 12px', borderRadius: '9999px', fontSize: '10px', fontWeight: 600,
+                        padding: '6px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
                         textTransform: 'uppercase', border: `1px solid ${t.border}`,
                         backgroundColor: t.input, color: t.accent, outline: 'none',
                       }}>
@@ -325,7 +325,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 disabled={loading}
                 style={{
                   backgroundColor: t.accent, color: 'white', border: 'none',
-                  borderRadius: '9999px', padding: isMobile ? '14px 24px' : '10px 20px',
+                  borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
                   fontSize: '11px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   gap: '8px', transition: 'all 0.2s', opacity: loading ? 0.6 : 1,
@@ -342,7 +342,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               {/* LEFT COLUMN - Timeline & Contract */}
               <div className={`${isMobile ? '' : 'col-span-8'} space-y-6`}>
                 {/* PAYMENT TIMELINE */}
-                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                   <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                     <CalendarDays size={14} color={t.accent} /> Cronograma de Cobros
                   </h3>
@@ -379,7 +379,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 </div>
 
                 {/* CONTRACT & GUARANTEE */}
-                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                   <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                     <ShieldCheck size={14} color={t.accent} /> Contrato y Garantía
                   </h3>
@@ -401,7 +401,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                         style={{
                           width: '100%', padding: '10px 14px', fontSize: '10px',
                           backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                          borderRadius: '10px', outline: 'none', transition: 'border 0.2s',
+                          borderRadius: '12px', outline: 'none', transition: 'border 0.2s',
                         }}
                         onFocus={e => { e.target.style.borderColor = t.accent; }}
                         onBlur={e => { e.target.style.borderColor = t.border; }}
@@ -414,7 +414,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                         style={{
                           width: '100%', padding: '10px 14px', fontSize: '10px',
                           backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                          borderRadius: '10px', outline: 'none', transition: 'border 0.2s',
+                          borderRadius: '12px', outline: 'none', transition: 'border 0.2s',
                         }}
                         onFocus={e => { e.target.style.borderColor = t.accent; }}
                         onBlur={e => { e.target.style.borderColor = t.border; }}
@@ -427,7 +427,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               {/* RIGHT COLUMN - Capital & Period */}
               <div className={`${isMobile ? '' : 'col-span-4'} space-y-6`}>
                 {/* CAPITAL & INTEREST */}
-                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                   <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '12px' }}>Capital Invertido</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                     <DollarSign size={18} color={t.textDim} />
@@ -447,7 +447,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                         style={{
                           width: '100%', padding: '12px', fontSize: '1rem', fontFamily: 'monospace',
                           backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.accent,
-                          borderRadius: '10px', outline: 'none', fontWeight: 600,
+                          borderRadius: '12px', outline: 'none', fontWeight: 600,
                         }} />
                     </div>
                     <div>
@@ -457,7 +457,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                         style={{
                           width: '100%', padding: '12px', fontSize: '14px', fontWeight: 600,
                           backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                          borderRadius: '10px', outline: 'none',
+                          borderRadius: '12px', outline: 'none',
                         }}>
                         <option value="BOB">BOB</option>
                         <option value="USD">USD</option>
@@ -473,7 +473,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 </div>
 
                 {/* PERIOD */}
-                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }}>
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                   <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '16px' }}>Periodo del Préstamo</label>
                   <div style={{ marginBottom: '12px' }}>
                     <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginBottom: '6px' }}>Fecha Inicio</p>
@@ -482,7 +482,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       style={{
                         width: '100%', padding: '10px 14px', fontSize: '12px',
                         backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                        borderRadius: '10px', outline: 'none', transition: 'border 0.2s',
+                        borderRadius: '12px', outline: 'none', transition: 'border 0.2s',
                       }}
                       onFocus={e => { e.target.style.borderColor = t.accent; }}
                       onBlur={e => { e.target.style.borderColor = t.border; }} />
@@ -494,7 +494,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       style={{
                         width: '100%', padding: '10px 14px', fontSize: '12px',
                         backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                        borderRadius: '10px', outline: 'none', transition: 'border 0.2s',
+                        borderRadius: '12px', outline: 'none', transition: 'border 0.2s',
                       }}
                       onFocus={e => { e.target.style.borderColor = t.accent; }}
                       onBlur={e => { e.target.style.borderColor = t.border; }} />

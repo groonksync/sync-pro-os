@@ -150,9 +150,9 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
            </div>
            <div className="flex gap-4 w-full md:w-auto">
               {googleUser ? (
-                <button onClick={onLogout} className="w-full md:w-auto px-6 py-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-[10px] font-black uppercase text-rose-500 hover:bg-rose-500 hover:text-white transition-all">Desvincular</button>
+                <button onClick={onLogout} className="w-full md:w-auto px-6 py-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[10px] font-black uppercase text-rose-500 hover:bg-rose-500 hover:text-white transition-all">Desvincular</button>
               ) : (
-                <button onClick={() => login()} className="w-full md:w-auto px-10 py-4 bg-white text-black rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">Vincular Google</button>
+                <button onClick={() => login()} className="w-full md:w-auto px-10 py-4 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">Vincular Google</button>
               )}
            </div>
         </div>
@@ -166,7 +166,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
               <button 
                 key={color.hex}
                 onClick={() => updateSetting('accentColor', color.hex)}
-                className={`h-12 rounded-2xl transition-all border-2 ${settings.accentColor === color.hex ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-40 hover:opacity-100'}`}
+                className={`h-12 rounded-xl transition-all border-2 ${settings.accentColor === color.hex ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-40 hover:opacity-100'}`}
                 style={{ backgroundColor: color.hex }}
               />
             ))}
@@ -177,8 +177,8 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
           <h3 className="text-xl font-black uppercase tracking-tighter flex items-center gap-3"><Smartphone size={20}/> Transmutador Móvil</h3>
           <div className="flex items-center justify-between">
             <p className="text-xs font-black uppercase">Optimización Táctil</p>
-            <button onClick={() => updateSetting('isMobileMode', !settings.isMobileMode)} className={`w-16 h-8 rounded-full relative transition-all ${settings.isMobileMode ? 'bg-[#141414]' : 'bg-white/10'}`}>
-              <div className={`absolute top-1 w-6 h-6 rounded-full transition-all ${settings.isMobileMode ? 'right-1 bg-white' : 'left-1 bg-neutral-700'}`}></div>
+            <button onClick={() => updateSetting('isMobileMode', !settings.isMobileMode)} className={`w-16 h-8 rounded-xl relative transition-all ${settings.isMobileMode ? 'bg-[#141414]' : 'bg-white/10'}`}>
+              <div className={`absolute top-1 w-6 h-6 rounded-xl transition-all ${settings.isMobileMode ? 'right-1 bg-white' : 'left-1 bg-neutral-700'}`}></div>
             </button>
           </div>
         </section>
@@ -186,13 +186,13 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
         <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl md:col-span-2">
           <div className="flex items-center justify-between">
              <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><Cpu size={20} className="text-emerald-500"/> Bóveda de Inteligencia</h3>
-             <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/5">
-                <div className={`w-2 h-2 rounded-full ${settings.geminiKey || settings.deepseekKey ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
+             <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/5">
+                <div className={`w-2 h-2 rounded-xl ${settings.geminiKey || settings.deepseekKey ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
                 <span className="text-[9px] font-black text-white uppercase tracking-widest">{settings.geminiKey || settings.deepseekKey ? 'Vault Protegido' : 'Bóveda Vacía'}</span>
              </div>
           </div>
 
-          <div className="flex bg-[#141414] rounded-2xl p-1.5 border border-white/10 max-w-xs">
+          <div className="flex bg-[#141414] rounded-xl p-1.5 border border-white/10 max-w-xs">
             {[
               { id: 'gemini', label: 'Google', Icon: GoogleLogo },
               { id: 'deepseek', label: 'DeepSeek', Icon: DeepSeekLogo }
@@ -223,7 +223,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                       id="ai-key-input"
                       defaultValue={settings.aiProvider === 'gemini' ? settings.geminiKey : settings.deepseekKey}
                       placeholder={`Pegar llave de ${settings.aiProvider}...`} 
-                      className="w-full bg-[#141414] border border-white/5 rounded-2xl p-5 text-[10px] text-white font-mono outline-none focus:border-white/20 transition-all pr-12 shadow-inner"
+                      className="w-full bg-[#141414] border border-white/5 rounded-xl p-5 text-[10px] text-white font-mono outline-none focus:border-white/20 transition-all pr-12 shadow-inner"
                     />
                   </div>
 
@@ -234,7 +234,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                          updateSetting(settings.aiProvider === 'gemini' ? 'geminiKey' : 'deepseekKey', val);
                          alert("✅ Bóveda Actualizada. Llave vinculada correctamente.");
                        }}
-                       className="py-4 bg-emerald-500 text-black rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                       className="py-4 bg-emerald-500 text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
                      >
                        Guardar API
                      </button>
@@ -244,7 +244,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                          document.getElementById('ai-key-input').value = '';
                          alert("⚠️ Purga Completada. La llave ha sido eliminada del sistema.");
                        }}
-                       className="py-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
+                       className="py-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
                      >
                        Eliminar API
                      </button>
@@ -258,7 +258,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                   <div className="flex justify-between items-center pb-4 border-b border-white/5">
                      <span className="text-[10px] text-neutral-500 font-black uppercase">Consumo Neural</span>
                      <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                        <div className="w-1.5 h-1.5 rounded-xl bg-emerald-500"></div>
                         <span className="text-[10px] text-emerald-500 font-black">ACTIVO</span>
                      </div>
                   </div>
@@ -303,7 +303,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                      alert("📡 Sincronización Exitosa: Balance actualizado.");
                    }
                  }} 
-                 className="w-full py-5 bg-white text-black rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl"
+                 className="w-full py-5 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl"
                >
                  Refrescar y Diagnosticar Telemetría
                </button>
@@ -313,8 +313,8 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
 
         <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl">
           <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><Building2 size={20}/> Identidad</h3>
-          <input type="text" value={settings.studioName} onChange={e => updateSetting('studioName', e.target.value)} className="w-full bg-[#141414] border border-white/5 rounded-2xl p-4 text-sm text-white font-bold outline-none"/>
-          <button onClick={handleExportBackup} className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-[10px] font-black uppercase text-emerald-500 flex items-center justify-center gap-3"><Download size={16}/> Exportar Backup</button>
+          <input type="text" value={settings.studioName} onChange={e => updateSetting('studioName', e.target.value)} className="w-full bg-[#141414] border border-white/5 rounded-xl p-4 text-sm text-white font-bold outline-none"/>
+          <button onClick={handleExportBackup} className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase text-emerald-500 flex items-center justify-center gap-3"><Download size={16}/> Exportar Backup</button>
         </section>
 
         <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl">
