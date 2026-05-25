@@ -274,28 +274,23 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
 
   return (
     <>
-      {/* ===== BOTÓN FLOTANTE REDISEÑADO ===== */}
+      {/* ===== BOTÓN FLOTANTE — DISEÑO PREMIUM MINIMAL ===== */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-500 active:scale-95 group overflow-hidden ${
+        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-300 active:scale-95 group ${
           isOpen
-            ? 'px-5 py-4 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
-            : 'px-6 py-4 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 backdrop-blur-xl border border-emerald-500/30 shadow-[0_0_25px_rgba(16,185,129,0.15)] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:border-emerald-400/50'
+            ? 'px-5 py-4 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20'
+            : 'px-5 py-3.5 rounded-xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] hover:bg-white/[0.12] hover:border-white/25'
         }`}
       >
-        {/* Anillo de pulso cuando está cerrado */}
-        {!isOpen && (
-          <span className="absolute inset-0 rounded-xl animate-ping opacity-20 bg-emerald-400" style={{ animationDuration: '3s' }}></span>
-        )}
-        <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
         {isOpen ? (
-          <X size={24} className="text-white relative z-10 animate-in spin-in duration-300"/>
+          <X size={20} className="text-white/80 relative z-10"/>
         ) : (
           <>
-            <div className="relative z-10 drop-shadow-[0_0_12px_rgba(16,185,129,0.6)] group-hover:scale-110 transition-transform duration-300">
+            <div className="relative z-10 group-hover:scale-105 transition-transform duration-200">
                <ActiveLogo />
             </div>
-            <span className="text-[10px] font-black text-white uppercase tracking-[0.15em] relative z-10">Agente</span>
+            <span className="text-[10px] font-semibold text-white/70 uppercase tracking-[0.08em] relative z-10 group-hover:text-white/90 transition-colors">Agente</span>
           </>
         )}
       </button>
@@ -311,10 +306,10 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
                 <ActiveLogo />
               </div>
               <div>
-                <h4 className="text-xs font-black text-white uppercase tracking-[0.12em]">Agente</h4>
+                <h4 className="text-xs font-semibold text-white/90 uppercase tracking-[0.08em]">Agente</h4>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"></span>
-                  <span className="text-[8px] font-bold text-emerald-500/70 uppercase tracking-[0.1em]">Online</span>
+                  <span className="w-1 h-1 rounded-full bg-white/30"></span>
+                  <span className="text-[7px] font-medium text-white/40 uppercase tracking-[0.08em]">Online</span>
                 </div>
               </div>
             </div>
@@ -357,11 +352,11 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
                   <div className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center border shadow-sm ${
                     m.role === 'agent'
                       ? 'bg-white/[0.06] border-white/[0.08]'
-                      : 'bg-emerald-500/20 border-emerald-500/20'
+                      : 'bg-white/[0.08] border-white/[0.10]'
                   }`}>
                     {m.role === 'agent'
                       ? <div className="scale-[0.6]"><ActiveLogo /></div>
-                      : <User size={13} className="text-emerald-400"/>
+                      : <User size={13} className="text-white/60"/>
                     }
                   </div>
                   {/* Contenido */}
@@ -369,7 +364,7 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
                     <div className={`px-4 py-3 text-[12px] leading-relaxed ${
                       m.role === 'agent'
                         ? 'bg-white/[0.04] border border-white/[0.06] text-neutral-200 rounded-2xl rounded-tl-sm'
-                        : 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-black font-semibold rounded-2xl rounded-tr-sm shadow-lg shadow-emerald-500/20'
+                        : 'bg-white/[0.10] border border-white/[0.12] text-white font-medium rounded-2xl rounded-tr-sm'
                     }`}>
                       {m.role === 'agent'
                         ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
@@ -410,19 +405,19 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
             {isThinking && (
               <div className="flex items-center gap-3 px-2 py-3">
                 <div className="flex gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/30 animate-bounce" style={{ animationDelay: '300ms' }}></span>
                 </div>
-                <span className="text-[9px] font-bold text-emerald-500/80 uppercase tracking-[0.12em]">Procesando...</span>
+                <span className="text-[8px] font-medium text-white/40 uppercase tracking-[0.08em]">Procesando...</span>
               </div>
             )}
           </div>
 
           {/* INPUT REDISEÑADO */}
           <footer className="px-5 py-4 border-t border-white/[0.06] shrink-0">
-            <div className="relative bg-white/[0.04] border border-white/[0.08] rounded-xl p-1.5 flex items-center gap-1 transition-all focus-within:border-emerald-500/30 focus-within:shadow-[0_0_20px_rgba(16,185,129,0.06)]">
-              <label className="w-9 h-9 rounded-lg flex items-center justify-center text-neutral-600 hover:text-emerald-400 hover:bg-white/5 cursor-pointer transition-all">
+            <div className="relative bg-white/[0.04] border border-white/[0.08] rounded-xl p-1.5 flex items-center gap-1 transition-all focus-within:border-white/20">
+              <label className="w-9 h-9 rounded-lg flex items-center justify-center text-neutral-600 hover:text-white/70 hover:bg-white/5 cursor-pointer transition-all">
                 <input type="file" multiple className="hidden" onChange={handleFileUpload}/>
                 <Paperclip size={16}/>
               </label>
@@ -466,11 +461,11 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
                   onClick={handleSend}
                   className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
                     input.trim() || uploadedFiles.length > 0
-                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-black shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95'
+                      ? 'bg-white text-black font-bold hover:bg-white/90 active:scale-95'
                       : 'bg-white/5 text-neutral-700'
                   }`}
                 >
-                  <Send size={16}/>
+                  <Send size={15}/>
                 </button>
               )}
             </div>
