@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { Plus, FileText, Printer, Trash2, CheckCircle2, Clock, ArrowLeft, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
 
-const Recibos = ({ data, setData }) => {
+const Recibos = ({ data, setData, isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const recibos = data.recibos || [];
   const [view, setView] = useState('list'); // 'list' | 'create' | 'print'
   const [activeRecibo, setActiveRecibo] = useState(null);
@@ -70,87 +72,101 @@ const Recibos = ({ data, setData }) => {
   const pendiente    = totalEmitido - totalCobrado;
 
   return (
-    <div className="animate-in fade-in duration-300 max-w-[1200px] w-full">
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-300">
 
       {/* ── LISTA ─────────────────────────────────────────────────────────── */}
       {view === 'list' && (
         <>
-          <header className="mb-6 flex justify-between items-center">
+          <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
             <div>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Recibos</h2>
-              <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Gestión y emisión de comprobantes de pago</p>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Recibos</h2>
+              <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Gestión y emisión de comprobantes de pago</p>
             </div>
             <button onClick={() => setView('create')}
-              className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5">
-              <Plus size={14}/> Nuevo Recibo
+              style={{ padding: '10px 24px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 10, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <Plus size={16} strokeWidth={3}/> Nuevo Recibo
             </button>
           </header>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4">
-              <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-2 flex items-center gap-1"><FileText size={10}/> Total Emitido</p>
-              <p className="text-2xl font-light text-white">${totalEmitido.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-              <p className="text-[9px] text-neutral-600 mt-1">{recibos.length} recibos</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 8, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+              <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 6 }}><FileText size={12}/> Total Emitido</p>
+              <p style={{ fontSize: 20, fontWeight: 900, color: t.text }}>${totalEmitido.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+              <p style={{ fontSize: 8, fontWeight: 700, color: t.textMuted }}>{recibos.length} recibos</p>
             </div>
-            <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4">
-              <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-2 flex items-center gap-1"><CheckCircle2 size={10}/> Cobrado</p>
-              <p className="text-2xl font-light text-emerald-400">${totalCobrado.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-              <p className="text-[9px] text-emerald-600 mt-1">{recibos.filter(r => r.estado === 'Pagado').length} pagados</p>
+            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 8, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+              <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={12}/> Cobrado</p>
+              <p style={{ fontSize: 20, fontWeight: 900, color: t.success }}>${totalCobrado.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+              <p style={{ fontSize: 8, fontWeight: 700, color: t.textMuted }}>{recibos.filter(r => r.estado === 'Pagado').length} pagados</p>
             </div>
-            <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-4">
-              <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-2 flex items-center gap-1"><Clock size={10}/> Por Cobrar</p>
-              <p className="text-2xl font-light text-amber-400">${pendiente.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-              <p className="text-[9px] text-amber-600 mt-1">{recibos.filter(r => r.estado !== 'Pagado').length} pendientes</p>
+            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, display: 'flex', flexDirection: 'column', gap: 8, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+              <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={12}/> Por Cobrar</p>
+              <p style={{ fontSize: 20, fontWeight: 900, color: t.accent }}>${pendiente.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+              <p style={{ fontSize: 8, fontWeight: 700, color: t.textMuted }}>{recibos.filter(r => r.estado !== 'Pagado').length} pendientes</p>
             </div>
           </div>
 
           {/* Tabla */}
-          <div className="bg-[#202022] border border-white/[0.05] rounded-xl overflow-hidden">
-            <table className="w-full text-left border-collapse">
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+            <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
               <thead>
-                <tr className="bg-[#141414]/40 border-b border-white/[0.05]">
-                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest"># Recibo</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Cliente / Concepto</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Fecha</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Estado</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest text-right">Monto</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest text-center">Acción</th>
+                <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
+                  <th style={{ padding: '16px 24px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}># Recibo</th>
+                  <th style={{ padding: '16px 24px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Cliente / Concepto</th>
+                  <th style={{ padding: '16px 24px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Fecha</th>
+                  <th style={{ padding: '16px 24px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Estado</th>
+                  <th style={{ padding: '16px 24px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', textAlign: 'right' }}>Monto</th>
+                  <th style={{ padding: '16px 24px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', textAlign: 'center' }}>Acción</th>
                 </tr>
               </thead>
               <tbody>
                 {recibos.length > 0 ? [...recibos].sort((a, b) => b.fecha?.localeCompare(a.fecha)).map(r => (
-                  <tr key={r.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-[11px] text-amber-500 font-bold">#{r.numero || '—'}</span>
+                  <tr key={r.id} onClick={() => { setActiveRecibo(r); setView('print'); }}
+                    style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <td style={{ padding: '16px 24px' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 900, color: t.accent }}>#{r.numero || '—'}</span>
                     </td>
-                    <td className="px-4 py-3">
-                      <p className="text-xs text-white font-medium">{r.cliente}</p>
-                      <p className="text-[10px] text-neutral-500 mt-0.5">{r.concepto}</p>
+                    <td style={{ padding: '16px 24px' }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: t.text, margin: 0 }}>{r.cliente}</p>
+                      <p style={{ fontSize: 10, color: t.textDim, marginTop: 2 }}>{r.concepto}</p>
                     </td>
-                    <td className="px-4 py-3 text-xs text-neutral-500 font-mono">{r.fecha}</td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => toggleEstado(r)}
-                        className={`text-[9px] px-2 py-0.5 rounded uppercase font-bold tracking-widest border transition-colors ${r.estado === 'Pagado' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20'}`}>
+                    <td style={{ padding: '16px 24px' }}>
+                      <span style={{ fontSize: 10, color: t.textDim, fontFamily: 'monospace' }}>{r.fecha}</span>
+                    </td>
+                    <td style={{ padding: '16px 24px' }}>
+                      <button onClick={(e) => { e.stopPropagation(); toggleEstado(r); }}
+                        style={{ padding: '4px 10px', borderRadius: 10, border: 'none', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer',
+                          backgroundColor: r.estado === 'Pagado' ? `${t.success}1e` : `${t.accent}1e`,
+                          color: r.estado === 'Pagado' ? t.success : t.accent }}>
                         {r.estado}
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      <p className="text-sm font-mono font-bold text-white">${parseFloat(r.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                      <p style={{ fontSize: 14, fontWeight: 900, color: t.text, fontFamily: 'monospace' }}>${parseFloat(r.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <button onClick={() => handlePrint(r)} className="p-1.5 text-neutral-500 hover:text-white transition-colors" title="Ver e imprimir recibo">
+                    <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                        <button onClick={(e) => { e.stopPropagation(); handlePrint(r); }}
+                          style={{ padding: 6, borderRadius: 8, border: 'none', backgroundColor: t.accentSoft, color: t.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}
+                          onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.panel; e.currentTarget.style.color = t.text; }}
+                          onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accentSoft; e.currentTarget.style.color = t.textMuted; }}>
                           <Printer size={13}/>
                         </button>
-                        <button onClick={() => handleDelete(r.id)} className="p-1.5 text-neutral-600 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">
+                        <button onClick={(e) => { e.stopPropagation(); handleDelete(r.id); }}
+                          style={{ padding: 6, borderRadius: 8, border: 'none', backgroundColor: 'transparent', color: t.textDim, cursor: 'pointer', transition: 'all 0.2s' }}
+                          onMouseEnter={e => { e.currentTarget.style.color = '#ef4444'; }}
+                          onMouseLeave={e => { e.currentTarget.style.color = t.textDim; }}>
                           <Trash2 size={13}/>
                         </button>
                       </div>
                     </td>
                   </tr>
                 )) : (
-                  <tr><td colSpan="6" className="px-4 py-10 text-center text-neutral-600 text-xs italic">Sin recibos emitidos. Crea el primero.</td></tr>
+                  <tr><td colSpan="6" style={{ padding: '40px 24px', textAlign: 'center', color: t.textDim, fontSize: 11, fontStyle: 'italic' }}>Sin recibos emitidos. Crea el primero.</td></tr>
                 )}
               </tbody>
             </table>
@@ -160,46 +176,63 @@ const Recibos = ({ data, setData }) => {
 
       {/* ── CREAR ─────────────────────────────────────────────────────────── */}
       {view === 'create' && (
-        <div className="animate-in slide-in-from-bottom-4 duration-300 max-w-xl w-full">
-          <div className="flex items-center gap-2 mb-4 text-xs text-neutral-500 cursor-pointer hover:text-white w-max" onClick={() => setView('list')}>
-            <ArrowLeft size={12}/> Volver a Recibos
-          </div>
-          <div className="bg-[#202022] border border-white/[0.05] rounded-xl p-8">
-            <h2 className="text-2xl font-light text-white tracking-tight mb-1 flex items-center gap-2">
-              <FileText size={20} className="text-amber-500"/> Nuevo Recibo
+        <div className="animate-in slide-in-from-bottom-4 duration-300" style={{ maxWidth: 560, width: '100%' }}>
+          <button onClick={() => setView('list')}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 24, fontSize: 11, color: t.textDim, background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s', padding: 0 }}
+            onMouseEnter={e => e.currentTarget.style.color = t.text}
+            onMouseLeave={e => e.currentTarget.style.color = t.textDim}>
+            <ArrowLeft size={14}/> Volver a Recibos
+          </button>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 32, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+            <h2 style={{ fontSize: 22, fontWeight: 300, color: t.text, letterSpacing: '-0.02em', margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <FileText size={20} color={t.accent}/> Nuevo Recibo
             </h2>
-            <p className="text-[10px] text-neutral-600 mb-6 font-mono">Número: <span className="text-amber-500">#{nextNum}</span></p>
-            <div className="space-y-4">
+            <p style={{ fontSize: 10, color: t.textMuted, marginBottom: 24, fontFamily: 'monospace' }}>Número: <span style={{ color: t.accent, fontWeight: 700 }}>#{nextNum}</span></p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Cliente *</label>
+                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Cliente *</label>
                 <input type="text" value={form.cliente} onChange={e => setForm({...form, cliente: e.target.value})}
-                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-sm text-white outline-none focus:border-amber-500/50" placeholder="Nombre del cliente" autoFocus/>
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '10px 14px', fontSize: 13, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                  placeholder="Nombre del cliente" autoFocus
+                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
               </div>
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Concepto *</label>
+                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Concepto *</label>
                 <input type="text" value={form.concepto} onChange={e => setForm({...form, concepto: e.target.value})}
-                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Ej: Edición de video — Boda"/>
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                  placeholder="Ej: Edición de video — Boda"
+                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Monto ($) *</label>
+                  <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Monto ($) *</label>
                   <input type="number" value={form.monto} onChange={e => setForm({...form, monto: e.target.value})}
-                    className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0.00"/>
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                    placeholder="0.00"
+                    onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                    onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
                 </div>
                 <div>
-                  <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Fecha</label>
+                  <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Fecha</label>
                   <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})}
-                    className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none"/>
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: t.textMuted, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                    onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                    onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
                 </div>
               </div>
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Notas adicionales</label>
+                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Notas adicionales</label>
                 <textarea value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
-                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none min-h-[60px] resize-none" placeholder="Opcional..."/>
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '10px 14px', fontSize: 12, color: t.text, outline: 'none', minHeight: 60, resize: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                  placeholder="Opcional..."
+                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
               </div>
             </div>
             <button onClick={handleCreate} disabled={loading || !form.cliente || !form.monto}
-              className="mt-6 w-full py-2.5 bg-white text-black text-xs font-bold rounded-md hover:bg-neutral-200 disabled:opacity-50 transition-colors">
+              style={{ marginTop: 24, width: '100%', padding: '12px 0', backgroundColor: loading || !form.cliente || !form.monto ? t.textMuted : t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.2em', border: 'none', cursor: loading || !form.cliente || !form.monto ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
               {loading ? 'Creando...' : 'Emitir Recibo'}
             </button>
           </div>
@@ -209,68 +242,71 @@ const Recibos = ({ data, setData }) => {
       {/* ── VISTA DE IMPRESIÓN ─────────────────────────────────────────────── */}
       {view === 'print' && activeRecibo && (
         <div className="animate-in fade-in duration-300">
-          <div className="flex items-center justify-between mb-5">
-            <button className="flex items-center gap-2 text-xs text-neutral-500 hover:text-white" onClick={() => setView('list')}>
-              <ArrowLeft size={12}/> Volver a Recibos
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <button onClick={() => setView('list')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: t.textDim, background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s', padding: 0 }}
+              onMouseEnter={e => e.currentTarget.style.color = t.text}
+              onMouseLeave={e => e.currentTarget.style.color = t.textDim}>
+              <ArrowLeft size={14}/> Volver a Recibos
             </button>
             <button onClick={triggerPrint}
-              className="px-4 py-2 bg-white text-black text-xs font-bold rounded-md hover:bg-neutral-200 transition-colors flex items-center gap-1.5">
-              <Printer size={13}/> Imprimir / Guardar PDF
+              style={{ padding: '10px 20px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 8, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <Printer size={14}/> Imprimir / Guardar PDF
             </button>
           </div>
 
-          {/* Recibo imprimible */}
-          <div ref={printRef} className="bg-white text-black rounded-xl p-10 max-w-2xl mx-auto print:m-0 print:rounded-none print:shadow-none shadow-2xl">
+          {/* Recibo imprimible — mantiene blanco para impresión física */}
+          <div ref={printRef} style={{ backgroundColor: '#fff', color: '#000', borderRadius: 14, padding: 40, maxWidth: 672, margin: '0 auto', boxShadow: '0 25px 80px rgba(0,0,0,0.5)' }}>
             {/* Cabecera del recibo */}
-            <div className="flex justify-between items-start mb-8 pb-6 border-b border-neutral-200">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 32, paddingBottom: 24, borderBottom: '1px solid #e5e5e5' }}>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <Activity size={18} className="text-amber-500"/>
-                  <span className="text-lg font-bold tracking-tight">sync <span className="text-amber-500 italic">pro</span></span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <Activity size={18} color="#d97706"/>
+                  <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>sync <span style={{ color: '#d97706', fontStyle: 'italic' }}>pro</span></span>
                 </div>
-                <p className="text-xs text-neutral-500">Producción Audiovisual Profesional</p>
+                <p style={{ fontSize: 12, color: '#737373' }}>Producción Audiovisual Profesional</p>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-neutral-800">RECIBO</p>
-                <p className="text-sm font-mono text-amber-600 font-bold">#{activeRecibo.numero}</p>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 24, fontWeight: 700, color: '#262626' }}>RECIBO</p>
+                <p style={{ fontSize: 14, fontFamily: 'monospace', color: '#d97706', fontWeight: 700 }}>#{activeRecibo.numero}</p>
               </div>
             </div>
 
             {/* Datos del cliente */}
-            <div className="grid grid-cols-2 gap-8 mb-8">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginBottom: 32 }}>
               <div>
-                <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold mb-1">Emitido para</p>
-                <p className="text-lg font-semibold text-neutral-800">{activeRecibo.cliente}</p>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a3a3a3', fontWeight: 700, marginBottom: 4 }}>Emitido para</p>
+                <p style={{ fontSize: 18, fontWeight: 600, color: '#262626' }}>{activeRecibo.cliente}</p>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold mb-1">Fecha</p>
-                <p className="text-sm font-mono text-neutral-700">{activeRecibo.fecha}</p>
-                <div className={`inline-block mt-1 text-[9px] px-2 py-0.5 rounded uppercase font-bold tracking-widest ${activeRecibo.estado === 'Pagado' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a3a3a3', fontWeight: 700, marginBottom: 4 }}>Fecha</p>
+                <p style={{ fontSize: 14, fontFamily: 'monospace', color: '#404040' }}>{activeRecibo.fecha}</p>
+                <div style={{ display: 'inline-block', marginTop: 4, fontSize: 9, padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', backgroundColor: activeRecibo.estado === 'Pagado' ? '#d1fae5' : '#fef3c7', color: activeRecibo.estado === 'Pagado' ? '#047857' : '#b45309' }}>
                   {activeRecibo.estado}
                 </div>
               </div>
             </div>
 
             {/* Tabla de concepto */}
-            <table className="w-full mb-8 border-collapse">
+            <table style={{ width: '100%', marginBottom: 32, borderCollapse: 'collapse' }}>
               <thead>
-                <tr className="border-b-2 border-neutral-200">
-                  <th className="text-left text-[10px] uppercase tracking-widest text-neutral-400 py-2 font-bold">Concepto</th>
-                  <th className="text-right text-[10px] uppercase tracking-widest text-neutral-400 py-2 font-bold">Total</th>
+                <tr style={{ borderBottom: '2px solid #e5e5e5' }}>
+                  <th style={{ textAlign: 'left', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a3a3a3', paddingBottom: 8, fontWeight: 700 }}>Concepto</th>
+                  <th style={{ textAlign: 'right', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a3a3a3', paddingBottom: 8, fontWeight: 700 }}>Total</th>
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b border-neutral-100">
-                  <td className="py-4 text-sm text-neutral-700">{activeRecibo.concepto}</td>
-                  <td className="py-4 text-right font-mono font-bold text-neutral-800 text-lg">
+                <tr style={{ borderBottom: '1px solid #f5f5f5' }}>
+                  <td style={{ padding: '16px 0', fontSize: 14, color: '#404040' }}>{activeRecibo.concepto}</td>
+                  <td style={{ padding: '16px 0', textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, color: '#262626', fontSize: 18 }}>
                     ${parseFloat(activeRecibo.monto).toLocaleString('en', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr>
-                  <td className="pt-4 text-[10px] uppercase tracking-widest font-bold text-neutral-400">Total</td>
-                  <td className="pt-4 text-right font-mono font-bold text-2xl text-amber-600">
+                  <td style={{ paddingTop: 16, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: '#a3a3a3' }}>Total</td>
+                  <td style={{ paddingTop: 16, textAlign: 'right', fontFamily: 'monospace', fontWeight: 700, fontSize: 24, color: '#d97706' }}>
                     ${parseFloat(activeRecibo.monto).toLocaleString('en', { minimumFractionDigits: 2 })}
                   </td>
                 </tr>
@@ -279,16 +315,16 @@ const Recibos = ({ data, setData }) => {
 
             {/* Notas */}
             {activeRecibo.notas && (
-              <div className="bg-neutral-50 rounded-xl p-4 mb-8">
-                <p className="text-[10px] uppercase tracking-widest text-neutral-400 font-bold mb-1">Notas</p>
-                <p className="text-xs text-neutral-600">{activeRecibo.notas}</p>
+              <div style={{ backgroundColor: '#fafafa', borderRadius: 14, padding: 16, marginBottom: 32 }}>
+                <p style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a3a3a3', fontWeight: 700, marginBottom: 4 }}>Notas</p>
+                <p style={{ fontSize: 12, color: '#525252' }}>{activeRecibo.notas}</p>
               </div>
             )}
 
             {/* Pie del recibo */}
-            <div className="border-t border-neutral-200 pt-6 flex justify-between items-center">
-              <p className="text-[10px] text-neutral-400">Generado con Sync Pro OS</p>
-              <p className="text-[10px] text-neutral-400 font-mono">{new Date().toLocaleDateString('es')}</p>
+            <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <p style={{ fontSize: 10, color: '#a3a3a3' }}>Generado con Sync Pro OS</p>
+              <p style={{ fontSize: 10, color: '#a3a3a3', fontFamily: 'monospace' }}>{new Date().toLocaleDateString('es')}</p>
             </div>
           </div>
         </div>

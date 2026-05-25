@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Plus, TrendingUp, Download, Trash2, ArrowUpRight, ShoppingBag, Globe } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
 
 const PLATAFORMAS = ['Gumroad', 'Etsy', 'Shopify', 'Patreon', 'Gumroad', 'Ko-fi', 'Directo', 'Otra'];
 const CATEGORIAS = ['Preset', 'Plantilla', 'Curso', 'Pack de Footage', 'LUT', 'Plugin', 'Otro'];
 
-const VentasDigitales = ({ data, setData }) => {
+const VentasDigitales = ({ data, setData, isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const ventas = data.ventas || [];
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -66,52 +68,51 @@ const VentasDigitales = ({ data, setData }) => {
   };
 
   return (
-    <div className="animate-in fade-in duration-300 max-w-[1200px] w-full">
-      <header className="mb-6 flex justify-between items-center">
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-300">
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Ventas Digitales</h2>
-          <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Registro de ingresos por productos digitales</p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Ventas Digitales</h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Registro de ingresos por productos digitales</p>
         </div>
         <button onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5">
-          <Plus size={14}/> Registrar Venta
+          style={{ padding: '10px 24px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 10, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+          <Plus size={16} strokeWidth={3}/> Registrar Venta
         </button>
       </header>
 
       {/* Tarjetas de resumen */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-5">
-          <p className="text-[11px] text-neutral-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><Download size={12}/> Total Acumulado</p>
-          <p className="text-3xl font-light text-white">${totalGeneral.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><Download size={12}/> Total Acumulado</p>
+          <p style={{ fontSize: 28, fontWeight: 300, color: t.text }}>${totalGeneral.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-white/[0.02] border border-emerald-500/10 rounded-xl p-5">
-          <p className="text-[11px] text-neutral-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><TrendingUp size={12}/> Este Mes</p>
-          <p className="text-3xl font-light text-emerald-400">${totalMesActual.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><TrendingUp size={12}/> Este Mes</p>
+          <p style={{ fontSize: 28, fontWeight: 300, color: t.success }}>${totalMesActual.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
           {crecimiento !== null && (
-            <p className={`text-[10px] mt-1 font-bold flex items-center gap-1 ${parseFloat(crecimiento) >= 0 ? 'text-emerald-500' : 'text-rose-400'}`}>
+            <p style={{ fontSize: 10, marginTop: 4, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, color: parseFloat(crecimiento) >= 0 ? t.success : t.danger }}>
               <ArrowUpRight size={10}/> {crecimiento}% vs mes anterior
             </p>
           )}
         </div>
-        <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-5">
-          <p className="text-[11px] text-neutral-500 uppercase tracking-widest mb-3 flex items-center gap-1.5"><ShoppingBag size={12}/> Total Ventas</p>
-          <p className="text-3xl font-light text-white">{ventas.length}</p>
-          <p className="text-[10px] text-neutral-600 mt-1">{ventas.filter(v => v.fecha?.startsWith(mesActual)).length} este mes</p>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><ShoppingBag size={12}/> Total Ventas</p>
+          <p style={{ fontSize: 28, fontWeight: 300, color: t.text }}>{ventas.length}</p>
+          <p style={{ fontSize: 10, color: t.textMuted, marginTop: 4 }}>{ventas.filter(v => v.fecha?.startsWith(mesActual)).length} este mes</p>
         </div>
       </div>
 
       {/* Mini gráfico de barras */}
-      <div className="bg-[#202022] border border-white/[0.05] rounded-xl p-5 mb-6">
-        <p className="text-[11px] text-neutral-500 uppercase tracking-widest mb-4 flex items-center gap-1.5"><TrendingUp size={12}/> Ingresos Últimos 6 Meses</p>
-        <div className="flex items-end gap-3 h-20">
+      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, marginBottom: 32, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 6 }}><TrendingUp size={12}/> Ingresos Últimos 6 Meses</p>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, height: 80 }}>
           {ultimos6Meses.map(m => (
-            <div key={m.key} className="flex-1 flex flex-col items-center gap-1.5">
-              <p className="text-[9px] text-neutral-500 font-mono">${m.total > 0 ? m.total.toLocaleString('en', { maximumFractionDigits: 0 }) : ''}</p>
-              <div className="w-full rounded-t-sm bg-amber-500/20 relative overflow-hidden transition-all duration-700"
-                style={{ height: `${Math.max((m.total / maxMes) * 60, m.total > 0 ? 4 : 1)}px` }}>
-                <div className={`absolute inset-0 ${m.key === mesActual ? 'bg-amber-500' : 'bg-amber-500/40'} rounded-t-sm`}/>
+            <div key={m.key} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              <p style={{ fontSize: 9, color: t.textMuted, fontFamily: 'monospace' }}>${m.total > 0 ? m.total.toLocaleString('en', { maximumFractionDigits: 0 }) : ''}</p>
+              <div style={{ width: '100%', borderRadius: 4, backgroundColor: `${t.accent}20`, position: 'relative', overflow: 'hidden', transition: 'all 0.7s', height: `${Math.max((m.total / maxMes) * 60, m.total > 0 ? 4 : 1)}px` }}>
+                <div style={{ position: 'absolute', inset: 0, backgroundColor: m.key === mesActual ? t.accent : `${t.accent}66`, borderRadius: 4 }}/>
               </div>
-              <p className={`text-[9px] uppercase font-bold ${m.key === mesActual ? 'text-amber-400' : 'text-neutral-600'}`}>{m.label}</p>
+              <p style={{ fontSize: 9, textTransform: 'uppercase', fontWeight: 700, color: m.key === mesActual ? t.accent : t.textMuted }}>{m.label}</p>
             </div>
           ))}
         </div>
@@ -119,43 +120,56 @@ const VentasDigitales = ({ data, setData }) => {
 
       {/* Formulario de nueva venta (colapsable) */}
       {showForm && (
-        <div className="bg-[#202022] border border-amber-500/20 rounded-xl p-5 mb-5 animate-in slide-in-from-top-2 duration-200">
-          <h3 className="text-[11px] text-amber-500 uppercase tracking-widest font-bold mb-4">Nueva Venta</h3>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
-              <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Producto *</label>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}33`, borderRadius: 14, padding: 24, marginBottom: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <h3 style={{ fontSize: 11, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700, marginBottom: 16 }}>Nueva Venta</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div style={{ gridColumn: 'span 2' }}>
+              <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Producto *</label>
               <input type="text" value={form.producto} onChange={e => setForm({...form, producto: e.target.value})}
-                className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Ej: Urban Cinematic Preset Pack" autoFocus/>
+                style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                placeholder="Ej: Urban Cinematic Preset Pack" autoFocus
+                onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Monto ($) *</label>
+              <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Monto ($) *</label>
               <input type="number" value={form.monto} onChange={e => setForm({...form, monto: e.target.value})}
-                className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0.00"/>
+                style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                placeholder="0.00"
+                onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Categoría</label>
+              <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Categoría</label>
               <select value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})}
-                className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none cursor-pointer">
+                style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}>
                 {CATEGORIAS.map(c => <option key={c}>{c}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Plataforma</label>
+              <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Plataforma</label>
               <select value={form.plataforma} onChange={e => setForm({...form, plataforma: e.target.value})}
-                className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none cursor-pointer">
+                style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}>
                 {PLATAFORMAS.map(p => <option key={p}>{p}</option>)}
               </select>
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Fecha</label>
+              <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Fecha</label>
               <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})}
-                className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none focus:border-amber-500/50"/>
+                style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.textMuted, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
             </div>
           </div>
-          <div className="flex justify-end gap-3 mt-4">
-            <button onClick={() => setShowForm(false)} className="px-4 py-2 text-xs text-neutral-400 hover:text-white">Cancelar</button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
+            <button onClick={() => setShowForm(false)}
+              style={{ padding: '8px 16px', fontSize: 11, color: t.textDim, background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.color = t.text}
+              onMouseLeave={e => e.currentTarget.style.color = t.textDim}>
+              Cancelar
+            </button>
             <button onClick={handleCreate} disabled={loading || !form.producto || !form.monto}
-              className="px-5 py-2 bg-amber-500 text-black text-xs font-bold rounded-md hover:bg-amber-400 disabled:opacity-50 transition-colors">
+              style={{ padding: '10px 24px', backgroundColor: loading || !form.producto || !form.monto ? t.textMuted : t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', border: 'none', cursor: loading || !form.producto || !form.monto ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
               {loading ? 'Guardando...' : 'Registrar Venta'}
             </button>
           </div>
@@ -163,39 +177,45 @@ const VentasDigitales = ({ data, setData }) => {
       )}
 
       {/* Tabla de ventas */}
-      <div className="bg-[#202022] border border-white/[0.05] rounded-xl overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
           <thead>
-            <tr className="bg-[#141414]/40 border-b border-white/[0.05]">
-              <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Producto</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Plataforma</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Fecha</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest text-right">Monto</th>
-              <th className="px-4 py-3 w-10"></th>
+            <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
+              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Producto</th>
+              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Plataforma</th>
+              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Fecha</th>
+              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', textAlign: 'right' }}>Monto</th>
+              <th style={{ padding: '12px 16px', width: 40 }}></th>
             </tr>
           </thead>
           <tbody>
             {ventas.length > 0 ? [...ventas].sort((a, b) => b.fecha?.localeCompare(a.fecha)).map(v => (
-              <tr key={v.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors group">
-                <td className="px-4 py-3">
-                  <p className="text-xs text-white font-medium">{v.producto}</p>
-                  <span className="text-[9px] bg-white/5 text-neutral-400 px-1.5 py-0.5 rounded border border-white/5 mt-0.5 inline-block">{v.categoria}</span>
+              <tr key={v.id}
+                style={{ borderBottom: `1px solid ${t.border}`, transition: 'background 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                <td style={{ padding: '12px 16px' }}>
+                  <p style={{ fontSize: 12, color: t.text, fontWeight: 500, margin: 0 }}>{v.producto}</p>
+                  <span style={{ fontSize: 9, backgroundColor: t.accentSoft, color: t.textDim, padding: '1px 6px', borderRadius: 4, border: `1px solid ${t.borderLight}`, marginTop: 2, display: 'inline-block' }}>{v.categoria}</span>
                 </td>
-                <td className="px-4 py-3">
-                  <span className="text-[10px] text-neutral-400 flex items-center gap-1"><Globe size={10}/>{v.plataforma}</span>
+                <td style={{ padding: '12px 16px' }}>
+                  <span style={{ fontSize: 10, color: t.textDim, display: 'flex', alignItems: 'center', gap: 4 }}><Globe size={10}/>{v.plataforma}</span>
                 </td>
-                <td className="px-4 py-3 text-xs text-neutral-500 font-mono">{v.fecha}</td>
-                <td className="px-4 py-3 text-right">
-                  <p className="text-sm font-mono font-bold text-emerald-400">${parseFloat(v.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                <td style={{ padding: '12px 16px', fontSize: 11, color: t.textDim, fontFamily: 'monospace' }}>{v.fecha}</td>
+                <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                  <p style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: t.success, margin: 0 }}>${parseFloat(v.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
                 </td>
-                <td className="px-4 py-3">
-                  <button onClick={() => handleDelete(v.id)} className="p-1.5 text-neutral-600 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">
+                <td style={{ padding: '12px 16px' }}>
+                  <button onClick={() => handleDelete(v.id)}
+                    style={{ padding: 6, borderRadius: 8, border: 'none', backgroundColor: 'transparent', color: t.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = t.danger; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; }}>
                     <Trash2 size={13}/>
                   </button>
                 </td>
               </tr>
             )) : (
-              <tr><td colSpan="5" className="px-4 py-10 text-center text-neutral-600 text-xs italic tracking-widest">Sin ventas registradas. Registra tu primera venta.</td></tr>
+              <tr><td colSpan="5" style={{ padding: '40px 16px', textAlign: 'center', color: t.textDim, fontSize: 11, fontStyle: 'italic' }}>Sin ventas registradas. Registra tu primera venta.</td></tr>
             )}
           </tbody>
         </table>

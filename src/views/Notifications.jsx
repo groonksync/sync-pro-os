@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Bell, Calendar, ChevronRight, DollarSign, Clock, AlertCircle, TrendingUp } from 'lucide-react';
+import { getTheme } from '../lib/theme';
 
-const Notifications = ({ data }) => {
+const Notifications = ({ data, isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const today = new Date();
   
   // Filtrar préstamos con pagos próximos o vencidos basándose en ciclos de 30 días
@@ -33,61 +35,95 @@ const Notifications = ({ data }) => {
   }).filter(Boolean).sort((a, b) => a.diffDays - b.diffDays);
 
   return (
-    <div className="flex flex-col h-full max-w-[1000px] w-full animate-in fade-in duration-500">
-      <header className="mb-8">
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Notificaciones de Cobro</h2>
-        <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Seguimiento de vencimientos (Ciclos de 30 días)</p>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+      <header style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Notificaciones de Cobro</h2>
+        <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Seguimiento de vencimientos (Ciclos de 30 días)</p>
       </header>
 
-      <div className="grid gap-4">
+      <div style={{ display: 'grid', gap: 16 }}>
         {notifications.length > 0 ? (
           notifications.map(n => (
-            <div key={n.id} className={`p-5 rounded-xl border flex items-center justify-between group transition-all duration-300 ${
-              n.type === 'today' 
-                ? 'bg-white/10 border-white/20' 
-                : 'bg-[#202022] border-white/[0.05] hover:border-white/10'
-            }`}>
-              <div className="flex items-center gap-5">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  n.type === 'today' ? 'bg-white text-black' : 'bg-white/5 text-neutral-400'
-                }`}>
+            <div key={n.id}
+              style={{
+                padding: 20,
+                borderRadius: 14,
+                border: `1px solid ${n.type === 'today' ? t.accent : t.border}`,
+                backgroundColor: n.type === 'today' ? `${t.accent}15` : t.panel,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                transition: 'all 0.3s'
+              }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                <div style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: n.type === 'today' ? t.accent : t.accentSoft,
+                  color: n.type === 'today' ? '#000' : t.textDim
+                }}>
                   {n.type === 'today' ? <AlertCircle size={24} /> : <Calendar size={20} />}
                 </div>
                 
                 <div>
-                  <h4 className="text-white font-medium text-lg">{n.nombre}</h4>
-                  <div className="flex items-center gap-4 mt-1">
-                    <span className="text-[10px] text-emerald-400 flex items-center gap-1.5 uppercase tracking-wider font-bold">
+                  <h4 style={{ color: t.text, fontWeight: 500, fontSize: '1.125rem', margin: 0 }}>{n.nombre}</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 4 }}>
+                    <span style={{ fontSize: 10, color: t.success, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
                       <TrendingUp size={12} /> Cobrar Interés: {n.interestAmount} {n.moneda || 'BOB'}
                     </span>
-                    <span className="text-[10px] text-neutral-500 flex items-center gap-1.5 uppercase tracking-wider font-bold">
+                    <span style={{ fontSize: 10, color: t.textDim, display: 'flex', alignItems: 'center', gap: 6, textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
                       <Clock size={12} /> Próximo cobro: {n.nextBillingDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="text-right flex items-center gap-6">
+              <div style={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 24 }}>
                 <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${
-                    n.type === 'today' ? 'text-white' : 'text-neutral-500'
-                  }`}>
+                  <p style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    marginBottom: 4,
+                    color: n.type === 'today' ? t.accent : t.textDim
+                  }}>
                     {n.type === 'today' ? 'Vence Hoy' : `En ${n.diffDays} días`}
                   </p>
-                  <p className="text-xs text-neutral-400 font-mono">
+                  <p style={{ fontSize: 12, color: t.textMuted, fontFamily: 'monospace', margin: 0 }}>
                     {n.nextBillingDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' })}
                   </p>
                 </div>
-                <div className="p-2 rounded-xl bg-white/5 text-neutral-500 group-hover:text-white group-hover:bg-white/10 transition-all cursor-pointer">
+                <div style={{
+                  padding: 8,
+                  borderRadius: 12,
+                  backgroundColor: t.accentSoft,
+                  color: t.textDim,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}>
                   <ChevronRight size={20} />
                 </div>
               </div>
             </div>
           ))
         ) : (
-          <div className="py-20 flex flex-col items-center justify-center border border-dashed border-white/10 rounded-xl bg-white/[0.01]">
-            <Bell size={48} className="text-neutral-800 mb-4" />
-            <p className="text-neutral-500 text-sm">No hay cobros pendientes para los próximos días.</p>
+          <div style={{
+            padding: '80px 0',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            border: `1px dashed ${t.borderLight}`,
+            borderRadius: 14,
+            backgroundColor: `${t.panel}80`
+          }}>
+            <Bell size={48} style={{ color: t.textMuted, marginBottom: 16 }} />
+            <p style={{ color: t.textDim, fontSize: 14, margin: 0 }}>No hay cobros pendientes para los próximos días.</p>
           </div>
         )}
       </div>

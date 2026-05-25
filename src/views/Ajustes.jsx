@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 import { 
@@ -7,12 +7,14 @@ import {
   Upload, Check, ChevronRight, Plus, Cloud, User as UserIcon, Link2, Unlink, Cpu
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
 import { Google, DeepSeek } from '@lobehub/icons';
 
 const GoogleLogo = ({ size = 18 }) => <Google.Color size={size} />;
 const DeepSeekLogo = ({ size = 18 }) => <DeepSeek.Color size={size} />;
 
-const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }) => {
+const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const [authCode, setAuthCode] = useState(null);
   const [loading, setLoading] = useState(false);
   const [balance, setBalance] = useState('...');
@@ -116,83 +118,118 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
   };
 
   return (
-    <div className="flex flex-col h-full max-w-5xl mx-auto space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: 40 }}>
       
-      <header className="flex justify-between items-end pb-8 border-b border-white/5">
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingBottom: 32, borderBottom: `1px solid ${t.borderLight}` }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Ajustes</h2>
-          <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Calibración Global de Infraestructura</p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Ajustes</h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Calibración Global de Infraestructura</p>
         </div>
-        <div className="flex items-center gap-4 text-[10px] font-black text-neutral-800 uppercase tracking-widest">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 10, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
            <ShieldCheck size={16}/> System Secure
         </div>
       </header>
 
-      <section className="bg-[#202022] border border-white/5 rounded-[32px] p-8 shadow-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity"><Cloud size={100}/></div>
-        <div className="relative flex flex-col md:flex-row items-center justify-between gap-8">
-           <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-white/5 rounded-[2rem] border border-white/5 flex items-center justify-center overflow-hidden">
+      {/* Sección de Cuenta Google */}
+      <section style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 28, padding: 32, position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, padding: 32, opacity: 0.05, transition: 'opacity 0.3s' }}><Cloud size={100}/></div>
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 32 }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+              <div style={{ width: 80, height: 80, backgroundColor: t.accentSoft, borderRadius: 24, border: `1px solid ${t.borderLight}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {googleUser ? (
-                  <img src={googleUser.picture} alt="Profile" className="w-full h-full object-cover" />
+                  <img src={googleUser.picture} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 ) : (
-                  <UserIcon size={32} className="text-neutral-800" />
+                  <UserIcon size={32} style={{ color: t.textMuted }} />
                 )}
               </div>
               <div>
-                 <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-1">
+                 <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0 }}>
                    {googleUser ? googleUser.name : 'Cuenta Desconectada'}
                  </h3>
-                 <p className="text-[10px] text-neutral-600 font-black uppercase tracking-[0.2em]">
+                 <p style={{ fontSize: 10, color: t.textMuted, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 4 }}>
                    {googleUser ? googleUser.email : 'Sincroniza con Google para activar servicios'}
                  </p>
               </div>
            </div>
-           <div className="flex gap-4 w-full md:w-auto">
-              {googleUser ? (
-                <button onClick={onLogout} className="w-full md:w-auto px-6 py-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-[10px] font-black uppercase text-rose-500 hover:bg-rose-500 hover:text-white transition-all">Desvincular</button>
-              ) : (
-                <button onClick={() => login()} className="w-full md:w-auto px-10 py-4 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">Vincular Google</button>
-              )}
+           <div style={{ display: 'flex', gap: 16, width: '100%', flexWrap: 'wrap' }}>
+             {googleUser ? (
+               <button onClick={onLogout}
+                 style={{ width: '100%', padding: '12px 24px', backgroundColor: `${t.danger}15`, border: `1px solid ${t.danger}30`, borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: t.danger, cursor: 'pointer', transition: 'all 0.2s' }}>
+                 Desvincular
+               </button>
+             ) : (
+               <button onClick={() => login()}
+                 style={{ width: '100%', padding: '12px 24px', backgroundColor: t.accent, color: '#000', border: 'none', borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', cursor: 'pointer' }}>
+                 Vincular Google
+               </button>
+             )}
            </div>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl relative overflow-hidden">
-          <h3 className="text-xl font-black text-white uppercase tracking-tighter mb-2 flex items-center gap-3"><Palette size={20} className="text-neutral-700"/> Motor Estético</h3>
-          <div className="grid grid-cols-4 gap-3">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+        {/* Motor Estético */}
+        <section style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 32, display: 'flex', flexDirection: 'column', gap: 32, position: 'relative', overflow: 'hidden' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Palette size={20} style={{ color: t.textMuted }}/> Motor Estético
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
             {accentColors.map(color => (
               <button 
                 key={color.hex}
                 onClick={() => updateSetting('accentColor', color.hex)}
-                className={`h-12 rounded-xl transition-all border-2 ${settings.accentColor === color.hex ? 'border-white scale-110 shadow-xl' : 'border-transparent opacity-40 hover:opacity-100'}`}
-                style={{ backgroundColor: color.hex }}
+                style={{
+                  height: 48,
+                  borderRadius: 12,
+                  transition: 'all 0.2s',
+                  border: settings.accentColor === color.hex ? `2px solid ${t.text}` : '2px solid transparent',
+                  opacity: settings.accentColor === color.hex ? 1 : 0.4,
+                  backgroundColor: color.hex,
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={e => { if (settings.accentColor !== color.hex) e.target.style.opacity = '1'; }}
+                onMouseLeave={e => { if (settings.accentColor !== color.hex) e.target.style.opacity = '0.4'; }}
               />
             ))}
           </div>
         </section>
 
-        <section className={`border-2 rounded-[28px] p-8 space-y-8 shadow-2xl transition-all duration-500 ${settings.isMobileMode ? 'bg-white border-white text-black' : 'bg-[#202022] border-white/5 text-white'}`}>
-          <h3 className="text-xl font-black uppercase tracking-tighter flex items-center gap-3"><Smartphone size={20}/> Transmutador Móvil</h3>
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-black uppercase">Optimización Táctil</p>
-            <button onClick={() => updateSetting('isMobileMode', !settings.isMobileMode)} className={`w-16 h-8 rounded-xl relative transition-all ${settings.isMobileMode ? 'bg-[#141414]' : 'bg-white/10'}`}>
-              <div className={`absolute top-1 w-6 h-6 rounded-xl transition-all ${settings.isMobileMode ? 'right-1 bg-white' : 'left-1 bg-neutral-700'}`}></div>
+        {/* Transmutador Móvil */}
+        <section style={{
+          border: `2px solid ${settings.isMobileMode ? t.accent : t.border}`,
+          borderRadius: 24,
+          padding: 32,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 32,
+          transition: 'all 0.5s',
+          backgroundColor: t.panel
+        }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Smartphone size={20}/> Transmutador Móvil
+          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', color: t.textDim, margin: 0 }}>Optimización Táctil</p>
+            <button onClick={() => updateSetting('isMobileMode', !settings.isMobileMode)}
+              style={{ width: 64, height: 32, borderRadius: 12, position: 'relative', transition: 'all 0.2s', backgroundColor: settings.isMobileMode ? t.inputBg : `${t.textMuted}20`, border: 'none', cursor: 'pointer' }}>
+              <div style={{ position: 'absolute', top: 4, width: 24, height: 24, borderRadius: 12, transition: 'all 0.2s', backgroundColor: settings.isMobileMode ? t.text : t.textMuted, ...(settings.isMobileMode ? { right: 4 } : { left: 4 }) }}></div>
             </button>
           </div>
         </section>
 
-        <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl md:col-span-2">
-          <div className="flex items-center justify-between">
-             <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><Cpu size={20} className="text-emerald-500"/> Bóveda de Inteligencia</h3>
-             <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/5">
-                <div className={`w-2 h-2 rounded-xl ${settings.geminiKey || settings.deepseekKey ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
-                <span className="text-[9px] font-black text-white uppercase tracking-widest">{settings.geminiKey || settings.deepseekKey ? 'Vault Protegido' : 'Bóveda Vacía'}</span>
+        {/* Bóveda de Inteligencia */}
+        <section style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 32, display: 'flex', flexDirection: 'column', gap: 32, gridColumn: 'span 2' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+             <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+               <Cpu size={20} style={{ color: t.success }}/> Bóveda de Inteligencia
+             </h3>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', backgroundColor: t.accentSoft, borderRadius: 12, border: `1px solid ${t.borderLight}` }}>
+                <div style={{ width: 8, height: 8, borderRadius: 6, backgroundColor: settings.geminiKey || settings.deepseekKey ? t.success : t.danger, animation: settings.geminiKey || settings.deepseekKey ? 'pulse 2s infinite' : 'none' }}></div>
+                <span style={{ fontSize: 9, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.geminiKey || settings.deepseekKey ? 'Vault Protegido' : 'Bóveda Vacía'}</span>
              </div>
           </div>
 
-          <div className="flex bg-[#141414] rounded-xl p-1.5 border border-white/10 max-w-xs">
+          <div style={{ display: 'flex', backgroundColor: t.inputBg, borderRadius: 12, padding: 6, border: `1px solid ${t.borderLight}`, maxWidth: 320 }}>
             {[
               { id: 'gemini', label: 'Google', Icon: GoogleLogo },
               { id: 'deepseek', label: 'DeepSeek', Icon: DeepSeekLogo }
@@ -200,7 +237,23 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
               <button 
                 key={p.id} 
                 onClick={() => updateSetting('aiProvider', p.id)} 
-                className={`flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all flex items-center justify-center gap-2 ${settings.aiProvider === p.id ? 'bg-white text-black shadow-xl' : 'text-neutral-600 hover:text-white'}`}
+                style={{
+                  flex: 1,
+                  padding: '12px 0',
+                  borderRadius: 10,
+                  fontSize: 10,
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  border: 'none',
+                  backgroundColor: settings.aiProvider === p.id ? t.accent : 'transparent',
+                  color: settings.aiProvider === p.id ? '#000' : t.textMuted,
+                  cursor: 'pointer'
+                }}
               >
                 <p.Icon />
                 {p.label}
@@ -208,33 +261,33 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
             ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
             {/* GESTIÓN DE LLAVES */}
-            <div className="space-y-6">
-               <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[2rem] space-y-6">
-                  <div className="flex justify-between items-center">
-                     <p className="text-[10px] text-white font-black uppercase tracking-[0.2em]">Llave Maestra {settings.aiProvider === 'gemini' ? 'Google' : 'DeepSeek'}</p>
-                     <Zap size={14} className={settings.aiProvider === 'gemini' ? 'text-emerald-500' : 'text-blue-500'}/>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+               <div style={{ padding: 32, backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                     <p style={{ fontSize: 10, color: t.text, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>Llave Maestra {settings.aiProvider === 'gemini' ? 'Google' : 'DeepSeek'}</p>
+                     <Zap size={14} style={{ color: settings.aiProvider === 'gemini' ? t.success : '#60a5fa' }}/>
                   </div>
                   
-                  <div className="relative">
+                  <div style={{ position: 'relative' }}>
                     <input 
                       type="password" 
                       id="ai-key-input"
                       defaultValue={settings.aiProvider === 'gemini' ? settings.geminiKey : settings.deepseekKey}
                       placeholder={`Pegar llave de ${settings.aiProvider}...`} 
-                      className="w-full bg-[#141414] border border-white/5 rounded-xl p-5 text-[10px] text-white font-mono outline-none focus:border-white/20 transition-all pr-12 shadow-inner"
+                      style={{ width: '100%', backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16, fontSize: 10, color: t.text, fontFamily: 'monospace', outline: 'none', transition: 'border-color 0.2s', paddingRight: 48 }}
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                      <button 
                        onClick={() => {
                          const val = document.getElementById('ai-key-input').value;
                          updateSetting(settings.aiProvider === 'gemini' ? 'geminiKey' : 'deepseekKey', val);
                          alert("✅ Bóveda Actualizada. Llave vinculada correctamente.");
                        }}
-                       className="py-4 bg-emerald-500 text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                       style={{ padding: '14px 0', backgroundColor: t.success, color: '#000', borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', border: 'none', cursor: 'pointer', transition: 'transform 0.2s' }}
                      >
                        Guardar API
                      </button>
@@ -244,7 +297,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                          document.getElementById('ai-key-input').value = '';
                          alert("⚠️ Purga Completada. La llave ha sido eliminada del sistema.");
                        }}
-                       className="py-4 bg-rose-500/10 border border-rose-500/20 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all"
+                       style={{ padding: '14px 0', backgroundColor: `${t.danger}15`, border: `1px solid ${t.danger}30`, color: t.danger, borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', transition: 'all 0.2s' }}
                      >
                        Eliminar API
                      </button>
@@ -253,22 +306,22 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
             </div>
 
             {/* ESTADO Y CRÉDITOS */}
-            <div className="p-8 bg-white/[0.02] border border-white/5 rounded-[2rem] flex flex-col justify-between gap-8">
-               <div className="space-y-6">
-                  <div className="flex justify-between items-center pb-4 border-b border-white/5">
-                     <span className="text-[10px] text-neutral-500 font-black uppercase">Consumo Neural</span>
-                     <div className="flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-xl bg-emerald-500"></div>
-                        <span className="text-[10px] text-emerald-500 font-black">ACTIVO</span>
+            <div style={{ padding: 32, backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 32 }}>
+               <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 16, borderBottom: `1px solid ${t.borderLight}` }}>
+                     <span style={{ fontSize: 10, color: t.textDim, fontWeight: 900, textTransform: 'uppercase' }}>Consumo Neural</span>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 6, height: 6, borderRadius: 6, backgroundColor: t.success }}></div>
+                        <span style={{ fontSize: 10, color: t.success, fontWeight: 900 }}>ACTIVO</span>
                      </div>
                   </div>
                   
-                  <div className="text-center py-4">
-                     <p className="text-[10px] text-neutral-600 font-black uppercase tracking-widest mb-2">Créditos Disponibles</p>
-                     <p className="text-4xl font-black text-white tracking-tighter">
-                        {settings.aiProvider === 'gemini' ? (balance === '...' ? 'Ilimitado' : balance) : balance}
+                  <div style={{ textAlign: 'center', padding: '16px 0' }}>
+                     <p style={{ fontSize: 10, color: t.textMuted, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Créditos Disponibles</p>
+                     <p style={{ fontSize: '2rem', fontWeight: 900, color: t.text, letterSpacing: '-0.05em', margin: 0 }}>
+                       {settings.aiProvider === 'gemini' ? (balance === '...' ? 'Ilimitado' : balance) : balance}
                      </p>
-                     <p className="text-[8px] text-neutral-700 font-bold uppercase mt-2">Sincronizado en tiempo real</p>
+                     <p style={{ fontSize: 8, color: t.textMuted, fontWeight: 700, textTransform: 'uppercase', marginTop: 8 }}>Sincronizado en tiempo real</p>
                   </div>
                </div>
 
@@ -277,7 +330,6 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                    setBalance('...');
                    const { aiService } = await import('../services/aiService');
                    
-                   // TEST DE MODELOS
                    const key = settings.aiProvider === 'gemini' ? settings.geminiKey : settings.deepseekKey;
                    if (!key) {
                       alert("❌ Error: No hay llave para sincronizar.");
@@ -288,7 +340,6 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                    const res = await aiService.fetchBalance(settings);
                    setBalance(res);
 
-                   // DETECTAR MODELOS (Diagnóstico profundo)
                    try {
                      const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
                      const mRes = await fetch(url);
@@ -303,7 +354,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
                      alert("📡 Sincronización Exitosa: Balance actualizado.");
                    }
                  }} 
-                 className="w-full py-5 bg-white text-black rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl"
+                 style={{ width: '100%', padding: '18px 0', backgroundColor: t.accent, color: '#000', border: 'none', borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', transition: 'transform 0.2s' }}
                >
                  Refrescar y Diagnosticar Telemetría
                </button>
@@ -311,17 +362,27 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout }
           </div>
         </section>
 
-        <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl">
-          <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><Building2 size={20}/> Identidad</h3>
-          <input type="text" value={settings.studioName} onChange={e => updateSetting('studioName', e.target.value)} className="w-full bg-[#141414] border border-white/5 rounded-xl p-4 text-sm text-white font-bold outline-none"/>
-          <button onClick={handleExportBackup} className="w-full py-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase text-emerald-500 flex items-center justify-center gap-3"><Download size={16}/> Exportar Backup</button>
+        {/* Identidad */}
+        <section style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 32, display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Building2 size={20}/> Identidad
+          </h3>
+          <input type="text" value={settings.studioName} onChange={e => updateSetting('studioName', e.target.value)}
+            style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16, fontSize: 14, color: t.text, fontWeight: 700, outline: 'none' }}/>
+          <button onClick={handleExportBackup}
+            style={{ width: '100%', padding: '14px 0', backgroundColor: `${t.success}15`, border: `1px solid ${t.success}30`, borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: t.success, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, cursor: 'pointer' }}>
+            <Download size={16}/> Exportar Backup
+          </button>
         </section>
 
-        <section className="bg-[#202022] border border-white/5 rounded-[28px] p-8 space-y-8 shadow-2xl">
-          <h3 className="text-xl font-black text-white uppercase tracking-tighter flex items-center gap-3"><Database size={20}/> Mantenimiento</h3>
-          <button className="w-full p-6 bg-rose-500/5 border border-rose-500/10 rounded-[32px] flex items-center justify-between group">
-            <div className="text-left"><p className="text-xs font-black text-rose-500 uppercase">Limpiar Logs</p></div>
-            <Trash2 size={18} className="text-rose-500"/>
+        {/* Mantenimiento */}
+        <section style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 32, display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Database size={20}/> Mantenimiento
+          </h3>
+          <button style={{ width: '100%', padding: 24, backgroundColor: `${t.danger}08`, border: `1px solid ${t.danger}15`, borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+            <div style={{ textAlign: 'left' }}><p style={{ fontSize: 12, fontWeight: 900, color: t.danger, textTransform: 'uppercase', margin: 0 }}>Limpiar Logs</p></div>
+            <Trash2 size={18} style={{ color: t.danger }}/>
           </button>
         </section>
       </div>

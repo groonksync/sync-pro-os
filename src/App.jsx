@@ -242,10 +242,11 @@ const App = () => {
         case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} isDark={isDarkMode} />;
         case 'papelera': return <TrashView settings={appSettings} isDark={isDarkMode} />;
         case 'configuracion': return (
-          <Ajustes 
-            settings={appSettings} 
-            setSettings={setAppSettings} 
+          <Ajustes
+            settings={appSettings}
+            setSettings={setAppSettings}
             googleUser={googleUser}
+            isDark={isDarkMode}
             onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }}
             onLogout={() => { setGoogleToken(null); setGoogleUser(null); setActiveTab('resumen'); }}
           />

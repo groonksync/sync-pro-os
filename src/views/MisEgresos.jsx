@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, CreditCard, ArrowDownRight, Tag, Coffee, Wrench, Wifi, User, ShoppingCart } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { getTheme } from '../lib/theme';
 
 const CATEGORIAS = [
-  { label: 'Suscripción', icon: Wifi, color: 'text-blue-400' },
-  { label: 'Herramienta', icon: Wrench, color: 'text-amber-400' },
-  { label: 'Servicio',    icon: Tag, color: 'text-purple-400' },
-  { label: 'Personal',   icon: User, color: 'text-rose-400' },
-  { label: 'Compra',     icon: ShoppingCart, color: 'text-emerald-400' },
-  { label: 'Otro',       icon: Coffee, color: 'text-neutral-400' },
+  { label: 'Suscripción', icon: Wifi },
+  { label: 'Herramienta', icon: Wrench },
+  { label: 'Servicio',    icon: Tag },
+  { label: 'Personal',   icon: User },
+  { label: 'Compra',     icon: ShoppingCart },
+  { label: 'Otro',       icon: Coffee },
 ];
 
 const catConfig = Object.fromEntries(CATEGORIAS.map(c => [c.label, c]));
 
-const MisEgresos = ({ data, setData }) => {
+const MisEgresos = ({ data, setData, isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
   const egresos = data.egresos || [];
   const ventas  = data.ventas  || [];
   const [showForm, setShowForm] = useState(false);
@@ -66,59 +68,60 @@ const MisEgresos = ({ data, setData }) => {
   })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
 
   return (
-    <div className="animate-in fade-in duration-300 max-w-[1200px] w-full">
-      <header className="mb-6 flex justify-between items-center">
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-300">
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Mis Egresos</h2>
-          <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '4px', fontWeight: 500 }}>Control de gastos y balance mensual</p>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Mis Egresos</h2>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Control de gastos y balance mensual</p>
         </div>
         <button onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-md transition-colors flex items-center gap-1.5">
-          <Plus size={14}/> Registrar Egreso
+          style={{ padding: '10px 24px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 10, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
+          <Plus size={16} strokeWidth={3}/> Registrar Egreso
         </button>
       </header>
 
       {/* Tarjetas de resumen */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4">
-          <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-2 flex items-center gap-1"><CreditCard size={10}/> Total Gastado</p>
-          <p className="text-2xl font-light text-white">${totalEgresos.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><CreditCard size={12}/> Total Gastado</p>
+          <p style={{ fontSize: 24, fontWeight: 300, color: t.text }}>${totalEgresos.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4">
-          <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-2 flex items-center gap-1"><ArrowDownRight size={10}/> Egresos Este Mes</p>
-          <p className="text-2xl font-light text-rose-400">${egresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><ArrowDownRight size={12}/> Egresos Este Mes</p>
+          <p style={{ fontSize: 24, fontWeight: 300, color: t.danger }}>${egresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-xl p-4">
-          <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-2">Ingresos Este Mes</p>
-          <p className="text-2xl font-light text-emerald-400">${ingresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-          <p className="text-[9px] text-neutral-600 mt-1">Ventas digitales</p>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>Ingresos Este Mes</p>
+          <p style={{ fontSize: 24, fontWeight: 300, color: t.success }}>${ingresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+          <p style={{ fontSize: 9, color: t.textMuted, marginTop: 4 }}>Ventas digitales</p>
         </div>
-        <div className={`border rounded-xl p-4 ${gananciaNeta >= 0 ? 'bg-emerald-500/5 border-emerald-500/10' : 'bg-rose-500/5 border-rose-500/10'}`}>
-          <p className="text-[10px] text-neutral-500 uppercase tracking-widest mb-2">Ganancia Neta Mes</p>
-          <p className={`text-2xl font-light font-mono ${gananciaNeta >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>Ganancia Neta Mes</p>
+          <p style={{ fontSize: 24, fontWeight: 300, fontFamily: 'monospace', color: gananciaNeta >= 0 ? t.success : t.danger }}>
             {gananciaNeta >= 0 ? '+' : ''}${gananciaNeta.toLocaleString('en', { minimumFractionDigits: 2 })}
           </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-5 mb-6">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 20, marginBottom: 32 }}>
         {/* Gastos por categoría */}
         {porCategoria.length > 0 && (
-          <div className="col-span-4 bg-[#202022] border border-white/[0.05] rounded-xl p-5">
-            <p className="text-[11px] text-neutral-500 uppercase tracking-widest mb-4">Por Categoría</p>
-            <div className="space-y-3">
+          <div style={{ gridColumn: 'span 4', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+            <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 16 }}>Por Categoría</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {porCategoria.map(cat => {
                 const Icon = cat.icon;
                 const pct = Math.round((cat.total / (totalEgresos || 1)) * 100);
                 return (
                   <div key={cat.label}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`text-[10px] font-bold flex items-center gap-1.5 ${cat.color}`}><Icon size={10}/>{cat.label}</span>
-                      <span className="text-[10px] text-neutral-400 font-mono">${cat.total.toLocaleString('en', { maximumFractionDigits: 0 })}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, color: t.textDim }}>
+                        <Icon size={10} color={t.accent}/>{cat.label}
+                      </span>
+                      <span style={{ fontSize: 10, color: t.textMuted, fontFamily: 'monospace' }}>${cat.total.toLocaleString('en', { maximumFractionDigits: 0 })}</span>
                     </div>
-                    <div className="h-1 bg-white/5 rounded-xl overflow-hidden">
-                      <div className="h-full bg-current rounded-xl transition-all duration-500" style={{ width: `${pct}%`, color: 'inherit' }}
-                        className={`h-full rounded-xl transition-all duration-500 ${cat.color.replace('text-', 'bg-').replace('400', '400/60')}`}/>
+                    <div style={{ height: 4, backgroundColor: t.accentSoft, borderRadius: 10, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', backgroundColor: t.accent, borderRadius: 10, transition: 'all 0.5s', width: `${pct}%` }}/>
                     </div>
                   </div>
                 );
@@ -129,41 +132,55 @@ const MisEgresos = ({ data, setData }) => {
 
         {/* Formulario si está abierto */}
         {showForm && (
-          <div className="col-span-8 bg-[#202022] border border-amber-500/20 rounded-xl p-5 animate-in fade-in duration-200">
-            <h3 className="text-[11px] text-amber-500 uppercase tracking-widest font-bold mb-4">Nuevo Egreso</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Descripción *</label>
+          <div style={{ gridColumn: 'span 8', backgroundColor: t.panel, border: `1px solid ${t.accent}33`, borderRadius: 14, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+            <h3 style={{ fontSize: 11, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700, marginBottom: 16 }}>Nuevo Egreso</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Descripción *</label>
                 <input type="text" value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})}
-                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="Ej: Adobe Creative Cloud" autoFocus/>
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                  placeholder="Ej: Adobe Creative Cloud" autoFocus
+                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
               </div>
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Categoría</label>
+                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Categoría</label>
                 <select value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})}
-                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none cursor-pointer">
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}>
                   {CATEGORIAS.map(c => <option key={c.label}>{c.label}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Monto ($) *</label>
+                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Monto ($) *</label>
                 <input type="number" value={form.monto} onChange={e => setForm({...form, monto: e.target.value})}
-                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none focus:border-amber-500/50" placeholder="0.00"/>
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                  placeholder="0.00"
+                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
               </div>
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Fecha</label>
+                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Fecha</label>
                 <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})}
-                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-neutral-300 outline-none"/>
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.textMuted, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
+                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
+                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
               </div>
               <div>
-                <label className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold mb-1.5 block">Notas</label>
+                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Notas</label>
                 <input type="text" value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
-                  className="w-full bg-[#141414]/40 border border-white/10 rounded-md px-3 py-2 text-xs text-white outline-none" placeholder="Opcional..."/>
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box' }}
+                  placeholder="Opcional..."/>
               </div>
             </div>
-            <div className="flex justify-end gap-3 mt-4">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-xs text-neutral-400 hover:text-white">Cancelar</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
+              <button onClick={() => setShowForm(false)}
+                style={{ padding: '8px 16px', fontSize: 11, color: t.textDim, background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.color = t.text}
+                onMouseLeave={e => e.currentTarget.style.color = t.textDim}>
+                Cancelar
+              </button>
               <button onClick={handleCreate} disabled={loading || !form.descripcion || !form.monto}
-                className="px-5 py-2 bg-amber-500 text-black text-xs font-bold rounded-md hover:bg-amber-400 disabled:opacity-50">
+                style={{ padding: '10px 24px', backgroundColor: loading || !form.descripcion || !form.monto ? t.textMuted : t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', border: 'none', cursor: loading || !form.descripcion || !form.monto ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
                 {loading ? 'Guardando...' : 'Registrar Egreso'}
               </button>
             </div>
@@ -172,15 +189,15 @@ const MisEgresos = ({ data, setData }) => {
       </div>
 
       {/* Tabla de egresos */}
-      <div className="bg-[#202022] border border-white/[0.05] rounded-xl overflow-hidden">
-        <table className="w-full text-left border-collapse">
+      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
           <thead>
-            <tr className="bg-[#141414]/40 border-b border-white/[0.05]">
-              <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Descripción</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Categoría</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Fecha</th>
-              <th className="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-widest text-right">Monto</th>
-              <th className="px-4 py-3 w-10"></th>
+            <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
+              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Descripción</th>
+              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Categoría</th>
+              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Fecha</th>
+              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', textAlign: 'right' }}>Monto</th>
+              <th style={{ padding: '12px 16px', width: 40 }}></th>
             </tr>
           </thead>
           <tbody>
@@ -188,27 +205,35 @@ const MisEgresos = ({ data, setData }) => {
               const cat = catConfig[e.categoria] || catConfig['Otro'];
               const Icon = cat.icon;
               return (
-                <tr key={e.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors group">
-                  <td className="px-4 py-3">
-                    <p className="text-xs text-white font-medium">{e.descripcion}</p>
-                    {e.notas && <p className="text-[10px] text-neutral-600 mt-0.5">{e.notas}</p>}
+                <tr key={e.id}
+                  style={{ borderBottom: `1px solid ${t.border}`, transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                  <td style={{ padding: '12px 16px' }}>
+                    <p style={{ fontSize: 12, color: t.text, fontWeight: 500, margin: 0 }}>{e.descripcion}</p>
+                    {e.notas && <p style={{ fontSize: 10, color: t.textMuted, marginTop: 2 }}>{e.notas}</p>}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`text-[10px] font-bold flex items-center gap-1 ${cat.color}`}><Icon size={10}/>{e.categoria}</span>
+                  <td style={{ padding: '12px 16px' }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, color: t.textDim }}>
+                      <Icon size={10} color={t.accent}/>{e.categoria}
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-xs text-neutral-500 font-mono">{e.fecha}</td>
-                  <td className="px-4 py-3 text-right">
-                    <p className="text-sm font-mono font-bold text-rose-400">-${parseFloat(e.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                  <td style={{ padding: '12px 16px', fontSize: 11, color: t.textDim, fontFamily: 'monospace' }}>{e.fecha}</td>
+                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                    <p style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: t.danger, margin: 0 }}>-${parseFloat(e.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
                   </td>
-                  <td className="px-4 py-3">
-                    <button onClick={() => handleDelete(e.id)} className="p-1.5 text-neutral-600 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100">
+                  <td style={{ padding: '12px 16px' }}>
+                    <button onClick={() => handleDelete(e.id)}
+                      style={{ padding: 6, borderRadius: 8, border: 'none', backgroundColor: 'transparent', color: t.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}
+                      onMouseEnter={e => { e.currentTarget.style.color = t.danger; }}
+                      onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; }}>
                       <Trash2 size={13}/>
                     </button>
                   </td>
                 </tr>
               );
             }) : (
-              <tr><td colSpan="5" className="px-4 py-10 text-center text-neutral-600 text-xs italic">Sin egresos registrados.</td></tr>
+              <tr><td colSpan="5" style={{ padding: '40px 16px', textAlign: 'center', color: t.textDim, fontSize: 11, fontStyle: 'italic' }}>Sin egresos registrados.</td></tr>
             )}
           </tbody>
         </table>
