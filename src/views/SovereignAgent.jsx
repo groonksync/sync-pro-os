@@ -274,99 +274,207 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
 
   return (
     <>
-      <button 
+      {/* ===== BOTÓN FLOTANTE REDISEÑADO ===== */}
+      <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-500 shadow-2xl active:scale-95 group overflow-hidden ${isOpen ? 'px-5 py-4 rounded-xl bg-rose-500' : 'px-6 py-4 rounded-xl bg-[#202022] border border-white/10 hover:border-emerald-500/30'}`}
+        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-500 active:scale-95 group overflow-hidden ${
+          isOpen
+            ? 'px-5 py-4 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 shadow-[0_0_30px_rgba(244,63,94,0.4)]'
+            : 'px-6 py-4 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 backdrop-blur-xl border border-emerald-500/30 shadow-[0_0_25px_rgba(16,185,129,0.15)] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:border-emerald-400/50'
+        }`}
       >
-        <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+        {/* Anillo de pulso cuando está cerrado */}
+        {!isOpen && (
+          <span className="absolute inset-0 rounded-xl animate-ping opacity-20 bg-emerald-400" style={{ animationDuration: '3s' }}></span>
+        )}
+        <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl"></div>
         {isOpen ? (
-          <X size={28} className="text-white relative z-10 animate-in spin-in duration-300"/>
+          <X size={24} className="text-white relative z-10 animate-in spin-in duration-300"/>
         ) : (
           <>
-            <div className="relative z-10 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)] group-hover:scale-110 transition-transform">
+            <div className="relative z-10 drop-shadow-[0_0_12px_rgba(16,185,129,0.6)] group-hover:scale-110 transition-transform duration-300">
                <ActiveLogo />
             </div>
-            <span className="text-[11px] font-black text-white uppercase tracking-[0.2em] relative z-10 group-hover:text-emerald-400 transition-colors">Agente</span>
+            <span className="text-[10px] font-black text-white uppercase tracking-[0.15em] relative z-10">Agente</span>
           </>
         )}
       </button>
 
+      {/* ===== VENTANA DE CHAT REDISEÑADA ===== */}
       {isOpen && (
-        <div className="fixed bottom-32 right-8 w-[92vw] md:w-[450px] h-[75vh] md:h-[650px] bg-[#202022] border border-white/10 rounded-[3.5rem] z-[1000] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-300 overflow-hidden">
-           <header className="p-8 border-b border-white/5 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10">
-                    <ActiveLogo />
-                 </div>
-                 <div>
-                    <h4 className="text-sm font-black text-white uppercase tracking-widest">Agente</h4>
-                    {/* SELECTOR DE PROVEEDOR RÁPIDO */}
-                    <div className="flex gap-2 mt-1">
-                       <button 
-                          onClick={() => setSettings(prev => ({ ...prev, aiProvider: 'gemini' }))}
-                          className={`text-[8px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-md transition-all ${settings?.aiProvider === 'gemini' ? 'bg-white text-black' : 'bg-white/5 text-neutral-600 hover:text-white'}`}
-                       >
-                          Google
-                       </button>
-                       <button 
-                          onClick={() => setSettings(prev => ({ ...prev, aiProvider: 'deepseek' }))}
-                          className={`text-[8px] font-black uppercase tracking-tighter px-2 py-0.5 rounded-md transition-all ${settings?.aiProvider === 'deepseek' ? 'bg-blue-500 text-white' : 'bg-white/5 text-neutral-600 hover:text-white'}`}
-                       >
-                          DeepSeek
-                       </button>
-                    </div>
-                 </div>
+        <div className="fixed bottom-32 right-8 w-[92vw] md:w-[440px] h-[75vh] md:h-[640px] bg-[#1a1a1e]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl z-[1000] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-200 overflow-hidden">
+          
+          {/* HEADER COMPACTO */}
+          <header className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.06] flex items-center justify-center border border-white/[0.08] shadow-inner">
+                <ActiveLogo />
               </div>
-              <button onClick={() => setIsOpen(false)} className="text-neutral-700 hover:text-white transition-all"><X size={20}/></button>
-           </header>
-
-           <div className="flex-1 overflow-y-auto p-8 space-y-8 mac-scrollbar" ref={scrollRef}>
-              {messages.map((m, i) => (
-                <div key={i} className={`flex w-full ${m.role === 'agent' ? 'justify-start' : 'justify-end'}`}>
-                   <div className={`max-w-[85%] flex gap-4 ${m.role === 'agent' ? 'flex-row' : 'flex-row-reverse'}`}>
-                      <div className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center border ${m.role === 'agent' ? 'bg-white/5 border-white/10' : 'bg-white/5 border-white/10 text-neutral-500'}`}>
-                         {m.role === 'agent' ? <div className="scale-75"><ActiveLogo /></div> : <User size={16}/>}
-                      </div>
-                      <div className="space-y-3">
-                         <div className={`p-5 rounded-xl md:rounded-[1.8rem] text-[12px] leading-relaxed ${m.role === 'agent' ? 'bg-white/[0.03] text-neutral-200' : 'bg-emerald-500 text-black font-black'}`}>
-                            {m.role === 'agent' ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown> : m.content}
-                         </div>
-                         {m.files && (
-                           <div className="flex gap-2 flex-wrap">
-                              {m.files.map((f, fi) => (
-                                <div key={fi} className="p-2 bg-white/5 border border-white/10 rounded-xl flex items-center gap-2">
-                                   {f.type?.startsWith('image/') ? <img src={f.base64} className="w-10 h-10 object-cover rounded-xl" /> : <Paperclip size={14} className="text-neutral-500"/>}
-                                   <span className="text-[8px] text-neutral-500 font-black uppercase truncate max-w-[80px]">{f.name}</span>
-                                </div>
-                              ))}
-                           </div>
-                         )}
-                         {m.actions?.map((act, actIdx) => <ActionCard key={actIdx} action={act.action} data={act.data} isDark={isDark} onConfirm={() => handleConfirmAction(act, i, actIdx)} onCancel={() => setMessages(prev => { const newM = [...prev]; newM[i].actions = newM[i].actions.filter((_, idx) => idx !== actIdx); return newM; })} />)}
-                      </div>
-                   </div>
+              <div>
+                <h4 className="text-xs font-black text-white uppercase tracking-[0.12em]">Agente</h4>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]"></span>
+                  <span className="text-[8px] font-bold text-emerald-500/70 uppercase tracking-[0.1em]">Online</span>
                 </div>
-              ))}
-              {isThinking && <div className="flex items-center gap-3 animate-pulse px-2"><Loader2 className="animate-spin text-emerald-500" size={16}/><span className="text-[10px] font-black text-emerald-500 uppercase">Procesando...</span></div>}
-           </div>
-
-           <footer className="p-8 bg-[#141414]/20 border-t border-white/5 space-y-4">
-              <div className="relative bg-[#141414] border border-white/10 rounded-xl p-2 flex items-center">
-                 <label className="w-10 h-10 flex items-center justify-center text-neutral-700 hover:text-emerald-500 cursor-pointer transition-all"><input type="file" multiple className="hidden" onChange={handleFileUpload}/><Paperclip size={18}/></label>
-                 <button onClick={toggleListening} className={`w-10 h-10 flex items-center justify-center rounded-xl ${isListening ? 'bg-blue-500 text-white animate-pulse' : 'text-neutral-700'}`}><Sparkles size={18} /></button>
-                 <button onClick={toggleRecording} className={`w-10 h-10 flex items-center justify-center rounded-xl ${isRecording ? 'bg-rose-500 text-white animate-pulse' : 'text-neutral-700'}`}><Mic size={18} /></button>
-                 <input type="text" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSend()} placeholder={isListening ? "Escuchando..." : isRecording ? "Grabando..." : "Comando maestro..."} className={`flex-1 bg-transparent py-4 text-xs font-bold outline-none px-4 ${isRecording ? 'text-rose-500 animate-pulse' : 'text-white'}`} />
-                 
-                 {isRecording ? (
-                   <button onClick={toggleRecording} className="w-12 h-12 rounded-xl flex items-center justify-center bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.5)] animate-pulse">
-                     <Square size={16} fill="currentColor"/>
-                   </button>
-                 ) : (
-                   <button onClick={handleSend} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${input.trim() || uploadedFiles.length > 0 ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' : 'bg-white/5 text-neutral-800'}`}>
-                     <Send size={18}/>
-                   </button>
-                 )}
               </div>
-           </footer>
+            </div>
+            <div className="flex items-center gap-2">
+              {/* SELECTOR DE PROVEEDOR */}
+              <div className="flex rounded-lg p-0.5 bg-white/[0.04] border border-white/[0.06]">
+                <button
+                  onClick={() => setSettings(prev => ({ ...prev, aiProvider: 'gemini' }))}
+                  className={`text-[7px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all ${
+                    settings?.aiProvider === 'gemini'
+                      ? 'bg-white text-black shadow-sm'
+                      : 'text-neutral-600 hover:text-white'
+                  }`}
+                >
+                  Google
+                </button>
+                <button
+                  onClick={() => setSettings(prev => ({ ...prev, aiProvider: 'deepseek' }))}
+                  className={`text-[7px] font-black uppercase tracking-tighter px-2 py-1 rounded-md transition-all ${
+                    settings?.aiProvider === 'deepseek'
+                      ? 'bg-blue-500 text-white shadow-sm'
+                      : 'text-neutral-600 hover:text-white'
+                  }`}
+                >
+                  DeepSeek
+                </button>
+              </div>
+              <button onClick={() => setIsOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-600 hover:text-white hover:bg-white/5 transition-all">
+                <X size={15}/>
+              </button>
+            </div>
+          </header>
+
+          {/* ZONA DE MENSAJES */}
+          <div className="flex-1 overflow-y-auto px-5 py-6 space-y-5 mac-scrollbar" ref={scrollRef}>
+            {messages.map((m, i) => (
+              <div key={i} className={`flex w-full ${m.role === 'agent' ? 'justify-start' : 'justify-end'}`}>
+                <div className={`max-w-[88%] flex gap-3 ${m.role === 'agent' ? 'flex-row' : 'flex-row-reverse'}`}>
+                  {/* Avatar */}
+                  <div className={`w-7 h-7 rounded-lg shrink-0 flex items-center justify-center border shadow-sm ${
+                    m.role === 'agent'
+                      ? 'bg-white/[0.06] border-white/[0.08]'
+                      : 'bg-emerald-500/20 border-emerald-500/20'
+                  }`}>
+                    {m.role === 'agent'
+                      ? <div className="scale-[0.6]"><ActiveLogo /></div>
+                      : <User size={13} className="text-emerald-400"/>
+                    }
+                  </div>
+                  {/* Contenido */}
+                  <div className="space-y-2">
+                    <div className={`px-4 py-3 text-[12px] leading-relaxed ${
+                      m.role === 'agent'
+                        ? 'bg-white/[0.04] border border-white/[0.06] text-neutral-200 rounded-2xl rounded-tl-sm'
+                        : 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-black font-semibold rounded-2xl rounded-tr-sm shadow-lg shadow-emerald-500/20'
+                    }`}>
+                      {m.role === 'agent'
+                        ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+                        : m.content
+                      }
+                    </div>
+                    {m.files && (
+                      <div className="flex gap-2 flex-wrap">
+                        {m.files.map((f, fi) => (
+                          <div key={fi} className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded-xl flex items-center gap-2">
+                            {f.type?.startsWith('image/')
+                              ? <img src={f.base64} className="w-8 h-8 object-cover rounded-lg" />
+                              : <Paperclip size={12} className="text-neutral-500"/>
+                            }
+                            <span className="text-[7px] text-neutral-500 font-bold uppercase truncate max-w-[70px]">{f.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {m.actions?.map((act, actIdx) => (
+                      <ActionCard
+                        key={actIdx}
+                        action={act.action}
+                        data={act.data}
+                        isDark={isDark}
+                        onConfirm={() => handleConfirmAction(act, i, actIdx)}
+                        onCancel={() => setMessages(prev => {
+                          const newM = [...prev];
+                          newM[i].actions = newM[i].actions.filter((_, idx) => idx !== actIdx);
+                          return newM;
+                        })}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {isThinking && (
+              <div className="flex items-center gap-3 px-2 py-3">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </div>
+                <span className="text-[9px] font-bold text-emerald-500/80 uppercase tracking-[0.12em]">Procesando...</span>
+              </div>
+            )}
+          </div>
+
+          {/* INPUT REDISEÑADO */}
+          <footer className="px-5 py-4 border-t border-white/[0.06] shrink-0">
+            <div className="relative bg-white/[0.04] border border-white/[0.08] rounded-xl p-1.5 flex items-center gap-1 transition-all focus-within:border-emerald-500/30 focus-within:shadow-[0_0_20px_rgba(16,185,129,0.06)]">
+              <label className="w-9 h-9 rounded-lg flex items-center justify-center text-neutral-600 hover:text-emerald-400 hover:bg-white/5 cursor-pointer transition-all">
+                <input type="file" multiple className="hidden" onChange={handleFileUpload}/>
+                <Paperclip size={16}/>
+              </label>
+              <button
+                onClick={toggleListening}
+                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
+                  isListening
+                    ? 'bg-blue-500/20 text-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.2)]'
+                    : 'text-neutral-600 hover:text-blue-400 hover:bg-white/5'
+                }`}
+              >
+                <Sparkles size={16} />
+              </button>
+              <button
+                onClick={toggleRecording}
+                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
+                  isRecording
+                    ? 'bg-rose-500/20 text-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.2)] animate-pulse'
+                    : 'text-neutral-600 hover:text-rose-400 hover:bg-white/5'
+                }`}
+              >
+                <Mic size={16} />
+              </button>
+              <input
+                type="text"
+                value={input}
+                onChange={e=>setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSend()}
+                placeholder={isListening ? "Escuchando..." : isRecording ? "Grabando..." : "Comando maestro..."}
+                className={`flex-1 bg-transparent py-3 text-xs font-semibold outline-none px-2 placeholder-neutral-600 ${
+                  isRecording ? 'text-rose-400 animate-pulse' : 'text-white'
+                }`}
+              />
+              
+              {isRecording ? (
+                <button onClick={toggleRecording} className="w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br from-rose-500 to-rose-600 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)] animate-pulse">
+                  <Square size={14} fill="currentColor"/>
+                </button>
+              ) : (
+                <button
+                  onClick={handleSend}
+                  className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                    input.trim() || uploadedFiles.length > 0
+                      ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-black shadow-[0_0_15px_rgba(16,185,129,0.25)] hover:shadow-[0_0_25px_rgba(16,185,129,0.4)] hover:scale-105 active:scale-95'
+                      : 'bg-white/5 text-neutral-700'
+                  }`}
+                >
+                  <Send size={16}/>
+                </button>
+              )}
+            </div>
+          </footer>
         </div>
       )}
     </>
