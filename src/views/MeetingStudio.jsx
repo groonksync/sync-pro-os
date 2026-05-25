@@ -244,14 +244,9 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
       <nav className="h-16 flex items-center justify-between px-6 relative z-50"
         style={{ backgroundColor: t.bg, borderBottom: `1px solid ${t.border}` }}>
          <div className="flex items-center gap-8">
-            <div className="flex items-center gap-3">
-               <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                 <Zap size={16} color={t.accent}/>
-               </div>
-               <div>
-                  <h1 className="text-xs font-black tracking-[0.25em] uppercase" style={{ color: 'white' }}>Sovereign <span style={{ color: t.textDim }}>OS</span></h1>
-                  <p className="text-[6px] font-black uppercase tracking-[0.3em]" style={{ color: t.accent }}>Neural Production</p>
-               </div>
+            <div>
+               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Meeting Studio</h2>
+               <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '2px', fontWeight: 500 }}>Sistema de producción audiovisual</p>
             </div>
             <div className="flex rounded-xl p-0.5" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                 <button onClick={() => setViewState('client-list')} className="px-6 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
