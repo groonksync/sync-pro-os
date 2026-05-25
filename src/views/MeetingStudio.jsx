@@ -852,13 +852,14 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
       )}
 
       {viewState === 'project-engine' && (
-        <ProjectEngineView />
+        <ProjectEngineView isDark={isDark} />
       )}
     </div>
   );
 };
 
-const ProjectEngineView = () => {
+const ProjectEngineView = ({ isDark = true }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
 
   const [activeTab, setActiveTab] = useState('estructurador');
   const [carpetaMaestra, setCarpetaMaestra] = useState('Base de Edición Principal');
