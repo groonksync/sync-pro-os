@@ -27,7 +27,8 @@ import {
   Brain,
   Table2,
   FileType,
-  Upload
+  Upload,
+  Sidebar
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -61,6 +62,9 @@ const Notas = ({ settings, isDark }) => {
     icloud: true,
     carpetas: true
   });
+  
+  // --- Collapse sidebar + note list (Apple Notes: Cmd+Option+E style) ---
+  const [sidebarVisible, setSidebarVisible] = useState(true);
 
   // --- Modales y Formularios ---
   const [isNewFolderModalOpen, setIsNewFolderModalOpen] = useState(false);
@@ -456,14 +460,15 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] w-full max-w-[1600px] mx-auto animate-in fade-in duration-300 overflow-hidden"
+    <div className="flex flex-col h-[calc(100vh-5rem)] w-full animate-in fade-in duration-300 overflow-hidden"
       style={{ backgroundColor: t.bg }}>
 
       {/* === 3-PANEL APPLE NOTES LAYOUT === */}
       <div className="flex-1 flex min-h-0">
 
         {/* ===== LEFT SIDEBAR — Folders (Apple Notes style) ===== */}
-        <div className="w-[200px] shrink-0 flex flex-col border-r min-h-0 overflow-hidden"
+        {sidebarVisible && (
+        <div className="w-[200px] shrink-0 flex flex-col border-r min-h-0 overflow-hidden transition-all duration-200"
           style={{ borderColor: t.border, backgroundColor: t.panel }}>
           
           {/* Header with title */}
@@ -651,9 +656,11 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
             </div>
           )}
         </div>
+        )}
 
         {/* ===== MIDDLE PANEL — Note List (Apple Notes style) ===== */}
-        <div className="w-[280px] shrink-0 flex flex-col border-r min-h-0 overflow-hidden"
+        {sidebarVisible && (
+        <div className="w-[280px] shrink-0 flex flex-col border-r min-h-0 overflow-hidden transition-all duration-200"
           style={{ borderColor: t.border, backgroundColor: t.panel }}>
 
           {/* Search Bar — like Apple Notes inline */}
@@ -811,17 +818,29 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
             )}
           </div>
         </div>
+        )}
 
         {/* ===== RIGHT PANEL — Editor (Apple Notes canvas) ===== */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden"
-          style={{ backgroundColor: isDark ? '#1c1c1e' : '#f5f5f0' }}>
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-200"
+          style={{ backgroundColor: t.bg }}>
 
           {activeNote ? (
             <div className="flex-1 flex flex-col min-h-0">
 
               {/* Apple Notes — Minimal toolbar */}
-              <div className="flex items-center justify-between px-5 py-2 shrink-0 border-b"
+              <div className="flex items-center justify-between px-3 py-2 shrink-0 border-b"
                 style={{ borderColor: t.border, backgroundColor: t.panel }}>
+                {/* Collapse button — toggle both left panels */}
+                <button
+                  onClick={() => setSidebarVisible(!sidebarVisible)}
+                  className="p-1.5 rounded-md transition-all shrink-0"
+                  style={{ color: sidebarVisible ? t.accent : t.textDim }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  title={sidebarVisible ? 'Ocultar paneles' : 'Mostrar paneles'}
+                >
+                  <Sidebar size={14} />
+                </button>
                 <div className="flex items-center gap-1.5">
                   {/* Folder selector */}
                   <div className="relative">
@@ -930,11 +949,11 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                 </div>
               </div>
 
-              {/* Editor Canvas — Apple Notes: clean white/cream background */}
+              {/* Editor Canvas */}
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto"
-                style={{ backgroundColor: isDark ? '#1c1c1e' : '#f5f5f0' }}>
+                style={{ backgroundColor: t.bg }}>
                 
-                <div className="max-w-[700px] w-full mx-auto px-8 py-6 flex-1 flex flex-col">
+                <div className="max-w-[720px] w-full mx-auto px-8 py-6 flex-1 flex flex-col">
                   {/* Title */}
                   <input
                     type="text"
