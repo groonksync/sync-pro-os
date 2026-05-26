@@ -206,47 +206,6 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   const isMobile = settings?.isMobileMode;
   const { cuotas: ledgerCuotas, resumen: ledgerResumen } = useAmortizacion(activePrestamo);
 
-  // ─── DASHBOARD: Estadísticas globales ──────────────────────
-  const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
-  const { stats } = useAmortizacionGlobal(prestamosList);
-  const { totales } = usePrestamoCategorias(prestamosList);
-
-  // Proyección agregada próximos 6 meses
-  const proyeccionAgregada = useMemo(() => {
-    if (!prestamosList.length) return [];
-    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
-    const totals = new Array(6).fill(0);
-    prestamosList.forEach(p => {
-      if (p.estado === 'Finalizado') return;
-      const proy = proyectarSiguientes(p, 6);
-      proy.forEach((pr, i) => {
-        if (i < 6) totals[i] += pr.interes || 0;
-      });
-    });
-    const maxVal = Math.max(...totals, 1);
-    return meses.map((label, i) => ({ label, valor: totals[i], pct: (totals[i] / maxVal) * 100 }));
-  }, [prestamosList]);
-
-  // Datos para donut chart de riesgo
-  const riesgoData = useMemo(() => {
-    const total = totales?.totalPorCobrar || 1;
-    const items = [
-      { label: 'Al día', valor: totales?.alDia || 0, color: '#10b981' },
-      { label: 'Pendiente', valor: totales?.pendientes || 0, color: '#f59e0b' },
-      { label: '1 Mes', valor: totales?.deudor1Mes || 0, color: '#f97316' },
-      { label: 'Crítico', valor: totales?.deudorCritico || 0, color: '#ef4444' },
-    ];
-    const totalVal = items.reduce((s, i) => s + i.valor, 0) || 1;
-    let offset = 0;
-    const segments = items.filter(i => i.valor > 0).map(i => {
-      const pct = i.valor / totalVal;
-      const seg = { ...i, pct, offset, length: pct * 283 };
-      offset += pct * 283;
-      return seg;
-    });
-    return { segments, totalVal, items };
-  }, [totales]);
-
   const showToast = (message, type = 'success') => {
     setToast({ message, type, key: Date.now() });
   };
@@ -385,6 +344,49 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
     return months;
   };
 
+  const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
+
+  // ─── HOOKS DEL DASHBOARD ─────────────────────────────────
+  const { stats } = useAmortizacionGlobal(prestamosList);
+  const { totales } = usePrestamoCategorias(prestamosList);
+
+  // Proyección agregada de todos los préstamos activos
+  const proyeccionAgregada = useMemo(() => {
+    const activos = prestamosList.filter(p => p.estado !== 'Finalizado');
+    if (activos.length === 0) return [];
+    const acum = {};
+    activos.forEach(p => {
+      const prox = proyectarSiguientes(p, 6);
+      prox.forEach(item => {
+        if (!acum[item.key]) acum[item.key] = { label: item.label, valor: 0 };
+        acum[item.key].valor += item.total;
+      });
+    });
+    const maxVal = Math.max(...Object.values(acum).map(v => v.valor), 1);
+    return Object.values(acum).map(v => ({ ...v, pct: (v.valor / maxVal) * 100 }));
+  }, [prestamosList]);
+
+  // Data para donut chart de riesgo
+  const riesgoData = useMemo(() => {
+    const items = [
+      { label: 'Al día', value: totales.alDia, color: '#10b981' },
+      { label: 'Pendientes', value: totales.pendientes, color: '#f59e0b' },
+      { label: '1 mes mora', value: totales.deudor1Mes, color: '#f97316' },
+      { label: 'Crítico', value: totales.deudorCritico, color: '#ef4444' },
+    ];
+    const totalVal = items.reduce((s, i) => s + i.value, 0) || 1;
+    let offset = 0;
+    const circumference = 2 * Math.PI * 38;
+    const segments = items.map(i => {
+      const pct = i.value / totalVal;
+      const segLen = pct * circumference;
+      const seg = { ...i, pct: pct * 100, dashArray: `${segLen} ${circumference - segLen}`, dashOffset: -offset };
+      offset += segLen;
+      return seg;
+    });
+    return { segments, totalVal, items };
+  }, [totales]);
+
   // Mapa de mora por préstamo para mostrar en lista
   const moraMap = useMemo(() => {
     const map = {};
@@ -435,7 +437,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
             <header style={{
               display: 'flex', flexDirection: isMobile ? 'column' : 'row',
               justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'flex-end',
-              gap: '16px', marginBottom: '24px',
+              gap: '16px', marginBottom: '32px',
             }}>
               <div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Cartera de Préstamos</h2>
@@ -459,90 +461,109 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               </div>
             </header>
 
-            {/* ═══════════════ DASHBOARD ANALÍTICO ═══════════════ */}
-            <div style={{ marginBottom: '28px' }}>
-              {/* KPIs */}
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3" style={{ marginBottom: '16px' }}>
-                <KPICard t={t} icon={DollarSign} label="Capital Activo" value={stats?.capitalActivo?.toLocaleString() || '0'} moneda={prestamosList[0]?.moneda || 'BOB'} color={t.accent} />
-                <KPICard t={t} icon={TrendingUp} label="Rendimiento Mensual" value={stats?.rendimientoMensual?.toLocaleString() || '0'} moneda={prestamosList[0]?.moneda || 'BOB'} color="#10b981" />
-                <KPICard t={t} icon={Percent} label="Tasa Promedio" value={`${(stats?.tasaPromedio || 0).toFixed(1)}%`} moneda="" color={t.warning || '#f59e0b'} />
-                <KPICard t={t} icon={AlertTriangle} label="Mora Acumulada" value={stats?.totalMora?.toLocaleString() || '0'} moneda={prestamosList[0]?.moneda || 'BOB'} color="#ef4444" />
-                <KPICard t={t} icon={Heart} label="Índice de Salud" value={`${(stats?.indiceSalud || 0).toFixed(0)}%`} moneda="" color={stats?.indiceSalud >= 70 ? '#10b981' : stats?.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
-              </div>
+            {/* ─── DASHBOBOARD ANALÍTICO ──────────────────────────────── */}
+            {/* KPIs */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)',
+              gap: '12px', marginBottom: '24px',
+            }}>
+              <KPICard t={t} icon={DollarSign} label="Capital Activo" value={stats.capitalActivo.toLocaleString()} moneda="BOB" color={t.accent} />
+              <KPICard t={t} icon={TrendingUp} label="Rendimiento Mensual" value={stats.rendimientoMensual.toLocaleString()} moneda="BOB" color="#10b981" />
+              <KPICard t={t} icon={Percent} label="Tasa Promedio" value={stats.tasaPromedio.toFixed(1)} moneda="%" color="#f59e0b" />
+              <KPICard t={t} icon={AlertTriangle} label="Mora Acumulada" value={stats.totalMora.toLocaleString()} moneda="BOB" color="#ef4444" />
+              <KPICard t={t} icon={Heart} label="Índice de Salud" value={stats.indiceSalud.toFixed(0)} moneda="/100" color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
+            </div>
 
-              {/* Gráficos */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Bar Chart: Proyección 6 meses */}
-                <div style={{
-                  padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <BarChart3 size={14} color={t.accent} />
-                    <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted }}>
-                      Proyección Próximos 6 Meses
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '120px' }}>
-                    {proyeccionAgregada.map((item, i) => (
-                      <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', height: '100%', justifyContent: 'flex-end' }}>
-                        <span style={{ fontSize: '8px', fontWeight: 700, color: t.accent }}>{item.valor.toLocaleString()}</span>
+            {/* Gráficos: Bar Chart + Donut Chart */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr',
+              gap: '16px', marginBottom: '24px',
+            }}>
+              {/* Bar Chart — Proyección 6 meses */}
+              <div style={{
+                padding: '20px', backgroundColor: t.panel,
+                border: `1px solid ${t.border}`, borderRadius: '16px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <BarChart3 size={16} color={t.accent} />
+                  <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: t.textDim }}>
+                    Proyección Próximos 6 Meses
+                  </span>
+                </div>
+                {proyeccionAgregada.length > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '100px' }}>
+                    {proyeccionAgregada.map((item, idx) => (
+                      <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', height: '100%', justifyContent: 'flex-end' }}>
+                        <span style={{ fontSize: '8px', fontWeight: 600, color: t.text, opacity: 0.7 }}>{(item.valor).toLocaleString()}</span>
                         <div
                           title={`${item.label}: ${item.valor.toLocaleString()}`}
                           style={{
-                            width: '100%', maxWidth: '36px', borderRadius: '6px 6px 0 0',
-                            background: `linear-gradient(180deg, ${t.accent}, ${t.accent}60)`,
+                            width: '100%', maxWidth: '36px',
                             height: `${Math.max(item.pct, 4)}%`,
-                            transition: 'height 0.5s ease',
+                            borderRadius: '6px 6px 0 0',
+                            background: `linear-gradient(180deg, ${t.accent}, ${t.accent}60)`,
+                            transition: 'height 0.4s ease',
+                            minHeight: '6px',
                           }}
                         />
-                        <span style={{ fontSize: '8px', fontWeight: 500, color: t.textDim }}>{item.label}</span>
+                        <span style={{ fontSize: '7px', fontWeight: 500, color: t.textDim, transform: 'rotate(-45deg)', transformOrigin: 'left', whiteSpace: 'nowrap', marginTop: '2px' }}>
+                          {item.label}
+                        </span>
                       </div>
                     ))}
                   </div>
-                </div>
-
-                {/* Donut Chart: Distribución de Riesgo */}
-                <div style={{
-                  padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <PieChart size={14} color={t.accent} />
-                    <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted }}>
-                      Distribución de Riesgo
-                    </span>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100px', color: t.textDim, fontSize: '11px' }}>
+                    Sin préstamos activos para proyectar
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                    {/* SVG Donut */}
-                    <div style={{ position: 'relative', width: '100px', height: '100px', flexShrink: 0 }}>
-                      <svg width="100" height="100" viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="45" fill="none" stroke={t.border} strokeWidth="10" />
-                        {riesgoData.segments.map((seg, i) => (
-                          <circle key={i} cx="50" cy="50" r="45" fill="none"
-                            stroke={seg.color} strokeWidth="10"
-                            strokeDasharray={`${seg.length} 283`}
-                            strokeDashoffset={-seg.offset}
-                            transform="rotate(-90 50 50)"
-                            style={{ transition: 'stroke-dasharray 0.5s ease' }}
-                          />
-                        ))}
-                        <text x="50" y="48" textAnchor="middle" fill={t.text} fontSize="16" fontWeight="700">
-                          {riesgoData.totalVal}
-                        </text>
-                        <text x="50" y="62" textAnchor="middle" fill={t.textDim} fontSize="7" fontWeight="500">
-                          préstamos
-                        </text>
-                      </svg>
-                    </div>
-                    {/* Leyenda */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {riesgoData.items.map((item, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '8px', height: '8px', borderRadius: '2px', backgroundColor: item.color, flexShrink: 0 }} />
-                          <span style={{ fontSize: '9px', color: t.textDim, flex: 1 }}>{item.label}</span>
-                          <span style={{ fontSize: '9px', fontWeight: 700, color: t.text }}>{item.valor}</span>
-                        </div>
+                )}
+              </div>
+
+              {/* Donut Chart — Distribución de Riesgo */}
+              <div style={{
+                padding: '20px', backgroundColor: t.panel,
+                border: `1px solid ${t.border}`, borderRadius: '16px',
+                display: 'flex', flexDirection: 'column',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                  <PieChart size={16} color={t.accent} />
+                  <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: t.textDim }}>
+                    Distribución de Riesgo
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
+                  <div style={{ position: 'relative', width: '96px', height: '96px', flexShrink: 0 }}>
+                    <svg width="96" height="96" viewBox="0 0 100 100">
+                      {riesgoData.segments.map((seg, idx) => (
+                        <circle
+                          key={idx}
+                          cx="50" cy="50" r="38"
+                          fill="none"
+                          stroke={seg.color}
+                          strokeWidth="12"
+                          strokeDasharray={seg.dashArray}
+                          strokeDashoffset={seg.dashOffset}
+                          transform="rotate(-90 50 50)"
+                          style={{ transition: 'stroke-dasharray 0.5s ease' }}
+                        />
                       ))}
-                    </div>
+                      <circle cx="50" cy="50" r="28" fill={t.panel} />
+                      <text x="50" y="50" textAnchor="middle" dominantBaseline="central"
+                        fill={t.text} fontSize="14" fontWeight="700">
+                        {riesgoData.totalVal}
+                      </text>
+                    </svg>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+                    {riesgoData.items.map((item, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, flexShrink: 0 }} />
+                        <span style={{ fontSize: '9px', fontWeight: 500, color: t.textDim, flex: 1 }}>{item.label}</span>
+                        <span style={{ fontSize: '9px', fontWeight: 700, color: t.text }}>{item.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -572,11 +593,11 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       >
                         <td style={{ padding: '16px 24px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: p.foto ? 'transparent' : t.accentSoft, flexShrink: 0 }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
                               {p.foto ? (
                                 <img src={p.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               ) : (
-                                <User size={16} color={t.accent} />
+                                <User size={16} />
                               )}
                             </div>
                             <div>
@@ -661,11 +682,11 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     <div key={p.id} onClick={() => openPrestamo(p)}
                       style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: p.foto ? 'transparent' : t.accentSoft, flexShrink: 0 }}>
+                        <div style={{ width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
                           {p.foto ? (
                             <img src={p.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                           ) : (
-                            <User size={20} color={t.accent} />
+                            <User size={20} />
                           )}
                         </div>
                         <div>
@@ -725,7 +746,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               gap: '24px', marginBottom: '40px',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: activePrestamo?.foto ? 'transparent' : t.accentSoft, border: `2px solid ${t.border}`, flexShrink: 0 }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, border: `2px solid ${t.border}`, flexShrink: 0 }}>
                   {activePrestamo?.foto ? (
                     <img src={activePrestamo.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
@@ -735,7 +756,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 <div>
                   <input 
                     type="text" 
-                    value={activePrestamo?.nombre || ''} 
+                    value={activePrestamo.nombre} 
                     onChange={e => setActivePrestamo({...activePrestamo, nombre: e.target.value})} 
                     style={{
                       fontSize: '1.25rem', fontWeight: 700, color: t.text,
@@ -747,17 +768,17 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                       <FileSignature size={12} color={t.textDim} /> 
-                      <input type="text" value={activePrestamo?.ci || ''} 
+                      <input type="text" value={activePrestamo.ci} 
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})} 
                         style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="CI..." />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                       <Smartphone size={12} color={t.textDim} />
-                      <input type="text" value={activePrestamo?.telefono || ''}
+                      <input type="text" value={activePrestamo.telefono}
                         onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
                         style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="WA..." />
                     </div>
-                    <select value={activePrestamo?.estado || 'Activo'} 
+                    <select value={activePrestamo.estado} 
                       onChange={e => setActivePrestamo({...activePrestamo, estado: e.target.value})}
                       style={{
                         padding: '6px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
@@ -768,7 +789,6 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       <option value="En Mora">En Mora</option>
                       <option value="Finalizado">Finalizado</option>
                     </select>
-                    {/* Botón Editar con wizard */}
                     <button
                       onClick={() => handleEditPrestamo(activePrestamo)}
                       style={{
@@ -780,7 +800,6 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     >
                       <Edit3 size={12} /> Editar todo
                     </button>
-                    {/* Botón Eliminar */}
                     <button
                       onClick={(e) => handleDeleteRequest(activePrestamo, e)}
                       style={{
@@ -836,8 +855,8 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                         </tr>
                       </thead>
                       <tbody>
-                        {(ledgerCuotas || []).map((c) => {
-                          const isPaid = (activePrestamo?.pagos || []).includes(c.key);
+                        {ledgerCuotas.map((c) => {
+                          const isPaid = (activePrestamo.pagos || []).includes(c.key);
                           return (
                             <tr key={c.key} onClick={() => togglePago(c.key)}
                               style={{
@@ -944,7 +963,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
                     <ShieldCheck size={14} color={t.accent} /> Contrato y Garantía
                   </h3>
-                  <textarea value={activePrestamo?.garantia || ''} 
+                  <textarea value={activePrestamo.garantia} 
                     onChange={e => setActivePrestamo({...activePrestamo, garantia: e.target.value})} 
                     style={{
                       width: '100%', height: '120px', padding: '14px', fontSize: '12px',
@@ -957,7 +976,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
                     <div>
                       <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Link Contrato Drive</label>
-                      <input type="text" value={activePrestamo?.drive_contrato || ''} 
+                      <input type="text" value={activePrestamo.drive_contrato} 
                         onChange={e => setActivePrestamo({...activePrestamo, drive_contrato: e.target.value})} 
                         style={{
                           width: '100%', padding: '10px 14px', fontSize: '10px',
@@ -970,7 +989,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     </div>
                     <div>
                       <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Link Fotos Respaldo</label>
-                      <input type="text" value={activePrestamo?.drive_fotos || ''} 
+                      <input type="text" value={activePrestamo.drive_fotos} 
                         onChange={e => setActivePrestamo({...activePrestamo, drive_fotos: e.target.value})} 
                         style={{
                           width: '100%', padding: '10px 14px', fontSize: '10px',
@@ -992,7 +1011,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '12px' }}>Capital Invertido</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                     <DollarSign size={18} color={t.textDim} />
-                    <input type="number" value={activePrestamo?.capital || ''} 
+                    <input type="number" value={activePrestamo.capital} 
                       onChange={e => setActivePrestamo({...activePrestamo, capital: e.target.value})} 
                       style={{
                         background: 'transparent', border: 'none', outline: 'none',
@@ -1003,7 +1022,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px' }}>
                     <div>
                       <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Interés (%)</label>
-                      <input type="number" value={activePrestamo?.interes || ''} 
+                      <input type="number" value={activePrestamo.interes} 
                         onChange={e => setActivePrestamo({...activePrestamo, interes: e.target.value})} 
                         style={{
                           width: '100%', padding: '12px', fontSize: '1rem', fontFamily: 'monospace',
@@ -1013,7 +1032,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     </div>
                     <div>
                       <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Moneda</label>
-                      <select value={activePrestamo?.moneda || 'BOB'} 
+                      <select value={activePrestamo.moneda} 
                         onChange={e => setActivePrestamo({...activePrestamo, moneda: e.target.value})} 
                         style={{
                           width: '100%', padding: '12px', fontSize: '14px', fontWeight: 600,
@@ -1028,7 +1047,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <div style={{ paddingTop: '12px', marginTop: '12px', borderTop: `1px solid ${t.border}` }}>
                     <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, marginBottom: '6px' }}>Interés Mensual Calculado</p>
                     <p style={{ fontSize: '1.125rem', fontWeight: 600, color: t.accent, margin: 0 }}>
-                      {(parseFloat(activePrestamo?.capital || 0) * (parseFloat(activePrestamo?.interes || 0) / 100) || 0).toLocaleString()} {activePrestamo?.moneda || 'BOB'}
+                      {(parseFloat(activePrestamo.capital) * (parseFloat(activePrestamo.interes) / 100) || 0).toLocaleString()} {activePrestamo.moneda}
                     </p>
                   </div>
                 </div>
@@ -1038,7 +1057,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '16px' }}>Periodo del Préstamo</label>
                   <div style={{ marginBottom: '12px' }}>
                     <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginBottom: '6px' }}>Fecha Inicio</p>
-                    <input type="date" value={activePrestamo?.inicio || ''} 
+                    <input type="date" value={activePrestamo.inicio} 
                       onChange={e => setActivePrestamo({...activePrestamo, inicio: e.target.value})} 
                       style={{
                         width: '100%', padding: '10px 14px', fontSize: '12px',
@@ -1050,7 +1069,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   </div>
                   <div style={{ marginBottom: '12px' }}>
                     <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginBottom: '6px' }}>Fecha Vencimiento</p>
-                    <input type="date" value={activePrestamo?.fin || ''} 
+                    <input type="date" value={activePrestamo.fin} 
                       onChange={e => setActivePrestamo({...activePrestamo, fin: e.target.value})} 
                       style={{
                         width: '100%', padding: '10px 14px', fontSize: '12px',
@@ -1063,7 +1082,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <div style={{ paddingTop: '12px', borderTop: `1px solid ${t.border}` }}>
                     <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, marginBottom: '4px' }}>Primer Cobro</p>
                     <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
-                      {activePrestamo?.inicio ? new Date(new Date(activePrestamo.inicio).setMonth(new Date(activePrestamo.inicio).getMonth() + 1)).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A'}
+                      {activePrestamo.inicio ? new Date(new Date(activePrestamo.inicio).setMonth(new Date(activePrestamo.inicio).getMonth() + 1)).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -1076,17 +1095,18 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   );
 };
 
-// ─── KPI CARD COMPONENT ──────────────────────────────────────
+// ─── COMPONENTE KPI CARD ────────────────────────────────────
 const KPICard = ({ t, icon: Icon, label, value, moneda, color }) => (
   <div style={{
-    padding: '16px', backgroundColor: t.panel, border: `1px solid ${t.border}`,
-    borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '8px',
+    padding: '16px', backgroundColor: t.panel,
+    border: `1px solid ${t.border}`, borderRadius: '12px',
+    display: 'flex', flexDirection: 'column', gap: '8px',
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
       <div style={{
         width: '32px', height: '32px', borderRadius: '10px',
-        backgroundColor: `${color}15`, color, display: 'flex',
-        alignItems: 'center', justifyContent: 'center',
+        backgroundColor: `${color}15`, color,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <Icon size={16} />
       </div>

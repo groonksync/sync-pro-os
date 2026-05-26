@@ -82,7 +82,6 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Validar tipo y tamaño
     if (!file.type.startsWith('image/')) {
       setErrors(prev => ({ ...prev, foto: 'Solo se permiten imágenes' }));
       return;
@@ -128,107 +127,77 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
     const errs = {};
     if (pasoActual === 0) {
       if (!form.nombre?.trim()) errs.nombre = 'El nombre es obligatorio';
-      if (!form.ci?.trim()) errs.ci = 'El CI / Cédula es obligatorio';
+      if (!form.ci?.trim()) errs.ci = 'El CI es obligatorio';
       if (!form.telefono?.trim()) errs.telefono = 'El teléfono es obligatorio';
     }
     if (pasoActual === 1) {
-      if (!form.capital || parseFloat(form.capital) <= 0) errs.capital = 'El capital debe ser mayor a 0';
-      if (!form.interes || parseFloat(form.interes) <= 0) errs.interes = 'El interés debe ser mayor a 0';
+      if (!form.capital || parseFloat(form.capital) <= 0) errs.capital = 'Capital inválido';
+      if (!form.interes || parseFloat(form.interes) <= 0) errs.interes = 'Interés inválido';
       if (!form.inicio) errs.inicio = 'Fecha de inicio requerida';
-      if (!form.fin) errs.fin = 'Fecha de vencimiento requerida';
-      if (form.inicio && form.fin && new Date(form.inicio) >= new Date(form.fin)) {
-        errs.fin = 'El vencimiento debe ser posterior al inicio';
-      }
+      if (!form.fin) errs.fin = 'Fecha de fin requerida';
+    }
+    if (pasoActual === 2) {
+      if (!form.tipoGarantia) errs.tipoGarantia = 'Selecciona un tipo de garantía';
+      if (!form.garantia?.trim()) errs.garantia = 'Describe la garantía';
     }
     return errs;
   }, [form]);
 
-  const validateAll = useCallback(() => {
-    let allErrors = {};
-    PASOS.forEach((_, i) => {
-      allErrors = { ...allErrors, ...validate(i) };
-    });
-    return allErrors;
-  }, [validate]);
-
+  // ─── MANEJO DE CAMPOS ────────────────────────────────────
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
     setTouched(prev => ({ ...prev, [field]: true }));
-    if (errors[field]) {
-      setErrors(prev => {
-        const copy = { ...prev };
-        delete copy[field];
-        return copy;
-      });
-    }
+    if (errors[field]) setErrors(prev => { const c = { ...prev }; delete c[field]; return c; });
   };
 
   const canAdvance = () => {
     const errs = validate(paso);
-    setErrors(prev => ({ ...prev, ...errs }));
-    setTouched(prev => PASOS[paso].fields?.reduce((acc, f) => ({ ...acc, [f]: true }), prev) || prev);
+    setErrors(errs);
+    setTouched(Object.keys(form).reduce((a, k) => ({ ...a, [k]: true }), {}));
     return Object.keys(errs).length === 0;
   };
 
-  const nextPaso = () => {
-    if (canAdvance() && paso < PASOS.length - 1) {
-      setPaso(p => p + 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const prevPaso = () => {
-    if (paso > 0) {
-      setPaso(p => p - 1);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
+  const nextPaso = () => { if (canAdvance()) setPaso(p => Math.min(p + 1, PASOS.length - 1)); };
+  const prevPaso = () => setPaso(p => Math.max(p - 1, 0));
 
   const irAPaso = (i) => {
     if (i < paso) { setPaso(i); return; }
+    // Si queremos avanzar, validamos los pasos intermedios
     let canGo = true;
     for (let p = paso; p < i; p++) {
+      setPaso(p);
       const errs = validate(p);
-      if (Object.keys(errs).length > 0) {
-        setErrors(prev => ({ ...prev, ...errs }));
-        canGo = false;
-        break;
-      }
+      if (Object.keys(errs).length > 0) { setErrors(errs); canGo = false; break; }
     }
     if (canGo) setPaso(i);
   };
 
-  // ─── GUARDAR ─────────────────────────────────────────────
+  // ─── SUBMIT ──────────────────────────────────────────────
   const handleSubmit = async () => {
-    const allErrors = validateAll();
-    setErrors(allErrors);
-    if (Object.keys(allErrors).length > 0) {
-      for (let i = 0; i < PASOS.length; i++) {
-        const pasoErrors = validate(i);
-        if (Object.keys(pasoErrors).length > 0) {
-          setPaso(i);
-          return;
-        }
-      }
+    const errs = validate(2); // validate garantia step too
+    const errsResumen = {};
+    if (!form.nombre?.trim()) errsResumen.nombre = 'Requerido';
+    if (Object.keys(errs).length > 0 || Object.keys(errsResumen).length > 0) {
+      setErrors({ ...errs, ...errsResumen });
       return;
     }
 
     setLoading(true);
     try {
       const payload = {
-        nombre: form.nombre.trim(),
-        ci: form.ci.trim(),
-        telefono: form.telefono.trim(),
+        nombre: form.nombre?.trim(),
+        ci: form.ci?.trim(),
+        telefono: form.telefono?.trim(),
         email: form.email?.trim() || '',
         direccion: form.direccion?.trim() || '',
         referencias: form.referencias?.trim() || '',
         ocupacion: form.ocupacion?.trim() || '',
         foto: form.foto || '',
-        capital: parseFloat(form.capital),
-        interes: parseFloat(form.interes),
-        moneda: form.moneda,
-        inicio: form.inicio,
-        fin: form.fin,
+        capital: parseFloat(form.capital) || 0,
+        interes: parseFloat(form.interes) || 0,
+        moneda: form.moneda || 'BOB',
+        inicio: form.inicio || '',
+        fin: form.fin || '',
         estado: form.estado || 'Activo',
         tipoGarantia: form.tipoGarantia || '',
         garantia: form.garantia?.trim() || '',
@@ -238,598 +207,495 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
         pagos: form.pagos || [],
       };
 
-      const isEdit = !!initialData?.id;
-      if (isEdit) {
+      if (initialData?.id) {
         const { error } = await supabase.from('prestamos').update(payload).eq('id', initialData.id);
         if (error) throw error;
+        // Audit trail
         await supabase.from('prestamos_historial').insert([{
           prestamo_id: initialData.id,
-          accion: 'ACTUALIZADO',
-          detalle: `Préstamo actualizado: ${payload.nombre}`,
+          accion: 'MODIFICADO',
+          detalle: `Préstamo modificado: ${payload.nombre}`,
           datos_previos: initialData,
-          datos_nuevos: payload,
         }]);
       } else {
-        const { data: newData, error } = await supabase.from('prestamos').insert([payload]).select();
+        const { data: newRecord, error } = await supabase.from('prestamos').insert([payload]).select();
         if (error) throw error;
-        if (newData?.[0]?.id) {
+        // Audit trail
+        if (newRecord?.[0]) {
           await supabase.from('prestamos_historial').insert([{
-            prestamo_id: newData[0].id,
+            prestamo_id: newRecord[0].id,
             accion: 'CREADO',
             detalle: `Nuevo préstamo creado: ${payload.nombre} - ${payload.capital} ${payload.moneda}`,
-            datos_nuevos: payload,
           }]);
         }
       }
 
-      if (onSave) onSave();
-      if (onClose) onClose();
-    } catch (e) {
-      setErrors({ submit: 'Error al guardar: ' + e.message });
+      onSave?.();
+    } catch (err) {
+      setErrors(prev => ({ ...prev, submit: err.message }));
     } finally {
       setLoading(false);
     }
   };
 
-  // ─── CÁLCULOS EN VIVO ────────────────────────────────────
-  const interesCalculado = useMemo(() => {
-    const cap = parseFloat(form.capital) || 0;
-    const int = parseFloat(form.interes) || 0;
-    return cap * (int / 100);
-  }, [form.capital, form.interes]);
-
-  const numMeses = useMemo(() => {
-    if (!form.inicio || !form.fin) return 0;
-    const start = new Date(form.inicio);
-    const end = new Date(form.fin);
-    return Math.max(0, (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1);
-  }, [form.inicio, form.fin]);
-
-  const totalInteres = useMemo(() => interesCalculado * numMeses, [interesCalculado, numMeses]);
-
-  // ─── RENDER DE PASOS ─────────────────────────────────────
-  const renderPasoDatos = () => (
-    <div className="space-y-5">
-      {/* Foto de perfil - nuevo */}
-      <div style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        marginBottom: '24px',
-      }}>
-        <div style={{
-          position: 'relative', width: '88px', height: '88px',
-          borderRadius: '50%', overflow: 'hidden',
-          backgroundColor: t.input, border: `2px solid ${form.foto ? t.accent : t.border}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', transition: 'all 0.2s',
-        }}
-          onMouseEnter={e => { if (!form.foto) e.currentTarget.style.borderColor = t.accent; }}
-          onMouseLeave={e => { if (!form.foto) e.currentTarget.style.borderColor = t.border; }}
-        >
-          {form.foto ? (
-            <>
-              <img
-                src={form.foto}
-                alt="Foto del prestatario"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-              <div
-                onClick={handleRemoveFoto}
-                style={{
-                  position: 'absolute', top: 0, right: 0, width: '28px', height: '28px',
-                  backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '0 0 0 12px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', color: '#ef4444',
-                }}
-                title="Eliminar foto"
-              >
-                <X size={14} />
-              </div>
-            </>
-          ) : (
-            <Camera size={28} color={t.textDim} />
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
+  // ─── RENDER: STEP INDICATOR ──────────────────────────────
+  const renderStepper = () => (
+    <div style={{ display: 'flex', gap: '8px', marginBottom: '32px', padding: '0 4px' }}>
+      {PASOS.map((p, idx) => {
+        const isActive = idx === paso;
+        const isComplete = idx < paso;
+        const Icon = p.icon;
+        return (
+          <div key={p.id}
+            onClick={() => irAPaso(idx)}
             style={{
-              position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer',
-            }}
-            disabled={uploadingFoto}
-          />
-        </div>
-        <div style={{ textAlign: 'center', marginTop: '8px' }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted, margin: 0 }}>
-            {uploadingFoto ? 'Subiendo...' : form.foto ? 'Foto del prestatario' : 'Foto del prestatario'}
-          </p>
-          <p style={{ fontSize: '8px', color: t.textDim, marginTop: '2px' }}>
-            {form.foto ? 'Click en ✕ para eliminar' : 'Toca para subir una foto'}
-          </p>
-        </div>
-        {errors.foto && (
-          <p style={{ color: '#ef4444', fontSize: '10px', marginTop: '4px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <AlertCircle size={10} /> {errors.foto}
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Campo
-          label="Nombre Completo"
-          icon={User}
-          value={form.nombre}
-          onChange={v => handleChange('nombre', v)}
-          error={errors.nombre}
-          touched={touched.nombre}
-          placeholder="Ej: Juan Pérez López"
-          required
-          isDark={isDark}
-        />
-        <Campo
-          label="Cédula de Identidad"
-          icon={Hash}
-          value={form.ci}
-          onChange={v => handleChange('ci', v)}
-          error={errors.ci}
-          touched={touched.ci}
-          placeholder="Ej: 1234567"
-          required
-          isDark={isDark}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Campo
-          label="Teléfono / WhatsApp"
-          icon={Smartphone}
-          value={form.telefono}
-          onChange={v => handleChange('telefono', v)}
-          error={errors.telefono}
-          touched={touched.telefono}
-          placeholder="Ej: +591 76543210"
-          required
-          isDark={isDark}
-        />
-        <Campo
-          label="Correo Electrónico"
-          icon={Mail}
-          value={form.email}
-          onChange={v => handleChange('email', v)}
-          error={errors.email}
-          touched={touched.email}
-          placeholder="Ej: juan@email.com"
-          type="email"
-          isDark={isDark}
-        />
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Campo
-          label="Dirección"
-          icon={MapPin}
-          value={form.direccion}
-          onChange={v => handleChange('direccion', v)}
-          error={errors.direccion}
-          touched={touched.direccion}
-          placeholder="Dirección de domicilio"
-          isDark={isDark}
-        />
-        <Campo
-          label="Ocupación"
-          icon={Briefcase}
-          value={form.ocupacion}
-          onChange={v => handleChange('ocupacion', v)}
-          error={errors.ocupacion}
-          touched={touched.ocupacion}
-          placeholder="Ej: Comerciante, Abogado..."
-          isDark={isDark}
-        />
-      </div>
-      <Campo
-        label="Referencias Personales"
-        icon={Users}
-        value={form.referencias}
-        onChange={v => handleChange('referencias', v)}
-        error={errors.referencias}
-        touched={touched.referencias}
-        placeholder="Nombres y teléfonos de referencias"
-        isDark={isDark}
-        textarea
-      />
+              flex: 1, cursor: idx <= paso ? 'pointer' : 'default',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+              opacity: idx > paso ? 0.4 : 1,
+              transition: 'all 0.2s',
+            }}>
+            <div style={{
+              width: '36px', height: '36px', borderRadius: '12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backgroundColor: isComplete ? t.accent : isActive ? t.accentSoft : t.input,
+              color: isComplete ? 'white' : isActive ? t.accent : t.textDim,
+              border: isActive && !isComplete ? `1.5px solid ${t.accent}` : 'none',
+              transition: 'all 0.2s',
+            }}>
+              {isComplete ? <Check size={16} strokeWidth={3} /> : <Icon size={16} />}
+            </div>
+            <span style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: isActive ? t.accent : t.textDim, textAlign: 'center' }}>
+              {p.label}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 
-  const renderPasoFinanciero = () => (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            Capital <span style={{ color: '#ef4444' }}>*</span>
+  // ─── RENDER: CAMPO REUTILIZABLE ──────────────────────────
+  const Campo = ({ label, icon: Icon, value, onChange, error, placeholder, type = 'text', required, textarea, noLabel }) => {
+    const hasError = error && touched[label];
+    return (
+      <div>
+        {!noLabel && (
+          <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: hasError ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
+            {Icon && <Icon size={10} style={{ display: 'inline', marginRight: '4px' }} />}
+            {label} {required && <span style={{ color: t.danger }}>*</span>}
           </label>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px',
-            backgroundColor: t.input, border: `1px solid ${errors.capital && touched.capital ? '#ef4444' : t.border}`,
-            borderRadius: '12px', transition: 'border 0.2s',
-          }}>
-            <DollarSign size={18} color={t.textDim} />
-            <input
-              type="number"
-              value={form.capital}
-              onChange={e => handleChange('capital', e.target.value)}
-              style={{
-                background: 'transparent', border: 'none', outline: 'none',
-                fontSize: '1.25rem', fontWeight: 700, color: t.text, width: '100%',
-                fontFamily: 'monospace',
-              }}
-              placeholder="0"
-            />
-          </div>
-          {errors.capital && touched.capital && (
-            <p style={{ color: '#ef4444', fontSize: '10px', marginTop: '4px', fontWeight: 500 }}>{errors.capital}</p>
-          )}
-        </div>
-
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            Interés Mensual (%) <span style={{ color: '#ef4444' }}>*</span>
-          </label>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px',
-            backgroundColor: t.input, border: `1px solid ${errors.interes && touched.interes ? '#ef4444' : t.border}`,
-            borderRadius: '12px', transition: 'border 0.2s',
-          }}>
-            <BadgePercent size={18} color={t.accent} />
-            <input
-              type="number"
-              value={form.interes}
-              onChange={e => handleChange('interes', e.target.value)}
-              style={{
-                background: 'transparent', border: 'none', outline: 'none',
-                fontSize: '1.25rem', fontWeight: 700, color: t.accent, width: '100%',
-                fontFamily: 'monospace',
-              }}
-              placeholder="5"
-              step="0.1"
-            />
-          </div>
-          {errors.interes && touched.interes && (
-            <p style={{ color: '#ef4444', fontSize: '10px', marginTop: '4px', fontWeight: 500 }}>{errors.interes}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            Moneda
-          </label>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            {MONEDAS.map(m => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => handleChange('moneda', m)}
-                style={{
-                  flex: 1, padding: '12px', borderRadius: '12px', fontWeight: 600,
-                  fontSize: '13px', cursor: 'pointer',
-                  backgroundColor: form.moneda === m ? t.accent : t.input,
-                  color: form.moneda === m ? 'white' : t.text,
-                  border: `1px solid ${form.moneda === m ? t.accent : t.border}`,
-                  transition: 'all 0.2s',
-                }}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            Estado Inicial
-          </label>
-          <select
-            value={form.estado}
-            onChange={e => handleChange('estado', e.target.value)}
+        )}
+        {textarea ? (
+          <textarea value={value} onChange={e => onChange(e.target.value)}
             style={{
-              width: '100%', padding: '12px', fontSize: '12px', fontWeight: 600,
-              backgroundColor: t.input, border: `1px solid ${t.border}`,
-              color: form.estado === 'Finalizado' ? t.success : form.estado === 'En Mora' ? t.danger : t.accent,
-              borderRadius: '12px', outline: 'none', cursor: 'pointer',
+              width: '100%', padding: '10px 12px', fontSize: '12px', lineHeight: 1.5,
+              backgroundColor: t.input, border: `1px solid ${hasError ? t.danger : t.border}`,
+              color: t.text, borderRadius: '10px', outline: 'none', resize: 'vertical',
+              minHeight: '70px', transition: 'border 0.2s',
             }}
+            onFocus={e => { if (!hasError) e.target.style.borderColor = t.accent; }}
+            onBlur={e => { if (!hasError) e.target.style.borderColor = t.border; }}
+            placeholder={placeholder} />
+        ) : (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '0 12px', backgroundColor: t.input,
+            border: `1px solid ${hasError ? t.danger : t.border}`,
+            borderRadius: '10px', transition: 'border 0.2s',
+          }}>
+            <input type={type} value={value} onChange={e => onChange(e.target.value)}
+              style={{
+                flex: 1, padding: '10px 0', fontSize: '12px', fontWeight: 500,
+                background: 'transparent', border: 'none', outline: 'none',
+                color: t.text, width: '100%',
+              }}
+              placeholder={placeholder} />
+          </div>
+        )}
+        {hasError && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{error}</p>}
+      </div>
+    );
+  };
+
+  // ─── RENDER: PASO 1 - DATOS PERSONALES ───────────────────
+  const renderPasoDatos = () => {
+    const makeHandler = (field) => (val) => handleChange(field, val);
+
+    return (
+      <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>Datos Personales</h3>
+          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Información básica del prestatario</p>
+        </div>
+
+        {/* Foto del prestatario */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '24px' }}>
+          <div style={{
+            width: '88px', height: '88px', borderRadius: '50%',
+            backgroundColor: t.input, border: `2px dashed ${t.border}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'relative', overflow: 'hidden', cursor: 'pointer',
+            transition: 'all 0.2s',
+          }}
+            onClick={() => document.getElementById('foto-input')?.click()}
+            onMouseEnter={e => { if (!form.foto) e.currentTarget.style.borderColor = t.accent; }}
+            onMouseLeave={e => { if (!form.foto) e.currentTarget.style.borderColor = t.border; }}
           >
-            {ESTADOS_INICIALES.map(e => (
-              <option key={e} value={e}>{e}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            Fecha de Inicio <span style={{ color: '#ef4444' }}>*</span>
-          </label>
-          <input
-            type="date"
-            value={form.inicio}
-            onChange={e => handleChange('inicio', e.target.value)}
-            style={{
-              width: '100%', padding: '12px', fontSize: '12px',
-              backgroundColor: t.input, border: `1px solid ${errors.inicio && touched.inicio ? '#ef4444' : t.border}`,
-              color: t.text, borderRadius: '12px', outline: 'none',
-            }}
-          />
-          {errors.inicio && touched.inicio && (
-            <p style={{ color: '#ef4444', fontSize: '10px', marginTop: '4px', fontWeight: 500 }}>{errors.inicio}</p>
+            {form.foto ? (
+              <>
+                <img src={form.foto} alt="Foto" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleRemoveFoto(); }}
+                  style={{
+                    position: 'absolute', top: '2px', right: '2px',
+                    width: '22px', height: '22px', borderRadius: '50%',
+                    backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff',
+                    border: 'none', cursor: 'pointer', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    fontSize: '12px', lineHeight: 1,
+                  }}
+                >
+                  <X size={12} />
+                </button>
+              </>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', color: t.textDim }}>
+                <Camera size={24} />
+                <span style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                  {uploadingFoto ? 'Subiendo...' : 'Foto'}
+                </span>
+              </div>
+            )}
+            <input
+              id="foto-input"
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+            />
+          </div>
+          {errors.foto && (
+            <p style={{ fontSize: '9px', color: t.danger, margin: '6px 0 0', fontWeight: 500 }}>{errors.foto}</p>
+          )}
+          {uploadingFoto && (
+            <p style={{ fontSize: '9px', color: t.accent, margin: '6px 0 0', fontWeight: 500 }}>Subiendo imagen…</p>
           )}
         </div>
 
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            Fecha de Vencimiento <span style={{ color: '#ef4444' }}>*</span>
-          </label>
-          <input
-            type="date"
-            value={form.fin}
-            onChange={e => handleChange('fin', e.target.value)}
-            style={{
-              width: '100%', padding: '12px', fontSize: '12px',
-              backgroundColor: t.input, border: `1px solid ${errors.fin && touched.fin ? '#ef4444' : t.border}`,
-              color: t.text, borderRadius: '12px', outline: 'none',
-            }}
-          />
-          {errors.fin && touched.fin && (
-            <p style={{ color: '#ef4444', fontSize: '10px', marginTop: '4px', fontWeight: 500 }}>{errors.fin}</p>
-          )}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          <Campo label="Nombre Completo" icon={User} value={form.nombre} onChange={makeHandler('nombre')}
+            error={errors.nombre} placeholder="Ej: Juan Pérez" required />
+          <Campo label="Cédula de Identidad" icon={FileSignature} value={form.ci} onChange={makeHandler('ci')}
+            error={errors.ci} placeholder="Ej: 1234567" required />
+          <Campo label="Teléfono / WhatsApp" icon={Smartphone} value={form.telefono} onChange={makeHandler('telefono')}
+            error={errors.telefono} placeholder="Ej: 71234567" required />
+          <Campo label="Correo Electrónico" icon={Mail} value={form.email} onChange={makeHandler('email')}
+            error={errors.email} placeholder="Ej: juan@email.com" />
+          <Campo label="Dirección" icon={MapPin} value={form.direccion} onChange={makeHandler('direccion')}
+            error={errors.direccion} placeholder="Dirección de domicilio" />
+          <Campo label="Ocupación" icon={Briefcase} value={form.ocupacion} onChange={makeHandler('ocupacion')}
+            error={errors.ocupacion} placeholder="Ej: Comerciante" />
+        </div>
+        <div style={{ marginTop: '14px' }}>
+          <Campo label="Referencias Personales" icon={Users} value={form.referencias} onChange={makeHandler('referencias')}
+            error={errors.referencias} placeholder="Nombre y teléfono de referencia" textarea />
         </div>
       </div>
+    );
+  };
 
-      {/* Vista previa de cálculos */}
-      {form.capital > 0 && (
+  // ─── RENDER: PASO 2 - FINANCIEROS ────────────────────────
+  const renderPasoFinanciero = () => {
+    const makeHandler = (field) => (val) => handleChange(field, val);
+
+    return (
+      <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>Términos Financieros</h3>
+          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Define el capital, interés y plazo del préstamo</p>
+        </div>
+
+        {/* Capital y Moneda lado a lado */}
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.capital ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <DollarSign size={10} style={{ display: 'inline', marginRight: '4px' }} /> Capital <span style={{ color: t.danger }}>*</span>
+            </label>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '0 12px', backgroundColor: t.input,
+              border: `1px solid ${errors.capital ? t.danger : t.border}`, borderRadius: '10px',
+            }}>
+              <input type="number" value={form.capital} onChange={e => handleChange('capital', e.target.value)}
+                style={{
+                  flex: 1, padding: '12px 0', fontSize: '14px', fontWeight: 700, fontFamily: 'monospace',
+                  background: 'transparent', border: 'none', outline: 'none', color: t.text,
+                }}
+                placeholder="0.00" />
+            </div>
+            {errors.capital && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.capital}</p>}
+          </div>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <Wallet size={10} style={{ display: 'inline', marginRight: '4px' }} /> Moneda
+            </label>
+            <select value={form.moneda} onChange={e => handleChange('moneda', e.target.value)}
+              style={{
+                width: '100%', padding: '12px', fontSize: '13px', fontWeight: 600,
+                backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                borderRadius: '10px', outline: 'none',
+              }}>
+              {MONEDAS.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Interés y Estado */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.interes ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <BadgePercent size={10} style={{ display: 'inline', marginRight: '4px' }} /> Interés Mensual (%) <span style={{ color: t.danger }}>*</span>
+            </label>
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '0 12px', backgroundColor: t.input,
+              border: `1px solid ${errors.interes ? t.danger : t.border}`, borderRadius: '10px',
+            }}>
+              <input type="number" step="0.1" value={form.interes} onChange={e => handleChange('interes', e.target.value)}
+                style={{
+                  flex: 1, padding: '12px 0', fontSize: '14px', fontWeight: 600, fontFamily: 'monospace',
+                  background: 'transparent', border: 'none', outline: 'none', color: t.accent,
+                }}
+                placeholder="5" />
+              <span style={{ fontSize: '11px', fontWeight: 600, color: t.textDim }}>%</span>
+            </div>
+            {errors.interes && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.interes}</p>}
+          </div>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <CheckCircle2 size={10} style={{ display: 'inline', marginRight: '4px' }} /> Estado Inicial
+            </label>
+            <select value={form.estado} onChange={e => handleChange('estado', e.target.value)}
+              style={{
+                width: '100%', padding: '12px', fontSize: '13px', fontWeight: 600,
+                backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                borderRadius: '10px', outline: 'none',
+              }}>
+              {ESTADOS_INICIALES.map(e => <option key={e} value={e}>{e}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Fechas */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.inicio ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Inicio <span style={{ color: t.danger }}>*</span>
+            </label>
+            <input type="date" value={form.inicio} onChange={e => handleChange('inicio', e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px', fontSize: '12px',
+                backgroundColor: t.input, border: `1px solid ${errors.inicio ? t.danger : t.border}`,
+                color: t.text, borderRadius: '10px', outline: 'none',
+              }} />
+            {errors.inicio && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.inicio}</p>}
+          </div>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.fin ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Vencimiento <span style={{ color: t.danger }}>*</span>
+            </label>
+            <input type="date" value={form.fin} onChange={e => handleChange('fin', e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px', fontSize: '12px',
+                backgroundColor: t.input, border: `1px solid ${errors.fin ? t.danger : t.border}`,
+                color: t.text, borderRadius: '10px', outline: 'none',
+              }} />
+            {errors.fin && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.fin}</p>}
+          </div>
+        </div>
+
+        {/* Resumen en vivo */}
         <div style={{
           padding: '16px', borderRadius: '12px',
           backgroundColor: `${t.accent}08`, border: `1px solid ${t.accent}20`,
         }}>
-          <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, marginBottom: '12px' }}>
-            <Wallet size={12} style={{ marginRight: 6 }} /> Proyección Financiera
-          </p>
-          <div className="grid grid-cols-3 gap-4">
+          <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, margin: '0 0 8px' }}>Resumen del Préstamo</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{ fontSize: '9px', color: t.textDim, margin: 0 }}>Interés Mensual</p>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: t.accent, margin: '2px 0 0 0' }}>
-                {interesCalculado.toLocaleString()} <span style={{ fontSize: '9px' }}>{form.moneda}</span>
+              <p style={{ fontSize: '10px', color: t.textDim, margin: '0 0 2px' }}>Interés mensual calculado:</p>
+              <p style={{ fontSize: '16px', fontWeight: 700, color: t.accent, margin: 0 }}>
+                {(parseFloat(form.capital) * (parseFloat(form.interes) / 100) || 0).toLocaleString()} {form.moneda}
               </p>
             </div>
-            <div>
-              <p style={{ fontSize: '9px', color: t.textDim, margin: 0 }}>N° Cuotas</p>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: t.text, margin: '2px 0 0 0' }}>
-                {numMeses} {numMeses === 1 ? 'mes' : 'meses'}
-              </p>
-            </div>
-            <div>
-              <p style={{ fontSize: '9px', color: t.textDim, margin: 0 }}>Total Intereses</p>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: t.accent, margin: '2px 0 0 0' }}>
-                {totalInteres.toLocaleString()} <span style={{ fontSize: '9px' }}>{form.moneda}</span>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '10px', color: t.textDim, margin: '0 0 2px' }}>Pago único mensual</p>
+              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+                {(parseFloat(form.capital) / 6 + parseFloat(form.capital) * (parseFloat(form.interes) / 100) || 0).toLocaleString()} {form.moneda}
+                <span style={{ fontSize: '9px', color: t.textDim }}> /mes</span>
               </p>
             </div>
           </div>
         </div>
-      )}
-    </div>
-  );
-
-  const renderPasoGarantia = () => (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            Tipo de Garantía
-          </label>
-          <select
-            value={form.tipoGarantia}
-            onChange={e => handleChange('tipoGarantia', e.target.value)}
-            style={{
-              width: '100%', padding: '12px', fontSize: '12px',
-              backgroundColor: t.input, border: `1px solid ${t.border}`,
-              color: t.text, borderRadius: '12px', outline: 'none', cursor: 'pointer',
-            }}
-          >
-            {TIPOS_GARANTIA.map(g => (
-              <option key={g.value} value={g.value}>{g.label}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            Documento de Garantía
-          </label>
-          <Campo
-            label=""
-            icon={FileText}
-            value={form.garantia}
-            onChange={v => handleChange('garantia', v)}
-            error={errors.garantia}
-            touched={touched.garantia}
-            placeholder="Descripción de la garantía"
-            isDark={isDark}
-            textarea
-            noLabel
-          />
-        </div>
       </div>
+    );
+  };
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            <Link size={10} style={{ marginRight: 4 }} /> Link Contrato (Drive)
-          </label>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px',
-            backgroundColor: t.input, border: `1px solid ${t.border}`,
-            borderRadius: '12px',
-          }}>
-            <ExternalLink size={14} color={t.textDim} />
-            <input
-              type="text"
-              value={form.drive_contrato}
-              onChange={e => handleChange('drive_contrato', e.target.value)}
+  // ─── RENDER: PASO 3 - GARANTÍA ───────────────────────────
+  const renderPasoGarantia = () => {
+    const makeHandler = (field) => (val) => handleChange(field, val);
+
+    return (
+      <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>Garantía & Documentos</h3>
+          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Respaldo documental del préstamo</p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.tipoGarantia ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <ShieldCheck size={10} style={{ display: 'inline', marginRight: '4px' }} /> Tipo de Garantía <span style={{ color: t.danger }}>*</span>
+            </label>
+            <select value={form.tipoGarantia} onChange={e => handleChange('tipoGarantia', e.target.value)}
               style={{
-                background: 'transparent', border: 'none', outline: 'none',
-                fontSize: '11px', color: t.text, width: '100%',
-              }}
-              placeholder="https://drive.google.com/..."
-            />
+                width: '100%', padding: '10px 12px', fontSize: '12px', fontWeight: 500,
+                backgroundColor: t.input, border: `1px solid ${errors.tipoGarantia ? t.danger : t.border}`,
+                color: t.text, borderRadius: '10px', outline: 'none',
+              }}>
+              {TIPOS_GARANTIA.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
+            </select>
+            {errors.tipoGarantia && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.tipoGarantia}</p>}
           </div>
-        </div>
-        <div>
-          <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-            <Image size={10} style={{ marginRight: 4 }} /> Link Fotos (Drive)
-          </label>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px',
-            backgroundColor: t.input, border: `1px solid ${t.border}`,
-            borderRadius: '12px',
-          }}>
-            <ExternalLink size={14} color={t.textDim} />
-            <input
-              type="text"
-              value={form.drive_fotos}
-              onChange={e => handleChange('drive_fotos', e.target.value)}
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <Link size={10} style={{ display: 'inline', marginRight: '4px' }} /> Link Contrato (Drive)
+            </label>
+            <input type="url" value={form.drive_contrato} onChange={e => handleChange('drive_contrato', e.target.value)}
               style={{
-                background: 'transparent', border: 'none', outline: 'none',
-                fontSize: '11px', color: t.text, width: '100%',
+                width: '100%', padding: '10px 12px', fontSize: '12px',
+                backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                borderRadius: '10px', outline: 'none',
               }}
-              placeholder="https://photos.app.goo.gl/..."
-            />
+              placeholder="https://drive.google.com/..." />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <Campo label="Descripción de la Garantía" icon={FileText} value={form.garantia}
+            onChange={makeHandler('garantia')} error={errors.garantia}
+            placeholder="Describe el bien o documento que respalda el préstamo (Ej: Toyota Corolla 2019, placas 1234ABC)" textarea />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <Image size={10} style={{ display: 'inline', marginRight: '4px' }} /> Link Fotos (Drive)
+            </label>
+            <input type="url" value={form.drive_fotos} onChange={e => handleChange('drive_fotos', e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px', fontSize: '12px',
+                backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                borderRadius: '10px', outline: 'none',
+              }}
+              placeholder="https://photos.app.goo.gl/..." />
+          </div>
+          <div>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <Lock size={10} style={{ display: 'inline', marginRight: '4px' }} /> Notas Internas
+            </label>
+            <input type="text" value={form.notas} onChange={e => handleChange('notas', e.target.value)}
+              style={{
+                width: '100%', padding: '10px 12px', fontSize: '12px',
+                backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                borderRadius: '10px', outline: 'none',
+              }}
+              placeholder="Información adicional..." />
           </div>
         </div>
       </div>
+    );
+  };
 
-      <div>
-        <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-          Notas Adicionales
-        </label>
-        <textarea
-          value={form.notas}
-          onChange={e => handleChange('notas', e.target.value)}
-          style={{
-            width: '100%', height: '80px', padding: '12px', fontSize: '11px',
-            backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-            borderRadius: '12px', outline: 'none', resize: 'vertical',
-          }}
-          placeholder="Cualquier información adicional relevante..."
-        />
-      </div>
-    </div>
-  );
+  // ─── RENDER: PASO 4 - RESUMEN ────────────────────────────
+  const renderPasoResumen = () => {
+    const resumenItems = [
+      { label: 'Prestatario', value: form.nombre || '—', icon: User },
+      { label: 'CI / Documento', value: form.ci || '—', icon: FileSignature },
+      { label: 'Contacto', value: form.telefono || '—', icon: Smartphone },
+      { label: 'Capital', value: `${(parseFloat(form.capital) || 0).toLocaleString()} ${form.moneda}`, icon: DollarSign },
+      { label: 'Interés', value: `${form.interes}% mensual`, icon: BadgePercent },
+      { label: 'Periodo', value: `${form.inicio ? new Date(form.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '—'} → ${form.fin ? new Date(form.fin).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}`, icon: CalendarDays },
+      { label: 'Garantía', value: form.tipoGarantia ? `${form.tipoGarantia} — ${form.garantia?.substring(0, 40)}${(form.garantia?.length || 0) > 40 ? '...' : ''}` : '—', icon: ShieldCheck },
+    ];
 
-  const renderPasoResumen = () => (
-    <div className="space-y-5">
-      {/* Tarjeta de resumen visual con foto */}
-      <div style={{
-        padding: '24px', borderRadius: '16px',
-        background: `linear-gradient(135deg, ${t.accent}15, ${t.accent}05)`,
-        border: `1px solid ${t.accent}30`,
-        textAlign: 'center',
-      }}>
+    const moneda = form.moneda || 'BOB';
+
+    return (
+      <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
+        <div style={{ marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>Resumen & Confirmar</h3>
+          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Verifica que todos los datos sean correctos antes de guardar</p>
+        </div>
+
+        {/* Foto en resumen */}
         <div style={{
-          width: '72px', height: '72px', borderRadius: '50%',
-          backgroundColor: `${t.accent}20`, color: t.accent,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 16px', overflow: 'hidden',
-          border: `2px solid ${t.accent}30`,
-        }}>
-          {form.foto ? (
-            <img src={form.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <User size={28} />
-          )}
-        </div>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, margin: 0 }}>
-          {form.nombre || 'Sin nombre'}
-        </h3>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '8px', flexWrap: 'wrap' }}>
-          {form.ci && <Badge style={{ label: 'CI', value: form.ci, color: t.textMuted, isDark }} />}
-          {form.telefono && <Badge style={{ label: 'WA', value: form.telefono, color: t.accent, isDark }} />}
-          {form.moneda && <Badge style={{ label: 'Moneda', value: form.moneda, color: t.textMuted, isDark }} />}
-        </div>
-      </div>
-
-      {/* Detalle financiero */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <ResumenCard t={t} label="Capital" value={`${parseFloat(form.capital || 0).toLocaleString()} ${form.moneda}`} icon={DollarSign} color={t.text} />
-        <ResumenCard t={t} label="Interés" value={`${form.interes}%`} icon={BadgePercent} color={t.accent} />
-        <ResumenCard t={t} label="Pago Mensual" value={`${interesCalculado.toLocaleString()} ${form.moneda}`} icon={CreditCard} color={t.success} />
-        <ResumenCard t={t} label="Total Intereses" value={`${totalInteres.toLocaleString()} ${form.moneda}`} icon={Wallet} color={t.warning || '#f59e0b'} />
-      </div>
-
-      {/* Periodo */}
-      <div style={{
-        padding: '16px', borderRadius: '12px',
-        backgroundColor: t.input, border: `1px solid ${t.border}`,
-      }}>
-        <div className="flex items-center gap-3">
-          <CalendarDays size={16} color={t.accent} />
-          <span style={{ fontSize: '12px', color: t.textMuted }}>
-            {form.inicio ? new Date(form.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
-          </span>
-          <ArrowRight size={14} color={t.textDim} />
-          <span style={{ fontSize: '12px', color: t.textMuted }}>
-            {form.fin ? new Date(form.fin).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}
-          </span>
-          <span style={{ fontSize: '10px', color: t.accent, fontWeight: 600, marginLeft: 'auto' }}>
-            {numMeses} {numMeses === 1 ? 'mes' : 'meses'}
-          </span>
-        </div>
-      </div>
-
-      {/* Garantía */}
-      {form.garantia && (
-        <div style={{
+          display: 'flex', alignItems: 'center', gap: '16px',
           padding: '16px', borderRadius: '12px',
           backgroundColor: t.input, border: `1px solid ${t.border}`,
+          marginBottom: '16px',
         }}>
-          <div className="flex items-start gap-3">
-            <ShieldCheck size={16} color={t.warning || '#f59e0b'} style={{ marginTop: 2 }} />
-            <div>
-              <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', color: t.textMuted, margin: 0 }}>
-                {form.tipoGarantia || 'Garantía'}
-              </p>
-              <p style={{ fontSize: '12px', color: t.text, marginTop: 4 }}>{form.garantia}</p>
+          <div style={{
+            width: '72px', height: '72px', borderRadius: '50%', overflow: 'hidden',
+            border: `2px solid ${t.accent}`, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: t.bg,
+          }}>
+            {form.foto ? (
+              <img src={form.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <User size={32} color={t.textDim} />
+            )}
+          </div>
+          <div>
+            <p style={{ fontSize: '16px', fontWeight: 700, color: t.text, margin: '0 0 2px' }}>{form.nombre || 'Sin nombre'}</p>
+            <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>{form.ci || 'Sin CI'} · {form.telefono || 'Sin teléfono'}</p>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+              <span style={{
+                fontSize: '9px', fontWeight: 600, padding: '2px 10px', borderRadius: '12px',
+                backgroundColor: t.accentSoft, color: t.accent,
+              }}>
+                {form.estado}
+              </span>
+              <span style={{
+                fontSize: '9px', fontWeight: 600, padding: '2px 10px', borderRadius: '12px',
+                backgroundColor: `${t.accent}08`, color: t.textDim,
+              }}>
+                {form.moneda}
+              </span>
             </div>
           </div>
         </div>
-      )}
 
-      {/* Estado */}
-      <div style={{
-        padding: '16px', borderRadius: '12px',
-        backgroundColor: t.input, border: `1px solid ${t.border}`,
-        display: 'flex', alignItems: 'center', gap: '12px',
-      }}>
-        <ShieldCheck size={16} color={
-          form.estado === 'Finalizado' ? t.success :
-          form.estado === 'En Mora' ? t.danger : t.accent
-        } />
-        <span style={{ fontSize: '12px', color: t.textMuted }}>Estado:</span>
-        <span style={{
-          fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '8px',
-          backgroundColor: form.estado === 'Finalizado' ? `${t.success}15` :
-            form.estado === 'En Mora' ? `${t.danger}15` : `${t.accent}15`,
-          color: form.estado === 'Finalizado' ? t.success :
-            form.estado === 'En Mora' ? t.danger : t.accent,
-        }}>
-          {form.estado || 'Activo'}
-        </span>
-      </div>
-
-      {errors.submit && (
-        <div style={{ padding: '12px', borderRadius: '10px', backgroundColor: '#ef444415', border: '1px solid #ef444430', color: '#ef4444', fontSize: '11px', fontWeight: 500 }}>
-          {errors.submit}
+        {/* Detalles */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px' }}>
+          {resumenItems.map((item, idx) => (
+            <ResumenCard key={idx} t={t} label={item.label} value={item.value} icon={item.icon} color={t.accent} />
+          ))}
         </div>
-      )}
-    </div>
-  );
 
+        {/* Totales destacados */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px',
+        }}>
+          <ResumenCard t={t} label="Capital" value={`${(parseFloat(form.capital) || 0).toLocaleString()} ${moneda}`} icon={DollarSign} color={t.accent} />
+          <ResumenCard t={t} label="Interés/Mes" value={`${(parseFloat(form.capital) * (parseFloat(form.interes) / 100) || 0).toLocaleString()} ${moneda}`} icon={BadgePercent} color="#10b981" />
+          <ResumenCard t={t} label="Pago Mensual" value={`${((parseFloat(form.capital) || 0) / Math.max(1, Math.ceil((new Date(form.fin) - new Date(form.inicio)) / (1000 * 60 * 60 * 24 * 30))) + (parseFloat(form.capital) * (parseFloat(form.interes) / 100) || 0)).toLocaleString()} ${moneda}`} icon={CreditCard} color="#f59e0b" />
+        </div>
+      </div>
+    );
+  };
+
+  // ─── RENDER: STEP CONTROLLER ─────────────────────────────
   const renderPaso = () => {
     switch (paso) {
       case 0: return renderPasoDatos();
@@ -840,229 +706,109 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
     }
   };
 
-  const isLastStep = paso === PASOS.length - 1;
-
+  // ─── RENDER PRINCIPAL ────────────────────────────────────
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div>
       {/* Header */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: '10px',
-      }}>
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.02em' }}>
-            {initialData ? 'Editar Préstamo' : 'Nuevo Préstamo'}
-          </h2>
-          <p style={{ fontSize: '11px', color: t.textDim, marginTop: '2px' }}>
-            {PASOS[paso].desc}
-          </p>
-        </div>
-        <button
-          onClick={onClose}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.02em' }}>
+          {initialData ? 'Editar Préstamo' : 'Nuevo Préstamo'}
+        </h2>
+        <button onClick={onClose}
           style={{
-            width: '36px', height: '36px', borderRadius: '10px', border: `1px solid ${t.border}`,
+            width: '32px', height: '32px', borderRadius: '10px', border: `1px solid ${t.border}`,
             backgroundColor: t.input, color: t.textDim, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >
+          }}>
           <X size={16} />
         </button>
       </div>
 
-      {/* Progress bar */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'flex', gap: '4px', marginBottom: '16px' }}>
-          {PASOS.map((p, i) => (
-            <button
-              key={p.id}
-              onClick={() => irAPaso(i)}
-              style={{
-                flex: 1, height: '4px', borderRadius: '2px', border: 'none', cursor: 'pointer',
-                backgroundColor: i <= paso ? t.accent : t.border,
-                transition: 'all 0.3s', opacity: i <= paso ? 1 : 0.5,
-              }}
-            />
-          ))}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          {PASOS.map((p, i) => (
-            <button
-              key={p.id}
-              onClick={() => irAPaso(i)}
-              style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                opacity: i <= paso ? 1 : 0.4,
-                transition: 'all 0.3s',
-              }}
-            >
-              <div style={{
-                width: '32px', height: '32px', borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: i < paso ? t.success :
-                  i === paso ? t.accent : t.input,
-                color: i <= paso ? 'white' : t.textDim,
-                fontSize: '11px', fontWeight: 700,
-                border: i === paso ? `2px solid ${t.accent}` : 'none',
-                transition: 'all 0.3s',
-              }}>
-                {i < paso ? <Check size={14} /> : <p.icon size={14} />}
-              </div>
-              <span style={{
-                fontSize: '8px', fontWeight: 600, textTransform: 'uppercase',
-                color: i === paso ? t.accent : t.textDim,
-                letterSpacing: '0.02em',
-              }}>
-                {p.label}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {renderStepper()}
 
       {/* Content */}
-      <div style={{
-        padding: '24px', backgroundColor: t.panel,
-        border: `1px solid ${t.border}`, borderRadius: '16px',
-        minHeight: '320px',
-      }}>
+      <div style={{ minHeight: '320px' }}>
         {renderPaso()}
-
-        {/* Botones de navegación */}
-        <div style={{
-          display: 'flex', justifyContent: 'space-between',
-          marginTop: '28px', paddingTop: '20px',
-          borderTop: `1px solid ${t.border}`,
-        }}>
-          <button
-            onClick={prevPaso}
-            disabled={paso === 0}
-            style={{
-              padding: '10px 20px', borderRadius: '12px', border: `1px solid ${t.border}`,
-              backgroundColor: t.input, color: t.text, fontSize: '11px', fontWeight: 600,
-              cursor: paso === 0 ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', gap: '6px',
-              opacity: paso === 0 ? 0.4 : 1,
-              transition: 'all 0.2s',
-            }}
-          >
-            <ChevronLeft size={14} /> Anterior
-          </button>
-
-          {isLastStep ? (
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              style={{
-                padding: '10px 24px', borderRadius: '12px', border: 'none',
-                backgroundColor: t.accent, color: 'white', fontSize: '11px', fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', gap: '8px',
-                opacity: loading ? 0.6 : 1,
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => { if (!loading) e.target.style.backgroundColor = t.accentHover; }}
-              onMouseLeave={e => { if (!loading) e.target.style.backgroundColor = t.accent; }}
-            >
-              {loading ? 'Guardando...' : <><Save size={14} /> {initialData ? 'Actualizar' : 'Guardar Préstamo'}</>}
-            </button>
-          ) : (
-            <button
-              onClick={nextPaso}
-              style={{
-                padding: '10px 24px', borderRadius: '12px', border: 'none',
-                backgroundColor: t.accent, color: 'white', fontSize: '11px', fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '6px',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => e.target.style.backgroundColor = t.accentHover}
-              onMouseLeave={e => e.target.style.backgroundColor = t.accent}
-            >
-              Siguiente <ChevronRight size={14} />
-            </button>
-          )}
-        </div>
       </div>
-    </div>
-  );
-};
 
-// ─── COMPONENTES AUXILIARES ──────────────────────────────────
-
-const Campo = ({ label, icon: Icon, value, onChange, error, touched, placeholder, type = 'text', required, textarea, isDark, noLabel }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
-  const showError = error && touched;
-
-  return (
-    <div>
-      {!noLabel && label && (
-        <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
-          {label} {required && <span style={{ color: '#ef4444' }}>*</span>}
-        </label>
+      {/* Error de submit */}
+      {errors.submit && (
+        <div style={{
+          padding: '12px', borderRadius: '10px', marginTop: '16px',
+          backgroundColor: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)',
+          color: '#ef4444', fontSize: '11px', fontWeight: 500,
+        }}>
+          {errors.submit}
+        </div>
       )}
+
+      {/* Botones de navegación */}
       <div style={{
-        display: 'flex', alignItems: textarea ? 'flex-start' : 'center',
-        gap: '10px', padding: textarea ? '12px 14px' : '10px 14px',
-        backgroundColor: t.input, border: `1px solid ${showError ? '#ef4444' : t.border}`,
-        borderRadius: '12px', transition: 'border 0.2s',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginTop: '28px', paddingTop: '20px', borderTop: `1px solid ${t.border}`,
       }}>
-        {Icon && <Icon size={16} color={t.textDim} style={{ marginTop: textarea ? 3 : 0 }} />}
-        {textarea ? (
-          <textarea
-            value={value}
-            onChange={e => onChange(e.target.value)}
+        <button onClick={prevPaso} disabled={paso === 0}
+          style={{
+            padding: '10px 20px', borderRadius: '10px', border: `1px solid ${t.border}`,
+            backgroundColor: t.input, color: t.text, fontSize: '11px', fontWeight: 600,
+            cursor: paso === 0 ? 'default' : 'pointer', opacity: paso === 0 ? 0.4 : 1,
+            display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s',
+          }}>
+          <ChevronLeft size={14} /> Anterior
+        </button>
+
+        {/* Indicador de paso */}
+        <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>
+          Paso {paso + 1} de {PASOS.length}
+        </span>
+
+        {paso < PASOS.length - 1 ? (
+          <button onClick={nextPaso}
             style={{
-              background: 'transparent', border: 'none', outline: 'none',
-              fontSize: '12px', color: t.text, width: '100%', minHeight: '60px',
-              resize: 'vertical', fontFamily: 'inherit',
+              padding: '10px 20px', borderRadius: '10px', border: 'none',
+              backgroundColor: t.accent, color: 'white', fontSize: '11px', fontWeight: 600,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s',
             }}
-            placeholder={placeholder}
-          />
+            onMouseEnter={e => e.target.style.backgroundColor = t.accentHover}
+            onMouseLeave={e => e.target.style.backgroundColor = t.accent}>
+            Siguiente <ChevronRight size={14} />
+          </button>
         ) : (
-          <input
-            type={type}
-            value={value}
-            onChange={e => onChange(e.target.value)}
+          <button onClick={handleSubmit} disabled={loading}
             style={{
-              background: 'transparent', border: 'none', outline: 'none',
-              fontSize: '12px', color: t.text, width: '100%',
+              padding: '10px 20px', borderRadius: '10px', border: 'none',
+              backgroundColor: t.accent, color: 'white', fontSize: '11px', fontWeight: 600,
+              cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1,
+              display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s',
             }}
-            placeholder={placeholder}
-          />
+            onMouseEnter={e => { if (!loading) e.target.style.backgroundColor = t.accentHover; }}
+            onMouseLeave={e => { if (!loading) e.target.style.backgroundColor = t.accent; }}>
+            {loading ? 'Guardando...' : <><Save size={14} /> {initialData ? 'Actualizar' : 'Crear Préstamo'}</>}
+          </button>
         )}
       </div>
-      {showError && (
-        <p style={{ color: '#ef4444', fontSize: '10px', marginTop: '4px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <AlertCircle size={10} /> {error}
-        </p>
-      )}
     </div>
   );
 };
 
-const Badge = ({ style: { label, value, color, isDark } }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
-  return (
-    <span style={{
-      fontSize: '9px', fontWeight: 600, padding: '3px 10px',
-      borderRadius: '8px', backgroundColor: t.input,
-      border: `1px solid ${t.border}`, color,
-    }}>
-      {label}: {value}
-    </span>
-  );
-};
-
+// ─── COMPONENTE RESUMEN CARD ────────────────────────────────
 const ResumenCard = ({ t, label, value, icon: Icon, color }) => (
   <div style={{
-    padding: '16px', borderRadius: '12px',
+    display: 'flex', alignItems: 'center', gap: '10px',
+    padding: '10px 12px', borderRadius: '10px',
     backgroundColor: t.input, border: `1px solid ${t.border}`,
-    textAlign: 'center',
   }}>
-    <Icon size={16} color={color} style={{ margin: '0 auto 6px' }} />
-    <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', color: t.textDim, margin: 0 }}>{label}</p>
-    <p style={{ fontSize: '13px', fontWeight: 700, color, marginTop: '4px' }}>{value}</p>
+    <div style={{
+      width: '28px', height: '28px', borderRadius: '8px',
+      backgroundColor: `${color}12`, color,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    }}>
+      <Icon size={13} />
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, margin: '0 0 2px' }}>{label}</p>
+      <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{value}</p>
+    </div>
   </div>
 );
 
