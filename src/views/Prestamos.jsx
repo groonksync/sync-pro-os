@@ -772,18 +772,18 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
                     {/* CI — misma altura y estilo que el select */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 14px', height: '36px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '10px', boxSizing: 'border-box' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 14px', height: '36px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '10px', boxSizing: 'border-box', overflow: 'hidden' }}>
                       <FileSignature size={14} color={t.textDim} />
                       <input type="text" value={activePrestamo?.ci || ''}
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '130px', color: t.text, fontSize: '11px' }} placeholder="Cédula de Identidad" />
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', minWidth: 0, color: t.text, fontSize: '11px', lineHeight: 1.2, padding: 0, height: 'auto' }} placeholder="Cédula de Identidad" />
                     </div>
                     {/* WhatsApp — misma altura y estilo que el select */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 14px', height: '36px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '10px', boxSizing: 'border-box' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 14px', height: '36px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '10px', boxSizing: 'border-box', overflow: 'hidden' }}>
                       <Smartphone size={14} color={t.textDim} />
                       <input type="text" value={activePrestamo.telefono}
                         onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '130px', color: t.text, fontSize: '11px' }} placeholder="WhatsApp" />
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', minWidth: 0, color: t.text, fontSize: '11px', lineHeight: 1.2, padding: 0, height: 'auto' }} placeholder="WhatsApp" />
                     </div>
                     <select value={activePrestamo.estado}
                       onChange={e => setActivePrestamo({...activePrestamo, estado: e.target.value})}
