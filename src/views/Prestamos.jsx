@@ -775,7 +775,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                       <FileSignature size={12} color={t.textDim} />
-                      <input type="text" value={activePrestamo.ci}
+                      <input type="text" value={activePrestamo?.ci || ''}
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})}
                         style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="CI..." />
                     </div>
