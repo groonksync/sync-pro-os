@@ -750,7 +750,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   {activePrestamo?.foto ? (
                     <img src={activePrestamo.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <User size={28} color={t.accent} />
+                    <User size={32} color={t.accent} />
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -770,57 +770,63 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       Contrato: {new Date(activePrestamo?.inicio || activePrestamo?.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
-                    {/* CI — misma altura que el select */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px', minHeight: '32px' }}>
-                      <FileSignature size={12} color={t.textDim} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                    {/* CI — misma altura y estilo que el select */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 14px', height: '36px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '10px', boxSizing: 'border-box' }}>
+                      <FileSignature size={14} color={t.textDim} />
                       <input type="text" value={activePrestamo?.ci || ''}
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '100px', color: t.text, fontSize: '10px' }} placeholder="Cédula" />
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '130px', color: t.text, fontSize: '11px' }} placeholder="Cédula de Identidad" />
                     </div>
-                    {/* WhatsApp — misma altura que el select */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px', minHeight: '32px' }}>
-                      <Smartphone size={12} color={t.textDim} />
+                    {/* WhatsApp — misma altura y estilo que el select */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 14px', height: '36px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '10px', boxSizing: 'border-box' }}>
+                      <Smartphone size={14} color={t.textDim} />
                       <input type="text" value={activePrestamo.telefono}
                         onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '100px', color: t.text, fontSize: '10px' }} placeholder="WhatsApp" />
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '130px', color: t.text, fontSize: '11px' }} placeholder="WhatsApp" />
                     </div>
                     <select value={activePrestamo.estado}
                       onChange={e => setActivePrestamo({...activePrestamo, estado: e.target.value})}
                       style={{
-                        padding: '6px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
+                        height: '36px', padding: '0 14px', borderRadius: '10px', fontSize: '11px', fontWeight: 600,
                         textTransform: 'uppercase', border: `1px solid ${t.border}`,
-                        backgroundColor: t.input, color: t.accent, outline: 'none',
+                        backgroundColor: t.input, color: t.accent, outline: 'none', boxSizing: 'border-box',
                       }}>
                       <option value="Activo">Activo</option>
                       <option value="En Mora">En Mora</option>
                       <option value="Finalizado">Finalizado</option>
                     </select>
-                    {/* Editar — solo ícono */}
+                    {/* Editar — misma altura que el resto */}
                     <button
                       onClick={() => handleEditPrestamo(activePrestamo)}
                       title="Editar préstamo"
                       style={{
-                        width: '32px', height: '32px', borderRadius: '12px',
-                        border: `1px solid ${t.accent}`, backgroundColor: 'transparent',
+                        width: '36px', height: '36px', borderRadius: '10px',
+                        border: `1px solid ${t.border}`, backgroundColor: t.input,
                         color: t.accent, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        transition: 'all 0.15s',
                       }}
+                      onMouseEnter={e => { e.target.style.borderColor = t.accent; e.target.style.backgroundColor = t.accentSoft; }}
+                      onMouseLeave={e => { e.target.style.borderColor = t.border; e.target.style.backgroundColor = t.input; }}
                     >
-                      <Edit3 size={14} />
+                      <Edit3 size={15} />
                     </button>
-                    {/* Eliminar — solo ícono */}
+                    {/* Eliminar — misma altura que el resto */}
                     <button
                       onClick={(e) => handleDeleteRequest(activePrestamo, e)}
                       title="Eliminar préstamo"
                       style={{
-                        width: '32px', height: '32px', borderRadius: '12px',
-                        border: '1px solid rgba(239, 68, 68, 0.3)', backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                        width: '36px', height: '36px', borderRadius: '10px',
+                        border: '1px solid rgba(239, 68, 68, 0.25)', backgroundColor: 'rgba(239, 68, 68, 0.07)',
                         color: '#ef4444', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        transition: 'all 0.15s',
                       }}
+                      onMouseEnter={e => { e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.15)'; e.target.style.borderColor = 'rgba(239, 68, 68, 0.5)'; }}
+                      onMouseLeave={e => { e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.07)'; e.target.style.borderColor = 'rgba(239, 68, 68, 0.25)'; }}
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
