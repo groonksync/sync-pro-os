@@ -3,7 +3,7 @@ import {
   User, FileSignature, Smartphone, DollarSign, BadgePercent, CalendarDays,
   ShieldCheck, ExternalLink, ChevronLeft, ChevronRight, Save, X, Check, CheckCircle2,
   AlertCircle, Upload, CreditCard, ArrowRight, Eye, EyeOff, MapPin, Globe, Building2,
-  Users, Briefcase, Hash, Phone, Mail, FileText, Image, Link, Lock, Wallet
+  Users, Briefcase, Hash, Phone, Mail, FileText, Image, Link, Lock, Wallet, Camera
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
@@ -36,12 +36,14 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showPreview, setShowPreview] = useState(false);
+  const [uploadingFoto, setUploadingFoto] = useState(false);
 
   // Estado del formulario
   const [form, setForm] = useState(() => {
     if (initialData) {
       return {
         ...initialData,
+        foto: initialData.foto || '',
         pagos: Array.isArray(initialData.pagos) ? initialData.pagos : [],
       };
     }
@@ -57,6 +59,7 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
       direccion: '',
       referencias: '',
       ocupacion: '',
+      foto: '',
       // Paso 2: Financieros
       capital: '',
       interes: 5,
@@ -73,6 +76,52 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
       pagos: [],
     };
   });
+
+  // ─── SUBIR FOTO A SUPABASE STORAGE ─────────────────────────
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validar tipo y tamaño
+    if (!file.type.startsWith('image/')) {
+      setErrors(prev => ({ ...prev, foto: 'Solo se permiten imágenes' }));
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrors(prev => ({ ...prev, foto: 'La imagen no debe superar 5MB' }));
+      return;
+    }
+    
+    setUploadingFoto(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `prestatario_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('prestatario-fotos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('prestatario-fotos')
+        .getPublicUrl(fileName);
+      
+      handleChange('foto', publicUrl);
+      setErrors(prev => { const c = { ...prev }; delete c.foto; return c; });
+    } catch (err) {
+      setErrors(prev => ({ ...prev, foto: 'Error al subir imagen: ' + err.message }));
+    } finally {
+      setUploadingFoto(false);
+    }
+  };
+
+  const handleRemoveFoto = () => {
+    handleChange('foto', '');
+  };
 
   // ─── VALIDACIÓN ──────────────────────────────────────────
   const validate = useCallback((pasoActual) => {
@@ -105,7 +154,6 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
   const handleChange = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }));
     setTouched(prev => ({ ...prev, [field]: true }));
-    // Limpiar error del campo
     if (errors[field]) {
       setErrors(prev => {
         const copy = { ...prev };
@@ -138,7 +186,6 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
 
   const irAPaso = (i) => {
     if (i < paso) { setPaso(i); return; }
-    // Solo permitir ir adelante si el paso actual es válido
     let canGo = true;
     for (let p = paso; p < i; p++) {
       const errs = validate(p);
@@ -156,7 +203,6 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
     const allErrors = validateAll();
     setErrors(allErrors);
     if (Object.keys(allErrors).length > 0) {
-      // Ir al primer paso con error
       for (let i = 0; i < PASOS.length; i++) {
         const pasoErrors = validate(i);
         if (Object.keys(pasoErrors).length > 0) {
@@ -177,6 +223,7 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
         direccion: form.direccion?.trim() || '',
         referencias: form.referencias?.trim() || '',
         ocupacion: form.ocupacion?.trim() || '',
+        foto: form.foto || '',
         capital: parseFloat(form.capital),
         interes: parseFloat(form.interes),
         moneda: form.moneda,
@@ -195,7 +242,6 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
       if (isEdit) {
         const { error } = await supabase.from('prestamos').update(payload).eq('id', initialData.id);
         if (error) throw error;
-        // Auditoría
         await supabase.from('prestamos_historial').insert([{
           prestamo_id: initialData.id,
           accion: 'ACTUALIZADO',
@@ -206,7 +252,6 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
       } else {
         const { data: newData, error } = await supabase.from('prestamos').insert([payload]).select();
         if (error) throw error;
-        // Auditoría
         if (newData?.[0]?.id) {
           await supabase.from('prestamos_historial').insert([{
             prestamo_id: newData[0].id,
@@ -245,6 +290,69 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
   // ─── RENDER DE PASOS ─────────────────────────────────────
   const renderPasoDatos = () => (
     <div className="space-y-5">
+      {/* Foto de perfil - nuevo */}
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        marginBottom: '24px',
+      }}>
+        <div style={{
+          position: 'relative', width: '88px', height: '88px',
+          borderRadius: '50%', overflow: 'hidden',
+          backgroundColor: t.input, border: `2px solid ${form.foto ? t.accent : t.border}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer', transition: 'all 0.2s',
+        }}
+          onMouseEnter={e => { if (!form.foto) e.currentTarget.style.borderColor = t.accent; }}
+          onMouseLeave={e => { if (!form.foto) e.currentTarget.style.borderColor = t.border; }}
+        >
+          {form.foto ? (
+            <>
+              <img
+                src={form.foto}
+                alt="Foto del prestatario"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <div
+                onClick={handleRemoveFoto}
+                style={{
+                  position: 'absolute', top: 0, right: 0, width: '28px', height: '28px',
+                  backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: '0 0 0 12px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#ef4444',
+                }}
+                title="Eliminar foto"
+              >
+                <X size={14} />
+              </div>
+            </>
+          ) : (
+            <Camera size={28} color={t.textDim} />
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            style={{
+              position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer',
+            }}
+            disabled={uploadingFoto}
+          />
+        </div>
+        <div style={{ textAlign: 'center', marginTop: '8px' }}>
+          <p style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted, margin: 0 }}>
+            {uploadingFoto ? 'Subiendo...' : form.foto ? 'Foto del prestatario' : 'Foto del prestatario'}
+          </p>
+          <p style={{ fontSize: '8px', color: t.textDim, marginTop: '2px' }}>
+            {form.foto ? 'Click en ✕ para eliminar' : 'Toca para subir una foto'}
+          </p>
+        </div>
+        {errors.foto && (
+          <p style={{ color: '#ef4444', fontSize: '10px', marginTop: '4px', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <AlertCircle size={10} /> {errors.foto}
+          </p>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Campo
           label="Nombre Completo"
@@ -616,7 +724,7 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
 
   const renderPasoResumen = () => (
     <div className="space-y-5">
-      {/* Tarjeta de resumen visual */}
+      {/* Tarjeta de resumen visual con foto */}
       <div style={{
         padding: '24px', borderRadius: '16px',
         background: `linear-gradient(135deg, ${t.accent}15, ${t.accent}05)`,
@@ -624,12 +732,17 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
         textAlign: 'center',
       }}>
         <div style={{
-          width: '64px', height: '64px', borderRadius: '50%',
+          width: '72px', height: '72px', borderRadius: '50%',
           backgroundColor: `${t.accent}20`, color: t.accent,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 16px',
+          margin: '0 auto 16px', overflow: 'hidden',
+          border: `2px solid ${t.accent}30`,
         }}>
-          <User size={28} />
+          {form.foto ? (
+            <img src={form.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <User size={28} />
+          )}
         </div>
         <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, margin: 0 }}>
           {form.nombre || 'Sin nombre'}
