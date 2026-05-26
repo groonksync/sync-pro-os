@@ -745,8 +745,8 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center',
               gap: '24px', marginBottom: '40px',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, border: `2px solid ${t.border}`, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                <div style={{ width: '88px', height: '88px', borderRadius: '16px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, border: `2px solid ${t.border}`, flexShrink: 0 }}>
                   {activePrestamo?.foto ? (
                     <img src={activePrestamo.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
@@ -770,20 +770,20 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       Contrato: {new Date(activePrestamo?.inicio || activePrestamo?.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
-                    {/* CI — primera posición */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    {/* CI — misma altura que el select */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px', minHeight: '32px' }}>
                       <FileSignature size={12} color={t.textDim} />
                       <input type="text" value={activePrestamo?.ci || ''}
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '140px', color: t.text, fontSize: '10px' }} placeholder="Cédula de Identidad" />
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '100px', color: t.text, fontSize: '10px' }} placeholder="Cédula" />
                     </div>
-                    {/* WhatsApp — segunda posición */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
+                    {/* WhatsApp — misma altura que el select */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px', minHeight: '32px' }}>
                       <Smartphone size={12} color={t.textDim} />
                       <input type="text" value={activePrestamo.telefono}
                         onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '140px', color: t.text, fontSize: '10px' }} placeholder="WhatsApp" />
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '100px', color: t.text, fontSize: '10px' }} placeholder="WhatsApp" />
                     </div>
                     <select value={activePrestamo.estado}
                       onChange={e => setActivePrestamo({...activePrestamo, estado: e.target.value})}
