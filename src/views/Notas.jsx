@@ -460,7 +460,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-5rem)] w-full animate-in fade-in duration-300 overflow-hidden"
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-300 overflow-hidden"
       style={{ backgroundColor: t.bg }}>
 
       {/* === 3-PANEL APPLE NOTES LAYOUT === */}
@@ -469,7 +469,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
         {/* ===== LEFT SIDEBAR — Folders (Apple Notes style) ===== */}
         {sidebarVisible && (
         <div className="w-[200px] shrink-0 flex flex-col border-r min-h-0 overflow-hidden transition-all duration-200"
-          style={{ borderColor: t.border, backgroundColor: t.panel }}>
+          style={{ borderColor: t.border, backgroundColor: t.bg }}>
           
           {/* Header with title */}
           <div className="flex items-center justify-between px-3.5 py-3 shrink-0">
@@ -661,7 +661,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
         {/* ===== MIDDLE PANEL — Note List (Apple Notes style) ===== */}
         {sidebarVisible && (
         <div className="w-[280px] shrink-0 flex flex-col border-r min-h-0 overflow-hidden transition-all duration-200"
-          style={{ borderColor: t.border, backgroundColor: t.panel }}>
+          style={{ borderColor: t.border, backgroundColor: t.bg }}>
 
           {/* Search Bar — like Apple Notes inline */}
           <div className="px-3 pt-2.5 pb-2 shrink-0">
@@ -829,7 +829,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
 
               {/* Apple Notes — Minimal toolbar */}
               <div className="flex items-center justify-between px-3 py-2 shrink-0 border-b"
-                style={{ borderColor: t.border, backgroundColor: t.panel }}>
+                style={{ borderColor: t.border, backgroundColor: t.bg }}>
                 {/* Collapse button — toggle both left panels */}
                 <button
                   onClick={() => setSidebarVisible(!sidebarVisible)}
@@ -1117,7 +1117,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
       {isNewFolderModalOpen && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center animate-in fade-in duration-200"
           style={{ backgroundColor: 'rgba(20,20,20,0.85)', backdropFilter: 'blur(8px)' }}>
-          <div className="rounded-lg p-6 w-full max-w-sm shadow-2xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
+          <div className="rounded-lg p-6 w-full max-w-sm shadow-2xl" style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}>
             <h4 className="text-sm font-semibold mb-5 flex items-center gap-2" style={{ color: t.text }}>
               <FolderPlus size={16} style={{ color: t.accent }} /> Nueva Carpeta
             </h4>
