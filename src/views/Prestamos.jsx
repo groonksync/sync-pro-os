@@ -8,6 +8,7 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 import FormularioPrestamo from '../components/FormularioPrestamo';
+import { useAmortizacion, generarCronograma, calcularResumen } from '../hooks/useAmortizacion';
 
 // ─── ESTILOS TOAST ───────────────────────────────────────────
 const toastStyles = {
@@ -202,6 +203,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   const [editPrestamo, setEditPrestamo] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const isMobile = settings?.isMobileMode;
+  const { cuotas: ledgerCuotas, resumen: ledgerResumen } = useAmortizacion(activePrestamo);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type, key: Date.now() });
@@ -219,8 +221,6 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
     const t = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(t);
   }, [toast]);
-
-  const showToast = (message, type = 'success') => setToast({ message, type });
 
   const openPrestamo = (p) => {
     if (!p) return;
@@ -298,78 +298,6 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
       showToast('Error: ' + e.message, 'error');
     }
   };
-  
-  const closePrestamo = async () => { 
-    try { if (activePrestamo) await handleSave(); } finally { setPrestamoView('list'); setActivePrestamo(null); } 
-  };
-
-  const handleNewPrestamo = () => {
-    setEditPrestamo(null);
-    setShowForm(true);
-  };
-
-  const handleEditPrestamo = (p) => {
-    setEditPrestamo(p);
-    setShowForm(true);
-  };
-
-  const handleFormSave = async () => {
-    setShowForm(false);
-    setEditPrestamo(null);
-    // Recargar datos desde Supabase
-    try {
-      const { data: prestamosData } = await supabase.from('prestamos').select('*');
-      if (prestamosData) setData(prev => ({ ...prev, prestamos: prestamosData }));
-    } catch (e) {
-      console.error('Error recargando datos:', e);
-    }
-  };
-
-  // ─── ELIMINACIÓN SEGURA ─────────────────────────────────
-  const handleDeleteRequest = (p, e) => {
-    if (e) { e.stopPropagation(); }
-    setDeleteTarget(p);
-  };
-
-  const handleDeleteConfirm = async (target) => {
-    try {
-      // 1. Guardar en papelera
-      const trashEntry = {
-        tipo: 'prestamo',
-        datos_originales: target,
-        titulo: target.nombre || 'Préstamo',
-        descripcion: `Capital: ${target.capital} ${target.moneda} — Estado: ${target.estado}`,
-        eliminado_en: new Date().toISOString(),
-        expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      };
-      
-      const { error: trashError } = await supabase.from('papelera').insert([trashEntry]);
-      if (trashError) throw trashError;
-
-      // 2. Registrar auditoría
-      await supabase.from('prestamos_historial').insert([{
-        prestamo_id: target.id,
-        accion: 'ELIMINADO',
-        detalle: `Préstamo eliminado: ${target.nombre} - ${target.capital} ${target.moneda}`,
-        datos_previos: target,
-      }]);
-
-      // 3. Eliminar físico de la tabla prestamos
-      const { error: deleteError } = await supabase.from('prestamos').delete().eq('id', target.id);
-      if (deleteError) throw deleteError;
-
-      // 4. Actualizar estado local
-      const updated = (data?.prestamos || []).filter(p => p.id !== target.id);
-      setData({ ...data, prestamos: updated });
-
-      setDeleteTarget(null);
-      setPrestamoView('list');
-      setActivePrestamo(null);
-      showToast(`"${target.nombre}" eliminado correctamente. Está en la papelera por 30 días.`, 'warning');
-    } catch (e) {
-      showToast('Error al eliminar: ' + e.message, 'error');
-    }
-  };
 
   const handleSave = async () => {
     if (!activePrestamo) return; setLoading(true);
@@ -421,6 +349,17 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   };
 
   const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
+
+  // Mapa de mora por préstamo para mostrar en lista
+  const moraMap = useMemo(() => {
+    const map = {};
+    prestamosList.forEach(p => {
+      const cuotas = generarCronograma(p);
+      const resumen = calcularResumen(cuotas);
+      if (resumen.totalMora > 0) map[p.id] = resumen.totalMora;
+    });
+    return map;
+  }, [prestamosList]);
 
   // ─── RENDER ─────────────────────────────────────────────
   return (
@@ -499,8 +438,10 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     </tr>
                   </thead>
                   <tbody>
-                    {prestamosList.map(p => (
-                      <tr key={p.id} onClick={() => openPrestamo(p)} 
+                    {prestamosList.map(p => {
+                      const moraAmount = moraMap[p.id];
+                      return (
+                      <tr key={p.id} onClick={() => openPrestamo(p)}
                         style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
                         onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
@@ -512,14 +453,25 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                             </div>
                             <div>
                               <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre || 'Sin Nombre'}</p>
-                              <span style={{
-                                fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em',
-                                padding: '2px 8px', borderRadius: '12px',
-                                backgroundColor: p.estado === 'Finalizado' ? 'rgba(16, 185, 129, 0.10)' : p.estado === 'En Mora' ? 'rgba(239, 68, 68, 0.10)' : t.accentSoft,
-                                color: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
-                              }}>
-                                {p.estado || 'Activo'}
-                              </span>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                                <span style={{
+                                  fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em',
+                                  padding: '2px 8px', borderRadius: '12px',
+                                  backgroundColor: p.estado === 'Finalizado' ? 'rgba(16, 185, 129, 0.10)' : p.estado === 'En Mora' ? 'rgba(239, 68, 68, 0.10)' : t.accentSoft,
+                                  color: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
+                                }}>
+                                  {p.estado || 'Activo'}
+                                </span>
+                                {moraAmount > 0 && (
+                                  <span style={{
+                                    fontSize: '9px', fontWeight: 700, color: '#ef4444',
+                                    padding: '2px 8px', borderRadius: '12px',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.10)',
+                                  }}>
+                                    +{moraAmount.toLocaleString()} mora
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -569,13 +521,16 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               ) : (
                 <div>
-                  {prestamosList.map(p => (
-                    <div key={p.id} onClick={() => openPrestamo(p)} 
+                  {prestamosList.map(p => {
+                    const moraAmount = moraMap[p.id];
+                    return (
+                    <div key={p.id} onClick={() => openPrestamo(p)}
                       style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <div style={{ width: '44px', height: '44px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent }}>
@@ -586,6 +541,11 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                           <p style={{ fontSize: '10px', fontWeight: 600, color: t.accent, marginTop: '2px' }}>
                             {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} {p.moneda}
                           </p>
+                          {moraAmount > 0 && (
+                            <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444', marginTop: '2px', display: 'inline-block' }}>
+                              +{moraAmount.toLocaleString()} mora
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -612,7 +572,8 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                         <ChevronRight size={18} color={t.textDim} />
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -719,40 +680,126 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
             <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`}>
               {/* LEFT COLUMN - Timeline & Contract */}
               <div className={`${isMobile ? '' : 'col-span-8'} space-y-6`}>
-                {/* PAYMENT TIMELINE */}
+                {/* LEDGER / CUENTA CORRIENTE */}
                 <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                   <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <CalendarDays size={14} color={t.accent} /> Cronograma de Cobros
+                    <CalendarDays size={14} color={t.accent} /> Cuenta Corriente
                   </h3>
                   <p style={{ fontSize: '10px', fontWeight: 500, color: t.textDim, marginBottom: '16px' }}>
-                    <span style={{ color: t.accent }}>⏱️</span> Primer pago: un mes después de la fecha de inicio
+                    <span style={{ color: t.accent }}>⏱️</span> Click en fila para marcar como pagado
                   </p>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '10px' }}>
-                    {generateTimeline().map((mes) => {
-                      const isPaid = (activePrestamo.pagos || []).includes(mes.key);
-                      return (
-                        <div 
-                          key={mes.key} 
-                          onClick={() => togglePago(mes.key)} 
-                          style={{
-                            padding: '14px', borderRadius: '12px', cursor: 'pointer',
-                            transition: 'all 0.2s', position: 'relative', overflow: 'hidden',
-                            backgroundColor: isPaid ? 'rgba(16, 185, 129, 0.08)' : t.input,
-                            border: `1px solid ${isPaid ? 'rgba(16, 185, 129, 0.30)' : t.border}`,
-                          }}
-                          onMouseEnter={e => { if (!isPaid) e.currentTarget.style.borderColor = t.accent; }}
-                          onMouseLeave={e => { if (!isPaid) e.currentTarget.style.borderColor = t.border; }}
-                        >
-                          <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: isPaid ? t.success : t.textMuted }}>
-                            {mes.label}
-                          </span>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: isPaid ? t.success : t.text, marginTop: '4px' }}>
-                            {(parseFloat(activePrestamo.capital) * (parseFloat(activePrestamo.interes) / 100)).toLocaleString()} {activePrestamo.moneda}
-                          </p>
-                          {isPaid && <CheckCircle2 size={16} style={{ position: 'absolute', top: '12px', right: '12px', color: t.success }} />}
-                        </div>
-                      );
-                    })}
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '600px' }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Mes</th>
+                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Vencimiento</th>
+                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés</th>
+                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Total</th>
+                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ledgerCuotas.map((c) => {
+                          const isPaid = (activePrestamo.pagos || []).includes(c.key);
+                          return (
+                            <tr key={c.key} onClick={() => togglePago(c.key)}
+                              style={{
+                                cursor: 'pointer', transition: 'background 0.15s',
+                                borderBottom: `1px solid ${t.border}`,
+                                backgroundColor: isPaid ? 'rgba(16, 185, 129, 0.04)' : 'transparent',
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = isPaid ? 'rgba(16, 185, 129, 0.08)' : t.hover}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = isPaid ? 'rgba(16, 185, 129, 0.04)' : 'transparent'}
+                            >
+                              <td style={{ padding: '10px 14px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : t.text }}>
+                                  {c.label}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <span style={{ fontSize: '10px', color: t.textDim, fontWeight: 500 }}>
+                                  {c.fechaVencimiento || '—'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : t.accent }}>
+                                  {c.interes.toLocaleString()}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : t.text }}>
+                                    {c.total.toLocaleString()}
+                                  </span>
+                                  {c.mora > 0 && (
+                                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444' }}>
+                                      +{c.mora.toLocaleString()} mora
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                                {isPaid ? (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: t.success }}>
+                                    <CheckCircle2 size={12} /> Pagado
+                                  </span>
+                                ) : c.estado === 'vencido' ? (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: '#ef4444' }}>
+                                    <AlertCircle size={12} /> Vencido
+                                  </span>
+                                ) : c.estado === 'futuro' ? (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
+                                    <Clock size={12} /> Futuro
+                                  </span>
+                                ) : (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: t.textMuted }}>
+                                    <Clock size={12} /> Pendiente
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                      {ledgerResumen && (
+                        <tfoot>
+                          <tr style={{ borderTop: `2px solid ${t.accent}` }}>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 700, color: t.text }}>Totales</span>
+                            </td>
+                            <td style={{ padding: '12px 14px' }}></td>
+                            <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: t.accent }}>
+                                {ledgerResumen.interesPromedio.toLocaleString()}/mes
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: t.text }}>
+                                {ledgerResumen.totalPagado.toLocaleString()} pagado
+                              </span>
+                              <br />
+                              <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>
+                                {ledgerResumen.totalPendiente.toLocaleString()} pend.
+                              </span>
+                              {ledgerResumen.totalMora > 0 && (
+                                <>
+                                  <br />
+                                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#ef4444' }}>
+                                    {ledgerResumen.totalMora.toLocaleString()} en mora
+                                  </span>
+                                </>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '9px', fontWeight: 600, color: t.textMuted }}>
+                                {ledgerResumen.cuotasPagadas}/{ledgerResumen.totalCuotas} pagadas
+                              </span>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      )}
+                    </table>
                   </div>
                 </div>
 
