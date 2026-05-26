@@ -854,9 +854,19 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               <div className={`${isMobile ? '' : 'col-span-8'} space-y-6`}>
                 {/* LEDGER / CUENTA CORRIENTE */}
                 <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
-                  <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <CalendarDays size={14} color={t.accent} /> Cuenta Corriente
-                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                    <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CalendarDays size={14} color={t.accent} /> Cuenta Corriente
+                    </h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted }}>
+                        Capital: <strong style={{ color: t.text, fontSize: '13px' }}>{(parseFloat(activePrestamo?.capital) || 0).toLocaleString()} Bs</strong>
+                      </span>
+                      <span style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted }}>
+                        Interés/mes: <strong style={{ color: t.accent, fontSize: '13px' }}>{Math.round((parseFloat(activePrestamo?.capital) || 0) * ((parseFloat(activePrestamo?.interes) || 0) / 100)).toLocaleString()} Bs</strong>
+                      </span>
+                    </div>
+                  </div>
                   <p style={{ fontSize: '10px', fontWeight: 500, color: t.textDim, marginBottom: '16px' }}>
                     <span style={{ color: t.accent }}>⏱️</span> Click en fila para marcar como pagado
                   </p>
@@ -867,7 +877,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                           <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Mes</th>
                           <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Vencimiento</th>
                           <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés</th>
-                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Total</th>
+                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Cuota Mensual</th>
                           <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Estado</th>
                         </tr>
                       </thead>
