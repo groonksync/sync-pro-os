@@ -84,7 +84,9 @@ const App = () => {
     ventas: [],
     pagos: [],
     productos: [],
-    recordatorios: []
+    recordatorios: [],
+    egresos: [],
+    notas: []
   });
 
   const [appSettings, setAppSettings] = useState(() => {
@@ -122,6 +124,14 @@ const App = () => {
 
       const { data: recordatoriosData } = await supabase.from('recordatorios').select('*').order('created_at', { ascending: false });
       if (recordatoriosData) setData(prev => ({ ...prev, recordatorios: recordatoriosData }));
+
+      // NUEVO: Traer egresos para el CommandCenter
+      const { data: egresosData } = await supabase.from('egresos').select('*').order('created_at', { ascending: false });
+      if (egresosData) setData(prev => ({ ...prev, egresos: egresosData }));
+
+      // NUEVO: Traer notas (conteo básico) para el CommandCenter
+      const { data: notasData } = await supabase.from('notas').select('id, titulo, created_at').eq('eliminada', false).order('updated_at', { ascending: false });
+      if (notasData) setData(prev => ({ ...prev, notas: notasData }));
     } catch (e) {
       console.error("Error crítico de datos:", e);
     }
@@ -144,6 +154,10 @@ const App = () => {
   const handleNavigateToPrestamo = (id) => {
     setSelectedPrestamoId(id);
     setActiveTab('prestamos');
+  };
+
+  const handleNavigateTo = (viewName) => {
+    setActiveTab(viewName);
   };
 
   const handleQuickPayment = async (prestamoId) => {
@@ -211,14 +225,15 @@ const App = () => {
     try {
       switch (activeTab) {
         case 'resumen': return (
-          <CommandCenter 
-            meetingsList={meetingsList} 
-            data={data} 
-            servicios={servicios} 
+          <CommandCenter
+            meetingsList={meetingsList}
+            data={data}
+            servicios={servicios}
             settings={appSettings}
             isDark={isDarkMode}
             onNavigateToPrestamo={handleNavigateToPrestamo}
-            onQuickPayment={handleQuickPayment} 
+            onQuickPayment={handleQuickPayment}
+            onNavigateTo={handleNavigateTo}
           />
         );
         case 'editor': return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} settings={appSettings} isDark={isDarkMode} token={googleToken} />;
