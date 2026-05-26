@@ -7,9 +7,10 @@ const DIAS_GRACIA = 0; // Días de gracia antes de aplicar mora
 // ─── UTILIDADES ───────────────────────────────────────────────
 function getFechaVencimiento(inicio, mesIndex) {
   const d = new Date(inicio);
-  d.setDate(d.getDate() + 1); // Un día después del inicio como base
-  // Primer pago: mes siguiente al inicio
-  const venc = new Date(d.getFullYear(), d.getMonth() + 1 + mesIndex, Math.min(d.getDate(), 28));
+  // Usar el día exacto del inicio del contrato como día de pago
+  const diaPago = Math.min(d.getDate(), 28);
+  // Primer pago: mes siguiente al inicio, usando el día original del contrato
+  const venc = new Date(d.getFullYear(), d.getMonth() + 1 + mesIndex, diaPago);
   return venc.toISOString().split('T')[0];
 }
 

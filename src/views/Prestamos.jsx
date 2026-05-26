@@ -766,10 +766,17 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     placeholder="Nombre del Cliente" 
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    {/* Fecha del contrato — siempre visible */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.accentSoft, border: `1px solid ${t.accent}40`, borderRadius: '12px' }}>
+                      <CalendarDays size={12} color={t.accent} />
+                      <span style={{ color: t.accent, fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                        📄 Contrato: {new Date(activePrestamo?.inicio || activePrestamo?.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      </span>
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
-                      <FileSignature size={12} color={t.textDim} /> 
-                      <input type="text" value={activePrestamo.ci} 
-                        onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})} 
+                      <FileSignature size={12} color={t.textDim} />
+                      <input type="text" value={activePrestamo.ci}
+                        onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})}
                         style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="CI..." />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>

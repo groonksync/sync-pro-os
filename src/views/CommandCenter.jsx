@@ -12,6 +12,7 @@ import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
 import { getTheme } from '../lib/theme';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
+import { generarCronograma } from '../hooks/useAmortizacion';
 import CommandModal from '../components/CommandModal';
 import { exportCobrosCSV, exportStockBajoCSV, exportPDF } from '../utils/exportReport';
 
@@ -278,6 +279,30 @@ const CommandCenter = ({
       });
     });
     
+    // ⏰ Próximos primeros pagos (notificación 10 días antes)
+    listaPrestamos.forEach(p => {
+      try {
+        const cuotas = generarCronograma(p);
+        const primeraNoPagada = cuotas.find(c => c.estado !== 'pagado');
+        if (!primeraNoPagada) return;
+        const hoyLocal = new Date();
+        const venc = new Date(primeraNoPagada.fechaVencimiento);
+        const diffTime = venc.getTime() - hoyLocal.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays === 10) {
+          notifs.push({
+            id: `pago-prox-${p.id}`,
+            tipo: 'pago-proximo',
+            icono: 'Bell',
+            mensaje: `🔔 ${p.nombre}: faltan EXACTAMENTE 10 DÍAS para su primer pago (${primeraNoPagada.fechaVencimiento})`,
+            accion: 'Ver',
+            color: '#8b5cf6',
+            prestamoId: p.id,
+          });
+        }
+      } catch (e) { /* ignorar errores de cómputo */ }
+    });
+    
     // Stock bajo
     stockBajo.slice(0, 3).forEach(p => {
       notifs.push({
@@ -317,10 +342,10 @@ const CommandCenter = ({
     }
     
     return notifs.sort((a, b) => {
-      const prioridad = { critico: 0, stock: 1, tarea: 2, pendiente: 3 };
+      const prioridad = { critico: 0, 'pago-proximo': 1, stock: 2, tarea: 3, pendiente: 4 };
       return (prioridad[a.tipo] || 99) - (prioridad[b.tipo] || 99);
     });
-  }, [categorias, stockBajo, tareasCriticas]);
+  }, [categorias, stockBajo, tareasCriticas, listaPrestamos]);
 
   // ─── Handlers ───────────────────────────────────────────────
   const toggleWidget = (widgetId) => {
