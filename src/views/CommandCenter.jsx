@@ -14,6 +14,7 @@ import { getTheme } from '../lib/theme';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
 import { generarCronograma } from '../hooks/useAmortizacion';
 import CommandModal from '../components/CommandModal';
+import ResumenIAModal from '../components/ResumenIAModal';
 import { exportCobrosCSV, exportStockBajoCSV, exportPDF } from '../utils/exportReport';
 
 const GoogleLogo = ({ size = 18 }) => <Google.Color size={size} />;
@@ -377,12 +378,22 @@ const CommandCenter = ({
         balanceMensual,
         totalDeudores: categorias.totales.totalPorCobrar,
         totalPendiente: categorias.totales.totalPendiente,
-        deudoresCriticos: categorias.deudorCritico.map(d => d.nombre),
+        deudoresCriticos: categorias.deudorCritico.map(d => ({ nombre: d.nombre, capital: d.capital, interes: d.interes, diasAtraso: d.diasAtraso || 0 })),
+        totalDeudoresCriticos: categorias.deudorCritico.length,
         tareasCriticas: tareasCriticas.length,
         proveedorIA: settings.aiProvider || 'gemini',
+        categoriasDetalle: [
+          { nombre: 'Al Día', cantidad: categorias.alDia.length, monto: categorias.totales.totalAlDia },
+          { nombre: 'Pendientes', cantidad: categorias.pendientes.length, monto: categorias.totales.totalPendiente },
+          { nombre: 'Deudores 1 Mes', cantidad: categorias.deudor1Mes.length, monto: categorias.totales.totalDeudor1Mes },
+          { nombre: 'Críticos', cantidad: categorias.deudorCritico.length, monto: categorias.totales.totalDeudorCritico },
+        ],
+        totalPorCobrar: categorias.totales.totalPorCobrar,
+        totalCapitalActivo: data?.prestamos?.reduce((s, p) => s + (parseFloat(p.capital) || 0), 0) || 0,
+        totalPrestamosActivos: data?.prestamos?.length || 0,
       };
       
-      const prompt = `Genera un resumen ejecutivo del estado financiero y operativo con estos datos:\n${JSON.stringify(contexto, null, 2)}\n\nFormato: Encabezado con fecha, secciones por área (Cartera, Inventario, Balance, Cobros), y recomendaciones al final. Responde en español, profesional pero claro.`;
+      const prompt = `Eres un analista financiero senior. Genera un resumen ejecutivo profesional en formato JSON con los siguientes datos contextuales:\n${JSON.stringify(contexto, null, 2)}\n\nDebes responder EXACTAMENTE con este esquema JSON (sin markdown, solo JSON puro):\n\n{\n  "resumenGeneral": [\n    { "indicador": "Capital Activo", "valor": "X Bs", "variacion": "—" },\n    { "indicador": "Rendimiento Mensual", "valor": "X Bs", "variacion": "—" },\n    { "indicador": "Valor Inventario", "valor": "X Bs", "variacion": "—" },\n    { "indicador": "Balance Mensual", "valor": "X Bs", "variacion": "—" }\n  ],\n  "tablaCartera": [\n    { "concepto": "Al Día", "cantidad": "X", "monto": "X Bs", "porcentaje": "X%" },\n    { "concepto": "Pendientes", "cantidad": "X", "monto": "X Bs", "porcentaje": "X%" },\n    { "concepto": "Deudores 1 Mes", "cantidad": "X", "monto": "X Bs", "porcentaje": "X%" },\n    { "concepto": "Críticos", "cantidad": "X", "monto": "X Bs", "porcentaje": "X%" },\n    { "concepto": "Total a Cobrar", "cantidad": "—", "monto": "X Bs", "porcentaje": "100%" }\n  ],\n  "tablaInventario": [\n    { "concepto": "Productos en Stock", "cantidad": "X", "valor": "X Bs" },\n    { "concepto": "Stock Crítico", "cantidad": "X", "valor": "X Bs" }\n  ],\n  "tablaBalance": [\n    { "concepto": "Ingresos por Intereses", "ingresos": "X Bs", "egresos": "—", "neto": "X Bs" },\n    { "concepto": "Ventas Inventario", "ingresos": "X Bs", "egresos": "—", "neto": "X Bs" },\n    { "concepto": "Balance Neto", "ingresos": "X Bs", "egresos": "—", "neto": "X Bs" }\n  ],\n  "alertas": [\n    { "tipo": "Crítico", "descripcion": "Deudores con más de 30 días", "nivel": "🔴 Alto", "accion": "Gestionar cobro inmediato" }\n  ],\n  "recomendaciones": [\n    "Recomendación estratégica 1",\n    "Recomendación estratégica 2",\n    "Recomendación estratégica 3"\n  ]\n}\n\nImportante: Calcula los porcentajes correctamente. Usa datos reales del contexto. Responde SOLO con el JSON válido, sin texto adicional.`;
       
       const respuesta = await aiService.askAgent(prompt, [], {
         settings,
@@ -1278,33 +1289,31 @@ const CommandCenter = ({
       </CommandModal>
 
       {/* ══════════════════════════════════════════════════════
-          MODAL DE RESUMEN IA
+          MODAL DE RESUMEN IA PROFESIONAL
           ══════════════════════════════════════════════════════ */}
-      <CommandModal
+      <ResumenIAModal
         isOpen={modalIA.isOpen}
         onClose={() => setModalIA({ isOpen: false, contenido: '', cargando: false })}
-        onConfirm={() => setModalIA({ isOpen: false, contenido: '', cargando: false })}
-        titulo={modalIA.cargando ? 'Generando resumen...' : 'Resumen Ejecutivo'}
-        confirmText="Cerrar"
-        cancelText=""
+        contenido={modalIA.contenido}
+        cargando={modalIA.cargando}
         isDark={isDark}
-        colorAccent={t.accent}
-      >
-        {modalIA.cargando ? (
-          <div style={{ padding: '20px', textAlign: 'center' }}>
-            <div className="animate-spin" style={{ width: '24px', height: '24px', border: '3px solid', borderColor: `${t.accent}30`, borderTopColor: t.accent, borderRadius: '50%', margin: '0 auto 12px' }}></div>
-            <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Analizando datos financieros...</p>
-          </div>
-        ) : (
-          <div style={{
-            padding: '12px', borderRadius: '10px',
-            backgroundColor: t.input, maxHeight: '300px', overflowY: 'auto',
-            fontSize: '12px', color: t.text, lineHeight: 1.7, whiteSpace: 'pre-wrap',
-          }}>
-            {modalIA.contenido || 'No se pudo generar el resumen.'}
-          </div>
-        )}
-      </CommandModal>
+        titulo="Resumen Ejecutivo IA"
+        onExportPDF={(data) => {
+          try {
+            exportPDF({
+              totalCapital: totalCapital,
+              totalInteresMensual: totalInteresMensual,
+              valorInventario: valorInventario,
+              stockBajoCount: stockBajo.length,
+              totalPendiente: categorias.totales.totalPendiente,
+              porCobrar: cobrosDelPeriodo,
+              mesActual: periodoMes,
+            });
+          } catch (e) {
+            setToastMsg({ tipo: 'error', texto: `Error al exportar: ${e.message}` });
+          }
+        }}
+      />
 
     </div>
   );

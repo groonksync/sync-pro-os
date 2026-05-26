@@ -204,7 +204,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   const [editPrestamo, setEditPrestamo] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const isMobile = settings?.isMobileMode;
-  const { cuotas: ledgerCuotas, resumen: ledgerResumen } = useAmortizacion(activePrestamo);
+  const { cuotas: ledgerCuotas, resumen: ledgerResumen, proyeccion: ledgerProyeccion } = useAmortizacion(activePrestamo);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type, key: Date.now() });
@@ -984,6 +984,71 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     </table>
                   </div>
                 </div>
+
+                {/* PROYECCIÓN PRÓXIMOS 6 MESES */}
+                {ledgerProyeccion && ledgerProyeccion.length > 0 && (
+                  <div style={{ marginTop: '16px', padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                      <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <TrendingUp size={14} color="#a855f7" /> Proyección Próximos 6 Meses
+                      </h3>
+                    </div>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '550px' }}>
+                        <thead>
+                          <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Mes</th>
+                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Vencimiento</th>
+                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés Proy.</th>
+                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Cuota Proy.</th>
+                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Estado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ledgerProyeccion.map((p) => (
+                            <tr key={p.key}
+                              style={{
+                                borderBottom: `1px solid ${t.border}`,
+                                backgroundColor: 'transparent',
+                                transition: 'background 0.15s',
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              <td style={{ padding: '10px 14px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#a855f7' }}>
+                                  {p.label}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 14px' }}>
+                                <span style={{ fontSize: '10px', color: t.textDim, fontWeight: 500 }}>
+                                  {p.fechaVencimiento || '—'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#a855f7' }}>
+                                  {p.interes.toLocaleString()}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>
+                                    {p.total.toLocaleString()}
+                                  </span>
+                                </div>
+                              </td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
+                                  <Clock size={12} /> Proyectado
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
                 {/* CONTRACT & GUARANTEE */}
                 <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>

@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { 
-  FolderPlus, 
-  Plus, 
-  Search, 
-  Star, 
-  Trash2, 
-  Edit3, 
-  Eye, 
-  Clock, 
+import {
+  FolderPlus,
+  Plus,
+  Search,
+  Star,
+  Trash2,
+  Edit3,
+  Eye,
+  Clock,
   Sparkles,
-  BookOpen, 
+  BookOpen,
   Calendar,
   AlertCircle,
   Check,
@@ -20,12 +20,21 @@ import {
   Tag,
   MoreHorizontal,
   List,
-  Grid
+  Grid,
+  Image as ImageIcon,
+  ShoppingCart,
+  Brain,
+  Table2,
+  FileType,
+  Upload
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
+import NotaGuionTecnico from '../components/NotaGuionTecnico';
+import NotaPromptIA from '../components/NotaPromptIA';
+import NotaListaCompras from '../components/NotaListaCompras';
 
 const Notas = ({ settings, isDark }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
@@ -59,6 +68,9 @@ const Notas = ({ settings, isDark }) => {
 
   const autoSaveTimer = useRef(null);
   const searchInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const sqlSchemaCode = `-- SOVEREIGN STUDIO - NOTAS SCHEMA
 CREATE TABLE IF NOT EXISTS notas (
@@ -122,6 +134,8 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
           color: n.color || '#4ec9b0',
           estado: n.estado || 'pendiente',
           fecha_evento: n.fecha_evento || null,
+          tipo: n.tipo || 'normal',
+          imagenes: n.imagenes || [],
           updated_at: n.updated_at
         }));
 
@@ -151,11 +165,13 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
         const demoNote = {
           id: 'demo-1',
           titulo: 'Bienvenido a Notas',
-          contenido: '# Bienvenido a tu Bóveda de Notas\n\nSistema de notas avanzado con Markdown.\n\n### Características:\n1. **Editor Markdown** en tiempo real\n2. **Estados**: pendiente, en proceso, completado\n3. **Carpetas** personalizables\n4. **Favoritos** y filtros\n5. **Sincronización** con Supabase\n\nEdita este texto para empezar.',
+          contenido: '# Bienvenido a tu Bóveda de Notas\n\nSistema de notas avanzado con Markdown.\n\n### Características:\n1. **Editor Markdown** en tiempo real\n2. **Estados**: pendiente, en proceso, completado\n3. **Carpetas** personalizables\n4. **Favoritos** y filtros\n5. **Tipos de nota**: Normal, Guión Técnico, Prompt IA, Lista de Compras\n6. **Sincronización** con Supabase\n\nEdita este texto para empezar.',
           folderId: 'folder-personal',
           favorito: true,
           color: '#4ec9b0',
           estado: 'pendiente',
+          tipo: 'normal',
+          imagenes: [],
           fecha_evento: new Date().toISOString().split('T')[0],
           updated_at: new Date().toISOString()
         };
@@ -208,15 +224,25 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
   };
 
   // --- Gestión de Notas ---
-  const handleCreateNote = () => {
+  const handleCreateNote = (tipo = 'normal') => {
+    const contenidosIniciales = {
+      normal: '',
+      guion: JSON.stringify([{ id: 'b1', tipo: 'texto', contenido: '## Nueva escena\n\nDescribe aquí la escena...' }]),
+      prompt: '',
+      compras: JSON.stringify([{ id: '1', texto: 'Nuevo item', cantidad: 1, precio: 0, comprado: false }]),
+    };
     const newNote = {
       id: 'note-' + Date.now(),
-      titulo: 'Nueva Nota',
-      contenido: '',
+      titulo: tipo === 'normal' ? 'Nueva Nota' :
+              tipo === 'guion' ? 'Nuevo Guión Técnico' :
+              tipo === 'prompt' ? 'Nuevo Prompt IA' : 'Nueva Lista de Compras',
+      contenido: contenidosIniciales[tipo] || '',
       folderId: activeFolderId === 'all' || activeFolderId === 'favs' ? 'all' : activeFolderId,
       favorito: activeFolderId === 'favs',
-      color: '#4ec9b0',
+      color: tipo === 'guion' ? '#a855f7' : tipo === 'prompt' ? '#3b82f6' : tipo === 'compras' ? '#22c55e' : '#4ec9b0',
       estado: 'pendiente',
+      tipo: tipo,
+      imagenes: [],
       fecha_evento: null,
       updated_at: new Date().toISOString()
     };
@@ -316,6 +342,44 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
     setActiveFolderId(newFolderId);
   };
 
+  // --- Gestión de Imágenes ---
+  const handleImageUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingImage(true);
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const fileName = `notas/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+        const { data, error } = await supabase.storage
+          .from('images')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+        if (error) throw error;
+        const { data: { publicUrl } } = supabase.storage
+          .from('images')
+          .getPublicUrl(fileName);
+        uploadedUrls.push(publicUrl);
+      }
+      const currentImages = activeNote?.imagenes || [];
+      handleUpdateNoteField(activeNote.id, 'imagenes', [...currentImages, ...uploadedUrls]);
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      alert('Error al subir imagen: ' + err.message);
+    } finally {
+      setUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleImageDelete = (url) => {
+    if (!activeNote) return;
+    const updated = (activeNote.imagenes || []).filter(img => img !== url);
+    handleUpdateNoteField(activeNote.id, 'imagenes', updated);
+  };
+
   const copySqlToClipboard = () => {
     navigator.clipboard.writeText(sqlSchemaCode);
     setCopiedSql(true);
@@ -369,7 +433,11 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
       <header className="flex items-center justify-between mb-4 pb-3">
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Notas</h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Editor de Texto Markdown</p>
+          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
+            {activeNote?.tipo === 'guion' ? 'Editor de Guión Técnico' :
+             activeNote?.tipo === 'prompt' ? 'Editor de Prompt IA' :
+             activeNote?.tipo === 'compras' ? 'Lista de Compras' : 'Editor de Texto Markdown'}
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -385,15 +453,63 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
             </span>
           </div>
 
-          <button
-            onClick={handleCreateNote}
-            className="px-5 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all flex items-center gap-2"
-            style={{ backgroundColor: t.accent, color: t.bg, border: `1px solid transparent` }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
-          >
-            <Plus size={14} /> Nueva Nota
-          </button>
+          {/* Type Selector Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowTypeMenu(!showTypeMenu)}
+              className="px-4 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all flex items-center gap-2"
+              style={{ backgroundColor: t.accent, color: t.bg, border: `1px solid transparent` }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
+            >
+              <Plus size={14} /> Nueva Nota
+              <ChevronDown size={10} style={{ opacity: 0.7 }} />
+            </button>
+            {showTypeMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowTypeMenu(false)} />
+                <div className="absolute right-0 top-full mt-1.5 z-50 w-48 rounded-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
+                  style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
+                  <button
+                    onClick={() => { handleCreateNote('normal'); setShowTypeMenu(false); }}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-medium transition-all"
+                    style={{ color: t.text, borderBottom: `1px solid ${t.border}` }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <FileText size={14} style={{ color: '#4ec9b0' }} /> Normal
+                  </button>
+                  <button
+                    onClick={() => { handleCreateNote('guion'); setShowTypeMenu(false); }}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-medium transition-all"
+                    style={{ color: t.text, borderBottom: `1px solid ${t.border}` }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <Table2 size={14} style={{ color: '#a855f7' }} /> Guión Técnico
+                  </button>
+                  <button
+                    onClick={() => { handleCreateNote('prompt'); setShowTypeMenu(false); }}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-medium transition-all"
+                    style={{ color: t.text, borderBottom: `1px solid ${t.border}` }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <Brain size={14} style={{ color: '#3b82f6' }} /> Prompt IA
+                  </button>
+                  <button
+                    onClick={() => { handleCreateNote('compras'); setShowTypeMenu(false); }}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-medium transition-all"
+                    style={{ color: t.text }}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <ShoppingCart size={14} style={{ color: '#22c55e' }} /> Lista de Compras
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -722,57 +838,142 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                 style={{ color: t.text }}
               />
 
-              {/* Editor Tabs */}
-              <div className="flex items-center justify-between shrink-0">
-                <div className="flex rounded-xl p-0.5 gap-0.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                  <button
-                    onClick={() => setEditMode('write')}
-                    className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
-                    style={{
-                      backgroundColor: editMode === 'write' ? t.accent : 'transparent',
-                      color: editMode === 'write' ? t.bg : t.textDim
-                    }}
-                  >
-                    <span className="flex items-center gap-1"><Edit3 size={10} /> Editar</span>
-                  </button>
-                  <button
-                    onClick={() => setEditMode('preview')}
-                    className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
-                    style={{
-                      backgroundColor: editMode === 'preview' ? t.accent : 'transparent',
-                      color: editMode === 'preview' ? t.bg : t.textDim
-                    }}
-                  >
-                    <span className="flex items-center gap-1"><Eye size={10} /> Vista</span>
-                  </button>
+              {/* Editor Tabs - only for 'normal' type */}
+              {activeNote.tipo === 'normal' && (
+                <div className="flex items-center justify-between shrink-0">
+                  <div className="flex rounded-xl p-0.5 gap-0.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                    <button
+                      onClick={() => setEditMode('write')}
+                      className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
+                      style={{
+                        backgroundColor: editMode === 'write' ? t.accent : 'transparent',
+                        color: editMode === 'write' ? t.bg : t.textDim
+                      }}
+                    >
+                      <span className="flex items-center gap-1"><Edit3 size={10} /> Editar</span>
+                    </button>
+                    <button
+                      onClick={() => setEditMode('preview')}
+                      className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
+                      style={{
+                        backgroundColor: editMode === 'preview' ? t.accent : 'transparent',
+                        color: editMode === 'preview' ? t.bg : t.textDim
+                      }}
+                    >
+                      <span className="flex items-center gap-1"><Eye size={10} /> Vista</span>
+                    </button>
+                  </div>
+                  <span className="text-[8px] font-medium" style={{ color: t.textDim }}>Markdown</span>
                 </div>
-                <span className="text-[8px] font-medium" style={{ color: t.textDim }}>Markdown</span>
+              )}
+
+              {/* Editor Dinámico según tipo */}
+              <div className="flex-1 min-h-0 rounded-xl overflow-hidden" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                {activeNote.tipo === 'guion' ? (
+                  <div className="h-full p-3 overflow-y-auto">
+                    <NotaGuionTecnico
+                      bloques={activeNote.contenido}
+                      onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', JSON.stringify(val))}
+                      isDark={isDark}
+                    />
+                  </div>
+                ) : activeNote.tipo === 'prompt' ? (
+                  <NotaPromptIA
+                    contenido={activeNote.contenido}
+                    onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', val)}
+                    isDark={isDark}
+                  />
+                ) : activeNote.tipo === 'compras' ? (
+                  <div className="h-full p-3 overflow-y-auto">
+                    <NotaListaCompras
+                      items={activeNote.contenido}
+                      onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', JSON.stringify(val))}
+                      isDark={isDark}
+                    />
+                  </div>
+                ) : (
+                  /* Normal: textarea + markdown preview */
+                  editMode === 'write' ? (
+                    <textarea
+                      value={activeNote.contenido}
+                      onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
+                      placeholder="Escribe en Markdown..."
+                      className="w-full h-full p-4 bg-transparent text-xs leading-relaxed outline-none border-0 resize-none font-mono"
+                      style={{ color: t.textMuted }}
+                    />
+                  ) : (
+                    <div className="h-full overflow-y-auto p-4 prose prose-invert max-w-none text-xs leading-relaxed markdown-preview scrollbar-thin"
+                      style={{ color: t.textMuted }}>
+                      {activeNote.contenido ? (
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {activeNote.contenido}
+                        </ReactMarkdown>
+                      ) : (
+                        <p className="text-center py-16 text-[10px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
+                          Sin contenido para previsualizar
+                        </p>
+                      )}
+                    </div>
+                  )
+                )}
               </div>
 
-              {/* Editor / Preview */}
-              <div className="flex-1 min-h-0 rounded-xl overflow-hidden" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                {editMode === 'write' ? (
-                  <textarea
-                    value={activeNote.contenido}
-                    onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
-                    placeholder="Escribe en Markdown..."
-                    className="w-full h-full p-4 bg-transparent text-xs leading-relaxed outline-none border-0 resize-none font-mono"
-                    style={{ color: t.textMuted }}
-                  />
-                ) : (
-                  <div className="h-full overflow-y-auto p-4 prose prose-invert max-w-none text-xs leading-relaxed markdown-preview scrollbar-thin"
-                    style={{ color: t.textMuted }}>
-                    {activeNote.contenido ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {activeNote.contenido}
-                      </ReactMarkdown>
-                    ) : (
-                      <p className="text-center py-16 text-[10px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
-                        Sin contenido para previsualizar
-                      </p>
-                    )}
+              {/* Image Gallery */}
+              {activeNote.imagenes && activeNote.imagenes.length > 0 && (
+                <div className="shrink-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ImageIcon size={12} style={{ color: t.textDim }} />
+                    <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
+                      Imágenes ({activeNote.imagenes.length})
+                    </span>
                   </div>
-                )}
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                    {activeNote.imagenes.map((url, i) => (
+                      <div key={i} className="relative group shrink-0">
+                        <img
+                          src={url}
+                          alt={`Imagen ${i + 1}`}
+                          className="w-20 h-20 rounded-xl object-cover border"
+                          style={{ borderColor: t.border }}
+                        />
+                        <button
+                          onClick={() => handleImageDelete(url)}
+                          className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                          style={{ backgroundColor: t.danger, color: '#fff' }}
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Image Upload Button */}
+              <div className="shrink-0 pt-1">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[8px] font-semibold transition-all"
+                  style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.textDim }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.color = t.accent; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.textDim; }}
+                >
+                  {uploadingImage ? (
+                    <div className="w-3 h-3 border-2 rounded-xl animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
+                  ) : (
+                    <Upload size={12} />
+                  )}
+                  {uploadingImage ? 'Subiendo...' : 'Subir Imagen'}
+                </button>
               </div>
 
             </div>
