@@ -133,6 +133,8 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
           favorito: n.favorito || false,
           color: n.color || '#4ec9b0',
           estado: n.estado || 'pendiente',
+          tipo: n.tipo || 'normal',
+          imagenes: n.imagenes || [],
           fecha_evento: n.fecha_evento || null,
           tipo: n.tipo || 'normal',
           imagenes: n.imagenes || [],
