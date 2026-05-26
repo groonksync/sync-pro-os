@@ -766,26 +766,21 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     placeholder="Nombre del Cliente" 
                   />
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
-                    {/* Fecha del contrato — siempre visible */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.accentSoft, border: `1px solid ${t.accent}40`, borderRadius: '12px' }}>
-                      <CalendarDays size={12} color={t.accent} />
-                      <span style={{ color: t.accent, fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                        📄 Contrato: {new Date(activePrestamo?.inicio || activePrestamo?.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
-                      </span>
-                    </div>
+                    {/* CI — ahora en primera posición (donde estaba Contrato) */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                       <FileSignature size={12} color={t.textDim} />
                       <input type="text" value={activePrestamo?.ci || ''}
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="CI..." />
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '140px', color: t.text, fontSize: '10px' }} placeholder="Cédula de Identidad" />
                     </div>
+                    {/* WhatsApp — segunda posición */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                       <Smartphone size={12} color={t.textDim} />
                       <input type="text" value={activePrestamo.telefono}
                         onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '80px', color: t.text, fontSize: '10px' }} placeholder="WA..." />
+                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '140px', color: t.text, fontSize: '10px' }} placeholder="WhatsApp" />
                     </div>
-                    <select value={activePrestamo.estado} 
+                    <select value={activePrestamo.estado}
                       onChange={e => setActivePrestamo({...activePrestamo, estado: e.target.value})}
                       style={{
                         padding: '6px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
@@ -796,28 +791,39 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       <option value="En Mora">En Mora</option>
                       <option value="Finalizado">Finalizado</option>
                     </select>
+                    {/* Editar — solo ícono */}
                     <button
                       onClick={() => handleEditPrestamo(activePrestamo)}
+                      title="Editar préstamo"
                       style={{
-                        padding: '6px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
+                        width: '32px', height: '32px', borderRadius: '12px',
                         border: `1px solid ${t.accent}`, backgroundColor: 'transparent',
                         color: t.accent, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: '4px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
                     >
-                      <Edit3 size={12} /> Editar todo
+                      <Edit3 size={14} />
                     </button>
+                    {/* Eliminar — solo ícono */}
                     <button
                       onClick={(e) => handleDeleteRequest(activePrestamo, e)}
+                      title="Eliminar préstamo"
                       style={{
-                        padding: '6px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
+                        width: '32px', height: '32px', borderRadius: '12px',
                         border: '1px solid rgba(239, 68, 68, 0.3)', backgroundColor: 'rgba(239, 68, 68, 0.08)',
                         color: '#ef4444', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: '4px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}
                     >
-                      <Trash2 size={12} /> Eliminar
+                      <Trash2 size={14} />
                     </button>
+                  </div>
+                  {/* Fecha del contrato — movida aquí, debajo de las badges */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', padding: '6px 12px', backgroundColor: t.accentSoft, border: `1px solid ${t.accent}40`, borderRadius: '12px', width: 'fit-content' }}>
+                    <CalendarDays size={12} color={t.accent} />
+                    <span style={{ color: t.accent, fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                      📄 Contrato: {new Date(activePrestamo?.inicio || activePrestamo?.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </span>
                   </div>
                 </div>
               </div>
