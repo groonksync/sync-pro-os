@@ -68,3 +68,9 @@ dist-ssr
 *.local
 .vercel
 .env*.local
+
+# electron-builder output
+release/
+*.app/
+Sovereign OS*.dmg
+*.dmg
