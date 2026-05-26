@@ -214,10 +214,89 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
     }
   }, [preSelectedId, data?.prestamos]);
 
-  const openPrestamo = (p) => { 
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  const showToast = (message, type = 'success') => setToast({ message, type });
+
+  const openPrestamo = (p) => {
     if (!p) return;
-    setActivePrestamo({ ...p, pagos: Array.isArray(p.pagos) ? p.pagos : [], moneda: p.moneda || 'BOB', estado: p.estado || 'Activo' }); 
-    setPrestamoView('detail'); 
+    setActivePrestamo({ ...p, pagos: Array.isArray(p.pagos) ? p.pagos : [], moneda: p.moneda || 'BOB', estado: p.estado || 'Activo' });
+    setPrestamoView('detail');
+  };
+
+  const closePrestamo = async () => {
+    try { if (activePrestamo) await handleSave(); }
+    finally { setPrestamoView('list'); setActivePrestamo(null); }
+  };
+
+  const handleNewPrestamo = () => {
+    setEditPrestamo(null);
+    setShowForm(true);
+  };
+
+  const handleEditPrestamo = (p, e) => {
+    if (e) e.stopPropagation();
+    setEditPrestamo(p);
+    setShowForm(true);
+  };
+
+  const handleFormSave = async () => {
+    setShowForm(false);
+    setEditPrestamo(null);
+    // Refresh data from the parent
+    if (setData) {
+      const { data: refreshed } = await supabase.from('prestamos').select('*');
+      if (refreshed) setData(prev => ({ ...prev, prestamos: refreshed }));
+    }
+    showToast('✅ Préstamo guardado correctamente');
+  };
+
+  const handleDeleteRequest = (p, e) => {
+    if (e) e.stopPropagation();
+    setDeleteTarget(p);
+  };
+
+  const handleDeleteConfirm = async (target) => {
+    try {
+      // 1. Save to papelera
+      const trashEntry = {
+        tipo: 'prestamo',
+        datos_originales: target,
+        titulo: target.nombre || 'Préstamo',
+        descripcion: `Capital: ${target.capital} ${target.moneda} — Estado: ${target.estado}`,
+        eliminado_en: new Date().toISOString(),
+        expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      const { error: trashError } = await supabase.from('papelera').insert([trashEntry]);
+      if (trashError) throw trashError;
+
+      // 2. Register audit
+      const { error: auditError } = await supabase.from('prestamos_historial').insert([{
+        prestamo_id: target.id,
+        accion: 'ELIMINADO',
+        detalle: `Préstamo eliminado: ${target.nombre} - ${target.capital} ${target.moneda}`,
+        datos_previos: target,
+      }]);
+      if (auditError) throw auditError;
+
+      // 3. Delete from prestamos table
+      const { error: deleteError } = await supabase.from('prestamos').delete().eq('id', target.id);
+      if (deleteError) throw deleteError;
+
+      // 4. Update local state
+      const updated = (data?.prestamos || []).filter(p => p.id !== target.id);
+      setData({ ...data, prestamos: updated });
+      setDeleteTarget(null);
+      setPrestamoView('list');
+      setActivePrestamo(null);
+      showToast('🗑️ Préstamo eliminado correctamente');
+    } catch (e) {
+      showToast('Error: ' + e.message, 'error');
+    }
   };
   
   const closePrestamo = async () => { 
