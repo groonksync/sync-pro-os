@@ -4,7 +4,7 @@ import {
   Bell, CheckSquare, Video, Cloud, ShieldCheck, FileText,
   Lock, CreditCard, Briefcase, ShoppingCart, Settings,
   ChevronDown, ChevronUp, AlertTriangle, Clock, UserPlus,
-  Download, Brain, Eye, EyeOff, X, Filter
+  Download, Brain, Eye, EyeOff, X, Filter, Box, Check
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
