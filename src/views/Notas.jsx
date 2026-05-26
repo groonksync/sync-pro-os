@@ -136,8 +136,6 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
           tipo: n.tipo || 'normal',
           imagenes: n.imagenes || [],
           fecha_evento: n.fecha_evento || null,
-          tipo: n.tipo || 'normal',
-          imagenes: n.imagenes || [],
           updated_at: n.updated_at
         }));
 
