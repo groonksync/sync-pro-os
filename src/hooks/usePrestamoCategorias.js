@@ -36,7 +36,7 @@ function calcularCategoriaPrestamo(prestamo) {
     categoria = 'AL_DIA';
     dialog = {
       color: '#22c55e',
-      icon: '✅',
+      icono: 'CheckCircle',
       titulo: 'Sin novedades',
       mensaje: 'Cliente al día con todos sus pagos.',
       nivel: 'Bajo',
@@ -45,7 +45,7 @@ function calcularCategoriaPrestamo(prestamo) {
     categoria = 'PENDIENTE';
     dialog = {
       color: '#eab308',
-      icon: '⏳',
+      icono: 'Clock',
       titulo: 'Pendiente de pago',
       mensaje: `Debe el mes actual (${mesesAdeudados[0]}). Enviar recordatorio de cobro.`,
       nivel: 'Bajo',
@@ -54,7 +54,7 @@ function calcularCategoriaPrestamo(prestamo) {
     categoria = 'DEUDOR_1MES';
     dialog = {
       color: '#f97316',
-      icon: '⚠️',
+      icono: 'AlertTriangle',
       titulo: 'Riesgo medio',
       mensaje: `Debe ${totalAtraso} meses (${mesesAdeudados.join(', ')}). Contactar urgente.`,
       nivel: 'Medio',
@@ -63,8 +63,8 @@ function calcularCategoriaPrestamo(prestamo) {
     categoria = 'DEUDOR_CRITICO';
     dialog = {
       color: '#ef4444',
-      icon: '🔴',
-      titulo: '⚠️ RIESGO ALTO',
+      icono: 'XCircle',
+      titulo: 'RIESGO ALTO',
       mensaje: `Debe ${totalAtraso} meses (${mesesAdeudados.join(', ')}). Evaluar acción legal o refinanciamiento.`,
       nivel: 'Alto',
     };
@@ -101,7 +101,11 @@ export function usePrestamoCategorias(prestamos) {
     const deudorCritico = categorizado.filter(p => p.categoria === 'DEUDOR_CRITICO');
     const porCobrar = categorizado.filter(p => p.categoria !== 'AL_DIA');
     
-    const totalPendiente = porCobrar.reduce((sum, p) => sum + (parseFloat(p.capital) || 0), 0);
+    const totalPendiente = porCobrar.reduce((sum, p) => {
+      const cap = parseFloat(p.capital) || 0;
+      const int = parseFloat(p.interes) || 0;
+      return sum + (cap * (int / 100));
+    }, 0);
     
     return {
       alDia,

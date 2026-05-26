@@ -4,7 +4,9 @@ import {
   Bell, CheckSquare, Video, Cloud, ShieldCheck, FileText,
   Lock, CreditCard, Briefcase, ShoppingCart, Settings,
   ChevronDown, ChevronUp, AlertTriangle, Clock, UserPlus,
-  Download, Brain, Eye, EyeOff, X, Filter, Box, Check
+  Download, Brain, Eye, EyeOff, X, Filter, Box, Check,
+  CheckCircle, XCircle, DollarSign, Sparkles, Flame,
+  FileSpreadsheet
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
@@ -147,6 +149,11 @@ const MODULE_WIDGETS = [
   },
 ];
 
+// Mapa de íconos para los diálogos de categoría
+const DIALOG_ICONS = {
+  CheckCircle, Clock, AlertTriangle, XCircle,
+};
+
 // ============================================================
 // COMPONENTE PRINCIPAL
 // ============================================================
@@ -263,7 +270,7 @@ const CommandCenter = ({
       notifs.push({
         id: `critico-${d.id}`,
         tipo: 'critico',
-        icono: '🔴',
+        icono: 'XCircle',
         mensaje: `${d.nombre} - ${parseFloat(d.capital).toFixed(0)} Bs (${d.mesesAtraso} meses sin pagar)`,
         accion: 'Cobrar',
         color: t.danger,
@@ -276,7 +283,7 @@ const CommandCenter = ({
       notifs.push({
         id: `stock-${p.id}`,
         tipo: 'stock',
-        icono: '⚠️',
+        icono: 'AlertTriangle',
         mensaje: `Stock bajo: ${p.nombre} (${p.stock} unidades)`,
         accion: 'Ir',
         color: '#f97316',
@@ -289,7 +296,7 @@ const CommandCenter = ({
       notifs.push({
         id: `tarea-${r.id}`,
         tipo: 'tarea',
-        icono: '🔥',
+        icono: 'Flame',
         mensaje: `Tarea crítica: ${r.titulo}`,
         accion: 'Ir',
         color: '#ef4444',
@@ -302,7 +309,7 @@ const CommandCenter = ({
       notifs.push({
         id: 'pendientes-resumen',
         tipo: 'pendiente',
-        icono: '⏳',
+        icono: 'Clock',
         mensaje: `${categorias.pendientes.length} cobros pendientes este mes`,
         accion: 'Ver',
         color: '#eab308',
@@ -350,7 +357,7 @@ const CommandCenter = ({
         proveedorIA: settings.aiProvider || 'gemini',
       };
       
-      const prompt = `Genera un resumen ejecutivo del estado financiero y operativo con estos datos:\n${JSON.stringify(contexto, null, 2)}\n\nFormato: Encabezado con fecha, secciones por área (💰 Cartera, 📦 Inventario, 💳 Balance, ⏰ Cobros), y recomendaciones al final. Responde en español, profesional pero claro.`;
+      const prompt = `Genera un resumen ejecutivo del estado financiero y operativo con estos datos:\n${JSON.stringify(contexto, null, 2)}\n\nFormato: Encabezado con fecha, secciones por área (Cartera, Inventario, Balance, Cobros), y recomendaciones al final. Responde en español, profesional pero claro.`;
       
       const respuesta = await aiService.askAgent(prompt, [], {
         settings,
@@ -380,7 +387,7 @@ const CommandCenter = ({
     } else if (tipo === 'csv-stock') {
       exportStockBajoCSV(stockBajo);
     }
-    setToastMsg({ tipo: 'success', texto: '📄 Reporte exportado exitosamente' });
+    setToastMsg({ tipo: 'success', texto: 'Reporte exportado exitosamente' });
   };
 
   const ActiveAILogo = settings.aiProvider === 'deepseek' ? DeepSeekLogo : GoogleLogo;
@@ -401,12 +408,12 @@ const CommandCenter = ({
   // Badge de categoría
   const CategoryBadge = ({ categoria, count, activo, onClick }) => {
     const configs = {
-      AL_DIA: { icono: '✅', color: '#22c55e', label: 'Al Día' },
-      PENDIENTE: { icono: '⏳', color: '#eab308', label: 'Pendientes' },
-      DEUDOR_1MES: { icono: '⚠️', color: '#f97316', label: 'Deudores 1M' },
-      DEUDOR_CRITICO: { icono: '🔴', color: '#ef4444', label: 'Críticos' },
+      AL_DIA: { Icon: CheckCircle, color: '#22c55e', label: 'Al Día' },
+      PENDIENTE: { Icon: Clock, color: '#eab308', label: 'Pendientes' },
+      DEUDOR_1MES: { Icon: AlertTriangle, color: '#f97316', label: 'Deudores 1M' },
+      DEUDOR_CRITICO: { Icon: XCircle, color: '#ef4444', label: 'Críticos' },
     };
-    const cfg = configs[categoria] || { icono: '📋', color: t.text, label: categoria };
+    const cfg = configs[categoria] || { Icon: FileText, color: t.text, label: categoria };
     return (
       <button
         onClick={onClick}
@@ -425,7 +432,7 @@ const CommandCenter = ({
           e.currentTarget.style.backgroundColor = activo ? `${cfg.color}15` : t.input;
         }}
       >
-        <span style={{ fontSize: '13px' }}>{cfg.icono}</span>
+        <cfg.Icon size={14} color={activo ? cfg.color : t.textDim} fill={activo ? cfg.color : 'none'} />
         <span>{cfg.label}</span>
         <span style={{
           padding: '2px 8px', borderRadius: '8px',
@@ -700,7 +707,8 @@ const CommandCenter = ({
                     <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Categoría</th>
                     <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Meses Deuda</th>
                     <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Diálogo Riesgo</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Capital</th>
+                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Capital Orig.</th>
+                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés/Mes</th>
                     <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Acción</th>
                   </tr>
                 </thead>
@@ -743,7 +751,11 @@ const CommandCenter = ({
                             backgroundColor: `${badgeColor}15`, color: badgeColor,
                             fontSize: '10px', fontWeight: 600,
                           }}>
-                            {p.dialog?.icono} {p.categoria === 'AL_DIA' ? 'Al Día' :
+                            {(() => {
+                              const IconComp = DIALOG_ICONS[p.dialog?.icono] || CheckCircle;
+                              return <IconComp size={12} color={badgeColor} fill={badgeColor} style={{ marginRight: '2px' }} />;
+                            })()}
+                            {p.categoria === 'AL_DIA' ? 'Al Día' :
                               p.categoria === 'PENDIENTE' ? 'Pendiente' :
                               p.categoria === 'DEUDOR_1MES' ? 'Deudor 1M' : 'Crítico'}
                           </span>
@@ -765,9 +777,15 @@ const CommandCenter = ({
                             border: `1px solid ${badgeColor}20`,
                             maxWidth: '200px',
                           }}>
-                            <p style={{ fontSize: '10px', fontWeight: 700, color: badgeColor, margin: 0 }}>
-                              {p.dialog?.titulo || 'Sin riesgo'}
-                            </p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                              {(() => {
+                                const IconComp = DIALOG_ICONS[p.dialog?.icono] || CheckCircle;
+                                return <IconComp size={14} color={badgeColor} fill={badgeColor} />;
+                              })()}
+                              <p style={{ fontSize: '10px', fontWeight: 700, color: badgeColor, margin: 0 }}>
+                                {p.dialog?.titulo || 'Sin riesgo'}
+                              </p>
+                            </div>
                             <p style={{ fontSize: '8px', color: t.textDim, margin: '2px 0 0 0', lineHeight: 1.3 }}>
                               {p.dialog?.mensaje || ''}
                             </p>
@@ -787,6 +805,14 @@ const CommandCenter = ({
                           </p>
                           <p style={{ fontSize: '8px', color: t.textDim, margin: '1px 0 0 0' }}>{p.moneda || 'Bs'}</p>
                         </td>
+                        <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                          <p style={{ fontSize: '13px', fontWeight: 700, color: t.accent, margin: 0 }}>
+                            {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()}
+                          </p>
+                          <p style={{ fontSize: '8px', color: t.textDim, margin: '1px 0 0 0' }}>
+                            {p.moneda || 'Bs'} · {parseFloat(p.interes)}%
+                          </p>
+                        </td>
                         <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                           <button
                             onClick={() => abrirModalPago(p)}
@@ -801,7 +827,8 @@ const CommandCenter = ({
                             onMouseEnter={e => { if (p.categoria !== 'AL_DIA') e.currentTarget.style.opacity = '0.85'; }}
                             onMouseLeave={e => { if (p.categoria !== 'AL_DIA') e.currentTarget.style.opacity = '1'; }}
                           >
-                            {p.categoria === 'AL_DIA' ? '✅ Cobrado' : '✓ Cobrar'}
+                            <DollarSign size={12} style={{ marginRight: '4px', display: 'inline' }} fill="#fff" />
+                            Cobrar
                           </button>
                         </td>
                       </tr>
@@ -812,7 +839,7 @@ const CommandCenter = ({
             </div>
           ) : (
             <div style={{ padding: '40px', textAlign: 'center', border: `1px dashed ${t.border}`, borderRadius: '12px' }}>
-              <p style={{ fontSize: '28px', margin: '0 0 8px 0' }}>🎉</p>
+              <CheckCircle size={32} color="#22c55e" fill="#22c55e" style={{ margin: '0 0 8px 0' }} />
               <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
                 {filtroCategoria ? 'No hay deudores en esta categoría' : '¡Todos los deudores están al día!'}
               </p>
@@ -834,7 +861,11 @@ const CommandCenter = ({
                 <div>
                   <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Total Pendiente</p>
                   <p style={{ fontSize: '16px', fontWeight: 700, color: t.text, margin: '2px 0 0 0' }}>
-                    {cobrosFiltrados.reduce((s, p) => s + (parseFloat(p.capital) || 0), 0).toLocaleString()} BS
+                    {cobrosFiltrados.reduce((s, p) => {
+                      const cap = parseFloat(p.capital) || 0;
+                      const int = parseFloat(p.interes) || 0;
+                      return s + (cap * (int / 100));
+                    }, 0).toLocaleString()} BS
                   </p>
                 </div>
                 <div style={{ width: '1px', height: '30px', backgroundColor: t.border }}></div>
@@ -1014,7 +1045,10 @@ const CommandCenter = ({
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${n.color}15`; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${n.color}08`; }}
                 >
-                  <span style={{ fontSize: '16px' }}>{n.icono}</span>
+                  {(() => {
+                    const NotifIcon = DIALOG_ICONS[n.icono] || Bell;
+                    return <NotifIcon size={16} color={n.color} fill={n.color} />;
+                  })()}
                   <p style={{ flex: 1, fontSize: '11px', fontWeight: 600, color: t.text, margin: 0, lineHeight: 1.4 }}>
                     {n.mensaje}
                   </p>
@@ -1109,15 +1143,15 @@ const CommandCenter = ({
                 zIndex: 100, minWidth: '200px',
               }}>
                 {[
-                  { label: '📕 PDF - Reporte Ejecutivo', tipo: 'pdf' },
-                  { label: '📗 CSV - Tabla de Cobros', tipo: 'csv-cobros' },
-                  { label: '📘 CSV - Stock Crítico', tipo: 'csv-stock' },
+                  { label: 'PDF - Reporte Ejecutivo', tipo: 'pdf', Icono: FileText },
+                  { label: 'CSV - Tabla de Cobros', tipo: 'csv-cobros', Icono: FileSpreadsheet },
+                  { label: 'CSV - Stock Crítico', tipo: 'csv-stock', Icono: AlertTriangle },
                 ].map(item => (
                   <button
                     key={item.tipo}
                     onClick={() => handleExport(item.tipo)}
                     style={{
-                      display: 'block', width: '100%', padding: '10px 14px', borderRadius: '8px',
+                      display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 14px', borderRadius: '8px',
                       border: 'none', background: 'transparent', color: t.text,
                       fontSize: '11px', fontWeight: 500, cursor: 'pointer',
                       textAlign: 'left', transition: 'background 0.15s',
@@ -1125,6 +1159,7 @@ const CommandCenter = ({
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
+                    <item.Icono size={14} color={t.accent} fill={t.accent} />
                     {item.label}
                   </button>
                 ))}
@@ -1160,9 +1195,9 @@ const CommandCenter = ({
         onConfirm={confirmarPago}
         titulo={`Confirmar cobro de ${modalPago.prestamo?.nombre || ''}`}
         mensaje={`¿Estás seguro de registrar el cobro de ${modalPago.prestamo?.nombre || ''} por ${modalPago.prestamo ? (parseFloat(modalPago.prestamo.capital) * (parseFloat(modalPago.prestamo.interes) / 100)).toFixed(0) : 0} Bs correspondiente a ${periodoMes}?`}
-        icono={<Check size={22} color="#22c55e" />}
+        icono={<DollarSign size={22} color="#22c55e" fill="#22c55e" />}
         colorAccent="#22c55e"
-        confirmText="✓ Confirmar Cobro"
+        confirmText="Confirmar Cobro"
         cancelText="Cancelar"
         isDark={isDark}
       >
@@ -1172,12 +1207,47 @@ const CommandCenter = ({
             backgroundColor: `${modalPago.prestamo.dialog?.color || t.textDim}10`,
             border: `1px solid ${modalPago.prestamo.dialog?.color || t.border}20`,
           }}>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: modalPago.prestamo.dialog?.color || t.text, margin: 0 }}>
-              {modalPago.prestamo.dialog?.icono} {modalPago.prestamo.dialog?.titulo}
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              {(() => {
+                const IconComp = DIALOG_ICONS[modalPago.prestamo.dialog?.icono] || CheckCircle;
+                return <IconComp size={14} color={modalPago.prestamo.dialog?.color || t.textDim} fill={modalPago.prestamo.dialog?.color || t.textDim} />;
+              })()}
+              <p style={{ fontSize: '11px', fontWeight: 600, color: modalPago.prestamo.dialog?.color || t.text, margin: 0 }}>
+                {modalPago.prestamo.dialog?.titulo}
+              </p>
+            </div>
             <p style={{ fontSize: '9px', color: t.textDim, margin: '4px 0 0 0' }}>
               {modalPago.prestamo.dialog?.mensaje}
             </p>
+          </div>
+        )}
+
+        {/* Resumen del cobro: solo intereses */}
+        {modalPago.prestamo && (
+          <div style={{
+            marginTop: '12px', padding: '12px', borderRadius: '10px',
+            backgroundColor: `${t.accent}10`, border: `1px solid ${t.border}`,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <div>
+              <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>
+                Capital Original
+              </p>
+              <p style={{ fontSize: '14px', fontWeight: 700, color: t.text, margin: '2px 0 0 0' }}>
+                {parseFloat(modalPago.prestamo.capital).toLocaleString()} {modalPago.prestamo.moneda || 'Bs'}
+              </p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>
+                Interés a Cobrar
+              </p>
+              <p style={{ fontSize: '14px', fontWeight: 700, color: '#22c55e', margin: '2px 0 0 0' }}>
+                +{(parseFloat(modalPago.prestamo.capital) * (parseFloat(modalPago.prestamo.interes) / 100)).toLocaleString()} {modalPago.prestamo.moneda || 'Bs'}
+              </p>
+              <p style={{ fontSize: '9px', color: t.textDim, margin: '1px 0 0 0' }}>
+                ({parseFloat(modalPago.prestamo.interes)}% del capital)
+              </p>
+            </div>
           </div>
         )}
       </CommandModal>
@@ -1189,7 +1259,7 @@ const CommandCenter = ({
         isOpen={modalIA.isOpen}
         onClose={() => setModalIA({ isOpen: false, contenido: '', cargando: false })}
         onConfirm={() => setModalIA({ isOpen: false, contenido: '', cargando: false })}
-        titulo={modalIA.cargando ? 'Generando resumen...' : '🧠 Resumen Ejecutivo'}
+        titulo={modalIA.cargando ? 'Generando resumen...' : 'Resumen Ejecutivo'}
         confirmText="Cerrar"
         cancelText=""
         isDark={isDark}
