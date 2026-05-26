@@ -431,215 +431,80 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)] w-full max-w-[1600px] mx-auto animate-in fade-in duration-300 overflow-hidden px-6">
       
-      {/* HEADER */}
-      <header className="flex items-center justify-between mb-4 pb-3">
-        <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Notas</h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
-            {activeNote?.tipo === 'guion' ? 'Editor de Guión Técnico' :
-             activeNote?.tipo === 'prompt' ? 'Editor de Prompt IA' :
-             activeNote?.tipo === 'compras' ? 'Lista de Compras' : 'Editor de Texto Markdown'}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Sync Status */}
-          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-            <span className={`w-1.5 h-1.5 rounded-xl ${
-              saveStatus === 'synced' ? 'bg-emerald-500' :
-              saveStatus === 'saving' ? 'bg-amber-500 animate-pulse' : 'bg-rose-500 animate-ping'
-            }`} />
-            <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
-              {saveStatus === 'synced' ? 'Sincronizado' :
-               saveStatus === 'saving' ? 'Guardando...' : 'Error'}
-            </span>
-          </div>
-
-          {/* Type Selector Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowTypeMenu(!showTypeMenu)}
-              className="px-4 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all flex items-center gap-2"
-              style={{ backgroundColor: t.accent, color: t.bg, border: `1px solid transparent` }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
-            >
-              <Plus size={14} /> Nueva Nota
-              <ChevronDown size={10} style={{ opacity: 0.7 }} />
-            </button>
-            {showTypeMenu && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowTypeMenu(false)} />
-                <div className="absolute right-0 top-full mt-1.5 z-50 w-48 rounded-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
-                  style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
-                  <button
-                    onClick={() => { handleCreateNote('normal'); setShowTypeMenu(false); }}
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-medium transition-all"
-                    style={{ color: t.text, borderBottom: `1px solid ${t.border}` }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <FileText size={14} style={{ color: '#4ec9b0' }} /> Normal
-                  </button>
-                  <button
-                    onClick={() => { handleCreateNote('guion'); setShowTypeMenu(false); }}
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-medium transition-all"
-                    style={{ color: t.text, borderBottom: `1px solid ${t.border}` }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <Table2 size={14} style={{ color: '#a855f7' }} /> Guión Técnico
-                  </button>
-                  <button
-                    onClick={() => { handleCreateNote('prompt'); setShowTypeMenu(false); }}
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-medium transition-all"
-                    style={{ color: t.text, borderBottom: `1px solid ${t.border}` }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <Brain size={14} style={{ color: '#3b82f6' }} /> Prompt IA
-                  </button>
-                  <button
-                    onClick={() => { handleCreateNote('compras'); setShowTypeMenu(false); }}
-                    className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-medium transition-all"
-                    style={{ color: t.text }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <ShoppingCart size={14} style={{ color: '#22c55e' }} /> Lista de Compras
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* DB ALERT */}
-      {dbError && (
-        <div className="mb-3 p-3 rounded-xl flex items-center justify-between text-[10px] font-semibold tracking-wide"
-          style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', color: '#ef4444' }}
-        >
-          <div className="flex items-center gap-2">
-            <AlertCircle size={14} />
-            <span>Modo offline — Datos guardados localmente. Para sincronizar, ejecuta el SQL en Supabase.</span>
-          </div>
-          <button 
-            onClick={copySqlToClipboard}
-            className="px-3 py-1.5 rounded-xl text-[9px] font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5"
-            style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
-            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.2)'; }}
-            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
-          >
-            {copiedSql ? <Check size={12} /> : <Copy size={12} />}
-            {copiedSql ? 'Copiado' : 'Copiar SQL'}
-          </button>
-        </div>
-      )}
-
-      {/* MAIN 3-COLUMN GRID */}
-      <div className="flex-1 grid grid-cols-[220px_1fr_1fr] gap-4 overflow-hidden min-h-0">
-
-        {/* COLUMN 1: FOLDERS + FILTERS */}
-        <div className="flex flex-col gap-3 overflow-y-auto min-h-0 rounded-xl p-3 scrollbar-thin"
-          style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-
-          {/* Folders Section */}
+      {/* HEADER — Minimal */}
+      <header className="flex items-center justify-between mb-4 pb-2 shrink-0">
+        <div className="flex items-center gap-4">
           <div>
-            <div className="flex items-center justify-between mb-2.5 px-1">
-              <h4 className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: t.textDim }}>Carpetas</h4>
-              <button
-                onClick={() => setIsNewFolderModalOpen(true)}
-                className="p-1 rounded-md transition-all"
-                style={{ color: t.textDim }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentSoft; e.currentTarget.style.color = t.accent; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = t.textDim; }}
-              >
-                <FolderPlus size={14} />
-              </button>
-            </div>
-            <div className="space-y-0.5">
-              {folders.map(folder => {
-                const count = folder.id === 'all' ? notas.length : 
-                  folder.id === 'favs' ? notas.filter(n => n.favorito).length : 
-                  notas.filter(n => n.folderId === folder.id).length;
-                return (
-                  <button
-                    key={folder.id}
-                    onClick={() => setActiveFolderId(folder.id)}
-                    className="w-full flex items-center justify-between px-2.5 py-2 rounded-xl transition-all text-[11px]"
-                    style={{
-                      backgroundColor: activeFolderId === folder.id ? t.accentSoft : 'transparent',
-                      border: `1px solid ${activeFolderId === folder.id ? t.borderLight : 'transparent'}`,
-                      color: activeFolderId === folder.id ? t.text : t.textDim
-                    }}
-                    onMouseEnter={e => { if (activeFolderId !== folder.id) e.currentTarget.style.backgroundColor = t.hover; }}
-                    onMouseLeave={e => { if (activeFolderId !== folder.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <span className="w-1.5 h-1.5 rounded-xl shrink-0" style={{ backgroundColor: folder.color }} />
-                      <span className="truncate font-medium">{folder.nombre}</span>
-                    </div>
-                    {count > 0 && (
-                      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-md" style={{ backgroundColor: t.accentSoft, color: t.textDim }}>
-                        {count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0, lineHeight: 1.2 }}>Notas</h2>
+            <p style={{ fontSize: '0.65rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>
+              {activeNote?.tipo === 'guion' ? 'Guión Técnico' :
+               activeNote?.tipo === 'prompt' ? 'Prompt IA' :
+               activeNote?.tipo === 'compras' ? 'Lista de Compras' : 'Markdown'}
+            </p>
           </div>
-
-          {/* Status Filter */}
-          <div className="pt-2 border-t" style={{ borderColor: t.border }}>
-            <h4 className="text-[9px] font-semibold uppercase tracking-widest mb-2.5 px-1" style={{ color: t.textDim }}>Estado</h4>
-            <div className="space-y-0.5">
-              {[
-                { key: 'todos', label: 'Todos' },
-                { key: 'pendiente', label: 'Pendiente' },
-                { key: 'proceso', label: 'En Proceso' },
-                { key: 'completado', label: 'Completado' },
-              ].map(st => (
+          {/* Folder Pills (horizontal) */}
+          <div className="flex items-center gap-1.5 overflow-x-auto max-w-[400px] scrollbar-thin py-1">
+            {folders.map(folder => {
+              const count = folder.id === 'all' ? notas.length :
+                folder.id === 'favs' ? notas.filter(n => n.favorito).length :
+                notas.filter(n => n.folderId === folder.id).length;
+              return (
                 <button
-                  key={st.key}
-                  onClick={() => setStatusFilter(st.key)}
-                  className="w-full flex items-center gap-2 px-2.5 py-2 rounded-xl transition-all text-[10px] font-medium"
+                  key={folder.id}
+                  onClick={() => setActiveFolderId(folder.id)}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[9px] font-semibold uppercase tracking-wider whitespace-nowrap transition-all shrink-0"
                   style={{
-                    backgroundColor: statusFilter === st.key ? t.accentSoft : 'transparent',
-                    border: `1px solid ${statusFilter === st.key ? t.borderLight : 'transparent'}`,
-                    color: statusFilter === st.key ? t.text : t.textDim
+                    backgroundColor: activeFolderId === folder.id ? t.accent : 'transparent',
+                    border: `1px solid ${activeFolderId === folder.id ? t.accent : t.border}`,
+                    color: activeFolderId === folder.id ? t.bg : t.textDim,
                   }}
-                  onMouseEnter={e => { if (statusFilter !== st.key) e.currentTarget.style.backgroundColor = t.hover; }}
-                  onMouseLeave={e => { if (statusFilter !== st.key) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  onMouseEnter={e => {
+                    if (activeFolderId !== folder.id) e.currentTarget.style.borderColor = t.accent;
+                  }}
+                  onMouseLeave={e => {
+                    if (activeFolderId !== folder.id) e.currentTarget.style.borderColor = t.border;
+                  }}
                 >
-                  <span className="w-2 h-2 rounded-sm" style={{
-                    backgroundColor: st.key === 'todos' ? t.accent :
-                      st.key === 'pendiente' ? '#eab308' :
-                      st.key === 'proceso' ? t.accent : '#4ec9b0',
-                    opacity: 0.6
-                  }} />
-                  {st.label}
+                  {folder.id === 'favs' ? (
+                    <Star size={9} style={{ color: activeFolderId === folder.id ? t.bg : '#eab308' }} />
+                  ) : (
+                    <span className="w-1.5 h-1.5 rounded-sm shrink-0" style={{ backgroundColor: folder.color }} />
+                  )}
+                  {folder.nombre}
+                  {count > 0 && (
+                    <span className="px-1 rounded-sm" style={{
+                      backgroundColor: activeFolderId === folder.id ? 'rgba(255,255,255,0.15)' : t.accentSoft,
+                      fontSize: '7px',
+                    }}>
+                      {count}
+                    </span>
+                  )}
                 </button>
-              ))}
-            </div>
+              );
+            })}
+            <button
+              onClick={() => setIsNewFolderModalOpen(true)}
+              className="p-1.5 rounded-xl transition-all shrink-0"
+              style={{ color: t.textDim, border: `1px dashed ${t.border}` }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.color = t.accent; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.textDim; }}
+            >
+              <FolderPlus size={12} />
+            </button>
           </div>
         </div>
 
-        {/* COLUMN 2: NOTE LIST */}
-        <div className="flex flex-col gap-3 overflow-hidden min-h-0 rounded-xl p-3"
-          style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-
+        <div className="flex items-center gap-2">
           {/* Search */}
-          <div className="relative shrink-0">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: t.textDim }} />
+          <div className="relative w-[180px]">
+            <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: t.textDim }} />
             <input
               ref={searchInputRef}
               type="text"
-              placeholder="Buscar notas..."
+              placeholder="Buscar..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full rounded-xl py-2 pl-9 pr-3 text-xs outline-none transition-all"
+              className="w-full rounded-xl py-1.5 pl-8 pr-2.5 text-[10px] outline-none transition-all"
               style={{
                 backgroundColor: t.surface,
                 border: `1px solid ${t.border}`,
@@ -650,114 +515,215 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
             />
           </div>
 
+          {/* Status filter pill */}
+          <div className="flex rounded-xl p-0.5 gap-0.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+            {[
+              { key: 'todos', label: 'Todas' },
+              { key: 'pendiente', label: 'Pend' },
+              { key: 'proceso', label: 'Proceso' },
+              { key: 'completado', label: 'Listo' },
+            ].map(st => (
+              <button
+                key={st.key}
+                onClick={() => setStatusFilter(st.key)}
+                className="px-2 py-1 rounded-md text-[8px] font-semibold uppercase tracking-wider transition-all"
+                style={{
+                  backgroundColor: statusFilter === st.key ? t.accent : 'transparent',
+                  color: statusFilter === st.key ? t.bg : t.textDim,
+                }}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Sync Status */}
+          <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+            <span className={`w-1 h-1 rounded-xl ${
+              saveStatus === 'synced' ? 'bg-emerald-500' :
+              saveStatus === 'saving' ? 'bg-amber-500 animate-pulse' : 'bg-rose-500 animate-ping'
+            }`} />
+          </div>
+
+          {/* Type Selector Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowTypeMenu(!showTypeMenu)}
+              className="px-3 py-1.5 rounded-xl text-[9px] font-semibold uppercase tracking-wider transition-all flex items-center gap-1.5"
+              style={{ backgroundColor: t.accent, color: t.bg }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
+            >
+              <Plus size={12} /> Nueva
+            </button>
+            {showTypeMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowTypeMenu(false)} />
+                <div className="absolute right-0 top-full mt-1.5 z-50 w-44 rounded-xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150"
+                  style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
+                  {[
+                    { tipo: 'normal', icon: FileText, label: 'Normal', color: '#4ec9b0' },
+                    { tipo: 'guion', icon: Table2, label: 'Guión Técnico', color: '#a855f7' },
+                    { tipo: 'prompt', icon: Brain, label: 'Prompt IA', color: '#3b82f6' },
+                    { tipo: 'compras', icon: ShoppingCart, label: 'Lista de Compras', color: '#22c55e' },
+                  ].map((item, i) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.tipo}
+                        onClick={() => { handleCreateNote(item.tipo); setShowTypeMenu(false); }}
+                        className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[10px] font-medium transition-all"
+                        style={{ color: t.text, borderBottom: i < 3 ? `1px solid ${t.border}` : 'none' }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
+                      >
+                        <Icon size={13} style={{ color: item.color }} /> {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {/* DB ALERT */}
+      {dbError && (
+        <div className="mb-3 p-2.5 rounded-xl flex items-center justify-between text-[9px] font-semibold tracking-wide shrink-0"
+          style={{ backgroundColor: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', color: '#ef4444' }}
+        >
+          <div className="flex items-center gap-2">
+            <AlertCircle size={12} />
+            <span>Modo offline — Datos locales. Sincroniza con SQL en Supabase.</span>
+          </div>
+          <button
+            onClick={copySqlToClipboard}
+            className="px-2.5 py-1 rounded-xl text-[8px] font-semibold uppercase tracking-wider transition-all flex items-center gap-1"
+            style={{ backgroundColor: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.2)'; }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.1)'; }}
+          >
+            {copiedSql ? <Check size={10} /> : <Copy size={10} />}
+            {copiedSql ? 'Copiado' : 'Copiar SQL'}
+          </button>
+        </div>
+      )}
+
+      {/* MAIN 2-PANEL LAYOUT: Sidebar Explorer + Canvas Editor */}
+      <div className="flex-1 flex gap-3 overflow-hidden min-h-0">
+
+        {/* LEFT: EXPLORER SIDEBAR — Note list compacta */}
+        <div className="w-[260px] shrink-0 flex flex-col rounded-xl overflow-hidden"
+          style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+          
+          {/* Explorer Header */}
+          <div className="flex items-center justify-between px-3 py-2.5 border-b shrink-0" style={{ borderColor: t.border }}>
+            <span className="text-[8px] font-semibold uppercase tracking-widest" style={{ color: t.textDim }}>
+              Explorador
+            </span>
+            <span className="text-[8px] font-medium px-1.5 py-0.5 rounded-md" style={{ backgroundColor: t.accentSoft, color: t.textDim }}>
+              {filteredNotas.length}
+            </span>
+          </div>
+
           {/* Note List */}
-          <div className="flex-1 overflow-y-auto min-h-0 space-y-2 scrollbar-thin pr-0.5">
+          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin">
             {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <div className="w-5 h-5 border-2 rounded-xl animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
+              <div className="flex items-center justify-center py-12">
+                <div className="w-4 h-4 border-2 rounded-xl animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
               </div>
             ) : filteredNotas.length > 0 ? (
               filteredNotas.map(note => {
                 const folder = folders.find(f => f.id === note.folderId);
                 const estadoColor = getEstadoColor(note.estado);
+                const isActive = activeNoteId === note.id;
                 return (
                   <div
                     key={note.id}
                     onClick={() => setActiveNoteId(note.id)}
-                    className="p-3 rounded-xl transition-all cursor-pointer border"
+                    className="w-full text-left px-3 py-2.5 transition-all cursor-pointer border-b"
                     style={{
-                      backgroundColor: activeNoteId === note.id ? t.accentSoft : 'transparent',
-                      borderColor: activeNoteId === note.id ? t.borderLight : 'transparent',
+                      backgroundColor: isActive ? t.accentSoft : 'transparent',
+                      borderColor: t.border,
                     }}
                     onMouseEnter={e => {
-                      if (activeNoteId !== note.id) {
-                        e.currentTarget.style.backgroundColor = t.hover;
-                        e.currentTarget.style.borderColor = t.border;
-                      }
+                      if (!isActive) e.currentTarget.style.backgroundColor = t.hover;
                     }}
                     onMouseLeave={e => {
-                      if (activeNoteId !== note.id) {
-                        e.currentTarget.style.backgroundColor = 'transparent';
-                        e.currentTarget.style.borderColor = 'transparent';
-                      }
+                      if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                     }}
                   >
-                    {/* Status line */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="w-1 h-1 rounded-xl" style={{ backgroundColor: estadoColor }} />
-                      <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
-                        {folder ? folder.nombre : 'General'}
-                      </span>
-                      {note.favorito && <Star size={9} style={{ color: '#eab308', fill: '#eab308' }} />}
-                    </div>
-
-                    {/* Title + action */}
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="text-[12px] font-semibold truncate" style={{ color: t.text }}>
-                        {note.titulo}
-                      </h4>
+                    <div className="flex items-start gap-2">
+                      {/* Status dot + folder indicator */}
+                      <div className="flex flex-col items-center gap-1 pt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-xl shrink-0" style={{ backgroundColor: estadoColor }} />
+                        {note.favorito && <Star size={7} style={{ color: '#eab308', fill: '#eab308' }} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {/* Folder label */}
+                        <div className="text-[7px] font-semibold uppercase tracking-wider mb-0.5" style={{ color: folder?.color || t.textDim }}>
+                          {folder ? folder.nombre : 'General'}
+                        </div>
+                        {/* Title */}
+                        <div className="text-[11px] font-semibold truncate leading-tight" style={{ color: t.text }}>
+                          {note.titulo}
+                        </div>
+                        {/* Preview line */}
+                        <div className="text-[9px] mt-1 leading-relaxed line-clamp-1" style={{ color: t.textMuted }}>
+                          {note.contenido.replace(/[#*`>_\-]/g, '').substring(0, 80) || 'Sin contenido'}
+                        </div>
+                        {/* Date */}
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <Clock size={8} style={{ color: t.textDim }} />
+                          <span className="text-[7px] font-medium" style={{ color: t.textDim }}>
+                            {new Date(note.updated_at).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Delete button */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteNote(note.id);
                         }}
-                        className="p-1 rounded-md opacity-0 group-hover:opacity-100 transition-all shrink-0"
+                        className="p-1 rounded-md opacity-0 hover:opacity-100 transition-all shrink-0 mt-0.5"
                         style={{ color: t.textDim }}
                         onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(239,68,68,0.15)'; e.currentTarget.style.color = '#ef4444'; }}
                         onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = t.textDim; }}
                       >
-                        <Trash2 size={11} />
+                        <Trash2 size={9} />
                       </button>
-                    </div>
-
-                    {/* Preview */}
-                    <p className="text-[10px] leading-relaxed mt-1.5 line-clamp-2" style={{ color: t.textDim }}>
-                      {note.contenido.replace(/[#*`>_\-]/g, '').substring(0, 120) || 'Sin contenido'}
-                    </p>
-
-                    {/* Footer */}
-                    <div className="flex items-center justify-between mt-2.5 pt-2 border-t" style={{ borderColor: t.border }}>
-                      <div className="flex items-center gap-1.5 text-[9px]" style={{ color: t.textDim }}>
-                        <Clock size={10} />
-                        {new Date(note.updated_at).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })}
-                      </div>
-                      <span className="text-[8px] font-semibold uppercase px-2 py-0.5 rounded-md" style={{
-                        backgroundColor: `${estadoColor}15`,
-                        color: estadoColor,
-                        border: `1px solid ${estadoColor}30`
-                      }}>
-                        {getEstadoLabel(note.estado)}
-                      </span>
                     </div>
                   </div>
                 );
               })
             ) : (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <FileText size={32} style={{ color: t.textDim }} className="mb-3" />
-                <p className="text-xs font-medium" style={{ color: t.textMuted }}>No se encontraron notas</p>
-                <p className="text-[10px] mt-1" style={{ color: t.textDim }}>Crea una nota o cambia los filtros</p>
+              <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+                <FileText size={28} style={{ color: t.textDim }} className="mb-2" />
+                <p className="text-[10px] font-medium" style={{ color: t.textMuted }}>Sin resultados</p>
+                <p className="text-[8px] mt-1" style={{ color: t.textDim }}>Crea una nota o cambia filtros</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* COLUMN 3: EDITOR */}
-        <div className="flex flex-col overflow-hidden min-h-0 rounded-xl p-3"
+        {/* RIGHT: CANVAS EDITOR */}
+        <div className="flex-1 flex flex-col rounded-xl overflow-hidden min-h-0"
           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
           
           {activeNote ? (
-            <div className="flex-1 flex flex-col min-h-0 gap-3">
+            <div className="flex-1 flex flex-col min-h-0">
               
-              {/* Note Metadata Bar */}
-              <div className="flex items-center justify-between gap-2 pb-3 border-b shrink-0" style={{ borderColor: t.border }}>
+              {/* Floating Metadata Toolbar */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b shrink-0" style={{ borderColor: t.border }}>
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Folder selector */}
                   <div className="relative">
                     <select
                       value={activeNote.folderId}
                       onChange={e => handleUpdateNoteField(activeNote.id, 'folderId', e.target.value)}
-                      className="appearance-none rounded-xl px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-6"
+                      className="appearance-none rounded-lg px-2 py-1 text-[8px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-5"
                       style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.text }}
                     >
                       {folders.filter(f => !f.isSystem).map(f => (
@@ -765,7 +731,7 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                       ))}
                       <option value="all">General</option>
                     </select>
-                    <ChevronDown size={9} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textDim }} />
+                    <ChevronDown size={8} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textDim }} />
                   </div>
 
                   {/* Status selector */}
@@ -773,219 +739,218 @@ CREATE POLICY "Acceso total" ON notas FOR ALL USING (true) WITH CHECK (true);`;
                     <select
                       value={activeNote.estado}
                       onChange={e => handleUpdateNoteField(activeNote.id, 'estado', e.target.value)}
-                      className="appearance-none rounded-xl px-2.5 py-1.5 text-[9px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-6"
+                      className="appearance-none rounded-lg px-2 py-1 text-[8px] font-semibold uppercase tracking-wider outline-none cursor-pointer pr-5"
                       style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.text }}
                     >
                       <option value="pendiente">Pendiente</option>
                       <option value="proceso">En Proceso</option>
                       <option value="completado">Completado</option>
                     </select>
-                    <ChevronDown size={9} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textDim }} />
+                    <ChevronDown size={8} className="absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textDim }} />
                   </div>
 
-                  {/* Color picker */}
-                  <div className="flex items-center gap-1 rounded-xl px-2 py-1.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                  {/* Color dots */}
+                  <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                     {['#4ec9b0', t.accent, '#ef4444', '#eab308', '#a855f7', '#f43f5e'].map(color => (
                       <button
                         key={color}
                         onClick={() => handleUpdateNoteField(activeNote.id, 'color', color)}
-                        className="w-3 h-3 rounded-xl transition-all"
+                        className="w-2.5 h-2.5 rounded-xl transition-all"
                         style={{
                           backgroundColor: color,
-                          border: activeNote.color === color ? `2px solid ${t.text}` : '2px solid transparent',
-                          transform: activeNote.color === color ? 'scale(1.15)' : 'scale(1)'
+                          border: activeNote.color === color ? `1.5px solid ${t.text}` : '1.5px solid transparent',
+                          transform: activeNote.color === color ? 'scale(1.2)' : 'scale(1)'
                         }}
                       />
                     ))}
                   </div>
 
                   {/* Date */}
-                  <div className="flex items-center gap-1.5 rounded-xl px-2 py-1.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                    <Calendar size={12} style={{ color: t.textDim }} />
+                  <div className="flex items-center gap-1 rounded-lg px-2 py-1" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                    <Calendar size={10} style={{ color: t.textDim }} />
                     <input
                       type="date"
                       value={activeNote.fecha_evento || ''}
                       onChange={e => handleUpdateNoteField(activeNote.id, 'fecha_evento', e.target.value || null)}
-                      className="bg-transparent border-0 text-[9px] font-semibold outline-none w-[90px]"
+                      className="bg-transparent border-0 text-[8px] font-semibold outline-none w-[80px]"
                       style={{ color: t.text }}
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   {/* Favorite toggle */}
                   <button
                     onClick={() => handleUpdateNoteField(activeNote.id, 'favorito', !activeNote.favorito)}
-                    className="p-1.5 rounded-xl transition-all"
+                    className="p-1.5 rounded-lg transition-all"
                     style={{
                       backgroundColor: activeNote.favorito ? 'rgba(234,179,8,0.12)' : 'transparent',
-                      border: `1px solid ${activeNote.favorito ? 'rgba(234,179,8,0.25)' : 'transparent'}`,
                       color: activeNote.favorito ? '#eab308' : t.textDim
                     }}
                     onMouseEnter={e => { if (!activeNote.favorito) e.currentTarget.style.backgroundColor = t.hover; }}
                     onMouseLeave={e => { if (!activeNote.favorito) e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    <Star size={13} className={activeNote.favorito ? 'fill-[#eab308]' : ''} />
+                    <Star size={11} className={activeNote.favorito ? 'fill-[#eab308]' : ''} />
                   </button>
-                </div>
-              </div>
-
-              {/* Title Input */}
-              <input
-                type="text"
-                value={activeNote.titulo}
-                onChange={e => handleUpdateNoteField(activeNote.id, 'titulo', e.target.value)}
-                placeholder="Título de la Nota"
-                className="w-full bg-transparent border-0 text-base font-semibold outline-none px-0 py-0 shrink-0"
-                style={{ color: t.text }}
-              />
-
-              {/* Editor Tabs - only for 'normal' type */}
-              {activeNote.tipo === 'normal' && (
-                <div className="flex items-center justify-between shrink-0">
-                  <div className="flex rounded-xl p-0.5 gap-0.5" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                    <button
-                      onClick={() => setEditMode('write')}
-                      className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
-                      style={{
-                        backgroundColor: editMode === 'write' ? t.accent : 'transparent',
-                        color: editMode === 'write' ? t.bg : t.textDim
-                      }}
-                    >
-                      <span className="flex items-center gap-1"><Edit3 size={10} /> Editar</span>
-                    </button>
-                    <button
-                      onClick={() => setEditMode('preview')}
-                      className="px-3 py-1.5 rounded-md text-[9px] font-semibold uppercase tracking-wider transition-all"
-                      style={{
-                        backgroundColor: editMode === 'preview' ? t.accent : 'transparent',
-                        color: editMode === 'preview' ? t.bg : t.textDim
-                      }}
-                    >
-                      <span className="flex items-center gap-1"><Eye size={10} /> Vista</span>
-                    </button>
-                  </div>
-                  <span className="text-[8px] font-medium" style={{ color: t.textDim }}>Markdown</span>
-                </div>
-              )}
-
-              {/* Editor Dinámico según tipo */}
-              <div className="flex-1 min-h-0 rounded-xl overflow-hidden" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                {activeNote.tipo === 'guion' ? (
-                  <div className="h-full p-3 overflow-y-auto">
-                    <NotaGuionTecnico
-                      bloques={activeNote.contenido}
-                      onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', JSON.stringify(val))}
-                      isDark={isDark}
-                    />
-                  </div>
-                ) : activeNote.tipo === 'prompt' ? (
-                  <NotaPromptIA
-                    contenido={activeNote.contenido}
-                    onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', val)}
-                    isDark={isDark}
-                  />
-                ) : activeNote.tipo === 'compras' ? (
-                  <div className="h-full p-3 overflow-y-auto">
-                    <NotaListaCompras
-                      items={activeNote.contenido}
-                      onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', JSON.stringify(val))}
-                      isDark={isDark}
-                    />
-                  </div>
-                ) : (
-                  /* Normal: textarea + markdown preview */
-                  editMode === 'write' ? (
-                    <textarea
-                      value={activeNote.contenido}
-                      onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
-                      placeholder="Escribe en Markdown..."
-                      className="w-full h-full p-4 bg-transparent text-xs leading-relaxed outline-none border-0 resize-none font-mono"
-                      style={{ color: t.textMuted }}
-                    />
-                  ) : (
-                    <div className="h-full overflow-y-auto p-4 prose prose-invert max-w-none text-xs leading-relaxed markdown-preview scrollbar-thin"
-                      style={{ color: t.textMuted }}>
-                      {activeNote.contenido ? (
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {activeNote.contenido}
-                        </ReactMarkdown>
-                      ) : (
-                        <p className="text-center py-16 text-[10px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
-                          Sin contenido para previsualizar
-                        </p>
-                      )}
+                  {/* Editor tabs for normal */}
+                  {activeNote.tipo === 'normal' && (
+                    <div className="flex rounded-lg p-0.5 gap-0.5 ml-1" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                      <button
+                        onClick={() => setEditMode('write')}
+                        className="px-2 py-1 rounded-md text-[7px] font-semibold uppercase tracking-wider transition-all"
+                        style={{
+                          backgroundColor: editMode === 'write' ? t.accent : 'transparent',
+                          color: editMode === 'write' ? t.bg : t.textDim
+                        }}
+                      >
+                        <Edit3 size={9} />
+                      </button>
+                      <button
+                        onClick={() => setEditMode('preview')}
+                        className="px-2 py-1 rounded-md text-[7px] font-semibold uppercase tracking-wider transition-all"
+                        style={{
+                          backgroundColor: editMode === 'preview' ? t.accent : 'transparent',
+                          color: editMode === 'preview' ? t.bg : t.textDim
+                        }}
+                      >
+                        <Eye size={9} />
+                      </button>
                     </div>
-                  )
-                )}
+                  )}
+                </div>
               </div>
 
-              {/* Image Gallery */}
-              {activeNote.imagenes && activeNote.imagenes.length > 0 && (
-                <div className="shrink-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ImageIcon size={12} style={{ color: t.textDim }} />
-                    <span className="text-[8px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
-                      Imágenes ({activeNote.imagenes.length})
-                    </span>
-                  </div>
-                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-                    {activeNote.imagenes.map((url, i) => (
-                      <div key={i} className="relative group shrink-0">
-                        <img
-                          src={url}
-                          alt={`Imagen ${i + 1}`}
-                          className="w-20 h-20 rounded-xl object-cover border"
-                          style={{ borderColor: t.border }}
-                        />
-                        <button
-                          onClick={() => handleImageDelete(url)}
-                          className="absolute -top-1.5 -right-1.5 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg"
-                          style={{ backgroundColor: t.danger, color: '#fff' }}
-                        >
-                          <Trash2 size={10} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Image Upload Button */}
-              <div className="shrink-0 pt-1">
+              {/* CANVAS CONTENT */}
+              <div className="flex-1 flex flex-col min-h-0 p-5">
+                {/* Title */}
                 <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
+                  type="text"
+                  value={activeNote.titulo}
+                  onChange={e => handleUpdateNoteField(activeNote.id, 'titulo', e.target.value)}
+                  placeholder="Título de la Nota"
+                  className="w-full bg-transparent border-0 text-lg font-bold outline-none px-0 py-0 shrink-0 mb-4"
+                  style={{ color: t.text, letterSpacing: '-0.01em' }}
                 />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingImage}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[8px] font-semibold transition-all"
-                  style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.textDim }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.color = t.accent; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.textDim; }}
-                >
-                  {uploadingImage ? (
-                    <div className="w-3 h-3 border-2 rounded-xl animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
+
+                {/* Editor Dinámico */}
+                <div className="flex-1 min-h-0 rounded-xl overflow-hidden" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+                  {activeNote.tipo === 'guion' ? (
+                    <div className="h-full p-4 overflow-y-auto">
+                      <NotaGuionTecnico
+                        bloques={activeNote.contenido}
+                        onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', JSON.stringify(val))}
+                        isDark={isDark}
+                      />
+                    </div>
+                  ) : activeNote.tipo === 'prompt' ? (
+                    <NotaPromptIA
+                      contenido={activeNote.contenido}
+                      onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', val)}
+                      isDark={isDark}
+                    />
+                  ) : activeNote.tipo === 'compras' ? (
+                    <div className="h-full p-4 overflow-y-auto">
+                      <NotaListaCompras
+                        items={activeNote.contenido}
+                        onChange={(val) => handleUpdateNoteField(activeNote.id, 'contenido', JSON.stringify(val))}
+                        isDark={isDark}
+                      />
+                    </div>
                   ) : (
-                    <Upload size={12} />
+                    editMode === 'write' ? (
+                      <textarea
+                        value={activeNote.contenido}
+                        onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
+                        placeholder="Escribe en Markdown..."
+                        className="w-full h-full p-5 bg-transparent text-sm leading-relaxed outline-none border-0 resize-none font-mono"
+                        style={{ color: t.textMuted, lineHeight: '1.7' }}
+                      />
+                    ) : (
+                      <div className="h-full overflow-y-auto p-5 prose prose-invert max-w-none text-sm leading-relaxed markdown-preview scrollbar-thin"
+                        style={{ color: t.textMuted }}>
+                        {activeNote.contenido ? (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {activeNote.contenido}
+                          </ReactMarkdown>
+                        ) : (
+                          <p className="text-center py-16 text-[9px] font-semibold uppercase tracking-wider" style={{ color: t.textDim }}>
+                            Sin contenido para previsualizar
+                          </p>
+                        )}
+                      </div>
+                    )
                   )}
-                  {uploadingImage ? 'Subiendo...' : 'Subir Imagen'}
-                </button>
+                </div>
+
+                {/* Image Gallery + Upload */}
+                <div className="flex items-center gap-3 mt-3 shrink-0">
+                  {/* Image Upload */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingImage}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[7px] font-semibold tracking-wider transition-all"
+                    style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.textDim }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.color = t.accent; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.textDim; }}
+                  >
+                    {uploadingImage ? (
+                      <div className="w-2.5 h-2.5 border-2 rounded-xl animate-spin" style={{ borderColor: t.border, borderTopColor: t.accent }} />
+                    ) : (
+                      <Upload size={10} />
+                    )}
+                    {uploadingImage ? 'Subiendo...' : 'Adjuntar'}
+                  </button>
+
+                  {/* Image Gallery */}
+                  {activeNote.imagenes && activeNote.imagenes.length > 0 && (
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <ImageIcon size={10} style={{ color: t.textDim }} />
+                      <div className="flex gap-1.5 overflow-x-auto scrollbar-thin">
+                        {activeNote.imagenes.map((url, i) => (
+                          <div key={i} className="relative group shrink-0">
+                            <img
+                              src={url}
+                              alt={`Img ${i + 1}`}
+                              className="w-7 h-7 rounded-md object-cover border"
+                              style={{ borderColor: t.border }}
+                            />
+                            <button
+                              onClick={() => handleImageDelete(url)}
+                              className="absolute -top-1 -right-1 p-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                              style={{ backgroundColor: t.danger, color: '#fff' }}
+                            >
+                              <Trash2 size={7} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
             </div>
           ) : (
-            /* Empty State */
+            /* Empty State — Canvas central */
             <div className="flex-1 flex flex-col items-center justify-center text-center">
-              <Sparkles size={36} style={{ color: t.textDim }} className="mb-4" />
-              <h4 className="text-sm font-semibold" style={{ color: t.textMuted }}>Selecciona una nota</h4>
-              <p className="text-[10px] mt-1.5 max-w-xs leading-relaxed" style={{ color: t.textDim }}>
-                Elige una nota de la lista o crea una nueva para empezar a escribir.
+              <div style={{
+                width: '64px', height: '64px', borderRadius: '20px',
+                backgroundColor: t.accentSoft, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: '20px',
+              }}>
+                <Sparkles size={28} style={{ color: t.accent }} />
+              </div>
+              <h4 style={{ fontSize: '1rem', fontWeight: 600, color: t.text, margin: 0 }}>Canvas de Notas</h4>
+              <p style={{ fontSize: '0.7rem', color: t.textDim, marginTop: '8px', maxWidth: '280px', lineHeight: '1.5' }}>
+                Selecciona una nota del explorador o crea una nueva para empezar a escribir.
               </p>
             </div>
           )}

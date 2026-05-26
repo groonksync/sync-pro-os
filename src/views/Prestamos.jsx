@@ -493,29 +493,56 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   </span>
                 </div>
                 {proyeccionAgregada.length > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '100px' }}>
-                    {proyeccionAgregada.map((item, idx) => (
-                      <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', height: '100%', justifyContent: 'flex-end' }}>
-                        <span style={{ fontSize: '8px', fontWeight: 600, color: t.text, opacity: 0.7 }}>{(item.valor).toLocaleString()}</span>
-                        <div
-                          title={`${item.label}: ${item.valor.toLocaleString()}`}
-                          style={{
-                            width: '100%', maxWidth: '36px',
-                            height: `${Math.max(item.pct, 4)}%`,
-                            borderRadius: '6px 6px 0 0',
-                            background: `linear-gradient(180deg, ${t.accent}, ${t.accent}60)`,
-                            transition: 'height 0.4s ease',
-                            minHeight: '6px',
-                          }}
-                        />
-                        <span style={{ fontSize: '7px', fontWeight: 500, color: t.textDim, transform: 'rotate(-45deg)', transformOrigin: 'left', whiteSpace: 'nowrap', marginTop: '2px' }}>
-                          {item.label}
-                        </span>
-                      </div>
-                    ))}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '120px', position: 'relative', paddingBottom: '20px' }}>
+                    {/* Línea de base */}
+                    <div style={{ position: 'absolute', left: 0, right: 0, bottom: '24px', height: '1px', backgroundColor: t.border, opacity: 0.3 }} />
+                    {proyeccionAgregada.map((item, idx) => {
+                      const esMayor = item.valor === Math.max(...proyeccionAgregada.map(i => i.valor));
+                      return (
+                        <div key={idx} style={{
+                          flex: 1, display: 'flex', flexDirection: 'column',
+                          alignItems: 'center', height: '100%',
+                          justifyContent: 'flex-end', position: 'relative',
+                        }}>
+                          {/* Valor sobre la barra (solo en hover) */}
+                          <div style={{
+                            fontSize: '8px', fontWeight: 700, color: t.accent,
+                            marginBottom: '4px', opacity: 0.85,
+                            lineHeight: 1,
+                          }}>
+                            {item.valor.toLocaleString()}
+                          </div>
+                          {/* Barra */}
+                          <div
+                            title={`${item.label}: ${item.valor.toLocaleString()}`}
+                            style={{
+                              width: '100%', maxWidth: '40px',
+                              height: `${Math.max(item.pct, 4)}%`,
+                              borderRadius: '4px 4px 0 0',
+                              background: esMayor
+                                ? `linear-gradient(180deg, ${t.accent}, ${t.success}80)`
+                                : `linear-gradient(180deg, ${t.accent}, ${t.accent}40)`,
+                              transition: 'height 0.4s ease, background 0.3s ease',
+                              minHeight: '6px',
+                              cursor: 'pointer',
+                              boxShadow: esMayor ? `0 0 8px ${t.accent}40` : 'none',
+                            }}
+                          />
+                          {/* Etiqueta horizontal debajo - SIN rotación */}
+                          <div style={{
+                            fontSize: '8px', fontWeight: 600, color: t.textDim,
+                            textAlign: 'center', lineHeight: 1.2,
+                            marginTop: '6px', whiteSpace: 'nowrap',
+                            letterSpacing: '0.02em',
+                          }}>
+                            {item.label.substring(0, 3)}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100px', color: t.textDim, fontSize: '11px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px', color: t.textDim, fontSize: '11px' }}>
                     Sin préstamos activos para proyectar
                   </div>
                 )}
