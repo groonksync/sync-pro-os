@@ -1,17 +1,22 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Plus, ChevronRight, ArrowLeft, Save, FileSignature, Smartphone, DollarSign,
   ExternalLink, User, CreditCard, ArrowRight, ShieldCheck, CalendarDays, CheckCircle2,
-  Check, X, AlertCircle
+  Check, X, AlertCircle, Trash2, AlertTriangle, Edit3, Search, Eye, EyeOff, Clock,
+  MoreHorizontal, Filter, Download, Printer, RefreshCw
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
+import FormularioPrestamo from '../components/FormularioPrestamo';
 
+// ─── ESTILOS TOAST ───────────────────────────────────────────
 const toastStyles = {
   success: { bg: 'rgba(78, 201, 176, 0.10)', border: 'rgba(78, 201, 176, 0.30)', icon: CheckCircle2, color: '#4ec9b0' },
-  error: { bg: 'rgba(241, 76, 76, 0.10)', border: 'rgba(241, 76, 76, 0.30)', icon: AlertCircle, color: '#f14c4c' }
+  error: { bg: 'rgba(241, 76, 76, 0.10)', border: 'rgba(241, 76, 76, 0.30)', icon: AlertCircle, color: '#f14c4c' },
+  warning: { bg: 'rgba(245, 158, 11, 0.10)', border: 'rgba(245, 158, 11, 0.30)', icon: AlertTriangle, color: '#f59e0b' }
 };
 
+// ─── TOAST NOTIFICATION ──────────────────────────────────────
 const ToastNotification = ({ message, type = 'success', onClose, isDark }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const { bg, border, icon: Icon, color } = toastStyles[type] || toastStyles.success;
@@ -36,12 +41,166 @@ const ToastNotification = ({ message, type = 'success', onClose, isDark }) => {
   );
 };
 
+// ─── MODAL ELIMINACIÓN SEGURA ────────────────────────────────
+const DeleteConfirmModal = ({ target, isDark, onConfirm, onCancel }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const [step, setStep] = useState(1); // 1 = first confirm, 2 = type ELIMINAR
+  const [typed, setTyped] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    if (step === 1) { setStep(2); return; }
+    if (typed !== 'ELIMINAR') return;
+    setLoading(true);
+    try {
+      await onConfirm(target);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isMobile = window.innerWidth < 1024;
+
+  return (
+    <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+      <div style={{
+        backgroundColor: t.panel, border: `1px solid ${t.border}`,
+        borderRadius: '20px', padding: isMobile ? '24px' : '32px',
+        maxWidth: '440px', width: '100%', position: 'relative',
+        animation: 'scaleIn 0.2s ease-out',
+      }}>
+        {/* Icono superior */}
+        <div style={{
+          width: '56px', height: '56px', borderRadius: '50%',
+          backgroundColor: `${t.danger || '#ef4444'}15`,
+          color: t.danger || '#ef4444',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          margin: '0 auto 16px',
+        }}>
+          {step === 1 ? <AlertTriangle size={24} /> : <Trash2 size={24} />}
+        </div>
+
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: t.text, textAlign: 'center', margin: '0 0 8px' }}>
+          {step === 1 ? '¿Eliminar este préstamo?' : 'Confirmación final'}
+        </h3>
+
+        <p style={{ fontSize: '12px', color: t.textDim, textAlign: 'center', margin: '0 0 20px', lineHeight: 1.5 }}>
+          {step === 1
+            ? `Esta acción eliminará el registro de "${target?.nombre || 'Sin nombre'}". Se guardará en la papelera por si necesitas restaurarlo.`
+            : 'Escribe "ELIMINAR" para confirmar que deseas eliminar permanentemente este registro.'
+          }
+        </p>
+
+        {step === 2 && (
+          <div style={{
+            padding: '12px', borderRadius: '12px',
+            backgroundColor: `${t.danger || '#ef4444'}08`,
+            border: `1px solid ${t.danger || '#ef4444'}20`,
+            marginBottom: '16px',
+          }}>
+            <p style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted, marginBottom: '8px' }}>
+              Registro a eliminar:
+            </p>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+              {target?.nombre || 'Sin nombre'}
+            </p>
+            <p style={{ fontSize: '11px', color: t.textDim, marginTop: '2px' }}>
+              {parseFloat(target?.capital || 0).toLocaleString()} {target?.moneda || 'BOB'} — {target?.estado || 'Activo'}
+            </p>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+              Escribe <span style={{ color: t.danger || '#ef4444' }}>ELIMINAR</span> para confirmar
+            </label>
+            <input
+              type="text"
+              value={typed}
+              onChange={e => setTyped(e.target.value)}
+              placeholder="ELIMINAR"
+              autoFocus
+              style={{
+                width: '100%', padding: '12px', fontSize: '14px', fontWeight: 700,
+                textAlign: 'center', letterSpacing: '0.15em',
+                backgroundColor: t.input, border: `1px solid ${typed === 'ELIMINAR' ? (t.danger || '#ef4444') : t.border}`,
+                color: typed === 'ELIMINAR' ? (t.danger || '#ef4444') : t.text,
+                borderRadius: '12px', outline: 'none',
+              }}
+            />
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button
+            onClick={onCancel}
+            disabled={loading}
+            style={{
+              flex: 1, padding: '12px', borderRadius: '12px',
+              border: `1px solid ${t.border}`, backgroundColor: t.input,
+              color: t.text, fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+              transition: 'all 0.2s', opacity: loading ? 0.6 : 1,
+            }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={loading || (step === 2 && typed !== 'ELIMINAR')}
+            style={{
+              flex: 1, padding: '12px', borderRadius: '12px',
+              border: 'none',
+              backgroundColor: step === 2 ? (t.danger || '#dc2626') : (t.danger || '#ef4444'),
+              color: 'white', fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+              transition: 'all 0.2s', opacity: (loading || (step === 2 && typed !== 'ELIMINAR')) ? 0.6 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+            }}
+          >
+            {loading ? 'Eliminando...' : step === 1 ? 'Sí, eliminar' : 'Confirmar y eliminar'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── MODAL PRESTAMO (WIZARD) ─────────────────────────────────
+const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
+  const t = useMemo(() => getTheme(isDark), [isDark]);
+  return (
+    <div className="fixed inset-0 z-[9997] overflow-y-auto"
+      style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+      <div className="min-h-full py-8 px-4 flex items-start justify-center">
+        <div style={{
+          backgroundColor: t.bg, border: `1px solid ${t.border}`,
+          borderRadius: '24px', padding: '32px',
+          maxWidth: '820px', width: '100%',
+          animation: 'scaleIn 0.2s ease-out',
+        }}>
+          <FormularioPrestamo
+            isDark={isDark}
+            onClose={onClose}
+            onSave={onSave}
+            initialData={prestamo}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── COMPONENTE PRINCIPAL ────────────────────────────────────
 const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSelection }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const [prestamoView, setPrestamoView] = useState('list'); 
   const [activePrestamo, setActivePrestamo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [editPrestamo, setEditPrestamo] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const isMobile = settings?.isMobileMode;
 
   const showToast = (message, type = 'success') => {
@@ -61,19 +220,76 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
     setPrestamoView('detail'); 
   };
   
-  const closePrestamo = async () => { try { if (activePrestamo) await handleSave(); } finally { setPrestamoView('list'); setActivePrestamo(null); } };
+  const closePrestamo = async () => { 
+    try { if (activePrestamo) await handleSave(); } finally { setPrestamoView('list'); setActivePrestamo(null); } 
+  };
 
-  const createPrestamo = () => {
-    const today = new Date();
-    const firstPayment = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
-    const newP = { 
-      id: crypto.randomUUID(), nombre: '', ci: '', telefono: '', capital: 0, interes: 5, 
-      moneda: 'BOB', 
-      inicio: today.toISOString().split('T')[0], 
-      fin: new Date(today.setMonth(today.getMonth() + 6)).toISOString().split('T')[0], 
-      estado: 'Activo', garantia: '', drive_contrato: '', drive_fotos: '', pagos: [] 
-    };
-    setActivePrestamo(newP); setPrestamoView('detail');
+  const handleNewPrestamo = () => {
+    setEditPrestamo(null);
+    setShowForm(true);
+  };
+
+  const handleEditPrestamo = (p) => {
+    setEditPrestamo(p);
+    setShowForm(true);
+  };
+
+  const handleFormSave = async () => {
+    setShowForm(false);
+    setEditPrestamo(null);
+    // Recargar datos desde Supabase
+    try {
+      const { data: prestamosData } = await supabase.from('prestamos').select('*');
+      if (prestamosData) setData(prev => ({ ...prev, prestamos: prestamosData }));
+    } catch (e) {
+      console.error('Error recargando datos:', e);
+    }
+  };
+
+  // ─── ELIMINACIÓN SEGURA ─────────────────────────────────
+  const handleDeleteRequest = (p, e) => {
+    if (e) { e.stopPropagation(); }
+    setDeleteTarget(p);
+  };
+
+  const handleDeleteConfirm = async (target) => {
+    try {
+      // 1. Guardar en papelera
+      const trashEntry = {
+        tipo: 'prestamo',
+        datos_originales: target,
+        titulo: target.nombre || 'Préstamo',
+        descripcion: `Capital: ${target.capital} ${target.moneda} — Estado: ${target.estado}`,
+        eliminado_en: new Date().toISOString(),
+        expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      
+      const { error: trashError } = await supabase.from('papelera').insert([trashEntry]);
+      if (trashError) throw trashError;
+
+      // 2. Registrar auditoría
+      await supabase.from('prestamos_historial').insert([{
+        prestamo_id: target.id,
+        accion: 'ELIMINADO',
+        detalle: `Préstamo eliminado: ${target.nombre} - ${target.capital} ${target.moneda}`,
+        datos_previos: target,
+      }]);
+
+      // 3. Eliminar físico de la tabla prestamos
+      const { error: deleteError } = await supabase.from('prestamos').delete().eq('id', target.id);
+      if (deleteError) throw deleteError;
+
+      // 4. Actualizar estado local
+      const updated = (data?.prestamos || []).filter(p => p.id !== target.id);
+      setData({ ...data, prestamos: updated });
+
+      setDeleteTarget(null);
+      setPrestamoView('list');
+      setActivePrestamo(null);
+      showToast(`"${target.nombre}" eliminado correctamente. Está en la papelera por 30 días.`, 'warning');
+    } catch (e) {
+      showToast('Error al eliminar: ' + e.message, 'error');
+    }
   };
 
   const handleSave = async () => {
@@ -106,12 +322,6 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
     setActivePrestamo({ ...activePrestamo, pagos: newPagos });
   };
 
-  /**
-   * Genera la línea de tiempo de pagos.
-   * El primer pago debe ser un mes después de la fecha de inicio,
-   * porque el dinero se entrega hoy y se cobra el primer mes al cumplirse 30 días.
-   * Ej: Si prestas el 25 de mayo, el primer pago es el 25 de junio.
-   */
   const generateTimeline = () => {
     if (!activePrestamo?.inicio || !activePrestamo?.fin) return [];
     const start = new Date(activePrestamo.inicio);
@@ -133,6 +343,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
 
   const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
 
+  // ─── RENDER ─────────────────────────────────────────────
   return (
     <>
       {toast && (
@@ -144,6 +355,27 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
           isDark={isDark}
         />
       )}
+
+      {/* Modal Formulario Wizard */}
+      {showForm && (
+        <PrestamoFormModal
+          isDark={isDark}
+          prestamo={editPrestamo}
+          onClose={() => { setShowForm(false); setEditPrestamo(null); }}
+          onSave={handleFormSave}
+        />
+      )}
+
+      {/* Modal Eliminación */}
+      {deleteTarget && (
+        <DeleteConfirmModal
+          target={deleteTarget}
+          isDark={isDark}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
       <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
         {prestamoView === 'list' ? (
           <div className="animate-in fade-in duration-300">
@@ -156,22 +388,25 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Cartera de Préstamos</h2>
                 <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Gestión de Capital</p>
               </div>
-              <button 
-                onClick={createPrestamo} 
-                style={{
-                  backgroundColor: t.accent, color: 'white', border: 'none',
-                  borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
-                  fontSize: '11px', fontWeight: 600, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
-                }}
-                onMouseEnter={e => e.target.style.backgroundColor = t.accentHover}
-                onMouseLeave={e => e.target.style.backgroundColor = t.accent}
-              >
-                <Plus size={16} strokeWidth={3} /> Nuevo Registro
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button 
+                  onClick={handleNewPrestamo} 
+                  style={{
+                    backgroundColor: t.accent, color: 'white', border: 'none',
+                    borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
+                    fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
+                  }}
+                  onMouseEnter={e => e.target.style.backgroundColor = t.accentHover}
+                  onMouseLeave={e => e.target.style.backgroundColor = t.accent}
+                >
+                  <Plus size={16} strokeWidth={3} /> Nuevo Registro
+                </button>
+              </div>
             </header>
 
+            {/* Tabla/Cards con botón eliminar */}
             <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
               {!isMobile ? (
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
@@ -225,16 +460,34 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                           </p>
                         </td>
                         <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                          <button style={{
-                            padding: '8px', borderRadius: '12px', border: 'none',
-                            backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                            opacity: 0, transition: 'all 0.2s',
-                          }}
-                          className="group-hover:opacity-100"
-                          onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
-                          >
-                            <FileSignature size={14} />
-                          </button>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
+                              style={{
+                                padding: '8px', borderRadius: '12px', border: 'none',
+                                backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                                opacity: 0, transition: 'all 0.2s',
+                              }}
+                              className="group-hover:opacity-100"
+                              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
+                              title="Editar"
+                            >
+                              <Edit3 size={14} />
+                            </button>
+                            <button 
+                              onClick={(e) => handleDeleteRequest(p, e)}
+                              style={{
+                                padding: '8px', borderRadius: '12px', border: 'none',
+                                backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
+                                opacity: 0, transition: 'all 0.2s',
+                              }}
+                              className="group-hover:opacity-100"
+                              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
+                              title="Eliminar"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -256,7 +509,29 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                           </p>
                         </div>
                       </div>
-                      <ChevronRight size={18} color={t.textDim} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
+                          style={{
+                            padding: '8px', borderRadius: '10px', border: 'none',
+                            backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                            fontSize: '10px', fontWeight: 600,
+                            display: 'flex', alignItems: 'center', gap: '4px',
+                          }}
+                        >
+                          <Edit3 size={12} /> Editar
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteRequest(p, e)}
+                          style={{
+                            padding: '8px', borderRadius: '10px', border: 'none',
+                            backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        <ChevronRight size={18} color={t.textDim} />
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -317,6 +592,30 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       <option value="En Mora">En Mora</option>
                       <option value="Finalizado">Finalizado</option>
                     </select>
+                    {/* Botón Editar con wizard */}
+                    <button
+                      onClick={() => handleEditPrestamo(activePrestamo)}
+                      style={{
+                        padding: '6px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
+                        border: `1px solid ${t.accent}`, backgroundColor: 'transparent',
+                        color: t.accent, cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                      }}
+                    >
+                      <Edit3 size={12} /> Editar todo
+                    </button>
+                    {/* Botón Eliminar */}
+                    <button
+                      onClick={(e) => handleDeleteRequest(activePrestamo, e)}
+                      style={{
+                        padding: '6px 12px', borderRadius: '12px', fontSize: '10px', fontWeight: 600,
+                        border: '1px solid rgba(239, 68, 68, 0.3)', backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                        color: '#ef4444', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                      }}
+                    >
+                      <Trash2 size={12} /> Eliminar
+                    </button>
                   </div>
                 </div>
               </div>
