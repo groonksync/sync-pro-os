@@ -432,7 +432,7 @@ const CommandCenter = ({
           e.currentTarget.style.backgroundColor = activo ? `${cfg.color}15` : t.input;
         }}
       >
-        <cfg.Icon size={14} color={activo ? cfg.color : t.textDim} fill={activo ? cfg.color : 'none'} />
+        <cfg.Icon size={14} color={activo ? cfg.color : t.textDim} />
         <span>{cfg.label}</span>
         <span style={{
           padding: '2px 8px', borderRadius: '8px',
@@ -753,7 +753,7 @@ const CommandCenter = ({
                           }}>
                             {(() => {
                               const IconComp = DIALOG_ICONS[p.dialog?.icono] || CheckCircle;
-                              return <IconComp size={12} color={badgeColor} fill={badgeColor} style={{ marginRight: '2px' }} />;
+                              return <IconComp size={12} color={badgeColor} style={{ marginRight: '2px' }} />;
                             })()}
                             {p.categoria === 'AL_DIA' ? 'Al Día' :
                               p.categoria === 'PENDIENTE' ? 'Pendiente' :
@@ -780,7 +780,7 @@ const CommandCenter = ({
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
                               {(() => {
                                 const IconComp = DIALOG_ICONS[p.dialog?.icono] || CheckCircle;
-                                return <IconComp size={14} color={badgeColor} fill={badgeColor} />;
+                                return <IconComp size={14} color={badgeColor} />;
                               })()}
                               <p style={{ fontSize: '10px', fontWeight: 700, color: badgeColor, margin: 0 }}>
                                 {p.dialog?.titulo || 'Sin riesgo'}
@@ -827,7 +827,7 @@ const CommandCenter = ({
                             onMouseEnter={e => { if (p.categoria !== 'AL_DIA') e.currentTarget.style.opacity = '0.85'; }}
                             onMouseLeave={e => { if (p.categoria !== 'AL_DIA') e.currentTarget.style.opacity = '1'; }}
                           >
-                            <DollarSign size={12} style={{ marginRight: '4px', display: 'inline' }} fill="#fff" />
+                            <DollarSign size={12} style={{ marginRight: '4px', display: 'inline' }} />
                             Cobrar
                           </button>
                         </td>
@@ -839,7 +839,7 @@ const CommandCenter = ({
             </div>
           ) : (
             <div style={{ padding: '40px', textAlign: 'center', border: `1px dashed ${t.border}`, borderRadius: '12px' }}>
-              <CheckCircle size={32} color="#22c55e" fill="#22c55e" style={{ margin: '0 0 8px 0' }} />
+              <CheckCircle size={32} color="#22c55e" style={{ margin: '0 0 8px 0' }} />
               <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
                 {filtroCategoria ? 'No hay deudores en esta categoría' : '¡Todos los deudores están al día!'}
               </p>
@@ -1047,7 +1047,7 @@ const CommandCenter = ({
                 >
                   {(() => {
                     const NotifIcon = DIALOG_ICONS[n.icono] || Bell;
-                    return <NotifIcon size={16} color={n.color} fill={n.color} />;
+                    return <NotifIcon size={16} color={n.color} />;
                   })()}
                   <p style={{ flex: 1, fontSize: '11px', fontWeight: 600, color: t.text, margin: 0, lineHeight: 1.4 }}>
                     {n.mensaje}
@@ -1159,7 +1159,7 @@ const CommandCenter = ({
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; }}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    <item.Icono size={14} color={t.accent} fill={t.accent} />
+                    <item.Icono size={14} color={t.accent} />
                     {item.label}
                   </button>
                 ))}
@@ -1195,7 +1195,7 @@ const CommandCenter = ({
         onConfirm={confirmarPago}
         titulo={`Confirmar cobro de ${modalPago.prestamo?.nombre || ''}`}
         mensaje={`¿Estás seguro de registrar el cobro de ${modalPago.prestamo?.nombre || ''} por ${modalPago.prestamo ? (parseFloat(modalPago.prestamo.capital) * (parseFloat(modalPago.prestamo.interes) / 100)).toFixed(0) : 0} Bs correspondiente a ${periodoMes}?`}
-        icono={<DollarSign size={22} color="#22c55e" fill="#22c55e" />}
+        icono={<DollarSign size={22} color="#22c55e" />}
         colorAccent="#22c55e"
         confirmText="Confirmar Cobro"
         cancelText="Cancelar"
@@ -1210,7 +1210,7 @@ const CommandCenter = ({
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
               {(() => {
                 const IconComp = DIALOG_ICONS[modalPago.prestamo.dialog?.icono] || CheckCircle;
-                return <IconComp size={14} color={modalPago.prestamo.dialog?.color || t.textDim} fill={modalPago.prestamo.dialog?.color || t.textDim} />;
+                return <IconComp size={14} color={modalPago.prestamo.dialog?.color || t.textDim} />;
               })()}
               <p style={{ fontSize: '11px', fontWeight: 600, color: modalPago.prestamo.dialog?.color || t.text, margin: 0 }}>
                 {modalPago.prestamo.dialog?.titulo}
