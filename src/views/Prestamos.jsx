@@ -753,20 +753,25 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     <User size={28} color={t.accent} />
                   )}
                 </div>
-                <div>
-                  <input 
-                    type="text" 
-                    value={activePrestamo.nombre} 
-                    onChange={e => setActivePrestamo({...activePrestamo, nombre: e.target.value})} 
-                    style={{
-                      fontSize: '1.25rem', fontWeight: 700, color: t.text,
-                      background: 'transparent', border: 'none', outline: 'none',
-                      width: '100%', letterSpacing: '-0.02em',
-                    }}
-                    placeholder="Nombre del Cliente" 
-                  />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+                    <input
+                      type="text"
+                      value={activePrestamo.nombre}
+                      onChange={e => setActivePrestamo({...activePrestamo, nombre: e.target.value})}
+                      style={{
+                        fontSize: '1.25rem', fontWeight: 700, color: t.text,
+                        background: 'transparent', border: 'none', outline: 'none',
+                        flex: 1, minWidth: 0, letterSpacing: '-0.02em',
+                      }}
+                      placeholder="Nombre del Cliente"
+                    />
+                    <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 400, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      Contrato: {new Date(activePrestamo?.inicio || activePrestamo?.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </span>
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
-                    {/* CI — ahora en primera posición (donde estaba Contrato) */}
+                    {/* CI — primera posición */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
                       <FileSignature size={12} color={t.textDim} />
                       <input type="text" value={activePrestamo?.ci || ''}
@@ -817,13 +822,6 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     >
                       <Trash2 size={14} />
                     </button>
-                  </div>
-                  {/* Fecha del contrato — movida aquí, debajo de las badges */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', padding: '6px 12px', backgroundColor: t.accentSoft, border: `1px solid ${t.accent}40`, borderRadius: '12px', width: 'fit-content' }}>
-                    <CalendarDays size={12} color={t.accent} />
-                    <span style={{ color: t.accent, fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                      📄 Contrato: {new Date(activePrestamo?.inicio || activePrestamo?.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </span>
                   </div>
                 </div>
               </div>
