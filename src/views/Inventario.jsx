@@ -1022,7 +1022,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
           { label: 'Ítems en Inventario', value: `${stats.totalCount} ref`, icon: Package, color: '#8b5cf6' },
           { label: 'Stock Crítico', value: stats.lowStock.length, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070' }
         ].map((m, i) => (
-          <div key={i} style={{ backgroundColor: '#121214', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.35)', position: 'relative', overflow: 'hidden' }}>
+          <div key={i} style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.35)', position: 'relative', overflow: 'hidden' }}>
             <div>
               <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
               <p style={{ fontSize: 20, fontWeight: 900, color: m.color, fontFamily: 'monospace', margin: '4px 0 0 0', letterSpacing: '-0.02em' }}>{m.value}</p>
@@ -1039,7 +1039,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
       <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexShrink: 0 }}>
         
         {/* Categories Pill Card */}
-        <div style={{ flex: 1, backgroundColor: '#121214', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ flex: 1, backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <Layers size={15} style={{ color: '#10b981' }} />
             <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Categorías de Activos</h4>
@@ -1090,7 +1090,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         </div>
 
         {/* Low Stock Alerts */}
-        <div style={{ flex: 1, backgroundColor: '#121214', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ flex: 1, backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
             <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Control Stock Crítico</h4>
@@ -1133,7 +1133,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
       </div>
 
       {/* FULL-WIDTH MASTER TABLE */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#121214', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 15px 40px rgba(0,0,0,0.35)' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 15px 40px rgba(0,0,0,0.35)' }}>
         
         {/* Table Header Filter search */}
         <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 12, alignItems: 'center' }}>
