@@ -130,7 +130,7 @@ const App = () => {
       if (egresosData) setData(prev => ({ ...prev, egresos: egresosData }));
 
       // NUEVO: Traer notas (conteo básico) para el CommandCenter
-      const { data: notasData } = await supabase.from('notas').select('id, titulo, created_at').eq('eliminada', false).order('updated_at', { ascending: false });
+      const { data: notasData } = await supabase.from('notas').select('id, titulo, created_at').order('created_at', { ascending: false });
       if (notasData) setData(prev => ({ ...prev, notas: notasData }));
     } catch (e) {
       console.error("Error crítico de datos:", e);
