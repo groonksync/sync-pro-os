@@ -1,10 +1,10 @@
 {
   "version": 2,
   "framework": "vite",
-  "rewrites": [
-    { "source": "/api/meta-catalog", "destination": "/api/meta-catalog.js" },
-    { "source": "/api/refresh-token", "destination": "/api/refresh-token.js" },
-    { "source": "/(.*)", "destination": "/" }
+  "routes": [
+    { "src": "/api/meta-catalog", "dest": "/api/meta-catalog.js" },
+    { "src": "/api/refresh-token", "dest": "/api/refresh-token.js" },
+    { "src": "/(.*)", "dest": "/" }
   ],
   "build": {
     "env": {
