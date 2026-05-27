@@ -1,11 +1,10 @@
 {
   "version": 2,
   "framework": "vite",
-  "routes": [
-    { "src": "/api/meta-catalog", "dest": "/api/meta-catalog.js" },
-    { "src": "/api/refresh-token", "dest": "/api/refresh-token.js" },
-    { "handle": "filesystem" },
-    { "src": "/(.*)", "dest": "/index.html" }
+  "rewrites": [
+    { "source": "/api/meta-catalog", "destination": "/api/meta-catalog.js" },
+    { "source": "/api/refresh-token", "destination": "/api/refresh-token.js" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "build": {
     "env": {
