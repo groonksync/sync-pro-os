@@ -226,8 +226,8 @@ const CommandCenter = ({
   }, 0);
 
   const listaProductos = Array.isArray(data?.productos) ? data.productos : [];
-  const valorInventario = listaProductos.reduce((acc, p) => acc + (parseFloat(p.precio) * (parseInt(p.stock) || 0)), 0);
-  const stockBajo = listaProductos.filter(p => (parseInt(p.stock) || 0) <= 5);
+  const valorInventario = listaProductos.reduce((acc, p) => acc + (parseFloat(p.precio_venta || p.precio || 0) * (parseInt(p.stock_actual || p.stock || 0) || 0)), 0);
+  const stockBajo = listaProductos.filter(p => (parseInt(p.stock_actual || p.stock || 0) || 0) <= 5);
 
   const listaRecordatorios = Array.isArray(data?.recordatorios) ? data.recordatorios : [];
   const tareasPendientes = listaRecordatorios.filter(r => r.estado === 'Pendiente').sort((a, b) => {
@@ -310,7 +310,7 @@ const CommandCenter = ({
         id: `stock-${p.id}`,
         tipo: 'stock',
         icono: 'AlertTriangle',
-        mensaje: `Stock bajo: ${p.nombre} (${p.stock} unidades)`,
+        mensaje: `Stock bajo: ${p.nombre} (${p.stock_actual || p.stock || 0} unidades)`,
         accion: 'Ir',
         color: '#f97316',
         navigateTo: 'inventario',

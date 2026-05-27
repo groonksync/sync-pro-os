@@ -47,9 +47,9 @@ export function exportStockBajoCSV(stockBajo) {
   
   const rows = stockBajo.map(p => [
     p.nombre || 'Sin nombre',
-    parseInt(p.stock || 0),
-    parseFloat(p.precio || 0).toFixed(2),
-    (parseInt(p.stock || 0) * parseFloat(p.precio || 0)).toFixed(2),
+    parseInt(p.stock_actual || p.stock || 0),
+    parseFloat(p.precio_venta || p.precio || 0).toFixed(2),
+    (parseInt(p.stock_actual || p.stock || 0) * parseFloat(p.precio_venta || p.precio || 0)).toFixed(2),
     p.categoria || 'General',
   ]);
   
