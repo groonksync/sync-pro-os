@@ -2,11 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Package, Search, X, ShoppingCart, CheckCircle, 
   Home, Music, Smartphone, LayoutGrid, Star, ChevronLeft, ChevronRight,
-  TrendingUp, Tag, Plus, Minus, Trash2, ArrowRight
+  TrendingUp, Tag, Plus, Minus, Trash2, ArrowRight, Image as ImageIcon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
-import { ProductIllustration } from '../components/ProductIllustration';
 
 const Toast = ({ message, type = 'success', show, onClose, t }) => {
   useEffect(() => {
@@ -45,6 +44,11 @@ const PublicCatalog = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [isDark, setIsDark] = useState(true);
 
+  // Detail Modal State
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [mediaTab, setMediaTab] = useState('images'); // 'images' or 'video'
+
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const WHATSAPP_NUMBER = "59169109766";
   const itemsPerPage = 6;
@@ -53,7 +57,7 @@ const PublicCatalog = () => {
 
   const fetchProducts = async () => {
     try {
-      setLoading(false);
+      setLoading(true);
       const { data, error } = await supabase.from('productos').select('*').order('created_at', { ascending: false });
       if (error) throw error;
       setProductos(data || []);
@@ -64,27 +68,43 @@ const PublicCatalog = () => {
     }
   };
 
-  // Helper formatting values
-  const getIllustrationType = (p) => p.metadata?.illustration_type || p.imagen || 'headphones';
-  const getIllustrationColor = (p) => p.metadata?.illustration_color || p.color || 'indigo';
   const getProductRating = (p) => p.metadata?.rating || 4.5;
+  const getVideoUrl = (p) => p.video_url || p.metadata?.video_url || '';
+
+  // Get Embed Link
+  const getEmbedVideoUrl = (url) => {
+    if (!url) return '';
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      return `https://www.youtube.com/embed/${match[2]}`;
+    }
+    const vimeoReg = /vimeo\.com\/(\d+)/;
+    const vimeoMatch = url.match(vimeoReg);
+    if (vimeoMatch) {
+      return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+    }
+    return url;
+  };
 
   // Filter logic
   const filteredProducts = useMemo(() => {
     let result = productos;
 
-    // Search term filter
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      result = result.filter(p => p.nombre?.toLowerCase().includes(searchLower) || p.marca?.toLowerCase().includes(searchLower));
+      result = result.filter(p => 
+        p.nombre?.toLowerCase().includes(searchLower) || 
+        p.marca?.toLowerCase().includes(searchLower) ||
+        p.sku?.toLowerCase().includes(searchLower) ||
+        p.codigo?.toLowerCase().includes(searchLower)
+      );
     }
 
-    // Category filter
     if (activeCategory !== 'Todos') {
       result = result.filter(p => p.categoria?.toLowerCase() === activeCategory.toLowerCase());
     }
 
-    // Subfilter status
     if (activeSubfilter === 'Novedades') {
       result = result.filter(p => p.metadata?.is_new === true || p.condicion === 'Nuevo');
     } else if (activeSubfilter === 'Más Vendidos') {
@@ -162,27 +182,45 @@ const PublicCatalog = () => {
     setToast({ show: true, message: 'Eliminado del carrito', type: 'success' });
   };
 
-  const handleCheckout = async () => {
+  // WhatsApp Checkout integration
+  const handleWhatsAppCheckout = async () => {
     try {
       setLoading(true);
-      // Process purchase: decrement stock in Supabase for each item
+      
+      // Dec stock
       for (const item of cart) {
         const currentStock = parseInt(item.stock_actual || 0);
         const nextStock = Math.max(0, currentStock - item.quantity);
         const nextVendido = parseInt(item.stock_vendido || 0) + item.quantity;
-
-        const { error } = await supabase
+        await supabase
           .from('productos')
           .update({ stock_actual: nextStock, stock_vendido: nextVendido })
           .eq('id', item.id);
-        
-        if (error) throw error;
       }
 
-      setToast({ show: true, message: '¡Compra simulada con éxito! Stock actualizado', type: 'success' });
+      // Generate text
+      let text = `*NUEVO PEDIDO DESDE EL CATÁLOGO SYNCPRO*\n`;
+      text += `-------------------------------------------\n`;
+      cart.forEach((item, index) => {
+        const itemSku = item.sku || item.codigo || 'N/A';
+        const itemTotal = parseFloat(item.precio_venta) * item.quantity;
+        text += `*${index + 1}. ${item.nombre}*\n`;
+        text += `   - Cantidad: ${item.quantity} ud(s)\n`;
+        text += `   - SKU/Código: ${itemSku}\n`;
+        text += `   - Precio unitario: ${parseFloat(item.precio_venta).toLocaleString()} BS.\n`;
+        text += `   - Subtotal: ${itemTotal.toLocaleString()} BS.\n\n`;
+      });
+      text += `-------------------------------------------\n`;
+      text += `*TOTAL DEL PEDIDO:* ${cartTotal.toLocaleString()} BS.\n`;
+      
+      const encodedText = encodeURIComponent(text);
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`;
+
+      setToast({ show: true, message: 'Pedido procesado. Abriendo WhatsApp...', type: 'success' });
       setCart([]);
       setIsCartOpen(false);
       await fetchProducts();
+      window.open(url, '_blank');
     } catch (e) {
       setToast({ show: true, message: 'Error al procesar la compra', type: 'error' });
       console.error(e);
@@ -193,6 +231,19 @@ const PublicCatalog = () => {
 
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
   const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.precio_venta * item.quantity), 0), [cart]);
+
+  // Product secondary media images array
+  const allImages = useMemo(() => {
+    if (!selectedProduct) return [];
+    const imgs = [];
+    if (selectedProduct.imagen) imgs.push(selectedProduct.imagen);
+    if (Array.isArray(selectedProduct.imagenes)) {
+      selectedProduct.imagenes.forEach(img => {
+        if (img && !imgs.includes(img)) imgs.push(img);
+      });
+    }
+    return imgs;
+  }, [selectedProduct]);
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: t.bg, color: t.text, fontFamily: 'Outfit, sans-serif', transition: 'background-color 0.4s' }}>
@@ -210,33 +261,19 @@ const PublicCatalog = () => {
         </div>
 
         {/* Search Input Centralized */}
-        <div style={{ position: 'relative', width: '35%', minWidth: 260 }}>
+        <div style={{ position: 'relative', width: '40%', minWidth: 260 }}>
           <Search style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={16} />
           <input 
             type="text" 
-            placeholder="Buscar en el catálogo..." 
+            placeholder="Buscar por nombre, categoría, SKU o código..." 
             value={searchTerm}
             onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
             style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 30, padding: '12px 20px 12px 42px', fontSize: 11, outline: 'none', color: t.text, transition: 'all 0.2s' }} 
           />
         </div>
 
-        {/* Controls: Pill Selector & Cart */}
+        {/* Controls: Cart Trigger (removed Tienda/Gestor pill selector) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ display: 'flex', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 30, padding: 2 }}>
-            <button 
-              style={{ padding: '8px 20px', borderRadius: 28, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', border: 'none', cursor: 'default', backgroundColor: t.accent, color: '#000' }}
-            >
-              Tienda
-            </button>
-            <button 
-              onClick={() => { window.location.hash = '#inventario'; window.location.reload(); }}
-              style={{ padding: '8px 20px', borderRadius: 28, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: t.textDim }}
-            >
-              Gestor
-            </button>
-          </div>
-
           <button 
             onClick={() => setIsCartOpen(true)}
             style={{ position: 'relative', width: 44, height: 44, borderRadius: '50%', backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.accent, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
@@ -335,9 +372,10 @@ const PublicCatalog = () => {
                   return (
                     <div 
                       key={p.id}
+                      onClick={() => { setSelectedProduct(p); setSelectedImageIndex(0); setMediaTab('images'); }}
                       style={{ 
                         backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 20, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.15)', transition: 'all 0.3s' 
+                        boxShadow: '0 10px 30px rgba(0,0,0,0.15)', transition: 'all 0.3s', cursor: 'pointer'
                       }}
                     >
                       <div>
@@ -355,9 +393,13 @@ const PublicCatalog = () => {
                           )}
                         </div>
 
-                        {/* Graphic Illustration */}
-                        <div style={{ height: 160, borderRadius: 16, backgroundColor: t.bg, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
-                          <ProductIllustration type={getIllustrationType(p)} color={getIllustrationColor(p)} />
+                        {/* Real Image container */}
+                        <div style={{ height: 180, borderRadius: 16, backgroundColor: t.bg, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
+                          {p.imagen ? (
+                            <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
+                          ) : (
+                            <ImageIcon size={32} style={{ color: t.textDim }} />
+                          )}
                         </div>
 
                         {/* Title & Star Rating */}
@@ -374,7 +416,10 @@ const PublicCatalog = () => {
                       </div>
 
                       {/* Pricing & Cart Action */}
-                      <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div 
+                        onClick={e => e.stopPropagation()} 
+                        style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                      >
                         <div>
                           {hasDiscount && (
                             <span style={{ fontSize: 8, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, display: 'block', marginBottom: -2 }}>
@@ -443,6 +488,174 @@ const PublicCatalog = () => {
         </section>
       </div>
 
+      {/* DETAIL MODAL WITH LARGE IMAGE GALLERY AND EMBEDDED VIDEOS */}
+      {selectedProduct && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 740, borderRadius: 28, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: `1px solid ${t.border}` }}>
+              <span style={{ fontSize: 8, fontWeight: 900, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Detalles del Producto</span>
+              <button 
+                onClick={() => setSelectedProduct(null)} 
+                style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim, cursor: 'pointer' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              
+              {/* Media viewer on top (fully occupying width) */}
+              <div style={{ position: 'relative', width: '100%', height: 320, backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${t.border}` }}>
+                {mediaTab === 'video' && getVideoUrl(selectedProduct) ? (
+                  <iframe 
+                    src={getEmbedVideoUrl(getVideoUrl(selectedProduct))}
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title={selectedProduct.nombre}
+                  />
+                ) : allImages.length > 0 ? (
+                  <img 
+                    src={allImages[selectedImageIndex]} 
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                    alt={selectedProduct.nombre} 
+                  />
+                ) : (
+                  <ImageIcon size={60} style={{ color: t.textDim }} />
+                )}
+
+                {/* Media tabs (Imágenes / Video) */}
+                {getVideoUrl(selectedProduct) && (
+                  <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', backgroundColor: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 2 }}>
+                    <button 
+                      onClick={() => setMediaTab('images')}
+                      style={{ padding: '6px 14px', borderRadius: 18, fontSize: 8, fontWeight: 900, border: 'none', cursor: 'pointer', backgroundColor: mediaTab === 'images' ? t.accent : 'transparent', color: mediaTab === 'images' ? '#000' : '#fff', textTransform: 'uppercase' }}
+                    >
+                      Imágenes
+                    </button>
+                    <button 
+                      onClick={() => setMediaTab('video')}
+                      style={{ padding: '6px 14px', borderRadius: 18, fontSize: 8, fontWeight: 900, border: 'none', cursor: 'pointer', backgroundColor: mediaTab === 'video' ? t.accent : 'transparent', color: mediaTab === 'video' ? '#000' : '#fff', textTransform: 'uppercase' }}
+                    >
+                      Ver Video
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Thumbnail Selector (Only shown in Images tab) */}
+              {mediaTab === 'images' && allImages.length > 1 && (
+                <div style={{ display: 'flex', gap: 10, padding: '16px 28px', overflowX: 'auto', backgroundColor: t.inputBg, borderBottom: `1px solid ${t.border}` }}>
+                  {allImages.map((img, idx) => (
+                    <button 
+                      key={idx}
+                      onClick={() => setSelectedImageIndex(idx)}
+                      style={{ 
+                        width: 54, height: 54, borderRadius: 10, border: `2px solid ${selectedImageIndex === idx ? t.accent : t.border}`, overflow: 'hidden', padding: 0, cursor: 'pointer', flexShrink: 0 
+                      }}
+                    >
+                      <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Text Description Box */}
+              <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+                
+                {/* Title & Brand */}
+                <div>
+                  <h2 style={{ fontSize: 20, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0 }}>
+                    {selectedProduct.nombre}
+                  </h2>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      Marca: {selectedProduct.marca || 'Sovereign'}
+                    </span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      SKU/Código: {selectedProduct.sku || selectedProduct.codigo || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Price Display */}
+                <div style={{ backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 18, padding: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <span style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Público</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                      <span style={{ fontSize: 24, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
+                        {parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 900, color: t.accent }}>BS.</span>
+                    </div>
+                  </div>
+                  {selectedProduct.precio_antes > selectedProduct.precio_venta && (
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: 8, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Antes</span>
+                      <p style={{ fontSize: 18, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, margin: '4px 0 0 0' }}>
+                        {parseFloat(selectedProduct.precio_antes).toLocaleString()} BS.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Info parameters */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: t.inputBg, padding: 14, borderRadius: 14, border: `1px solid ${t.border}` }}>
+                    <Star size={16} style={{ color: t.accent }} fill={t.accent} />
+                    <div>
+                      <p style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', margin: 0 }}>Garantía</p>
+                      <p style={{ fontSize: 10, fontWeight: 900, color: t.text, margin: '2px 0 0 0' }}>{selectedProduct.garantia || 'Consulte'}</p>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: t.inputBg, padding: 14, borderRadius: 14, border: `1px solid ${t.border}` }}>
+                    <Tag size={16} style={{ color: t.accent }} />
+                    <div>
+                      <p style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', margin: 0 }}>Envío / Logística</p>
+                      <p style={{ fontSize: 10, fontWeight: 900, color: t.text, margin: '2px 0 0 0' }}>{selectedProduct.tipo_envio || 'Estándar'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                {(selectedProduct.descripcion || selectedProduct.ficha_tecnica) && (
+                  <div>
+                    <h4 style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', color: t.textMuted, letterSpacing: '0.1em', marginBottom: 8 }}>Descripción del Producto</h4>
+                    <p style={{ fontSize: 11, color: t.textDim, lineHeight: '1.6', margin: 0, whiteSpace: 'pre-line' }}>
+                      {selectedProduct.descripcion || selectedProduct.ficha_tecnica}
+                    </p>
+                  </div>
+                )}
+
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div style={{ padding: '20px 28px', borderTop: `1px solid ${t.border}`, display: 'flex', gap: 12, backgroundColor: t.inputBg }}>
+              <button 
+                onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
+                style={{ flex: 1, padding: '14px', borderRadius: 14, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+              >
+                + Añadir al Carrito
+              </button>
+              <button 
+                onClick={() => {
+                  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre} (SKU: ${selectedProduct.sku || selectedProduct.codigo || 'N/A'})`, '_blank');
+                  setSelectedProduct(null);
+                }}
+                style={{ flex: 1.2, padding: '14px', borderRadius: 14, border: 'none', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+              >
+                Preguntar por WhatsApp
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* DRAWER LATERAL DEL CARRITO */}
       {isCartOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 900, display: 'flex', justifyContent: 'flex-end' }}>
@@ -482,7 +695,11 @@ const PublicCatalog = () => {
                 cart.map(item => (
                   <div key={item.id} style={{ display: 'flex', gap: 12, paddingBottom: 16, borderBottom: `1px solid ${t.border}` }}>
                     <div style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: t.bg, border: `1px solid ${t.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <ProductIllustration type={getIllustrationType(item)} color={getIllustrationColor(item)} />
+                      {item.imagen ? (
+                        <img src={item.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={item.nombre} />
+                      ) : (
+                        <ImageIcon size={20} style={{ color: t.textDim }} />
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <h4 style={{ fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em', color: t.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>{item.nombre}</h4>
@@ -532,13 +749,13 @@ const PublicCatalog = () => {
                 </div>
 
                 <button 
-                  onClick={handleCheckout}
+                  onClick={handleWhatsAppCheckout}
                   style={{ 
                     width: '100%', padding: '16px', borderRadius: 14, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: 10, fontWeight: 900, 
                     textTransform: 'uppercase', letterSpacing: '0.15em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s' 
                   }}
                 >
-                  Proceder al Pago
+                  Pedir por WhatsApp
                 </button>
               </div>
             )}

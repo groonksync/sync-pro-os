@@ -283,7 +283,13 @@ const Inventario = ({ isDark = true }) => {
         precio_costo: parseFloat(editingProduct.precio_costo) || 0,
         precio_antes: parseFloat(editingProduct.precio_antes) || 0,
         stock_actual: parseInt(editingProduct.stock_actual) || 0,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        metadata: {
+          ...(editingProduct.metadata || {}),
+          video_url: editingProduct.video_url || '',
+          sku: editingProduct.sku || '',
+          codigo: editingProduct.codigo || ''
+        }
       };
       
       const { error } = await supabase.from('productos').upsert(payload);
@@ -303,7 +309,15 @@ const Inventario = ({ isDark = true }) => {
   const handleEditProduct = (p) => {
     setEditingProduct({
       ...p,
-      metadata: p.metadata || { illustration_type: 'headphones', illustration_color: 'indigo', rating: 4.5 }
+      imagen: p.imagen || '',
+      imagenes: p.imagenes || [],
+      descripcion: p.descripcion || p.ficha_tecnica || '',
+      sku: p.sku || p.metadata?.sku || '',
+      codigo: p.codigo || p.metadata?.codigo || '',
+      garantia: p.garantia || '6 Meses',
+      tipo_envio: p.tipo_envio || 'Envío Gratuito',
+      video_url: p.video_url || p.metadata?.video_url || '',
+      metadata: p.metadata || {}
     });
     setIsModalOpen(true);
   };
@@ -321,14 +335,14 @@ const Inventario = ({ isDark = true }) => {
       stock_minimo: 5,
       stock_vendido: 0,
       codigo: '',
+      sku: '',
+      imagen: '',
+      imagenes: [],
+      descripcion: '',
       garantia: '6 Meses',
       tipo_envio: 'Envío Gratuito',
-      metadata: {
-        illustration_type: 'holder',
-        illustration_color: 'sky',
-        rating: 4.5,
-        is_new: true
-      }
+      video_url: '',
+      metadata: {}
     });
     setIsModalOpen(true);
   };
@@ -349,15 +363,44 @@ const Inventario = ({ isDark = true }) => {
     }
   };
 
-  // Helper values
-  const getIllustrationType = (p) => p.metadata?.illustration_type || p.imagen || 'headphones';
-  const getIllustrationColor = (p) => p.metadata?.illustration_color || p.color || 'indigo';
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    setLoading(true);
+    try {
+      const urls = [];
+      for (const file of files) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('productos').upload(fileName, file);
+        if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage.from('productos').getPublicUrl(fileName);
+        urls.push(publicUrl);
+      }
+      const newImages = [...(editingProduct.imagenes || []), ...urls];
+      setEditingProduct(prev => ({
+        ...prev,
+        imagenes: newImages,
+        imagen: prev.imagen || newImages[0]
+      }));
+      setToast({ show: true, message: 'Imagen Subida' });
+    } catch (err) {
+      alert('Error al subir imagen: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filters search
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return productos;
     const lower = searchTerm.toLowerCase();
-    return productos.filter(p => p.nombre?.toLowerCase().includes(lower) || p.categoria?.toLowerCase().includes(lower));
+    return productos.filter(p => 
+      p.nombre?.toLowerCase().includes(lower) || 
+      p.categoria?.toLowerCase().includes(lower) || 
+      p.sku?.toLowerCase().includes(lower) ||
+      p.codigo?.toLowerCase().includes(lower)
+    );
   }, [productos, searchTerm]);
 
   // Metrics
@@ -399,22 +442,8 @@ const Inventario = ({ isDark = true }) => {
           </p>
         </div>
 
-        {/* Navigation pill, Search & Restore/Create buttons */}
+        {/* Action buttons (removed selector pill) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <div style={{ display: 'flex', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 30, padding: 2 }}>
-            <button 
-              onClick={() => { window.location.hash = '#catalogo'; window.location.reload(); }}
-              style={{ padding: '8px 20px', borderRadius: 28, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', border: 'none', cursor: 'pointer', backgroundColor: 'transparent', color: t.textDim }}
-            >
-              Tienda
-            </button>
-            <button 
-              style={{ padding: '8px 20px', borderRadius: 28, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', border: 'none', cursor: 'default', backgroundColor: t.accent, color: '#000' }}
-            >
-              Gestor
-            </button>
-          </div>
-
           <button 
             onClick={() => setConfirmRestore(true)}
             style={{ padding: '10px 18px', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, color: t.text, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
@@ -458,7 +487,7 @@ const Inventario = ({ isDark = true }) => {
           <Search style={{ position: 'absolute', left: 36, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={16} />
           <input 
             type="text" 
-            placeholder="Buscar por nombre o categoría..." 
+            placeholder="Buscar por nombre, categoría, SKU o código..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 20px 12px 42px', fontSize: 11, outline: 'none', color: t.text }}
@@ -470,7 +499,7 @@ const Inventario = ({ isDark = true }) => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.inputBg }}>
-                {['ID', 'Producto', 'Categoría', 'Precio Venta', 'Stock', 'Acciones'].map((th, idx) => (
+                {['Código / SKU', 'Producto', 'Categoría', 'Precio Venta', 'Stock', 'Acciones'].map((th, idx) => (
                   <th key={idx} style={{ padding: '14px 24px', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: t.textMuted }}>{th}</th>
                 ))}
               </tr>
@@ -484,12 +513,18 @@ const Inventario = ({ isDark = true }) => {
 
                 return (
                   <tr key={p.id} style={{ borderBottom: `1px solid ${t.border}`, transition: 'background-color 0.2s' }}>
-                    <td style={{ padding: '16px 24px', fontSize: 10, fontFamily: 'monospace', color: t.textMuted }}>{p.id ? p.id.substring(0, 8) : 'N/A'}</td>
+                    <td style={{ padding: '16px 24px', fontSize: 10, fontFamily: 'monospace', color: t.textMuted }}>
+                      {p.sku || p.codigo || (p.id ? p.id.substring(0, 8) : 'N/A')}
+                    </td>
                     <td style={{ padding: '16px 24px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                         {/* Huge Product Image container w-24 h-24 */}
                         <div style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <ProductIllustration type={getIllustrationType(p)} color={getIllustrationColor(p)} />
+                          {p.imagen ? (
+                            <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
+                          ) : (
+                            <ImageIcon size={28} style={{ color: t.textDim }} />
+                          )}
                         </div>
                         <div>
                           <span style={{ fontSize: 13, fontWeight: 900, color: t.text, display: 'block', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>{p.nombre}</span>
@@ -535,7 +570,7 @@ const Inventario = ({ isDark = true }) => {
       {/* FORM MODAL (CREATION AND EDITION) */}
       {isModalOpen && editingProduct && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 800, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(24px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 720, borderRadius: 24, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 780, borderRadius: 24, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', borderBottom: `1px solid ${t.border}` }}>
               <h3 style={{ fontSize: 16, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
@@ -548,6 +583,7 @@ const Inventario = ({ isDark = true }) => {
 
             {/* Scrollable Form Body */}
             <div style={{ padding: '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+              
               {/* Field: Nombre */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Nombre del Artículo</label>
@@ -557,6 +593,30 @@ const Inventario = ({ isDark = true }) => {
                   onChange={e => setEditingProduct({ ...editingProduct, nombre: e.target.value })}
                   style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
                 />
+              </div>
+
+              {/* Grid: SKU & Codigo */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>SKU Interno</label>
+                  <input 
+                    type="text" 
+                    value={editingProduct.sku} 
+                    onChange={e => setEditingProduct({ ...editingProduct, sku: e.target.value })}
+                    placeholder="Ej: SAKTI-STAND-01"
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Código de barras</label>
+                  <input 
+                    type="text" 
+                    value={editingProduct.codigo} 
+                    onChange={e => setEditingProduct({ ...editingProduct, codigo: e.target.value })}
+                    placeholder="Ej: 779123456789"
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
+                  />
+                </div>
               </div>
 
               {/* Grid: Categoria & Marca */}
@@ -615,7 +675,7 @@ const Inventario = ({ isDark = true }) => {
                 </div>
               </div>
 
-              {/* Grid: Stock & Illustration configurations */}
+              {/* Grid: Stock, Garantia & Envio */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Stock Disponible</label>
@@ -627,44 +687,80 @@ const Inventario = ({ isDark = true }) => {
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Tipo Ilustración SVG</label>
-                  <select 
-                    value={editingProduct.metadata?.illustration_type || 'headphones'} 
-                    onChange={e => setEditingProduct({ 
-                      ...editingProduct, 
-                      metadata: { ...(editingProduct.metadata || {}), illustration_type: e.target.value } 
-                    })}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 11, outline: 'none', color: t.text }}
-                  >
-                    <option value="holder">Soporte Celular</option>
-                    <option value="headphones">Auriculares</option>
-                    <option value="cleaner">Robot Aspirador</option>
-                    <option value="camera">Cámara Inteligente</option>
-                    <option value="speaker">Cilindro Altavoz</option>
-                    <option value="earbuds">Estuche Audífonos</option>
-                    <option value="piano">Piano de Cola</option>
-                  </select>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Garantía</label>
+                  <input 
+                    type="text" 
+                    value={editingProduct.garantia} 
+                    onChange={e => setEditingProduct({ ...editingProduct, garantia: e.target.value })}
+                    placeholder="Ej: 6 Meses"
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
+                  />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Paleta Gradiente</label>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Logística / Envío</label>
                   <select 
-                    value={editingProduct.metadata?.illustration_color || 'indigo'} 
-                    onChange={e => setEditingProduct({ 
-                      ...editingProduct, 
-                      metadata: { ...(editingProduct.metadata || {}), illustration_color: e.target.value } 
-                    })}
+                    value={editingProduct.tipo_envio} 
+                    onChange={e => setEditingProduct({ ...editingProduct, tipo_envio: e.target.value })}
                     style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 11, outline: 'none', color: t.text }}
                   >
-                    <option value="sky">Celeste (Sky)</option>
-                    <option value="indigo">Índigo (Indigo)</option>
-                    <option value="amber">Ámbar (Amber)</option>
-                    <option value="rose">Rosa (Rose)</option>
-                    <option value="emerald">Esmeralda (Emerald)</option>
-                    <option value="slate">Pizarra (Slate)</option>
-                    <option value="violet">Violeta (Violet)</option>
+                    <option value="Envío Gratuito">Envío Gratuito</option>
+                    <option value="Costo Adicional">Costo Adicional</option>
                   </select>
                 </div>
               </div>
+
+              {/* URL de Imagen Principal & Uploader */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Imagen Principal (URL)</label>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <input 
+                    type="text" 
+                    value={editingProduct.imagen} 
+                    onChange={e => setEditingProduct({ ...editingProduct, imagen: e.target.value })}
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                    style={{ flex: 1, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
+                  />
+                  <label style={{ padding: '12px 20px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                    <input type="file" style={{ display: 'none' }} accept="image/*" onChange={handleImageUpload} />
+                    Subir Archivo
+                  </label>
+                </div>
+              </div>
+
+              {/* URLs de Imágenes Secundarias */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Imágenes adicionales (Una URL por línea)</label>
+                <textarea 
+                  value={Array.isArray(editingProduct.imagenes) ? editingProduct.imagenes.join('\n') : ''} 
+                  onChange={e => setEditingProduct({ ...editingProduct, imagenes: e.target.value.split('\n').filter(line => line.trim() !== '') })}
+                  placeholder="https://ejemplo.com/imagen2.jpg&#10;https://ejemplo.com/imagen3.jpg"
+                  style={{ width: '100%', height: 80, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text, fontFamily: 'monospace', resize: 'vertical' }} 
+                />
+              </div>
+
+              {/* URL de Video */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>URL de Video (YouTube/Vimeo/Directo)</label>
+                <input 
+                  type="text" 
+                  value={editingProduct.video_url} 
+                  onChange={e => setEditingProduct({ ...editingProduct, video_url: e.target.value })}
+                  placeholder="Ej: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
+                />
+              </div>
+
+              {/* Descripción */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Descripción del Producto</label>
+                <textarea 
+                  value={editingProduct.descripcion} 
+                  onChange={e => setEditingProduct({ ...editingProduct, descripcion: e.target.value })}
+                  placeholder="Escribe la descripción del artículo..."
+                  style={{ width: '100%', height: 100, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text, resize: 'vertical' }} 
+                />
+              </div>
+
             </div>
 
             {/* Actions */}
