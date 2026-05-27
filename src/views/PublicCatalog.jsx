@@ -105,35 +105,6 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
         boxShadow: '0 2px 12px rgba(0,0,0,0.3)', transition: 'all 0.3s', cursor: 'pointer', position: 'relative', overflow: 'hidden'
       }}
     >
-      {isAgotado && (
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10,
-          borderRadius: 20
-        }}>
-          <span style={{
-            backgroundColor: '#ef4444',
-            color: '#ffffff',
-            fontSize: 10,
-            fontWeight: 900,
-            padding: '8px 18px',
-            borderRadius: 30,
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)'
-          }}>
-            Agotado
-          </span>
-        </div>
-      )}
-
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <span style={{ fontSize: 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.inputBg, color: t.textMuted, padding: '4px 10px', borderRadius: 20 }}>
@@ -148,14 +119,42 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
           )}
         </div>
 
+        {/* Image container — AGOTADO overlay lives ONLY here */}
         <div style={{ height: 250, borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
+          {isAgotado && (
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 6,
+              borderRadius: 16
+            }}>
+              <span style={{
+                backgroundColor: '#ef4444',
+                color: '#ffffff',
+                fontSize: 11,
+                fontWeight: 900,
+                padding: '9px 22px',
+                borderRadius: 30,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.5)'
+              }}>AGOTADO</span>
+            </div>
+          )}
+
           {cardImages.length > 0 ? (
             <img src={cardImages[activeImageIndex]} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 12 }} alt={p.nombre} />
           ) : (
             <ImageIcon size={32} style={{ color: t.textDim }} />
           )}
 
-          {cardImages.length > 1 && (
+          {!isAgotado && cardImages.length > 1 && (
             <>
               <button
                 onClick={handlePrevImage}
@@ -182,7 +181,7 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
             </>
           )}
 
-          {cardImages.length > 1 && (
+          {!isAgotado && cardImages.length > 1 && (
             <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 5 }}>
               {cardImages.map((_, idx) => (
                 <span
@@ -199,6 +198,7 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
             </div>
           )}
         </div>
+      </div>
 
         <h3 style={{ 
           fontSize: 13, 
@@ -441,27 +441,44 @@ const PublicCatalog = () => {
 
   // WhatsApp Checkout integration
   const checkoutMessage = useMemo(() => {
-    let text = `*NUEVO PEDIDO DESDE EL CATÁLOGO SYNCPRO*\n`;
-    text += `-------------------------------------------\n`;
+    const now = new Date();
+    const fecha = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+    const hora = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const pedidoId = `#SP-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    let text = `🛒 *NUEVO PEDIDO — SYNCPRO CATALOG*\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `🔖 *Pedido:* ${pedidoId}\n`;
+    text += `📅 *Fecha:* ${fecha} — ${hora}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     if (clientName.trim()) {
-      text += `*Cliente:* ${clientName.trim()}\n`;
+      text += `👤 *Cliente:* ${clientName.trim()}\n`;
     }
     if (clientAddress.trim()) {
-      text += `*Dirección:* ${clientAddress.trim()}\n`;
+      text += `📍 *Dirección de entrega:* ${clientAddress.trim()}\n`;
     }
-    text += `*Método de Pago:* ${paymentMethod}\n`;
-    text += `-------------------------------------------\n`;
+    text += `💳 *Método de Pago:* ${paymentMethod}\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `📦 *DETALLE DE PRODUCTOS (${cart.length} ítem${cart.length !== 1 ? 's' : ''})*\n\n`;
     cart.forEach((item, index) => {
-      const itemSku = item.sku || item.codigo || 'N/A';
+      const itemSku = item.sku || item.codigo || 'S/C';
       const itemTotal = parseFloat(item.precio_venta) * item.quantity;
-      text += `*${index + 1}. ${item.nombre}*\n`;
-      text += `   - Cantidad: ${item.quantity} ud(s)\n`;
-      text += `   - SKU/Código: ${itemSku}\n`;
-      text += `   - Precio unitario: ${parseFloat(item.precio_venta).toLocaleString()} BS.\n`;
-      text += `   - Subtotal: ${itemTotal.toLocaleString()} BS.\n\n`;
+      const categoria = item.categoria || 'General';
+      text += `*${index + 1}.* 🏷️ *${String(item.nombre).toUpperCase()}*\n`;
+      text += `   📂 Categoría: ${categoria}\n`;
+      text += `   🔢 Código/SKU: \`${itemSku}\`\n`;
+      text += `   📦 Cantidad: *${item.quantity}* ud(s)\n`;
+      text += `   💰 Precio unitario: *${parseFloat(item.precio_venta).toLocaleString()} BS.*\n`;
+      text += `   🧾 Subtotal: *${itemTotal.toLocaleString()} BS.*\n`;
+      if (item.imagenes && item.imagenes[0]) {
+        text += `   🖼️ Ver producto: ${item.imagenes[0]}\n`;
+      }
+      text += `\n`;
     });
-    text += `-------------------------------------------\n`;
-    text += `*TOTAL DEL PEDIDO:* ${cartTotal.toLocaleString()} BS.\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `💵 *TOTAL DEL PEDIDO: ${cartTotal.toLocaleString()} BS.*\n`;
+    text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+    text += `_Pedido generado automáticamente desde SyncPro Catalog_`;
     return text;
   }, [cart, cartTotal, clientName, clientAddress, paymentMethod]);
 
@@ -696,20 +713,32 @@ const PublicCatalog = () => {
                   <ImageIcon size={60} style={{ color: t.textDim }} />
                 )}
 
-                {/* Media tabs (Imágenes / Video) */}
+                {/* Media tabs (Imágenes / Video) — clean toggle pill */}
                 {getVideoUrl(selectedProduct) && (
-                  <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', backgroundColor: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: 2 }}>
+                  <div style={{ position: 'absolute', top: 14, left: 14, display: 'flex', backgroundColor: 'rgba(0,0,0,0.65)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 24, padding: 3, gap: 2 }}>
                     <button 
                       onClick={() => setMediaTab('images')}
-                      style={{ padding: '6px 14px', borderRadius: 18, fontSize: 8, fontWeight: 900, border: 'none', cursor: 'pointer', backgroundColor: mediaTab === 'images' ? t.accent : 'transparent', color: mediaTab === 'images' ? '#000' : '#fff', textTransform: 'uppercase' }}
+                      style={{
+                        padding: '6px 16px', borderRadius: 20, fontSize: 9, fontWeight: 900, border: 'none', cursor: 'pointer',
+                        backgroundColor: mediaTab === 'images' ? '#fff' : 'transparent',
+                        color: mediaTab === 'images' ? '#000' : 'rgba(255,255,255,0.7)',
+                        textTransform: 'uppercase', letterSpacing: '0.08em', transition: 'all 0.2s',
+                        display: 'flex', alignItems: 'center', gap: 5
+                      }}
                     >
-                      Imágenes
+                      📷 Imágenes
                     </button>
                     <button 
                       onClick={() => setMediaTab('video')}
-                      style={{ padding: '6px 14px', borderRadius: 18, fontSize: 8, fontWeight: 900, border: 'none', cursor: 'pointer', backgroundColor: mediaTab === 'video' ? t.accent : 'transparent', color: mediaTab === 'video' ? '#000' : '#fff', textTransform: 'uppercase' }}
+                      style={{
+                        padding: '6px 16px', borderRadius: 20, fontSize: 9, fontWeight: 900, border: 'none', cursor: 'pointer',
+                        backgroundColor: mediaTab === 'video' ? t.accent : 'transparent',
+                        color: mediaTab === 'video' ? '#000' : 'rgba(255,255,255,0.7)',
+                        textTransform: 'uppercase', letterSpacing: '0.08em', transition: 'all 0.2s',
+                        display: 'flex', alignItems: 'center', gap: 5
+                      }}
                     >
-                      Ver Video
+                      ▶ Ver Video
                     </button>
                   </div>
                 )}
