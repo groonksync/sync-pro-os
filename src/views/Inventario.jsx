@@ -4,11 +4,12 @@ import {
   Truck, Tag, Box as BoxIcon, Layout, CheckCircle, ChevronLeft, ChevronRight,
   Briefcase, ShoppingBag, DollarSign, Hash, MapPin, ShieldCheck, FileText, Info, Zap, ShoppingCart,
   Layers, Ruler, Weight, Globe, Star, AlertTriangle, List, ArrowUpRight, ArrowLeft, ArrowRight,
-  Barcode, Shield, ZapOff, Activity, Palette, ClipboardList, RotateCcw, Search
+  Barcode, Shield, ZapOff, Activity, Palette, ClipboardList, RotateCcw, Search, TrendingUp, AlertOctagon, Video, Download
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
-import { ProductIllustration } from '../components/ProductIllustration';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 const Toast = ({ message, show, onClose, isDark, t }) => {
   useEffect(() => {
@@ -16,10 +17,10 @@ const Toast = ({ message, show, onClose, isDark, t }) => {
   }, [show, onClose]);
   if (!show) return null;
   return (
-    <div style={{ position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)', zIndex: 600 }}>
-      <div style={{ backgroundColor: isDark ? 'rgba(20,20,20,0.85)' : 'rgba(245,245,247,0.95)', backdropFilter: 'blur(24px)', border: `1px solid ${t.border}`, padding: '12px 24px', borderRadius: 12, boxShadow: '0 20px 60px rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', gap: 12, minWidth: 240, justifyContent: 'center' }}>
-        <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: t.accentSoft, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.accent }}><CheckCircle size={16} /></div>
-        <span style={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.4em' }}>{message}</span>
+    <div style={{ position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}>
+      <div style={{ backgroundColor: isDark ? 'rgba(20,20,20,0.95)' : 'rgba(245,245,247,0.98)', backdropFilter: 'blur(24px)', border: `1px solid ${t.border}`, padding: '14px 28px', borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', gap: 12, minWidth: 280, justifyContent: 'center' }}>
+        <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}><CheckCircle size={16} /></div>
+        <span style={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>{message}</span>
       </div>
     </div>
   );
@@ -28,13 +29,13 @@ const Toast = ({ message, show, onClose, isDark, t }) => {
 const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, t }) => {
   if (!isOpen) return null;
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}>
-      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, padding: 24, borderRadius: 20, maxWidth: 400, width: '90%', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
-        <h4 style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '-0.02em', margin: '0 0 12px 0' }}>{title}</h4>
-        <p style={{ fontSize: 11, color: t.textMuted, lineHeight: '1.6', margin: '0 0 24px 0' }}>{message}</p>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}>
+      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, padding: 28, borderRadius: 24, maxWidth: 420, width: '90%', boxShadow: '0 25px 70px rgba(0,0,0,0.5)', animation: 'scaleIn 0.3s ease-out' }}>
+        <h4 style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '0.05em', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={18} color="#ef4444" /> {title}</h4>
+        <p style={{ fontSize: 12, color: t.textMuted, lineHeight: '1.6', margin: '0 0 28px 0' }}>{message}</p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-          <button onClick={onCancel} style={{ padding: '8px 16px', borderRadius: 10, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.textDim, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer' }}>Cancelar</button>
-          <button onClick={onConfirm} style={{ padding: '8px 16px', borderRadius: 10, border: 'none', backgroundColor: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer' }}>Confirmar</button>
+          <button onClick={onCancel} style={{ padding: '10px 20px', borderRadius: 12, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.textDim, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s' }}>Cancelar</button>
+          <button onClick={onConfirm} style={{ padding: '10px 20px', borderRadius: 12, border: 'none', backgroundColor: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)' }}>Confirmar</button>
         </div>
       </div>
     </div>
@@ -43,193 +44,547 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, t }) => {
 
 const DEFAULT_PRODUCTS = [
   {
-    nombre: "Soporte Sakti",
-    categoria: "Celular",
-    marca: "Sakti",
-    precio_venta: 150,
-    precio_costo: 90,
-    precio_antes: 200,
-    stock_actual: 12,
-    stock_minimo: 5,
-    stock_vendido: 0,
-    codigo: "STAND-SAKTI",
-    garantia: "6 Meses",
-    tipo_envio: "Envío Gratuito",
-    metadata: {
-      illustration_type: "holder",
-      illustration_color: "sky",
-      rating: 4.8,
-      is_new: true
-    }
+    "nombre": "POWER BANK 10,000mAh NEGRO/GRIS",
+    "categoria": "Accesorios",
+    "precio_costo": 99,
+    "precio_venta": 155,
+    "precio_antes": 200,
+    "stock_actual": 18,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "POWER BANK 10,000mAh NEGRO/GRIS*180g COMPACTO Y LIGERO*CARGA RAPIDA*2 PUERTOS 1X USB-A, 1x USB-C*MATERIAL PC+ABS\n",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777692539470-5t048.webp",
+    "codigo": "GF0647",
+    "sku": "GF0647",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777692521532-cmenx.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777692531562-3qxjo.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777692539470-5t048.webp"
+    ],
+    "marca": "HAVIT",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
   },
   {
-    nombre: "Auriculares Max",
-    categoria: "Música",
-    marca: "Sovereign",
-    precio_venta: 790,
-    precio_costo: 450,
-    precio_antes: 990,
-    stock_actual: 8,
-    stock_minimo: 5,
-    stock_vendido: 0,
-    codigo: "HEAD-MAX",
-    garantia: "1 Año",
-    tipo_envio: "Envío Gratuito",
-    metadata: {
-      illustration_type: "headphones",
-      illustration_color: "indigo",
-      rating: 4.9,
-      is_bestseller: true
-    }
+    "nombre": "AUDIFONOS INALAMBRICOS CONFORT NEGRO",
+    "categoria": "Audio y Sonido",
+    "precio_costo": 142,
+    "precio_venta": 230,
+    "precio_antes": 0,
+    "stock_actual": 12,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "AUDIFONOS INALAMBRICOS CONFORT NEGRO* PESO 2,083gr*DISEO ERGONOMICO CONFORT IN-EAR*CASE CON DISPLAY PARA VER EL NIVEL DE BATERIA*BT V5,4*DISEOÑ COMPACTO\n",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738066951-q83gf.webp",
+    "codigo": "AIRBUDS 9-BK",
+    "sku": "AIRBUDS 9-BK",
+    "garantia": "180 Días",
+    "tipo_envio": "Envío Gratuito",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738066951-q83gf.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689299635-bbapj.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689314364-m04w8.webp"
+    ],
+    "marca": "HAVIT",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
   },
   {
-    nombre: "Aspiradora Adudu",
-    categoria: "Hogar",
-    marca: "Adudu",
-    precio_venta: 1200,
-    precio_costo: 800,
-    precio_antes: 1500,
-    stock_actual: 4,
-    stock_minimo: 5,
-    stock_vendido: 0,
-    codigo: "ROBOT-ADUDU",
-    garantia: "2 Años",
-    tipo_envio: "Envío Gratuito",
-    metadata: {
-      illustration_type: "cleaner",
-      illustration_color: "amber",
-      rating: 4.5,
-      is_discounted: true
-    }
+    "nombre": "EXTENSION DE PANTALLA PARA LAPTOP",
+    "categoria": "Computadoras",
+    "precio_costo": 1193,
+    "precio_venta": 1400,
+    "precio_antes": 0,
+    "stock_actual": 6,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "EXTENSION DE PANTALLA PARA LAPTOP*PANTALLA 14\" IPS FHD 1080P* 60Hz*COMPATIBLE PD 3.0 20V/5A*COMPATIBLE CON WIN/MAC/ANDROID/LINUX/CHROMEOS*DISEÑO PREMIUM*ALTAVOZ\n",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777690191316-n16ju.webp",
+    "codigo": "SCM6",
+    "sku": "SCM6",
+    "garantia": "180 Días",
+    "tipo_envio": "Envío Gratuito",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777690186172-tbv7x.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777690191316-n16ju.webp"
+    ],
+    "marca": "Sovereign",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
   },
   {
-    nombre: "Cámara Sentinel",
-    categoria: "Hogar",
-    marca: "Sovereign",
-    precio_venta: 350,
-    precio_costo: 200,
-    precio_antes: 450,
-    stock_actual: 15,
-    stock_minimo: 5,
-    stock_vendido: 0,
-    codigo: "CAM-SENTINEL",
-    garantia: "1 Año",
-    tipo_envio: "Envío Gratuito",
-    metadata: {
-      illustration_type: "camera",
-      illustration_color: "rose",
-      rating: 4.7,
-      is_new: true
-    }
+    "nombre": "MICROFONO INALAMBRICO TODO EN UNO BOYA",
+    "categoria": "Audio y Sonido",
+    "precio_costo": 2273,
+    "precio_venta": 2550,
+    "precio_antes": 2600,
+    "stock_actual": 8,
+    "stock_minimo": 2,
+    "stock_vendido": 0,
+    "ficha_tecnica": "MICROFONO INALAMBRICO TODO EN UNO*TRUE AI*PARA USO PROFESIONAL*FULL KIT\n",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777737243332-143mi.webp",
+    "codigo": "BOYAMIC 2-01",
+    "sku": "GV0027",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777737243332-143mi.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777737238297-kzxvz.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777737338736-6erzd.webp"
+    ],
+    "marca": "BOYA",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
   },
   {
-    nombre: "Altavoz Aura",
-    categoria: "Música",
-    marca: "Sovereign",
-    precio_venta: 290,
-    precio_costo: 180,
-    precio_antes: 350,
-    stock_actual: 0,
-    stock_minimo: 5,
-    stock_vendido: 0,
-    codigo: "SPK-AURA",
-    garantia: "6 Meses",
-    tipo_envio: "Envío Gratuito",
-    metadata: {
-      illustration_type: "speaker",
-      illustration_color: "emerald",
-      rating: 4.6
-    }
+    "nombre": "AURICULARES INALAMBRICOS ESTEREO NEGRO",
+    "categoria": "Audio y Sonido",
+    "precio_costo": 123,
+    "precio_venta": 200,
+    "precio_antes": 250,
+    "stock_actual": 33,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "AURICULARES INALAMBRICOS ESTEREO NEGRO*TAMAÑO COMPACTO*CONTROL TACTIL*LLAMADAS NITIDAS*GRAVES POTENTES*BT 5.3*PUERTO TIPO-C*5HR BATERIA",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777688997328-e4iyh.webp",
+    "codigo": "GF0563",
+    "sku": "GF0563",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777688739198-qfsbk.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777688742733-6iaes.webp"
+    ],
+    "marca": "HAVIT",
+    "color": "NEGRO",
+    "condicion": "Nuevo",
+    "metadata": {}
   },
   {
-    nombre: "Estuche Pods Pro",
-    categoria: "Celular",
-    marca: "Sovereign",
-    precio_venta: 450,
-    precio_costo: 280,
-    precio_antes: 550,
-    stock_actual: 20,
-    stock_minimo: 5,
-    stock_vendido: 0,
-    codigo: "EAR-PODS",
-    garantia: "1 Año",
-    tipo_envio: "Envío Gratuito",
-    metadata: {
-      illustration_type: "earbuds",
-      illustration_color: "violet",
-      rating: 4.8,
-      is_bestseller: true
-    }
+    "nombre": "MICROFONO INALAMBRICO TODO EN UNO",
+    "categoria": "Audio y Sonido",
+    "precio_costo": 1518,
+    "precio_venta": 1800,
+    "precio_antes": 2100,
+    "stock_actual": 12,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "MICROFONO INALAMBRICO TODO EN UNO*BOTON DE GRABACION (REC) INTEGRADO*ALCANCE 300MTS*CONTROL DE CANCELACION DE RUIDO 48kHz/ 24bit HD*8GB DE MEMORIA INTERNA*\n",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777694339200-p6yj0.webp",
+    "codigo": "BOYAMIC",
+    "sku": "GV0010",
+    "garantia": "180 Días",
+    "tipo_envio": "Envío Gratuito",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777694339200-p6yj0.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777694345485-a6g8r.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777694358281-7xb0z.webp"
+    ],
+    "marca": "BOYA",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
   },
   {
-    nombre: "Piano Steinway",
-    categoria: "Música",
-    marca: "Steinway",
-    precio_venta: 18500,
-    precio_costo: 12000,
-    precio_antes: 22000,
-    stock_actual: 2,
-    stock_minimo: 2,
-    stock_vendido: 0,
-    codigo: "PIANO-STEIN",
-    garantia: "5 Años",
-    tipo_envio: "Costo Adicional",
-    metadata: {
-      illustration_type: "piano",
-      illustration_color: "slate",
-      rating: 5.0,
-      is_new: true
-    }
+    "nombre": "CAMARA IP WIFI 5X5MP DOBLE LENTE TIPO PT",
+    "categoria": "Cámaras y Fotografía",
+    "precio_costo": 695,
+    "precio_venta": 780,
+    "precio_antes": 820,
+    "stock_actual": 12,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "CAMARA IP WIFI 5X5MP DOBLE LENTE TIPO PT **DETECCIÓN DUAL *CONTROL DE RONDA *SIRENA Y LUZ DE ALARMA *DETEC. PERSONAS Y VEHICULOS IA *IP66 *MICRO SD HASTA 256GB",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518465961-6a7x5.webp",
+    "codigo": "IPC-P5DP-5F-PV-0280B/0600",
+    "sku": "EA0849",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518465961-6a7x5.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518469333-7ukjd.webp"
+    ],
+    "marca": "DAHUA TECHNOLOGY",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
   },
   {
-    nombre: "Soporte Nimbus",
-    categoria: "Celular",
-    marca: "Nimbus",
-    precio_venta: 180,
-    precio_costo: 110,
-    precio_antes: 240,
-    stock_actual: 10,
-    stock_minimo: 5,
-    stock_vendido: 0,
-    codigo: "STAND-NIMBUS",
-    garantia: "6 Meses",
-    tipo_envio: "Envío Gratuito",
-    metadata: {
-      illustration_type: "holder",
-      illustration_color: "violet",
-      rating: 4.4,
-      is_discounted: true
-    }
+    "nombre": "MICROFONO INALAMBRICO MINI",
+    "categoria": "Audio y Sonido",
+    "precio_costo": 285,
+    "precio_venta": 340,
+    "precio_antes": 370,
+    "stock_actual": 1,
+    "stock_minimo": 2,
+    "stock_vendido": 0,
+    "ficha_tecnica": "MICROFONO INALAMBRICO MINI*ULTRACOMPACTO Y PORTATIL*48KHz/16bits*CANCELACION DE RUIDO CON IA DE 4 NIVELES*30Hr DE BATERIA*TRANSMISION 100MT*FILTROS DE VOZ IA\n",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738496425-vhk57.webp",
+    "codigo": "WAVE T1 MINI",
+    "sku": "WAVE T1 MINI",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738496425-vhk57.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738505470-6ang9.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738513868-i6eu9.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738520729-kwxdb.webp"
+    ],
+    "marca": "MAONO",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
   },
   {
-    nombre: "Auriculares Beat",
-    categoria: "Música",
-    marca: "Beat",
-    precio_venta: 580,
-    precio_costo: 350,
-    precio_antes: 690,
-    stock_actual: 3,
-    stock_minimo: 5,
-    stock_vendido: 0,
-    codigo: "HEAD-BEAT",
-    garantia: "1 Año",
-    tipo_envio: "Envío Gratuito",
-    metadata: {
-      illustration_type: "headphones",
-      illustration_color: "rose",
-      rating: 4.7,
-      is_discounted: true
-    }
+    "nombre": "CÁMARA PT WIFI 4MP TIPO FOCO",
+    "categoria": "Cámaras y Fotografía",
+    "precio_costo": 245,
+    "precio_venta": 300,
+    "precio_antes": 340,
+    "stock_actual": 4,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "CÁMARA PT WIFI 4MP TIPO FOCO *DETEC. PERSONAS *DETEC. MOVIMIENTO *AUDIO BIDIRECCIONAL *DIT. IR 8-10M *WIFI 2.4GHz *RANURA MICRO SD MAX 256GB *MATERIAL PLASTICO",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778519157314-md024.webp",
+    "codigo": "G120",
+    "sku": "G120",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778519157314-md024.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778519163140-424q9.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778519171164-mg8ng.webp"
+    ],
+    "marca": "DIMAX",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "CAMARA CRUISER DUAL 2 IP WIFI 3+5MP",
+    "categoria": "Cámaras y Fotografía",
+    "precio_costo": 719,
+    "precio_venta": 810,
+    "precio_antes": 850,
+    "stock_actual": 4,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "CAMARA CRUISER DUAL 2 IP WIFI 3+5MP *TIPO PT *LENTE FIJO 3MP, LENTE PT 5MP *LUCES DISUASIVAS ROJO/AZUL *SIRENA INTEGRADA *FULL COLOR *AUDIO BIDIRECCIONAL",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518786231-n8bwv.webp",
+    "codigo": "IPC-S7XEN-8M0WED-0360B",
+    "sku": "ED0055",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518786231-n8bwv.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518796638-mk8wr.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518803815-0t502.webp"
+    ],
+    "marca": "IMOU",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "AURICULARES INALAMBRICOS DE OIDO ABIERTO",
+    "categoria": "Audio y Sonido",
+    "precio_costo": 142,
+    "precio_venta": 250,
+    "precio_antes": 280,
+    "stock_actual": 46,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "AURICULARES INALAMBRICOS DE OIDO ABIERTO*CANCELACION DE RUIDO*RESISTENCIA IPX5*BT V5.4*PUERTO USB-C\n",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689521868-z4295.webp",
+    "codigo": "OWS916 LITE-BK",
+    "sku": "GF0617",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689521868-z4295.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689530295-wgl5g.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689535371-zrj8w.webp"
+    ],
+    "marca": "HAVIT",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "CÁMARA IP WIFI CRUISER SC 3MP *TIPO PT",
+    "categoria": "Cámaras y Fotografía",
+    "precio_costo": 429,
+    "precio_venta": 510,
+    "precio_antes": 540,
+    "stock_actual": 95,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "CÁMARA IP WIFI CRUISER SC 3MP *TIPO PT *FULL COLOR *RASTERO INTELIGENTE *AUDIO BIDIRECCIONAL *1 PUERTO RJ45 *MICRO SD HASTA 512GB *PARA EXTERIORES *DISUASIVA",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518931626-0cin7.webp",
+    "codigo": "IPC-K7FN-3H0WE-imou",
+    "sku": "ED0068",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518931626-0cin7.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518986261-ovd5y.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518993227-8zd5b.webp"
+    ],
+    "marca": "IMOU",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "CAMARA IP WIFI 3X3MP DOBLE LENTE TIPO PT",
+    "categoria": "Cámaras y Fotografía",
+    "precio_costo": 695,
+    "precio_venta": 850,
+    "precio_antes": 900,
+    "stock_actual": 4,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "CAMARA IP WIFI 3X3 MP DOBLE LENTE TIPO PT *DETECCIÓN DUAL *CONTROL DE RONDA *SIRENA Y LUZ DE ALARMA *DETEC. PERSONAS Y VEHICULOS IA *IP66 *MICRO SD HASTA 256GB",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518105959-rnq57.webp",
+    "codigo": "EA0847",
+    "sku": "EA0847",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518105959-rnq57.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518110310-vzwwh.webp"
+    ],
+    "marca": "DAHUA TECHNOLOGY",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "CÁMARA WIFI 4MP C/ PANEL SOLAR Y BATERIA",
+    "categoria": "Cámaras y Fotografía",
+    "precio_costo": 755,
+    "precio_venta": 850,
+    "precio_antes": 900,
+    "stock_actual": 4,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "CÁMARA PT WIFI 4MP C/ PANEL SOLAR Y BATERIA *FUL COLOR *SENSOR PIR *AUDIO BIDIRECCIONAL *VISION NOCTURA HASTA 15M *IP65 *MICRO SD MAX 256GB",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522784817-dh027.webp",
+    "codigo": "G119",
+    "sku": "G119",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522784817-dh027.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522791831-atwca.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522800707-b54bx.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522806050-rzcuw.webp"
+    ],
+    "marca": "DIMAX",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "CAMARA IP WIFI CRUISER SC+ 5MP",
+    "categoria": "Cámaras y Fotografía",
+    "precio_costo": 485,
+    "precio_venta": 580,
+    "precio_antes": 620,
+    "stock_actual": 56,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "CAMARA IP WIFI CRUISER SC+ 5MP *DETEC. HUMANOS *RASTREO INTELIGENTE *DISUACIÓN ACTIVA *IP66 *AUDIO BIDIRECCIONAL *SD MAS 512GB *FULL COLOR *1 RJ45 1 x 100MBPS",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522479249-9ms3r.webp",
+    "codigo": "IPC-K7FN-5H0WE-imou",
+    "sku": "ED0069",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522479249-9ms3r.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522489503-yjo02.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522495497-gby1o.webp"
+    ],
+    "marca": "IMOU",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "CÁMARA PT WIFI 4MP PANEL SOLAR Y BATERIA",
+    "categoria": "Cámaras y Fotografía",
+    "precio_costo": 629,
+    "precio_venta": 720,
+    "precio_antes": 790,
+    "stock_actual": 20,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "CÁMARA PT WIFI FULL COLOR 4MP CON PANEL SOLAR Y BATERIA INTEGRADA *FULL COLOR *DETEC. PERSONAS *SENSOR PIR *DIST. ILUM. 8M *IP65 *POTENCIA PANEL 2.25W",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523658489-fb6n8.webp",
+    "codigo": "G125",
+    "sku": "G125",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523658489-fb6n8.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523663532-faixc.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523673740-1kxtx.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523682797-qqpnt.webp"
+    ],
+    "marca": "DIMAX",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "MICROFONO + BRAZO HIDRAULICO RGB",
+    "categoria": "Audio y Sonido",
+    "precio_costo": 264,
+    "precio_venta": 340,
+    "precio_antes": 380,
+    "stock_actual": 36,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "MICROFONO + BRAZO HIDRAULICO RGB*MICROFONO PARA STREAMING RGB*BOTON DE MUTE TOUCH*CARDIOIDE*FRECUENCIA DE RESPUESTA 30Hz-20000Hz",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524527472-pkhsz.webp",
+    "codigo": "GF0585",
+    "sku": "GF0585",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524527472-pkhsz.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524544597-rv37u.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524552653-odc0r.webp"
+    ],
+    "marca": "HAVIT",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "Fuente de alimentación portátil de 1200W",
+    "categoria": "Electrónica",
+    "precio_costo": 8946,
+    "precio_venta": 9600,
+    "precio_antes": 10800,
+    "stock_actual": 8,
+    "stock_minimo": 5,
+    "stock_vendido": 0,
+    "ficha_tecnica": "Capacidad: 1200VA/1200W • Voltaje: 220V • Tomas de corriente: 3 NEMA 5-15R + 8 CC • Factor de forma: Torre • Forma de onda: Onda sinusoidal pura",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778607812517-3pp1na.webp",
+    "codigo": "FPP-T1202",
+    "sku": "FPP-T1202",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778607812517-3pp1na.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778607812521-yg1n8d.webp"
+    ],
+    "marca": "FORZA",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "COMBO TECLADO+MOUSE ESTANDAR USB",
+    "categoria": "Computadoras",
+    "precio_costo": 45,
+    "precio_venta": 80,
+    "precio_antes": 110,
+    "stock_actual": 88,
+    "stock_minimo": 5,
+    "stock_vendido": 1,
+    "ficha_tecnica": "COMBO TECLADO+MOUSE ESTANDAR USB*104 TECLAS*CABLE USB 1.5m*TECLADO EN ESPAÑOL",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524171300-5mzwg.webp",
+    "codigo": "GF0548",
+    "sku": "GF0548",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524171300-5mzwg.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524188962-8l614.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524197499-y9dwn.webp"
+    ],
+    "marca": "HAVIT",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
+  },
+  {
+    "nombre": "MEMORIA MICRO SD 128GB EXTREME PRO",
+    "categoria": "Celulares y Accesorios",
+    "precio_costo": 228,
+    "precio_venta": 260,
+    "precio_antes": 300,
+    "stock_actual": 47,
+    "stock_minimo": 5,
+    "stock_vendido": 1,
+    "ficha_tecnica": "MEMORIA MICRO SD 128GB EXTREME PRO* SDXC 128GB V30/A1/C10 HASTA 100MB/s,NO INCLUYE ADAPTADOR",
+    "estado": "Stock",
+    "imagen": "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523957003-4rx6a.webp",
+    "codigo": "GN0037",
+    "sku": "GN0037",
+    "garantia": "180 Días",
+    "tipo_envio": "Costo Adicional",
+    "imagenes": [
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523957003-4rx6a.webp",
+      "https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523963785-exjln.webp"
+    ],
+    "marca": "NETAC",
+    "color": "",
+    "condicion": "Nuevo",
+    "metadata": {}
   }
 ];
 
-const Inventario = ({ isDark = true }) => {
+const AMAZON_CATEGORIES = [
+  "Electrónica", "Computadoras", "Celulares y Accesorios", "Audio y Sonido", "Cámaras y Fotografía",
+  "Accesorios", "Hogar y Cocina", "Electrodomésticos", "Herramientas", "Mascotas"
+];
+
+const getCategoryIcon = (category) => {
+  const catLower = category?.toLowerCase() || '';
+  if (catLower.includes('computadoras') || catLower.includes('pc') || catLower.includes('laptop')) return BoxIcon;
+  if (catLower.includes('audio') || catLower.includes('sonido') || catLower.includes('música') || catLower.includes('micrófono')) return Music;
+  if (catLower.includes('celular') || catLower.includes('teléfono') || catLower.includes('accesorio')) return Smartphone;
+  if (catLower.includes('cámara') || catLower.includes('fotografía') || catLower.includes('seguridad') || catLower.includes('video')) return Video;
+  if (catLower.includes('electrónica') || catLower.includes('fuente') || catLower.includes('forza')) return Zap;
+  return Tag;
+};
+
+const Inventario = ({ settings = {}, isDark = true }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('Todos');
   const [toast, setToast] = useState({ show: false, message: '' });
   
   // Custom dialog state
@@ -314,7 +669,7 @@ const Inventario = ({ isDark = true }) => {
       descripcion: p.descripcion || p.ficha_tecnica || '',
       sku: p.sku || p.metadata?.sku || '',
       codigo: p.codigo || p.metadata?.codigo || '',
-      garantia: p.garantia || '6 Meses',
+      garantia: p.garantia || '180 Días',
       tipo_envio: p.tipo_envio || 'Envío Gratuito',
       video_url: p.video_url || p.metadata?.video_url || '',
       metadata: p.metadata || {}
@@ -326,7 +681,7 @@ const Inventario = ({ isDark = true }) => {
     setEditingProduct({
       id: crypto.randomUUID(),
       nombre: '',
-      categoria: 'Celular',
+      categoria: 'Electrónica',
       marca: '',
       precio_costo: 0,
       precio_venta: 0,
@@ -339,7 +694,7 @@ const Inventario = ({ isDark = true }) => {
       imagen: '',
       imagenes: [],
       descripcion: '',
-      garantia: '6 Meses',
+      garantia: '180 Días',
       tipo_envio: 'Envío Gratuito',
       video_url: '',
       metadata: {}
@@ -383,7 +738,7 @@ const Inventario = ({ isDark = true }) => {
         imagenes: newImages,
         imagen: prev.imagen || newImages[0]
       }));
-      setToast({ show: true, message: 'Imagen Subida' });
+      setToast({ show: true, message: 'Imágenes Subidas' });
     } catch (err) {
       alert('Error al subir imagen: ' + err.message);
     } finally {
@@ -391,29 +746,144 @@ const Inventario = ({ isDark = true }) => {
     }
   };
 
-  // Filters search
-  const filteredProducts = useMemo(() => {
-    if (!searchTerm) return productos;
-    const lower = searchTerm.toLowerCase();
-    return productos.filter(p => 
-      p.nombre?.toLowerCase().includes(lower) || 
-      p.categoria?.toLowerCase().includes(lower) || 
-      p.sku?.toLowerCase().includes(lower) ||
-      p.codigo?.toLowerCase().includes(lower)
-    );
-  }, [productos, searchTerm]);
+  const handleMoveImage = (idx, direction) => {
+    if (!editingProduct) return;
+    const list = [...(editingProduct.imagenes || [])];
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= list.length) return;
+    [list[idx], list[targetIdx]] = [list[targetIdx], list[idx]];
+    
+    // If the cover was one of these, keep track of it
+    let newCover = editingProduct.imagen;
+    if (editingProduct.imagen === list[targetIdx]) {
+      newCover = list[idx];
+    } else if (editingProduct.imagen === list[idx]) {
+      newCover = list[targetIdx];
+    }
 
-  // Metrics
-  const totalProducts = productos.length;
-  const totalValue = useMemo(() => productos.reduce((sum, p) => sum + (parseFloat(p.precio_venta || 0) * parseInt(p.stock_actual || 0)), 0), [productos]);
-  const criticalStockCount = useMemo(() => productos.filter(p => parseInt(p.stock_actual || 0) <= 5 && parseInt(p.stock_actual || 0) > 0).length, [productos]);
-  const activeCategories = useMemo(() => new Set(productos.map(p => p.categoria).filter(Boolean)).size, [productos]);
+    setEditingProduct({
+      ...editingProduct,
+      imagenes: list,
+      imagen: newCover
+    });
+  };
+
+  const handleDeleteImage = (idx) => {
+    if (!editingProduct) return;
+    const targetUrl = editingProduct.imagenes[idx];
+    const list = editingProduct.imagenes.filter((_, i) => i !== idx);
+    setEditingProduct({
+      ...editingProduct,
+      imagenes: list,
+      imagen: editingProduct.imagen === targetUrl ? (list[0] || '') : editingProduct.imagen
+    });
+  };
+
+  const [manualUrlInput, setManualUrlInput] = useState('');
+  const handleAddManualUrl = () => {
+    if (!manualUrlInput.trim() || !editingProduct) return;
+    const updatedList = [...(editingProduct.imagenes || []), manualUrlInput.trim()];
+    setEditingProduct({
+      ...editingProduct,
+      imagenes: updatedList,
+      imagen: editingProduct.imagen || manualUrlInput.trim()
+    });
+    setManualUrlInput('');
+  };
+
+  const filteredProducts = useMemo(() => {
+    let result = productos;
+    if (selectedCategoryFilter !== 'Todos') {
+      result = result.filter(p => p.categoria === selectedCategoryFilter);
+    }
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      result = result.filter(p => 
+        p.nombre?.toLowerCase().includes(lower) || 
+        p.categoria?.toLowerCase().includes(lower) || 
+        p.sku?.toLowerCase().includes(lower) ||
+        p.codigo?.toLowerCase().includes(lower)
+      );
+    }
+    return result;
+  }, [productos, searchTerm, selectedCategoryFilter]);
+
+  const stats = useMemo(() => {
+    const totalCount = productos.length;
+    const totalInv = productos.reduce((sum, p) => sum + (parseFloat(p.precio_costo || 0) * parseInt(p.stock_actual || 0)), 0);
+    const totalSaleVal = productos.reduce((sum, p) => sum + (parseFloat(p.precio_venta || 0) * parseInt(p.stock_actual || 0)), 0);
+    const totalEarns = totalSaleVal - totalInv;
+    const lowStock = productos.filter(p => parseInt(p.stock_actual || 0) <= 5 && parseInt(p.stock_actual || 0) > 0);
+    
+    // Dynamically build category map with sums
+    const catMap = {};
+    productos.forEach(p => {
+      const cat = p.categoria || 'Accesorios';
+      if (!catMap[cat]) catMap[cat] = { count: 0, investment: 0 };
+      catMap[cat].count += 1;
+      catMap[cat].investment += (parseFloat(p.precio_costo || 0) * parseInt(p.stock_actual || 0));
+    });
+
+    return { totalCount, totalInv, totalSaleVal, totalEarns, lowStock, catMap };
+  }, [productos]);
+
+  const exportToPDF = () => {
+    try {
+      const doc = new jsPDF();
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("REPORTE FINANCIERO DE INVENTARIO CORPORATIVO PRO", 14, 20);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(`Fecha del Reporte: ${new Date().toLocaleString()}`, 14, 26);
+      doc.text(`Artículos Diferentes: ${productos.length} items`, 14, 31);
+      doc.text(`Inversión Total de Activos (Costo): ${stats.totalInv.toLocaleString()} BS.`, 14, 36);
+      doc.text(`Valor Estimado de Venta Público: ${stats.totalSaleVal.toLocaleString()} BS.`, 14, 41);
+      doc.text(`Ganancia Estimada Potencial: ${stats.totalEarns.toLocaleString()} BS.`, 14, 46);
+      
+      const tableRows = filteredProducts.map(p => {
+        const stock = parseInt(p.stock_actual || 0);
+        const cost = parseFloat(p.precio_costo || 0);
+        const sale = parseFloat(p.precio_venta || 0);
+        const profit = sale - cost;
+        const totalCost = cost * stock;
+        const totalSale = sale * stock;
+        const totalProfit = totalSale - totalCost;
+        const margin = cost > 0 ? `${((profit / cost) * 100).toFixed(0)}%` : '0%';
+        return [
+          p.sku || p.codigo || 'N/A',
+          p.nombre?.toUpperCase() || '',
+          p.categoria || '',
+          `${cost.toLocaleString()} BS`,
+          `${sale.toLocaleString()} BS`,
+          `${totalProfit.toLocaleString()} BS (${margin})`,
+          `${stock} uds`
+        ];
+      });
+
+      doc.autoTable({
+        startY: 52,
+        head: [['SKU / CÓDIGO', 'PRODUCTO', 'CATEGORÍA', 'COSTO UNIT.', 'PRECIO VENTA', 'POTENCIAL NETO (MARGEN)', 'STOCK']],
+        body: tableRows,
+        theme: 'striped',
+        headStyles: { fillColor: [16, 185, 129], fontSize: 8, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 7.5 },
+        alternateRowStyles: { fillColor: [245, 245, 247] },
+        margin: { top: 52, left: 14, right: 14 }
+      });
+
+      doc.save(`Reporte_Inventario_${new Date().toISOString().slice(0, 10)}.pdf`);
+      setToast({ show: true, message: 'Reporte PDF Descargado' });
+    } catch (error) {
+      alert("Error al exportar PDF: " + error.message);
+    }
+  };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', fontFamily: 'Outfit, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', fontFamily: 'Space Grotesk, Inter, sans-serif' }}>
       <Toast show={toast.show} message={toast.message} isDark={isDark} t={t} onClose={() => setToast({ ...toast, show: false })} />
       
-      {/* CONFIRMATION DIALOGS */}
       <ConfirmModal 
         isOpen={confirmDelete.isOpen} 
         title="Eliminar Producto" 
@@ -425,359 +895,590 @@ const Inventario = ({ isDark = true }) => {
       <ConfirmModal 
         isOpen={confirmRestore} 
         title="Restaurar Catálogo" 
-        message="Esta acción reemplazará todos los productos actuales en la base de datos por el catálogo predeterminado de 9 artículos tecnológicos de prueba. ¿Deseas continuar?" 
+        message="Esta acción reemplazará todos los productos actuales en la base de datos por el catálogo original real con imágenes y multimedia. ¿Deseas continuar?" 
         onConfirm={handleRestoreCatalog} 
         onCancel={() => setConfirmRestore(false)} 
         t={t} 
       />
 
       {/* TOP HEADER PANEL */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16 }}>
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: t.text, letterSpacing: '-0.03em', margin: 0, textTransform: 'uppercase' }}>
-            Gestor de Inventario
+          <h2 style={{ fontSize: 26, fontWeight: 900, color: '#ffffff', letterSpacing: '-0.03em', margin: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <BoxIcon size={30} style={{ color: '#10b981' }} /> Inventario Corporativo Pro
           </h2>
-          <p style={{ fontSize: 9, color: t.accent, marginTop: 4, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-            Panel de Administración Pro
+          <p style={{ fontSize: 9, color: '#10b981', marginTop: 4, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+            Consola Avanzada de Activos y Control de Capital
           </p>
         </div>
 
-        {/* Action buttons (removed selector pill) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button 
+            onClick={exportToPDF}
+            style={{ padding: '12px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+          >
+            <Download size={13} /> Exportar PDF
+          </button>
+
           <button 
             onClick={() => setConfirmRestore(true)}
-            style={{ padding: '10px 18px', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, color: t.text, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+            style={{ padding: '12px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
           >
             <RotateCcw size={13} /> Restaurar Catálogo
           </button>
 
           <button 
             onClick={openNewProduct}
-            style={{ padding: '10px 20px', backgroundColor: t.accent, border: 'none', borderRadius: 12, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
+            style={{ padding: '12px 22px', backgroundColor: '#10b981', border: 'none', borderRadius: 14, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
           >
-            <Plus size={14} /> Nuevo Producto
+            <Plus size={14} /> Nuevo Activo Maestro
           </button>
         </div>
       </header>
 
       {/* METRICS DASHBOARD */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
-          { label: 'Productos Totales', value: totalProducts, icon: Package },
-          { label: 'Valor del Inventario', value: `$${totalValue.toLocaleString()}`, icon: DollarSign },
-          { label: 'Stock Crítico', value: criticalStockCount, icon: AlertTriangle, status: criticalStockCount > 0 ? 'warning' : 'ok' },
-          { label: 'Categorías Activas', value: activeCategories, icon: Layers }
+          { label: 'Inversión de Capital (Costo)', value: `${stats.totalInv.toLocaleString()} BS`, icon: Briefcase, color: '#a0a0a0', glow: 'rgba(255,255,255,0.03)' },
+          { label: 'Valor Estimado de Venta', value: `${stats.totalSaleVal.toLocaleString()} BS`, icon: TrendingUp, color: '#3b82f6', glow: 'rgba(59, 130, 246, 0.05)' },
+          { label: 'Ganancia Neta Potencial', value: `${stats.totalEarns.toLocaleString()} BS`, icon: DollarSign, color: '#10b981', glow: 'rgba(16, 185, 129, 0.05)', sub: stats.totalInv > 0 ? `Margen: ${((stats.totalEarns / stats.totalInv) * 100).toFixed(0)}%` : 'Margen: 0%' },
+          { label: 'Ítems en Inventario', value: `${stats.totalCount} ref`, icon: Package, color: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.05)' },
+          { label: 'Stock Crítico', value: stats.lowStock.length, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070', glow: stats.lowStock.length > 0 ? 'rgba(245, 158, 11, 0.05)' : 'rgba(255,255,255,0.03)' }
         ].map((m, i) => (
-          <div key={i} style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 18, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          <div key={i} style={{ backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 80, background: `radial-gradient(circle at right, ${m.glow}, transparent)` }} />
             <div>
-              <span style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
-              <p style={{ fontSize: 24, fontWeight: 900, color: m.status === 'warning' ? '#fbbf24' : t.text, fontFamily: 'monospace', margin: '6px 0 0 0' }}>{m.value}</p>
+              <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
+              <p style={{ fontSize: 20, fontWeight: 900, color: m.color, fontFamily: 'monospace', margin: '4px 0 0 0', letterSpacing: '-0.02em' }}>{m.value}</p>
+              {m.sub && <span style={{ fontSize: 8, color: '#707070', fontWeight: 700, marginTop: 4, display: 'block' }}>{m.sub}</span>}
             </div>
-            <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: t.inputBg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.status === 'warning' ? '#fbbf24' : t.accent }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.color }}>
               <m.icon size={18} />
             </div>
           </div>
         ))}
       </div>
 
-      {/* SEARCH AND ADVANCED TABLE */}
-      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, boxShadow: '0 10px 30px rgba(0,0,0,0.15)' }}>
-        {/* Table Search Header */}
-        <div style={{ padding: '16px 24px', borderBottom: `1px solid ${t.border}`, position: 'relative' }}>
-          <Search style={{ position: 'absolute', left: 36, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={16} />
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre, categoría, SKU o código..." 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 20px 12px 42px', fontSize: 11, outline: 'none', color: t.text }}
-          />
-        </div>
+      {/* DASHBOARD CONTENT GRID (Layout Macbook 16") */}
+      <div style={{ display: 'flex', gap: 24, flex: 1, minHeight: 0 }}>
+        
+        {/* Left Side: Sidebar control and Alerts (340px) */}
+        <div style={{ width: '340px', display: 'flex', flexDirection: 'column', gap: 20, flexShrink: 0 }}>
+          
+          {/* Categories Pill Card */}
+          <div style={{ backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Layers size={15} style={{ color: '#10b981' }} />
+              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Categorías de Activos</h4>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: '260px', overflowY: 'auto' }} className="mac-scrollbar">
+              <button 
+                onClick={() => setSelectedCategoryFilter('Todos')}
+                style={{ 
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                  backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(16, 185, 129, 0.08)' : 'transparent', color: selectedCategoryFilter === 'Todos' ? '#10b981' : '#a0a0a0', fontSize: 10, fontWeight: 800, transition: 'all 0.2s' 
+                }}
+                onMouseEnter={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; }}
+                onMouseLeave={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = 'transparent'; }}
+              >
+                <span>Mostrar Todo</span>
+                <span style={{ fontFamily: 'monospace', fontSize: 9 }}>{productos.length}</span>
+              </button>
 
-        {/* Table Container */}
-        <div style={{ overflowX: 'auto', flex: 1 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.inputBg }}>
-                {['Código / SKU', 'Producto', 'Categoría', 'Precio Venta', 'Stock', 'Acciones'].map((th, idx) => (
-                  <th key={idx} style={{ padding: '14px 24px', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: t.textMuted }}>{th}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map(p => {
-                const stock = parseInt(p.stock_actual || 0);
-                const isAgotado = stock <= 0;
-                const isLow = stock > 0 && stock <= 5;
-                const statusColor = isAgotado ? '#ef4444' : isLow ? '#fbbf24' : '#10b981';
-
+              {Object.keys(stats.catMap).map(catName => {
+                const item = stats.catMap[catName];
+                const isActive = selectedCategoryFilter === catName;
+                const CatIcon = getCategoryIcon(catName);
                 return (
-                  <tr key={p.id} style={{ borderBottom: `1px solid ${t.border}`, transition: 'background-color 0.2s' }}>
-                    <td style={{ padding: '16px 24px', fontSize: 10, fontFamily: 'monospace', color: t.textMuted }}>
-                      {p.sku || p.codigo || (p.id ? p.id.substring(0, 8) : 'N/A')}
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                        {/* Huge Product Image container w-24 h-24 */}
-                        <div style={{ width: 96, height: 96, borderRadius: 14, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          {p.imagen ? (
-                            <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
-                          ) : (
-                            <ImageIcon size={28} style={{ color: t.textDim }} />
-                          )}
-                        </div>
-                        <div>
-                          <span style={{ fontSize: 13, fontWeight: 900, color: t.text, display: 'block', textTransform: 'uppercase', letterSpacing: '-0.01em' }}>{p.nombre}</span>
-                          <span style={{ fontSize: 8, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4, display: 'block' }}>SKU: {p.sku || p.codigo || 'N/A'}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <span style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.inputBg, color: t.textMuted, padding: '4px 10px', borderRadius: 20 }}>
-                        {p.categoria || 'General'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '16px 24px', fontSize: 14, fontWeight: 900, fontFamily: 'monospace', color: t.text }}>
-                      {parseFloat(p.precio_venta || 0).toLocaleString()} <span style={{ fontSize: 8, color: t.textMuted }}>BS.</span>
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: statusColor }} />
-                        <span style={{ fontSize: 11, fontWeight: 700, color: t.text }}>{stock} unidades</span>
-                        {isAgotado && (
-                          <span style={{ fontSize: 7, fontWeight: 900, color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Agotado</span>
-                        )}
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px 24px' }}>
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => handleEditProduct(p)} style={{ width: 34, height: 34, borderRadius: 10, border: `1px solid ${t.border}`, backgroundColor: t.inputBg, color: t.text, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
-                          <Edit3 size={14} />
-                        </button>
-                        <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id })} style={{ width: 34, height: 34, borderRadius: 10, border: `1px solid ${t.border}`, backgroundColor: t.inputBg, color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                  <button 
+                    key={catName}
+                    onClick={() => setSelectedCategoryFilter(catName)}
+                    style={{ 
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                      backgroundColor: isActive ? 'rgba(16, 185, 129, 0.08)' : 'transparent', color: isActive ? '#10b981' : '#d4d4d4', fontSize: 10, fontWeight: 800, transition: 'all 0.2s' 
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+                      <CatIcon size={12} style={{ color: isActive ? '#10b981' : '#707070' }} />
+                      <span>{catName}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 8, color: '#707070', fontFamily: 'monospace' }}>({item.investment.toLocaleString()} BS)</span>
+                      <span style={{ backgroundColor: isActive ? '#10b981' : 'rgba(255,255,255,0.04)', color: isActive ? '#000' : '#707070', padding: '2px 8px', borderRadius: 20, fontSize: 9, fontFamily: 'monospace' }}>{item.count}</span>
+                    </div>
+                  </button>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+          </div>
+
+          {/* Low Stock Alerts */}
+          <div style={{ backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14, flex: 1, minHeight: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
+              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Control Stock Crítico</h4>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, overflowY: 'auto' }} className="mac-scrollbar">
+              {stats.lowStock.length === 0 ? (
+                <div style={{ padding: 20, textAlign: 'center', color: '#707070', fontSize: 10, opacity: 0.7 }}>
+                  Todos los productos tienen stock suficiente.
+                </div>
+              ) : (
+                stats.lowStock.map(p => (
+                  <div 
+                    key={p.id} 
+                    onClick={() => { setSearchTerm(p.nombre); setSelectedCategoryFilter('Todos'); }}
+                    style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: '10px 14px', display: 'flex', gap: 10, alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      {p.imagen ? (
+                        <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                      ) : (
+                        <ImageIcon size={14} style={{ color: '#707070' }} />
+                      )}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ fontSize: 10, fontWeight: 900, color: '#fff', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>{p.nombre}</span>
+                      <span style={{ fontSize: 8, color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Quedan {p.stock_actual} unidades</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
         </div>
+
+        {/* Right Side: Data view master table (Flex 1) */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 15px 40px rgba(0,0,0,0.3)' }}>
+          
+          {/* Table Header Filter search */}
+          <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#707070' }} size={16} />
+              <input 
+                type="text" 
+                placeholder="Buscar activos por código, SKU, nombre comercial o categoría..." 
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 20px 12px 46px', fontSize: 11, outline: 'none', color: '#fff', transition: 'all 0.2s' }}
+              />
+            </div>
+            
+            {selectedCategoryFilter !== 'Todos' && (
+              <button 
+                onClick={() => setSelectedCategoryFilter('Todos')}
+                style={{ border: 'none', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', fontSize: 8, fontWeight: 900, textTransform: 'uppercase', padding: '10px 16px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+              >
+                Filtro: {selectedCategoryFilter} <X size={10} />
+              </button>
+            )}
+          </div>
+
+          {/* Master Table Scrollable Container */}
+          <div style={{ overflowX: 'auto', flex: 1 }} className="mac-scrollbar">
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                  {['Código / SKU', 'Producto', 'Categoría', 'Inversión (Costo)', 'Precio Público', 'Rendimiento Potencial', 'Stock', 'Acciones'].map((th, idx) => (
+                    <th key={idx} style={{ padding: '16px 24px', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#707070' }}>{th}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} style={{ padding: '100px 0', textAlign: 'center', color: '#707070', fontSize: 11 }}>
+                      No se encontraron activos que coincidan con la búsqueda.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredProducts.map(p => {
+                    const stock = parseInt(p.stock_actual || 0);
+                    const isAgotado = stock <= 0;
+                    const isLow = stock > 0 && stock <= 5;
+                    const statusColor = isAgotado ? '#ef4444' : isLow ? '#f59e0b' : '#10b981';
+                    
+                    const cost = parseFloat(p.precio_costo || 0);
+                    const sale = parseFloat(p.precio_venta || 0);
+                    const profit = sale - cost;
+                    const totalProfit = profit * stock;
+                    const marginPct = cost > 0 ? ((profit / cost) * 100).toFixed(0) : '0';
+
+                    // Compute stock bar width (min_stock standard is 5)
+                    const minStock = parseInt(p.stock_minimo || 5);
+                    const percent = Math.min(100, (stock / (minStock * 3)) * 100);
+
+                    return (
+                      <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background-color 0.2s' }} className="hover-row">
+                        {/* SKU internal */}
+                        <td style={{ padding: '18px 24px', fontSize: 10, fontFamily: 'monospace', color: '#707070' }}>
+                          {p.sku || p.codigo || (p.id ? p.id.substring(0, 8) : 'N/A')}
+                        </td>
+                        
+                        {/* Title & Brand */}
+                        <td style={{ padding: '18px 24px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                            <div style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              {p.imagen ? (
+                                <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
+                              ) : (
+                                <ImageIcon size={18} style={{ color: '#707070' }} />
+                              )}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <span style={{ fontSize: 11, fontWeight: 900, color: '#fff', display: 'block', textTransform: 'uppercase', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '240px' }}>{p.nombre}</span>
+                              <span style={{ fontSize: 8, fontWeight: 800, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4, display: 'block' }}>Fabricante: {p.marca || 'N/A'}</span>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Category */}
+                        <td style={{ padding: '18px 24px' }}>
+                          <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#a0a0a0', padding: '4px 10px', borderRadius: 20 }}>
+                            {p.categoria || 'General'}
+                          </span>
+                        </td>
+
+                        {/* Cost */}
+                        <td style={{ padding: '18px 24px', fontSize: 12, fontWeight: 900, fontFamily: 'monospace', color: '#707070' }}>
+                          {cost.toLocaleString()} <span style={{ fontSize: 8 }}>BS.</span>
+                        </td>
+
+                        {/* Sale Price */}
+                        <td style={{ padding: '18px 24px', fontSize: 12, fontWeight: 900, fontFamily: 'monospace', color: '#fff' }}>
+                          {sale.toLocaleString()} <span style={{ fontSize: 8, color: '#707070' }}>BS.</span>
+                        </td>
+
+                        {/* Rentability (Potential Profit & Margin) */}
+                        <td style={{ padding: '18px 24px' }}>
+                          <span style={{ fontSize: 12, fontWeight: 900, fontFamily: 'monospace', color: totalProfit >= 0 ? '#10b981' : '#ef4444' }}>
+                            {totalProfit.toLocaleString()} <span style={{ fontSize: 8 }}>BS</span>
+                          </span>
+                          <span style={{ fontSize: 8, display: 'block', color: '#707070', marginTop: 2, fontWeight: 800 }}>M: {marginPct}% ({profit} BS/u)</span>
+                        </td>
+
+                        {/* Stock pills + progress tracker bar */}
+                        <td style={{ padding: '18px 24px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: statusColor }} />
+                              <span style={{ fontSize: 10, fontWeight: 900, color: '#fff' }}>{stock} uds</span>
+                            </div>
+                            <div style={{ height: 4, width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 2, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${percent}%`, backgroundColor: statusColor, borderRadius: 2 }} />
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Row actions */}
+                        <td style={{ padding: '18px 24px' }}>
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            <button onClick={() => handleEditProduct(p)} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                              <Edit3 size={12} />
+                            </button>
+                            <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id })} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
 
-      {/* FORM MODAL (CREATION AND EDITION) */}
+      {/* PRODUCT CREATION AND EDIT PANEL MODAL */}
       {isModalOpen && editingProduct && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 800, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(24px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 780, borderRadius: 24, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', borderBottom: `1px solid ${t.border}` }}>
-              <h3 style={{ fontSize: 16, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
-                {editingProduct.nombre ? 'Editar Producto' : 'Nuevo Producto'}
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9000, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 1060, borderRadius: 28, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'scaleIn 0.3s ease-out' }}>
+            
+            {/* Modal Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px', borderBottom: `1px solid ${t.border}` }}>
+              <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#fff', letterSpacing: '0.1em', margin: 0 }}>
+                {editingProduct.nombre ? 'Ficha de Activo Maestro / Modificar Ficha' : 'Nuevo Activo Maestro / Registrar Activo'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim, cursor: 'pointer' }}>
+              <button onClick={() => setIsModalOpen(false)} style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim, cursor: 'pointer' }}>
                 <X size={14} />
               </button>
             </div>
 
-            {/* Scrollable Form Body */}
-            <div style={{ padding: '32px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {/* Split Form Layout Container */}
+            <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
               
-              {/* Field: Nombre */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Nombre del Artículo</label>
-                <input 
-                  type="text" 
-                  value={editingProduct.nombre} 
-                  onChange={e => setEditingProduct({ ...editingProduct, nombre: e.target.value })}
-                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                />
-              </div>
+              {/* Left Side Panel: Interactive Image Manager (380px) */}
+              <div style={{ width: '390px', borderRight: `1px solid ${t.border}`, backgroundColor: 'rgba(0,0,0,0.15)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20, overflowY: 'auto' }} className="mac-scrollbar">
+                
+                {/* Large Preview Area */}
+                <div style={{ width: '100%', height: 230, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.3)', border: `1px solid ${t.border}`, overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {editingProduct.imagen ? (
+                    <img src={editingProduct.imagen} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Portada" />
+                  ) : (
+                    <ImageIcon size={44} style={{ color: '#707070' }} />
+                  )}
+                  <div style={{ position: 'absolute', top: 12, left: 12, backgroundColor: '#10b981', color: '#000', fontSize: 7, fontWeight: 900, letterSpacing: '0.15em', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}><Star size={8} fill="black" /> Portada Principal</div>
+                </div>
 
-              {/* Grid: SKU & Codigo */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>SKU Interno</label>
-                  <input 
-                    type="text" 
-                    value={editingProduct.sku} 
-                    onChange={e => setEditingProduct({ ...editingProduct, sku: e.target.value })}
-                    placeholder="Ej: SAKTI-STAND-01"
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Código de barras</label>
-                  <input 
-                    type="text" 
-                    value={editingProduct.codigo} 
-                    onChange={e => setEditingProduct({ ...editingProduct, codigo: e.target.value })}
-                    placeholder="Ej: 779123456789"
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                </div>
-              </div>
-
-              {/* Grid: Categoria & Marca */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Categoría</label>
-                  <select 
-                    value={editingProduct.categoria} 
-                    onChange={e => setEditingProduct({ ...editingProduct, categoria: e.target.value })}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 11, outline: 'none', color: t.text }}
-                  >
-                    <option value="Celular">Celular</option>
-                    <option value="Hogar">Hogar</option>
-                    <option value="Música">Música</option>
-                  </select>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Marca</label>
-                  <input 
-                    type="text" 
-                    value={editingProduct.marca} 
-                    onChange={e => setEditingProduct({ ...editingProduct, marca: e.target.value })}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                </div>
-              </div>
-
-              {/* Grid: Precios */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Costo (BS)</label>
-                  <input 
-                    type="number" 
-                    value={editingProduct.precio_costo} 
-                    onChange={e => setEditingProduct({ ...editingProduct, precio_costo: e.target.value })}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Venta (Público)</label>
-                  <input 
-                    type="number" 
-                    value={editingProduct.precio_venta} 
-                    onChange={e => setEditingProduct({ ...editingProduct, precio_venta: e.target.value })}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Antes (Oferta)</label>
-                  <input 
-                    type="number" 
-                    value={editingProduct.precio_antes} 
-                    onChange={e => setEditingProduct({ ...editingProduct, precio_antes: e.target.value })}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                </div>
-              </div>
-
-              {/* Grid: Stock, Garantia & Envio */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Stock Disponible</label>
-                  <input 
-                    type="number" 
-                    value={editingProduct.stock_actual} 
-                    onChange={e => setEditingProduct({ ...editingProduct, stock_actual: e.target.value })}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Garantía</label>
-                  <input 
-                    type="text" 
-                    value={editingProduct.garantia} 
-                    onChange={e => setEditingProduct({ ...editingProduct, garantia: e.target.value })}
-                    placeholder="Ej: 6 Meses"
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Logística / Envío</label>
-                  <select 
-                    value={editingProduct.tipo_envio} 
-                    onChange={e => setEditingProduct({ ...editingProduct, tipo_envio: e.target.value })}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 11, outline: 'none', color: t.text }}
-                  >
-                    <option value="Envío Gratuito">Envío Gratuito</option>
-                    <option value="Costo Adicional">Costo Adicional</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* URL de Imagen Principal & Uploader */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Imagen Principal (URL)</label>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <input 
-                    type="text" 
-                    value={editingProduct.imagen} 
-                    onChange={e => setEditingProduct({ ...editingProduct, imagen: e.target.value })}
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                    style={{ flex: 1, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                  />
-                  <label style={{ padding: '12px 20px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-                    <input type="file" style={{ display: 'none' }} accept="image/*" onChange={handleImageUpload} />
-                    Subir Archivo
+                {/* File Uploader Button */}
+                <div>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>Subir archivos a Supabase</label>
+                  <label style={{ padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', borderRadius: 12, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s' }}>
+                    <input type="file" style={{ display: 'none' }} accept="image/*" multiple onChange={handleImageUpload} />
+                    <ImageIcon size={13} /> Subir Imágenes Simultáneas
                   </label>
                 </div>
+
+                {/* Paste URL Input */}
+                <div>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>O ingresar URL manual de foto</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input 
+                      type="text" 
+                      value={manualUrlInput} 
+                      onChange={e => setManualUrlInput(e.target.value)}
+                      placeholder="https://ejemplo.com/foto.jpg"
+                      style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '10px 14px', fontSize: 11, outline: 'none', color: '#fff' }} 
+                    />
+                    <button 
+                      onClick={handleAddManualUrl}
+                      style={{ padding: '10px 16px', backgroundColor: '#10b981', color: '#000', border: 'none', borderRadius: 12, fontSize: 9, fontWeight: 900, cursor: 'pointer' }}
+                    >
+                      Añadir
+                    </button>
+                  </div>
+                </div>
+
+                {/* Gallery List thumbnails */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Carrusel de Imágenes ({editingProduct.imagenes?.length || 0})</span>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {editingProduct.imagenes?.map((img, idx) => {
+                      const isCover = editingProduct.imagen === img;
+                      return (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${isCover ? '#10b981' : 'rgba(255,255,255,0.05)'}`, borderRadius: 14, padding: 8, transition: 'all 0.2s' }}>
+                          <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
+                            <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                          </div>
+                          
+                          <div style={{ flex: 1, minWidth: 0, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                            {/* Choose Cover Button */}
+                            <button 
+                              onClick={() => setEditingProduct({ ...editingProduct, imagen: img })}
+                              style={{ 
+                                width: 26, height: 26, borderRadius: 8, border: 'none', cursor: 'pointer',
+                                backgroundColor: isCover ? 'rgba(16, 185, 129, 0.1)' : 'transparent', color: isCover ? '#10b981' : '#707070', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                              }}
+                              title="Establecer como Portada"
+                            >
+                              <Star size={11} fill={isCover ? '#10b981' : 'none'} />
+                            </button>
+                            
+                            {/* Reordering */}
+                            <button onClick={() => handleMoveImage(idx, -1)} style={{ width: 26, height: 26, borderRadius: 8, border: 'none', backgroundColor: 'transparent', color: '#707070', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowLeft size={11} /></button>
+                            <button onClick={() => handleMoveImage(idx, 1)} style={{ width: 26, height: 26, borderRadius: 8, border: 'none', backgroundColor: 'transparent', color: '#707070', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ArrowRight size={11} /></button>
+                            
+                            {/* Trash Delete */}
+                            <button onClick={() => handleDeleteImage(idx)} style={{ width: 26, height: 26, borderRadius: 8, border: 'none', backgroundColor: 'transparent', color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Trash2 size={11} /></button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
               </div>
 
-              {/* URLs de Imágenes Secundarias */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Imágenes adicionales (Una URL por línea)</label>
-                <textarea 
-                  value={Array.isArray(editingProduct.imagenes) ? editingProduct.imagenes.join('\n') : ''} 
-                  onChange={e => setEditingProduct({ ...editingProduct, imagenes: e.target.value.split('\n').filter(line => line.trim() !== '') })}
-                  placeholder="https://ejemplo.com/imagen2.jpg&#10;https://ejemplo.com/imagen3.jpg"
-                  style={{ width: '100%', height: 80, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text, fontFamily: 'monospace', resize: 'vertical' }} 
-                />
-              </div>
+              {/* Right Side: Configuration Input Fields */}
+              <div style={{ flex: 1, padding: 32, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }} className="mac-scrollbar">
+                
+                {/* Commercial Name */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Nombre Comercial de Producto</label>
+                  <input 
+                    type="text" 
+                    value={editingProduct.nombre} 
+                    onChange={e => setEditingProduct({ ...editingProduct, nombre: e.target.value })}
+                    placeholder="Ej: CÁMARA PT WIFI 4MP PANEL SOLAR"
+                    style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                  />
+                </div>
 
-              {/* URL de Video */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>URL de Video (YouTube/Vimeo/Directo)</label>
-                <input 
-                  type="text" 
-                  value={editingProduct.video_url} 
-                  onChange={e => setEditingProduct({ ...editingProduct, video_url: e.target.value })}
-                  placeholder="Ej: https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
-                />
-              </div>
+                {/* SKU & Barcode */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Código SKU</label>
+                    <input 
+                      type="text" 
+                      value={editingProduct.sku} 
+                      onChange={e => setEditingProduct({ ...editingProduct, sku: e.target.value })}
+                      placeholder="Ej: SAKTI-STAND-01"
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Código de barras (UPC/EAN)</label>
+                    <input 
+                      type="text" 
+                      value={editingProduct.codigo} 
+                      onChange={e => setEditingProduct({ ...editingProduct, codigo: e.target.value })}
+                      placeholder="Ej: 779123456789"
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                </div>
 
-              {/* Descripción */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Descripción del Producto</label>
-                <textarea 
-                  value={editingProduct.descripcion} 
-                  onChange={e => setEditingProduct({ ...editingProduct, descripcion: e.target.value })}
-                  placeholder="Escribe la descripción del artículo..."
-                  style={{ width: '100%', height: 100, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text, resize: 'vertical' }} 
-                />
+                {/* Categoria & Marca */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Categoría Principal</label>
+                    <select 
+                      value={editingProduct.categoria} 
+                      onChange={e => setEditingProduct({ ...editingProduct, categoria: e.target.value })}
+                      style={{ width: '100%', backgroundColor: '#28282b', border: '1px solid #2e2e30', borderRadius: 14, padding: '12px 16px', fontSize: 11, outline: 'none', color: '#fff' }}
+                    >
+                      {AMAZON_CATEGORIES.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Marca / Fabricante</label>
+                    <input 
+                      type="text" 
+                      value={editingProduct.marca} 
+                      onChange={e => setEditingProduct({ ...editingProduct, marca: e.target.value })}
+                      placeholder="Ej: DAHUA TECHNOLOGY"
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                </div>
+
+                {/* Cost, Sale, and Before Prices */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Inversión / Costo (BS)</label>
+                    <input 
+                      type="number" 
+                      value={editingProduct.precio_costo} 
+                      onChange={e => setEditingProduct({ ...editingProduct, precio_costo: e.target.value })}
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Venta Público (BS)</label>
+                    <input 
+                      type="number" 
+                      value={editingProduct.precio_venta} 
+                      onChange={e => setEditingProduct({ ...editingProduct, precio_venta: e.target.value })}
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Oferta / Antes (BS)</label>
+                    <input 
+                      type="number" 
+                      value={editingProduct.precio_antes} 
+                      onChange={e => setEditingProduct({ ...editingProduct, precio_antes: e.target.value })}
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                </div>
+
+                {/* Stock, Garantia & Logistica */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Stock Disponible</label>
+                    <input 
+                      type="number" 
+                      value={editingProduct.stock_actual} 
+                      onChange={e => setEditingProduct({ ...editingProduct, stock_actual: e.target.value })}
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Garantía</label>
+                    <input 
+                      type="text" 
+                      value={editingProduct.garantia} 
+                      onChange={e => setEditingProduct({ ...editingProduct, garantia: e.target.value })}
+                      placeholder="Ej: 180 Días"
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Método de Envío</label>
+                    <select 
+                      value={editingProduct.tipo_envio} 
+                      onChange={e => setEditingProduct({ ...editingProduct, tipo_envio: e.target.value })}
+                      style={{ width: '100%', backgroundColor: '#28282b', border: '1px solid #2e2e30', borderRadius: 14, padding: '12px 16px', fontSize: 11, outline: 'none', color: '#fff' }}
+                    >
+                      <option value="Envío Gratuito">Envío Gratuito</option>
+                      <option value="Costo Adicional">Costo Adicional</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Video Promocional */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>URL del Video Promocional</label>
+                  <input 
+                    type="text" 
+                    value={editingProduct.video_url} 
+                    onChange={e => setEditingProduct({ ...editingProduct, video_url: e.target.value })}
+                    placeholder="Ej: https://www.youtube.com/watch?v=VIDEO_ID"
+                    style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                  />
+                </div>
+
+                {/* Description extended */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Descripción / Ficha Técnica Corporativa</label>
+                  <textarea 
+                    value={editingProduct.descripcion} 
+                    onChange={e => setEditingProduct({ ...editingProduct, descripcion: e.target.value })}
+                    placeholder="Detalla las especificaciones comerciales del artículo..."
+                    style={{ width: '100%', height: 130, backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff', resize: 'vertical' }} 
+                  />
+                </div>
+
               </div>
 
             </div>
 
-            {/* Actions */}
-            <div style={{ padding: '24px 32px', borderTop: `1px solid ${t.border}`, display: 'flex', justifyContent: 'flex-end', gap: 12, backgroundColor: t.inputBg }}>
+            {/* Modal Actions Footer */}
+            <div style={{ padding: '20px 32px', borderTop: `1px solid ${t.border}`, display: 'flex', justifyContent: 'flex-end', gap: 12, backgroundColor: 'rgba(0,0,0,0.15)' }}>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                style={{ padding: '10px 20px', borderRadius: 12, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.textDim, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer' }}
+                style={{ padding: '10px 22px', borderRadius: 12, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.textDim, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer' }}
               >
                 Cancelar
               </button>
               <button 
                 onClick={handleSaveProduct}
-                style={{ padding: '10px 24px', borderRadius: 12, border: 'none', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer' }}
+                style={{ padding: '10px 26px', borderRadius: 12, border: 'none', backgroundColor: '#10b981', color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)' }}
               >
-                Guardar Producto
+                Guardar Activo Maestro
               </button>
             </div>
+
           </div>
         </div>
       )}

@@ -2,10 +2,22 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Package, Search, X, ShoppingCart, CheckCircle, 
   Home, Music, Smartphone, LayoutGrid, Star, ChevronLeft, ChevronRight,
-  TrendingUp, Tag, Plus, Minus, Trash2, ArrowRight, Image as ImageIcon
+  TrendingUp, Tag, Plus, Minus, Trash2, ArrowRight, Image as ImageIcon,
+  Box as BoxIcon, Video, Zap
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
+
+const getCategoryIcon = (category) => {
+  const catLower = category?.toLowerCase() || '';
+  if (catLower.includes('computadoras') || catLower.includes('pc') || catLower.includes('laptop')) return BoxIcon;
+  if (catLower.includes('audio') || catLower.includes('sonido') || catLower.includes('música') || catLower.includes('micrófono')) return Music;
+  if (catLower.includes('celular') || catLower.includes('teléfono') || catLower.includes('accesorio')) return Smartphone;
+  if (catLower.includes('cámara') || catLower.includes('fotografía') || catLower.includes('seguridad') || catLower.includes('video')) return Video;
+  if (catLower.includes('electrónica') || catLower.includes('fuente') || catLower.includes('forza')) return Zap;
+  return Tag;
+};
+
 
 const Toast = ({ message, type = 'success', show, onClose, t }) => {
   useEffect(() => {
@@ -48,6 +60,14 @@ const PublicCatalog = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [mediaTab, setMediaTab] = useState('images'); // 'images' or 'video'
+
+  const uniqueCategories = useMemo(() => {
+    const list = new Set();
+    productos.forEach(p => {
+      if (p.categoria) list.add(p.categoria);
+    });
+    return Array.from(list).sort();
+  }, [productos]);
 
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const WHATSAPP_NUMBER = "59169109766";
@@ -296,19 +316,30 @@ const PublicCatalog = () => {
           <div>
             <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: t.textMuted, marginBottom: 16 }}>Categorías</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {[
-                { name: 'Todos', icon: LayoutGrid },
-                { name: 'Hogar', icon: Home },
-                { name: 'Música', icon: Music },
-                { name: 'Celular', icon: Smartphone }
-              ].map(cat => {
-                const Icon = cat.icon;
-                const isActive = activeCategory === cat.name;
-                const count = categoryCounts[cat.name] || 0;
+              <button 
+                onClick={() => { setActiveCategory('Todos'); setCurrentPage(1); }}
+                style={{ 
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                  backgroundColor: activeCategory === 'Todos' ? t.accentSoft : 'transparent', color: activeCategory === 'Todos' ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <LayoutGrid size={16} />
+                  <span style={{ fontSize: 11, fontWeight: 700 }}>Todos</span>
+                </div>
+                <span style={{ fontSize: 9, fontWeight: 900, backgroundColor: activeCategory === 'Todos' ? t.accent : t.inputBg, color: activeCategory === 'Todos' ? '#000' : t.textMuted, padding: '2px 8px', borderRadius: 20 }}>
+                  {productos.length}
+                </span>
+              </button>
+
+              {uniqueCategories.map(catName => {
+                const Icon = getCategoryIcon(catName);
+                const isActive = activeCategory === catName;
+                const count = categoryCounts[catName] || 0;
                 return (
                   <button 
-                    key={cat.name}
-                    onClick={() => { setActiveCategory(cat.name); setCurrentPage(1); }}
+                    key={catName}
+                    onClick={() => { setActiveCategory(catName); setCurrentPage(1); }}
                     style={{ 
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
                       backgroundColor: isActive ? t.accentSoft : 'transparent', color: isActive ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
@@ -316,7 +347,7 @@ const PublicCatalog = () => {
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <Icon size={16} />
-                      <span style={{ fontSize: 11, fontWeight: 700 }}>{cat.name}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700 }}>{catName}</span>
                     </div>
                     <span style={{ fontSize: 9, fontWeight: 900, backgroundColor: isActive ? t.accent : t.inputBg, color: isActive ? '#000' : t.textMuted, padding: '2px 8px', borderRadius: 20 }}>
                       {count}
