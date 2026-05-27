@@ -52,9 +52,14 @@ const PublicCatalog = () => {
   const [activeSubfilter, setActiveSubfilter] = useState('Todos los ítems');
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [isDark, setIsDark] = useState(true);
+
+  // WhatsApp Pre-visualization States
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [clientName, setClientName] = useState('');
+  const [clientAddress, setClientAddress] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Efectivo');
 
   // Detail Modal State
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -71,7 +76,6 @@ const PublicCatalog = () => {
 
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const WHATSAPP_NUMBER = "59169109766";
-  const itemsPerPage = 6;
 
   useEffect(() => { fetchProducts(); }, []);
 
@@ -136,15 +140,6 @@ const PublicCatalog = () => {
     return result;
   }, [productos, searchTerm, activeCategory, activeSubfilter]);
 
-  // Paginated products
-  const paginatedProducts = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredProducts.slice(start, start + itemsPerPage);
-  }, [filteredProducts, currentPage]);
-
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage) || 1;
-
-  // Category counts
   const categoryCounts = useMemo(() => {
     const counts = { Todos: productos.length };
     productos.forEach(p => {
@@ -203,6 +198,31 @@ const PublicCatalog = () => {
   };
 
   // WhatsApp Checkout integration
+  const checkoutMessage = useMemo(() => {
+    let text = `*NUEVO PEDIDO DESDE EL CATÁLOGO SYNCPRO*\n`;
+    text += `-------------------------------------------\n`;
+    if (clientName.trim()) {
+      text += `*Cliente:* ${clientName.trim()}\n`;
+    }
+    if (clientAddress.trim()) {
+      text += `*Dirección:* ${clientAddress.trim()}\n`;
+    }
+    text += `*Método de Pago:* ${paymentMethod}\n`;
+    text += `-------------------------------------------\n`;
+    cart.forEach((item, index) => {
+      const itemSku = item.sku || item.codigo || 'N/A';
+      const itemTotal = parseFloat(item.precio_venta) * item.quantity;
+      text += `*${index + 1}. ${item.nombre}*\n`;
+      text += `   - Cantidad: ${item.quantity} ud(s)\n`;
+      text += `   - SKU/Código: ${itemSku}\n`;
+      text += `   - Precio unitario: ${parseFloat(item.precio_venta).toLocaleString()} BS.\n`;
+      text += `   - Subtotal: ${itemTotal.toLocaleString()} BS.\n\n`;
+    });
+    text += `-------------------------------------------\n`;
+    text += `*TOTAL DEL PEDIDO:* ${cartTotal.toLocaleString()} BS.\n`;
+    return text;
+  }, [cart, cartTotal, clientName, clientAddress, paymentMethod]);
+
   const handleWhatsAppCheckout = async () => {
     try {
       setLoading(true);
@@ -218,27 +238,15 @@ const PublicCatalog = () => {
           .eq('id', item.id);
       }
 
-      // Generate text
-      let text = `*NUEVO PEDIDO DESDE EL CATÁLOGO SYNCPRO*\n`;
-      text += `-------------------------------------------\n`;
-      cart.forEach((item, index) => {
-        const itemSku = item.sku || item.codigo || 'N/A';
-        const itemTotal = parseFloat(item.precio_venta) * item.quantity;
-        text += `*${index + 1}. ${item.nombre}*\n`;
-        text += `   - Cantidad: ${item.quantity} ud(s)\n`;
-        text += `   - SKU/Código: ${itemSku}\n`;
-        text += `   - Precio unitario: ${parseFloat(item.precio_venta).toLocaleString()} BS.\n`;
-        text += `   - Subtotal: ${itemTotal.toLocaleString()} BS.\n\n`;
-      });
-      text += `-------------------------------------------\n`;
-      text += `*TOTAL DEL PEDIDO:* ${cartTotal.toLocaleString()} BS.\n`;
-      
-      const encodedText = encodeURIComponent(text);
+      const encodedText = encodeURIComponent(checkoutMessage);
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`;
 
       setToast({ show: true, message: 'Pedido procesado. Abriendo WhatsApp...', type: 'success' });
       setCart([]);
-      setIsCartOpen(false);
+      setIsCheckoutOpen(false);
+      setClientName('');
+      setClientAddress('');
+      setPaymentMethod('Efectivo');
       await fetchProducts();
       window.open(url, '_blank');
     } catch (e) {
@@ -287,7 +295,7 @@ const PublicCatalog = () => {
             type="text" 
             placeholder="Buscar por nombre, categoría, SKU o código..." 
             value={searchTerm}
-            onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            onChange={e => setSearchTerm(e.target.value)}
             style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 30, padding: '12px 20px 12px 42px', fontSize: 11, outline: 'none', color: t.text, transition: 'all 0.2s' }} 
           />
         </div>
@@ -317,7 +325,7 @@ const PublicCatalog = () => {
             <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: t.textMuted, marginBottom: 16 }}>Categorías</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <button 
-                onClick={() => { setActiveCategory('Todos'); setCurrentPage(1); }}
+                onClick={() => setActiveCategory('Todos')}
                 style={{ 
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
                   backgroundColor: activeCategory === 'Todos' ? t.accentSoft : 'transparent', color: activeCategory === 'Todos' ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
@@ -339,7 +347,7 @@ const PublicCatalog = () => {
                 return (
                   <button 
                     key={catName}
-                    onClick={() => { setActiveCategory(catName); setCurrentPage(1); }}
+                    onClick={() => setActiveCategory(catName)}
                     style={{ 
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
                       backgroundColor: isActive ? t.accentSoft : 'transparent', color: isActive ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
@@ -367,7 +375,7 @@ const PublicCatalog = () => {
                 return (
                   <button
                     key={sub}
-                    onClick={() => { setActiveSubfilter(sub); setCurrentPage(1); }}
+                    onClick={() => setActiveSubfilter(sub)}
                     style={{ 
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
                       backgroundColor: 'transparent', color: isActive ? t.accent : t.textMuted, transition: 'all 0.2s', width: '100%', textAlign: 'left'
@@ -394,7 +402,7 @@ const PublicCatalog = () => {
           ) : (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-                {paginatedProducts.map(p => {
+                {filteredProducts.map(p => {
                   const stock = parseInt(p.stock_actual || 0);
                   const isAgotado = stock <= 0;
                   const isLow = stock > 0 && stock <= 5;
@@ -486,33 +494,6 @@ const PublicCatalog = () => {
                     </div>
                   );
                 })}
-              </div>
-
-              {/* PAGINACIÓN MINIMALISTA */}
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 42 }}>
-                <button 
-                  disabled={currentPage === 1}
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  style={{ 
-                    padding: '8px 16px', borderRadius: 10, backgroundColor: t.panel, border: `1px solid ${t.border}`, color: currentPage === 1 ? t.textMuted : t.text,
-                    fontSize: 8, fontWeight: 900, textTransform: 'uppercase', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', opacity: currentPage === 1 ? 0.5 : 1 
-                  }}
-                >
-                  <ChevronLeft size={12} style={{ marginRight: 4 }} /> Anterior
-                </button>
-                <div style={{ fontSize: 10, fontWeight: 900, color: t.text }}>
-                  {currentPage} <span style={{ color: t.textMuted }}>/ {totalPages}</span>
-                </div>
-                <button 
-                  disabled={currentPage === totalPages}
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  style={{ 
-                    padding: '8px 16px', borderRadius: 10, backgroundColor: t.panel, border: `1px solid ${t.border}`, color: currentPage === totalPages ? t.textMuted : t.text,
-                    fontSize: 8, fontWeight: 900, textTransform: 'uppercase', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', opacity: currentPage === totalPages ? 0.5 : 1 
-                  }}
-                >
-                  Siguiente <ChevronRight size={12} style={{ marginLeft: 4 }} />
-                </button>
               </div>
             </div>
           )}
@@ -780,7 +761,7 @@ const PublicCatalog = () => {
                 </div>
 
                 <button 
-                  onClick={handleWhatsAppCheckout}
+                  onClick={() => { setIsCheckoutOpen(true); setIsCartOpen(false); }}
                   style={{ 
                     width: '100%', padding: '16px', borderRadius: 14, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: 10, fontWeight: 900, 
                     textTransform: 'uppercase', letterSpacing: '0.15em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s' 
@@ -790,6 +771,165 @@ const PublicCatalog = () => {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL INNOVADOR DE PREVISUALIZACIÓN DE WHATSAPP (SIMULADOR DE CELULAR) */}
+      {isCheckoutOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(24px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 900, borderRadius: 28, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: `1px solid ${t.border}` }}>
+              <div>
+                <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#fff', letterSpacing: '0.1em', margin: 0 }}>
+                  Previsualización de Pedido y Envío
+                </h3>
+                <span style={{ fontSize: 9, color: t.textMuted }}>Verifica tu mensaje tal como se enviará por WhatsApp</span>
+              </div>
+              <button 
+                onClick={() => { setIsCheckoutOpen(false); setIsCartOpen(true); }} 
+                style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim, cursor: 'pointer' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Split content */}
+            <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+              
+              {/* Form Column */}
+              <div style={{ flex: 1.1, padding: 28, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }} className="mac-scrollbar">
+                <span style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', color: t.accent, letterSpacing: '0.05em' }}>Datos de Entrega</span>
+                
+                {/* Client name */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 9, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Nombre Completo</label>
+                  <input 
+                    type="text" 
+                    placeholder="Ej: Juan Pérez" 
+                    value={clientName} 
+                    onChange={e => setClientName(e.target.value)}
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                  />
+                </div>
+
+                {/* Delivery address */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 9, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Dirección de Envío</label>
+                  <textarea 
+                    placeholder="Ej: Calle Bolívar #123, Zona Central" 
+                    value={clientAddress} 
+                    onChange={e => setClientAddress(e.target.value)}
+                    rows={3}
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff', resize: 'none', fontFamily: 'inherit' }} 
+                  />
+                </div>
+
+                {/* Payment Method */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 9, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Método de Pago Preferido</label>
+                  <select 
+                    value={paymentMethod} 
+                    onChange={e => setPaymentMethod(e.target.value)}
+                    style={{ width: '100%', backgroundColor: '#28282b', border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }}
+                  >
+                    <option value="Efectivo">Efectivo contra entrega</option>
+                    <option value="Transferencia QR">Transferencia Bancaria / QR</option>
+                    <option value="Pago Móvil">Pago Móvil</option>
+                  </select>
+                </div>
+
+                {/* Info summary */}
+                <div style={{ marginTop: 'auto', padding: 14, backgroundColor: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.1)', borderRadius: 14, display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <ShoppingCart size={20} style={{ color: '#10b981' }} />
+                  <div>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted }}>Total de Compra</span>
+                    <p style={{ fontSize: 16, fontFamily: 'monospace', fontWeight: 900, color: '#fff', margin: 0 }}>{cartTotal.toLocaleString()} BS.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Live WhatsApp Smartphone Simulator Column */}
+              <div style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.2)', borderLeft: `1px solid ${t.border}`, padding: '24px 32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                
+                {/* Smartphone Device Wrap */}
+                <div style={{ width: '100%', maxWidth: 320, height: 480, borderRadius: 32, border: '6px solid #2e2e30', backgroundColor: '#0b141a', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 25px 60px rgba(0,0,0,0.5)', position: 'relative' }}>
+                  
+                  {/* Speaker and Camera notch */}
+                  <div style={{ position: 'absolute', top: 4, left: '50%', transform: 'translateX(-50%)', width: 60, height: 12, backgroundColor: '#2e2e30', borderRadius: 6, zIndex: 10 }} />
+                  
+                  {/* WhatsApp Top Header Bar */}
+                  <div style={{ backgroundColor: '#075e54', padding: '16px 12px 10px 12px', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#fff', opacity: 0.8 }} />
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                      <ShoppingCart size={11} />
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', display: 'block' }}>SyncPro Catalog</span>
+                      <span style={{ fontSize: 7, color: '#10b981', fontWeight: 600 }}>En línea</span>
+                    </div>
+                  </div>
+
+                  {/* Chat screen Area */}
+                  <div style={{ flex: 1, padding: 12, overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', backgroundImage: 'radial-gradient(#152026 15%, transparent 16%)', backgroundSize: '12px 12px', backgroundColor: '#0b141a' }} className="mac-scrollbar">
+                    
+                    {/* Simulated System date info badge */}
+                    <div style={{ alignSelf: 'center', backgroundColor: '#182229', color: '#8696a0', fontSize: 8, padding: '3px 8px', borderRadius: 6, marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Hoy
+                    </div>
+
+                    {/* Chat Bubble Message */}
+                    <div style={{ alignSelf: 'flex-end', backgroundColor: '#005c4b', color: '#e9edef', padding: '10px 12px', borderRadius: '10px 0 10px 10px', maxWidth: '85%', boxShadow: '0 1px 2px rgba(0,0,0,0.15)', position: 'relative', wordBreak: 'break-word' }}>
+                      <pre style={{ margin: 0, fontSize: 8, fontFamily: 'monospace', whiteSpace: 'pre-wrap', lineHeight: 1.35 }}>
+                        {checkoutMessage}
+                      </pre>
+                      
+                      {/* Check tick and time stamp */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 2, marginTop: 4 }}>
+                        <span style={{ fontSize: 7, color: '#8696a0' }}>{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div style={{ display: 'flex', color: '#53bdeb' }}>
+                          <span style={{ fontSize: 8, fontWeight: 'bold' }}>✓✓</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                  
+                  {/* WhatsApp Bottom typing bar placeholder */}
+                  <div style={{ backgroundColor: '#1f2c34', padding: 8, display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    <div style={{ flex: 1, backgroundColor: '#2a3942', borderRadius: 20, padding: '6px 12px', fontSize: 8, color: '#8696a0', display: 'flex', alignItems: 'center' }}>
+                      Mensaje de compra...
+                    </div>
+                    <div style={{ width: 24, height: 24, borderRadius: '50%', backgroundColor: '#00a884', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 10 }}>
+                      ▶
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Footer buttons */}
+            <div style={{ padding: '20px 28px', borderTop: `1px solid ${t.border}`, display: 'flex', gap: 12, backgroundColor: t.inputBg }}>
+              <button 
+                onClick={() => { setIsCheckoutOpen(false); setIsCartOpen(true); }}
+                style={{ flex: 1, padding: '14px', borderRadius: 14, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+              >
+                Volver al Carrito
+              </button>
+              <button 
+                onClick={handleWhatsAppCheckout}
+                disabled={loading}
+                style={{ flex: 1.5, padding: '14px', borderRadius: 14, border: 'none', backgroundColor: '#10b981', color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: '0 4px 20px rgba(16,185,129,0.3)' }}
+              >
+                Confirmar y Enviar a WhatsApp
+              </button>
+            </div>
+
           </div>
         </div>
       )}

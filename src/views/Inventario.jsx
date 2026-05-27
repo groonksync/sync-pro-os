@@ -1016,14 +1016,13 @@ const Inventario = ({ settings = {}, isDark = true }) => {
       {/* METRICS DASHBOARD */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
-          { label: 'Inversión de Capital (Costo)', value: `${stats.totalInv.toLocaleString()} BS`, icon: Briefcase, color: '#a0a0a0', glow: 'rgba(255,255,255,0.03)' },
-          { label: 'Valor Estimado de Venta', value: `${stats.totalSaleVal.toLocaleString()} BS`, icon: TrendingUp, color: '#3b82f6', glow: 'rgba(59, 130, 246, 0.05)' },
-          { label: 'Ganancia Neta Potencial', value: `${stats.totalEarns.toLocaleString()} BS`, icon: DollarSign, color: '#10b981', glow: 'rgba(16, 185, 129, 0.05)', sub: stats.totalInv > 0 ? `Margen: ${((stats.totalEarns / stats.totalInv) * 100).toFixed(0)}%` : 'Margen: 0%' },
-          { label: 'Ítems en Inventario', value: `${stats.totalCount} ref`, icon: Package, color: '#8b5cf6', glow: 'rgba(139, 92, 246, 0.05)' },
-          { label: 'Stock Crítico', value: stats.lowStock.length, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070', glow: stats.lowStock.length > 0 ? 'rgba(245, 158, 11, 0.05)' : 'rgba(255,255,255,0.03)' }
+          { label: 'Inversión de Capital (Costo)', value: `${stats.totalInv.toLocaleString()} BS`, icon: Briefcase, color: '#a0a0a0' },
+          { label: 'Valor Estimado de Venta', value: `${stats.totalSaleVal.toLocaleString()} BS`, icon: TrendingUp, color: '#3b82f6' },
+          { label: 'Ganancia Neta Potencial', value: `${stats.totalEarns.toLocaleString()} BS`, icon: DollarSign, color: '#10b981', sub: stats.totalInv > 0 ? `Margen: ${((stats.totalEarns / stats.totalInv) * 100).toFixed(0)}%` : 'Margen: 0%' },
+          { label: 'Ítems en Inventario', value: `${stats.totalCount} ref`, icon: Package, color: '#8b5cf6' },
+          { label: 'Stock Crítico', value: stats.lowStock.length, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070' }
         ].map((m, i) => (
-          <div key={i} style={{ backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', position: 'relative', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 80, background: `radial-gradient(circle at right, ${m.glow}, transparent)` }} />
+          <div key={i} style={{ backgroundColor: '#121214', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.35)', position: 'relative', overflow: 'hidden' }}>
             <div>
               <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
               <p style={{ fontSize: 20, fontWeight: 900, color: m.color, fontFamily: 'monospace', margin: '4px 0 0 0', letterSpacing: '-0.02em' }}>{m.value}</p>
@@ -1036,257 +1035,247 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         ))}
       </div>
 
-      {/* DASHBOARD CONTENT GRID (Layout Macbook 16") */}
-      <div style={{ display: 'flex', gap: 24, flex: 1, minHeight: 0 }}>
+      {/* CATEGORÍAS + STOCK CRÍTICO ROW — Siempre visibles debajo de métricas */}
+      <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexShrink: 0 }}>
         
-        {/* Left Side: Sidebar control and Alerts (340px) */}
-        <div style={{ width: '340px', display: 'flex', flexDirection: 'column', gap: 20, flexShrink: 0 }}>
+        {/* Categories Pill Card */}
+        <div style={{ flex: 1, backgroundColor: '#121214', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Layers size={15} style={{ color: '#10b981' }} />
+            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Categorías de Activos</h4>
+          </div>
           
-          {/* Categories Pill Card */}
-          <div style={{ backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Layers size={15} style={{ color: '#10b981' }} />
-              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Categorías de Activos</h4>
-            </div>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: '260px', overflowY: 'auto' }} className="mac-scrollbar">
-              <button 
-                onClick={() => setSelectedCategoryFilter('Todos')}
-                style={{ 
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                  backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(16, 185, 129, 0.08)' : 'transparent', color: selectedCategoryFilter === 'Todos' ? '#10b981' : '#a0a0a0', fontSize: 10, fontWeight: 800, transition: 'all 0.2s' 
-                }}
-                onMouseEnter={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; }}
-                onMouseLeave={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = 'transparent'; }}
-              >
-                <span>Mostrar Todo</span>
-                <span style={{ fontFamily: 'monospace', fontSize: 9 }}>{productos.length}</span>
-              </button>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <button
+              onClick={() => setSelectedCategoryFilter('Todos')}
+              style={{
+                padding: '8px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255,255,255,0.03)',
+                color: selectedCategoryFilter === 'Todos' ? '#10b981' : '#a0a0a0',
+                fontSize: 9, fontWeight: 800, transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', gap: 6
+              }}
+              onMouseEnter={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'; }}
+              onMouseLeave={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; }}
+            >
+              <span>Todos</span>
+              <span style={{ backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.06)', padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{productos.length}</span>
+            </button>
 
-              {Object.keys(stats.catMap).map(catName => {
-                const item = stats.catMap[catName];
-                const isActive = selectedCategoryFilter === catName;
-                const CatIcon = getCategoryIcon(catName);
-                return (
-                  <button 
-                    key={catName}
-                    onClick={() => setSelectedCategoryFilter(catName)}
-                    style={{ 
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                      backgroundColor: isActive ? 'rgba(16, 185, 129, 0.08)' : 'transparent', color: isActive ? '#10b981' : '#d4d4d4', fontSize: 10, fontWeight: 800, transition: 'all 0.2s' 
-                    }}
-                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; }}
-                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
-                      <CatIcon size={12} style={{ color: isActive ? '#10b981' : '#707070' }} />
-                      <span>{catName}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 8, color: '#707070', fontFamily: 'monospace' }}>({item.investment.toLocaleString()} BS)</span>
-                      <span style={{ backgroundColor: isActive ? '#10b981' : 'rgba(255,255,255,0.04)', color: isActive ? '#000' : '#707070', padding: '2px 8px', borderRadius: 20, fontSize: 9, fontFamily: 'monospace' }}>{item.count}</span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            {Object.keys(stats.catMap).map(catName => {
+              const item = stats.catMap[catName];
+              const isActive = selectedCategoryFilter === catName;
+              const CatIcon = getCategoryIcon(catName);
+              return (
+                <button
+                  key={catName}
+                  onClick={() => setSelectedCategoryFilter(catName)}
+                  style={{
+                    padding: '8px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                    backgroundColor: isActive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255,255,255,0.03)',
+                    color: isActive ? '#10b981' : '#d4d4d4',
+                    fontSize: 9, fontWeight: 800, transition: 'all 0.2s',
+                    display: 'flex', alignItems: 'center', gap: 6
+                  }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; }}
+                >
+                  <CatIcon size={11} style={{ color: isActive ? '#10b981' : '#707070' }} />
+                  <span>{catName}</span>
+                  <span style={{ backgroundColor: isActive ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.06)', color: isActive ? '#10b981' : '#707070', padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{item.count}</span>
+                </button>
+              );
+            })}
           </div>
-
-          {/* Low Stock Alerts */}
-          <div style={{ backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14, flex: 1, minHeight: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
-              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Control Stock Crítico</h4>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1, overflowY: 'auto' }} className="mac-scrollbar">
-              {stats.lowStock.length === 0 ? (
-                <div style={{ padding: 20, textAlign: 'center', color: '#707070', fontSize: 10, opacity: 0.7 }}>
-                  Todos los productos tienen stock suficiente.
-                </div>
-              ) : (
-                stats.lowStock.map(p => (
-                  <div 
-                    key={p.id} 
-                    onClick={() => { setSearchTerm(p.nombre); setSelectedCategoryFilter('Todos'); }}
-                    style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: '10px 14px', display: 'flex', gap: 10, alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s' }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
-                    <div style={{ width: 36, height: 36, borderRadius: 8, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {p.imagen ? (
-                        <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
-                      ) : (
-                        <ImageIcon size={14} style={{ color: '#707070' }} />
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ fontSize: 10, fontWeight: 900, color: '#fff', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase' }}>{p.nombre}</span>
-                      <span style={{ fontSize: 8, color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Quedan {p.stock_actual} unidades</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
         </div>
 
-        {/* Right Side: Data view master table (Flex 1) */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 15px 40px rgba(0,0,0,0.3)' }}>
-          
-          {/* Table Header Filter search */}
-          <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div style={{ flex: 1 }}>
-              <input 
-                type="text" 
-                placeholder="Buscar por código, SKU, nombre o categoría..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '11px 18px', fontSize: 12, outline: 'none', color: '#e5e7eb', transition: 'all 0.2s', fontFamily: "'Inter', system-ui, sans-serif" }}
-              />
-            </div>
-            
-            {selectedCategoryFilter !== 'Todos' && (
-              <button 
-                onClick={() => setSelectedCategoryFilter('Todos')}
-                style={{ border: 'none', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', fontSize: 8, fontWeight: 900, textTransform: 'uppercase', padding: '10px 16px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                Filtro: {selectedCategoryFilter} <X size={10} />
-              </button>
+        {/* Low Stock Alerts */}
+        <div style={{ flex: 1, backgroundColor: '#121214', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
+            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Control Stock Crítico</h4>
+            {stats.lowStock.length > 0 && (
+              <span style={{ marginLeft: 'auto', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', padding: '2px 10px', borderRadius: 20, fontSize: 9, fontWeight: 800, fontFamily: 'monospace' }}>{stats.lowStock.length} Alertas</span>
             )}
           </div>
 
-          {/* Master Table Scrollable Container */}
-          <div style={{ overflowX: 'auto', flex: 1 }} className="mac-scrollbar">
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.015)' }}>
-                  {['SKU', 'Producto', 'Categoría', 'Costo', 'Precio Público', 'Ganancia & Margen', 'Stock', 'Acciones'].map((th, idx) => (
-                    <th key={idx} style={{ padding: '14px 20px', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6b7280', fontFamily: "'Inter', system-ui, sans-serif", whiteSpace: 'nowrap' }}>{th}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} style={{ padding: '100px 0', textAlign: 'center', color: '#707070', fontSize: 11 }}>
-                      No se encontraron activos que coincidan con la búsqueda.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredProducts.map(p => {
-                    const stock = parseInt(p.stock_actual || 0);
-                    const isAgotado = stock <= 0;
-                    const isLow = stock > 0 && stock <= 5;
-                    const statusColor = isAgotado ? '#ef4444' : isLow ? '#f59e0b' : '#10b981';
-                    
-                    const cost = parseFloat(p.precio_costo || 0);
-                    const sale = parseFloat(p.precio_venta || 0);
-                    const profit = sale - cost;
-                    const totalProfit = profit * stock;
-                    const marginPct = cost > 0 ? ((profit / cost) * 100).toFixed(0) : '0';
-
-                    // Compute stock bar width (min_stock standard is 5)
-                    const minStock = parseInt(p.stock_minimo || 5);
-                    const percent = Math.min(100, (stock / (minStock * 3)) * 100);
-
-                    return (
-                      <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background-color 0.2s' }} className="hover-row">
-                        {/* SKU internal */}
-                        <td style={{ padding: '14px 20px', fontSize: 10, fontFamily: 'monospace', color: '#6b7280', whiteSpace: 'nowrap' }}>
-                          {p.sku || p.codigo || (p.id ? p.id.substring(0, 8) : 'N/A')}
-                        </td>
-                        
-                        {/* Title & Brand */}
-                        <td style={{ padding: '14px 20px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                            <div style={{ width: 48, height: 48, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              {p.imagen ? (
-                                <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
-                              ) : (
-                                <ImageIcon size={16} style={{ color: '#6b7280' }} />
-                              )}
-                            </div>
-                            <div style={{ minWidth: 0 }}>
-                              <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: '-0.01em' }}>{p.nombre}</span>
-                              <span style={{ fontSize: 9, fontWeight: 400, color: '#6b7280', marginTop: 3, display: 'block', fontFamily: "'Inter', system-ui, sans-serif" }}>{p.marca || 'Sin marca'}</span>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Category */}
-                        <td style={{ padding: '14px 20px' }}>
-                          <span style={{ fontSize: 9, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#9ca3af', padding: '4px 10px', borderRadius: 20, whiteSpace: 'nowrap', fontFamily: "'Inter', system-ui, sans-serif" }}>
-                            {p.categoria || 'General'}
-                          </span>
-                        </td>
-
-                        {/* Cost */}
-                        <td style={{ padding: '14px 20px' }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: '#9ca3af' }}>{cost.toLocaleString()}</span>
-                          <span style={{ fontSize: 8, color: '#6b7280', display: 'block', marginTop: 1 }}>BS costo</span>
-                        </td>
-
-                        {/* Sale Price */}
-                        <td style={{ padding: '14px 20px' }}>
-                          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: '#f3f4f6' }}>{sale.toLocaleString()}</span>
-                          <span style={{ fontSize: 8, color: '#6b7280', display: 'block', marginTop: 1 }}>BS público</span>
-                        </td>
-
-                        {/* Ganancia & Margen por unidad */}
-                        <td style={{ padding: '14px 20px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: profit >= 0 ? '#e2e8f0' : '#ef4444' }}>+{profit.toLocaleString()}</span>
-                              <span style={{ fontSize: 8, color: '#6b7280' }}>BS/u</span>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{
-                                fontSize: 10, fontWeight: 700,
-                                color: parseFloat(marginPct) >= 30 ? '#10b981' : parseFloat(marginPct) >= 15 ? '#f59e0b' : '#ef4444',
-                                backgroundColor: parseFloat(marginPct) >= 30 ? 'rgba(16,185,129,0.1)' : parseFloat(marginPct) >= 15 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
-                                padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace'
-                              }}>{marginPct}%</span>
-                              <span style={{ fontSize: 8, color: '#6b7280', fontFamily: 'monospace' }}>{totalProfit.toLocaleString()} BS total</span>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Stock pills + progress tracker bar */}
-                        <td style={{ padding: '14px 20px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 80 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: statusColor, flexShrink: 0 }} />
-                              <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', fontFamily: 'monospace' }}>{stock}</span>
-                              <span style={{ fontSize: 9, color: '#6b7280' }}>uds</span>
-                            </div>
-                            <div style={{ height: 3, width: '100%', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 2, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${percent}%`, backgroundColor: statusColor, borderRadius: 2, transition: 'width 0.3s' }} />
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Row actions */}
-                        <td style={{ padding: '14px 20px' }}>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button onClick={() => handleEditProduct(p)} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
-                              <Edit3 size={12} />
-                            </button>
-                            <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id })} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
-                              <Trash2 size={12} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 8 }}>
+            {stats.lowStock.length === 0 ? (
+              <div style={{ padding: '16px 20px', gridColumn: '1 / -1', textAlign: 'center', color: '#707070', fontSize: 10, opacity: 0.7 }}>
+                Todos los productos tienen stock suficiente.
+              </div>
+            ) : (
+              stats.lowStock.slice(0, 6).map(p => (
+                <div
+                  key={p.id}
+                  onClick={() => { setSearchTerm(p.nombre); setSelectedCategoryFilter('Todos'); }}
+                  style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: '8px 12px', display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s', minWidth: 0 }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                >
+                  <div style={{ width: 28, height: 28, borderRadius: 6, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {p.imagen ? (
+                      <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                    ) : (
+                      <ImageIcon size={10} style={{ color: '#707070' }} />
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.nombre}>{p.nombre}</span>
+                    <span style={{ fontSize: 7, color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Stock: {p.stock_actual} uds</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
+      </div>
+
+      {/* FULL-WIDTH MASTER TABLE */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#121214', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 15px 40px rgba(0,0,0,0.35)' }}>
+        
+        {/* Table Header Filter search */}
+        <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ flex: 1 }}>
+            <input
+              type="text"
+              placeholder="Buscar por código, SKU, nombre o categoría..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '11px 18px', fontSize: 12, outline: 'none', color: '#e5e7eb', transition: 'all 0.2s', fontFamily: "'Inter', system-ui, sans-serif" }}
+            />
+          </div>
+          
+          {selectedCategoryFilter !== 'Todos' && (
+            <button
+              onClick={() => setSelectedCategoryFilter('Todos')}
+              style={{ border: 'none', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', fontSize: 8, fontWeight: 900, textTransform: 'uppercase', padding: '10px 16px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              Filtro: {selectedCategoryFilter} <X size={10} />
+            </button>
+          )}
+        </div>
+
+        {/* Master Table Scrollable Container */}
+        <div style={{ overflowX: 'auto', flex: 1 }} className="mac-scrollbar">
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.015)' }}>
+                {['SKU', 'Producto', 'Categoría', 'Costo', 'Precio Público', 'Ganancia & Margen', 'Stock', 'Acciones'].map((th, idx) => (
+                  <th key={idx} style={{ padding: '14px 20px', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6b7280', fontFamily: "'Inter', system-ui, sans-serif", whiteSpace: 'nowrap' }}>{th}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.length === 0 ? (
+                <tr>
+                  <td colSpan={8} style={{ padding: '100px 0', textAlign: 'center', color: '#707070', fontSize: 11 }}>
+                    No se encontraron activos que coincidan con la búsqueda.
+                  </td>
+                </tr>
+              ) : (
+                filteredProducts.map(p => {
+                  const stock = parseInt(p.stock_actual || 0);
+                  const isAgotado = stock <= 0;
+                  const isLow = stock > 0 && stock <= 5;
+                  const statusColor = isAgotado ? '#ef4444' : isLow ? '#f59e0b' : '#10b981';
+                  
+                  const cost = parseFloat(p.precio_costo || 0);
+                  const sale = parseFloat(p.precio_venta || 0);
+                  const profit = sale - cost;
+                  const totalProfit = profit * stock;
+                  const marginPct = cost > 0 ? ((profit / cost) * 100).toFixed(0) : '0';
+
+                  const minStock = parseInt(p.stock_minimo || 5);
+                  const percent = Math.min(100, (stock / (minStock * 3)) * 100);
+
+                  return (
+                    <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background-color 0.2s' }} className="hover-row">
+                      <td style={{ padding: '14px 20px', fontSize: 10, fontFamily: 'monospace', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                        {p.sku || p.codigo || (p.id ? p.id.substring(0, 8) : 'N/A')}
+                      </td>
+                      
+                      <td style={{ padding: '14px 20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                          <div style={{ width: 48, height: 48, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            {p.imagen ? (
+                              <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
+                            ) : (
+                              <ImageIcon size={16} style={{ color: '#6b7280' }} />
+                            )}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: '-0.01em' }}>{p.nombre}</span>
+                            <span style={{ fontSize: 9, fontWeight: 400, color: '#6b7280', marginTop: 3, display: 'block', fontFamily: "'Inter', system-ui, sans-serif" }}>{p.marca || 'Sin marca'}</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td style={{ padding: '14px 20px' }}>
+                        <span style={{ fontSize: 9, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#9ca3af', padding: '4px 10px', borderRadius: 20, whiteSpace: 'nowrap', fontFamily: "'Inter', system-ui, sans-serif" }}>
+                          {p.categoria || 'General'}
+                        </span>
+                      </td>
+
+                      <td style={{ padding: '14px 20px' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: '#9ca3af' }}>{cost.toLocaleString()}</span>
+                        <span style={{ fontSize: 8, color: '#6b7280', display: 'block', marginTop: 1 }}>BS costo</span>
+                      </td>
+
+                      <td style={{ padding: '14px 20px' }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: '#f3f4f6' }}>{sale.toLocaleString()}</span>
+                        <span style={{ fontSize: 8, color: '#6b7280', display: 'block', marginTop: 1 }}>BS público</span>
+                      </td>
+
+                      <td style={{ padding: '14px 20px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: profit >= 0 ? '#e2e8f0' : '#ef4444' }}>+{profit.toLocaleString()}</span>
+                            <span style={{ fontSize: 8, color: '#6b7280' }}>BS/u</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{
+                              fontSize: 10, fontWeight: 700,
+                              color: parseFloat(marginPct) >= 30 ? '#10b981' : parseFloat(marginPct) >= 15 ? '#f59e0b' : '#ef4444',
+                              backgroundColor: parseFloat(marginPct) >= 30 ? 'rgba(16,185,129,0.1)' : parseFloat(marginPct) >= 15 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
+                              padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace'
+                            }}>{marginPct}%</span>
+                            <span style={{ fontSize: 8, color: '#6b7280', fontFamily: 'monospace' }}>{totalProfit.toLocaleString()} BS total</span>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td style={{ padding: '14px 20px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 80 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: statusColor, flexShrink: 0 }} />
+                            <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', fontFamily: 'monospace' }}>{stock}</span>
+                            <span style={{ fontSize: 9, color: '#6b7280' }}>uds</span>
+                          </div>
+                          <div style={{ height: 3, width: '100%', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 2, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${percent}%`, backgroundColor: statusColor, borderRadius: 2, transition: 'width 0.3s' }} />
+                          </div>
+                        </div>
+                      </td>
+
+                      <td style={{ padding: '14px 20px' }}>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button onClick={() => handleEditProduct(p)} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                            <Edit3 size={12} />
+                          </button>
+                          <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id })} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* PRODUCT CREATION AND EDIT PANEL MODAL */}
