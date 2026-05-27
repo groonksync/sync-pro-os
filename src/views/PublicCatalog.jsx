@@ -822,7 +822,7 @@ const PublicCatalog = () => {
                   <div>
                     <h4 style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', color: t.textMuted, letterSpacing: '0.1em', marginBottom: 8 }}>Descripción del Producto</h4>
                     <p style={{ fontSize: 11, color: t.textDim, lineHeight: '1.6', margin: 0, whiteSpace: 'pre-line' }}>
-                      {selectedProduct.descripcion || selectedProduct.ficha_tecnica}
+                      {(selectedProduct.descripcion || selectedProduct.ficha_tecnica || '').replace(/\*/g, '\n• ')}
                     </p>
                   </div>
                 )}
