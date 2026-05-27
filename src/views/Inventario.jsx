@@ -8,8 +8,6 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
-import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
 
 const Toast = ({ message, show, onClose, isDark, t }) => {
   useEffect(() => {
@@ -827,8 +825,10 @@ const Inventario = ({ settings = {}, isDark = true }) => {
     return { totalCount, totalInv, totalSaleVal, totalEarns, lowStock, catMap };
   }, [productos]);
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     try {
+      const { default: jsPDF } = await import('jspdf');
+      await import('jspdf-autotable');
       const doc = new jsPDF();
       doc.setFont("helvetica", "bold");
       doc.setFontSize(16);
