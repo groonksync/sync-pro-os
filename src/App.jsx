@@ -274,6 +274,7 @@ const App = () => {
         default: return <CommandCenter meetingsList={meetingsList} data={data} servicios={servicios} onNavigateToPrestamo={handleNavigateToPrestamo} />;
       }
     } catch (e) {
+      console.error("Fallo de renderizado:", e);
       return (
         <div className="flex flex-col items-center justify-center h-full text-center p-10 bg-black/50 rounded-[40px] border border-white/10">
           <h3 className="text-xl font-bold text-white mb-2">Error de Visualización</h3>
