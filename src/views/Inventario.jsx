@@ -588,7 +588,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
   
   // Custom dialog state
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, id: null });
-  const [confirmRestore, setConfirmRestore] = useState(false);
+
 
   useEffect(() => { fetchData(); }, []);
 
@@ -601,31 +601,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
     } catch (e) { console.error(e); } finally { setLoading(false); }
   };
 
-  const handleRestoreCatalog = async () => {
-    try {
-      setLoading(true);
-      // Delete existing records
-      const { error: deleteError } = await supabase.from('productos').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      if (deleteError) throw deleteError;
 
-      // Seed default items
-      const { error: insertError } = await supabase.from('productos').insert(
-        DEFAULT_PRODUCTS.map(p => ({
-          ...p,
-          id: crypto.randomUUID()
-        }))
-      );
-      if (insertError) throw insertError;
-
-      setToast({ show: true, message: 'Catálogo Restaurado' });
-      setConfirmRestore(false);
-      await fetchData();
-    } catch (e) {
-      alert("Error al restaurar catálogo: " + e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSaveProduct = async () => {
     if (!editingProduct?.nombre) return;
@@ -830,59 +806,169 @@ const Inventario = ({ settings = {}, isDark = true }) => {
     try {
       const { default: jsPDF } = await import('jspdf');
       await import('jspdf-autotable');
-      const doc = new jsPDF();
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text("REPORTE FINANCIERO DE INVENTARIO CORPORATIVO PRO", 14, 20);
-      
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.text(`Fecha del Reporte: ${new Date().toLocaleString()}`, 14, 26);
-      doc.text(`Artículos Diferentes: ${productos.length} items`, 14, 31);
-      doc.text(`Inversión Total de Activos (Costo): ${stats.totalInv.toLocaleString()} BS.`, 14, 36);
-      doc.text(`Valor Estimado de Venta Público: ${stats.totalSaleVal.toLocaleString()} BS.`, 14, 41);
-      doc.text(`Ganancia Estimada Potencial: ${stats.totalEarns.toLocaleString()} BS.`, 14, 46);
-      
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+
+      // ── PORTADA ──────────────────────────────────────────────────────────────
+      doc.setFillColor(12, 12, 14);
+      doc.rect(0, 0, pageW, pageH, 'F');
+      doc.setFillColor(16, 185, 129);
+      doc.rect(0, 0, pageW, 4, 'F');
+      doc.setFillColor(16, 185, 129);
+      doc.rect(0, pageH - 4, pageW, 4, 'F');
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(36);
+      doc.setTextColor(255, 255, 255);
+      doc.text('INVENTARIO', 20, 55);
+      doc.setFontSize(14);
+      doc.setTextColor(16, 185, 129);
+      doc.text('REPORTE FINANCIERO COMPLETO', 20, 68);
+
+      doc.setDrawColor(40, 40, 44);
+      doc.setLineWidth(0.4);
+      doc.line(20, 75, pageW - 20, 75);
+
+      // Stats en portada
+      const coverStats = [
+        { label: 'Total Productos', value: `${productos.length} ref.`, color: [255, 255, 255] },
+        { label: 'Inversión Total', value: `${stats.totalInv.toLocaleString()} BS`, color: [156, 163, 175] },
+        { label: 'Valor Estimado Venta', value: `${stats.totalSaleVal.toLocaleString()} BS`, color: [96, 165, 250] },
+        { label: 'Ganancia Potencial', value: `${stats.totalEarns.toLocaleString()} BS`, color: [16, 185, 129] },
+        { label: 'Margen Global', value: stats.totalInv > 0 ? `${((stats.totalEarns / stats.totalInv) * 100).toFixed(1)}%` : '0%', color: [16, 185, 129] },
+        { label: 'Alertas Stock Crítico', value: `${stats.lowStock.length}`, color: stats.lowStock.length > 0 ? [245, 158, 11] : [107, 114, 128] },
+      ];
+      coverStats.forEach((s, i) => {
+        const col = i % 2;
+        const row = Math.floor(i / 2);
+        const x = 20 + col * 87;
+        const y = 86 + row * 34;
+        doc.setFillColor(22, 22, 26);
+        doc.roundedRect(x, y, 78, 28, 3, 3, 'F');
+        doc.setFontSize(7);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100, 100, 110);
+        doc.text(s.label.toUpperCase(), x + 5, y + 10);
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(...s.color);
+        doc.text(s.value, x + 5, y + 22);
+      });
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 90);
+      const fechaGen = new Date().toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' });
+      doc.text(`Generado el ${fechaGen}`, 20, pageH - 12);
+      doc.text('Control de Inventario — Sync Pro OS', pageW - 20, pageH - 12, { align: 'right' });
+
+      // ── RESUMEN POR CATEGORÍA ─────────────────────────────────────────────
+      doc.addPage();
+      doc.setFillColor(12, 12, 14);
+      doc.rect(0, 0, pageW, pageH, 'F');
+      doc.setFillColor(16, 185, 129);
+      doc.rect(0, 0, pageW, 4, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(255, 255, 255);
+      doc.text('RESUMEN POR CATEGORÍA', 20, 20);
+
+      const catRows = Object.entries(stats.catMap).map(([cat, data]) => {
+        const catProds = productos.filter(p => p.categoria === cat);
+        const gananciaTotal = catProds.reduce((sum, p) => {
+          const profit = (parseFloat(p.precio_venta || 0) - parseFloat(p.precio_costo || 0)) * parseInt(p.stock_actual || 0);
+          return sum + profit;
+        }, 0);
+        const avgMargin = data.count > 0
+          ? catProds.reduce((sum, p) => {
+              const c = parseFloat(p.precio_costo || 0);
+              const v = parseFloat(p.precio_venta || 0);
+              return sum + (c > 0 ? ((v - c) / c) * 100 : 0);
+            }, 0) / data.count
+          : 0;
+        return [cat, `${data.count}`, `${data.investment.toLocaleString()} BS`, `${gananciaTotal.toLocaleString()} BS`, `${avgMargin.toFixed(1)}%`];
+      });
+
+      doc.autoTable({
+        startY: 28,
+        head: [['CATEGORÍA', 'PRODUCTOS', 'INVERSIÓN TOTAL', 'GANANCIA POTENCIAL', 'MARGEN PROM.']],
+        body: catRows,
+        theme: 'plain',
+        styles: { fillColor: [18, 18, 20], textColor: [200, 200, 210], fontSize: 9, cellPadding: 6 },
+        headStyles: { fillColor: [16, 185, 129], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 9 },
+        alternateRowStyles: { fillColor: [25, 25, 28] },
+        margin: { left: 14, right: 14 },
+      });
+
+      // ── CATÁLOGO DETALLADO DE PRODUCTOS ──────────────────────────────────
+      doc.addPage();
+      doc.setFillColor(12, 12, 14);
+      doc.rect(0, 0, pageW, pageH, 'F');
+      doc.setFillColor(16, 185, 129);
+      doc.rect(0, 0, pageW, 4, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.setTextColor(255, 255, 255);
+      doc.text('CATÁLOGO DETALLADO DE PRODUCTOS', 20, 20);
+
       const tableRows = filteredProducts.map(p => {
         const stock = parseInt(p.stock_actual || 0);
         const cost = parseFloat(p.precio_costo || 0);
         const sale = parseFloat(p.precio_venta || 0);
         const profit = sale - cost;
-        const totalCost = cost * stock;
-        const totalSale = sale * stock;
-        const totalProfit = totalSale - totalCost;
-        const margin = cost > 0 ? `${((profit / cost) * 100).toFixed(0)}%` : '0%';
+        const marginPct = cost > 0 ? ((profit / cost) * 100).toFixed(1) : '0';
+        const totalProfit = profit * stock;
         return [
-          p.sku || p.codigo || 'N/A',
-          p.nombre?.toUpperCase() || '',
-          p.categoria || '',
+          p.sku || p.codigo || '-',
+          p.nombre?.toUpperCase() || '-',
+          p.categoria || '-',
+          p.marca || '-',
           `${cost.toLocaleString()} BS`,
           `${sale.toLocaleString()} BS`,
-          `${totalProfit.toLocaleString()} BS (${margin})`,
-          `${stock} uds`
+          `+${profit.toLocaleString()} BS`,
+          `${marginPct}%`,
+          `${totalProfit.toLocaleString()} BS`,
+          `${stock} uds`,
+          p.garantia || '-',
         ];
       });
 
       doc.autoTable({
-        startY: 52,
-        head: [['SKU / CÓDIGO', 'PRODUCTO', 'CATEGORÍA', 'COSTO UNIT.', 'PRECIO VENTA', 'POTENCIAL NETO (MARGEN)', 'STOCK']],
+        startY: 28,
+        head: [['SKU', 'PRODUCTO', 'CATEGORÍA', 'MARCA', 'COSTO', 'PRECIO VENTA', 'GANANCIA/U', 'MARGEN%', 'GANANCIA TOTAL', 'STOCK', 'GARANTÍA']],
         body: tableRows,
-        theme: 'striped',
-        headStyles: { fillColor: [16, 185, 129], fontSize: 8, fontStyle: 'bold' },
-        bodyStyles: { fontSize: 7.5 },
-        alternateRowStyles: { fillColor: [245, 245, 247] },
-        margin: { top: 52, left: 14, right: 14 }
+        theme: 'plain',
+        styles: { fillColor: [18, 18, 20], textColor: [200, 200, 210], fontSize: 6.5, cellPadding: 3.5 },
+        headStyles: { fillColor: [16, 185, 129], textColor: [0, 0, 0], fontStyle: 'bold', fontSize: 7 },
+        alternateRowStyles: { fillColor: [25, 25, 28] },
+        columnStyles: {
+          0: { cellWidth: 14 }, 1: { cellWidth: 36 }, 2: { cellWidth: 20 }, 3: { cellWidth: 16 },
+          4: { cellWidth: 14 }, 5: { cellWidth: 16 }, 6: { cellWidth: 16 }, 7: { cellWidth: 11 },
+          8: { cellWidth: 18 }, 9: { cellWidth: 10 }, 10: { cellWidth: 14 }
+        },
+        margin: { left: 8, right: 8 },
+        didDrawPage: () => {
+          doc.setFillColor(12, 12, 14);
+          doc.setFillColor(16, 185, 129);
+          doc.rect(0, 0, pageW, 4, 'F');
+          doc.rect(0, pageH - 4, pageW, 4, 'F');
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(80, 80, 90);
+          doc.text('Control de Inventario — Sync Pro OS', pageW - 14, pageH - 8, { align: 'right' });
+        },
       });
 
-      doc.save(`Reporte_Inventario_${new Date().toISOString().slice(0, 10)}.pdf`);
-      setToast({ show: true, message: 'Reporte PDF Descargado' });
+      doc.save(`Inventario_${new Date().toISOString().slice(0, 10)}.pdf`);
+      setToast({ show: true, message: 'PDF Exportado Correctamente' });
     } catch (error) {
-      alert("Error al exportar PDF: " + error.message);
+      alert('Error al exportar PDF: ' + error.message);
     }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', fontFamily: 'Space Grotesk, Inter, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', fontFamily: "'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont, system-ui, sans-serif" }}>
       <Toast show={toast.show} message={toast.message} isDark={isDark} t={t} onClose={() => setToast({ ...toast, show: false })} />
       
       <ConfirmModal 
@@ -893,23 +979,16 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         onCancel={() => setConfirmDelete({ isOpen: false, id: null })} 
         t={t} 
       />
-      <ConfirmModal 
-        isOpen={confirmRestore} 
-        title="Restaurar Catálogo" 
-        message="Esta acción reemplazará todos los productos actuales en la base de datos por el catálogo original real con imágenes y multimedia. ¿Deseas continuar?" 
-        onConfirm={handleRestoreCatalog} 
-        onCancel={() => setConfirmRestore(false)} 
-        t={t} 
-      />
+
 
       {/* TOP HEADER PANEL */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16 }}>
         <div>
-          <h2 style={{ fontSize: 26, fontWeight: 900, color: '#ffffff', letterSpacing: '-0.03em', margin: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 12 }}>
-            <BoxIcon size={30} style={{ color: '#10b981' }} /> Inventario Corporativo Pro
+          <h2 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.04em', margin: 0, fontFamily: "'Inter', system-ui, sans-serif" }}>
+            Inventario
           </h2>
-          <p style={{ fontSize: 9, color: '#10b981', marginTop: 4, fontWeight: 800, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-            Consola Avanzada de Activos y Control de Capital
+          <p style={{ fontSize: 11, color: '#6b7280', marginTop: 3, fontWeight: 400, letterSpacing: '0.01em' }}>
+            Control de Inventario
           </p>
         </div>
 
@@ -921,15 +1000,6 @@ const Inventario = ({ settings = {}, isDark = true }) => {
             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
           >
             <Download size={13} /> Exportar PDF
-          </button>
-
-          <button 
-            onClick={() => setConfirmRestore(true)}
-            style={{ padding: '12px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
-          >
-            <RotateCcw size={13} /> Restaurar Catálogo
           </button>
 
           <button 
@@ -1066,15 +1136,14 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: 'rgba(25, 25, 29, 0.65)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 15px 40px rgba(0,0,0,0.3)' }}>
           
           {/* Table Header Filter search */}
-          <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', position: 'relative', display: 'flex', gap: 12, alignItems: 'center' }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Search style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: '#707070' }} size={16} />
+          <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ flex: 1 }}>
               <input 
                 type="text" 
-                placeholder="Buscar activos por código, SKU, nombre comercial o categoría..." 
+                placeholder="Buscar por código, SKU, nombre o categoría..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 20px 12px 46px', fontSize: 11, outline: 'none', color: '#fff', transition: 'all 0.2s' }}
+                style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '11px 18px', fontSize: 12, outline: 'none', color: '#e5e7eb', transition: 'all 0.2s', fontFamily: "'Inter', system-ui, sans-serif" }}
               />
             </div>
             
@@ -1092,9 +1161,9 @@ const Inventario = ({ settings = {}, isDark = true }) => {
           <div style={{ overflowX: 'auto', flex: 1 }} className="mac-scrollbar">
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                  {['Código / SKU', 'Producto', 'Categoría', 'Inversión (Costo)', 'Precio Público', 'Rendimiento Potencial', 'Stock', 'Acciones'].map((th, idx) => (
-                    <th key={idx} style={{ padding: '16px 24px', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#707070' }}>{th}</th>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.015)' }}>
+                  {['SKU', 'Producto', 'Categoría', 'Costo', 'Precio Público', 'Ganancia & Margen', 'Stock', 'Acciones'].map((th, idx) => (
+                    <th key={idx} style={{ padding: '14px 20px', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6b7280', fontFamily: "'Inter', system-ui, sans-serif", whiteSpace: 'nowrap' }}>{th}</th>
                   ))}
                 </tr>
               </thead>
@@ -1125,67 +1194,81 @@ const Inventario = ({ settings = {}, isDark = true }) => {
                     return (
                       <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background-color 0.2s' }} className="hover-row">
                         {/* SKU internal */}
-                        <td style={{ padding: '18px 24px', fontSize: 10, fontFamily: 'monospace', color: '#707070' }}>
+                        <td style={{ padding: '14px 20px', fontSize: 10, fontFamily: 'monospace', color: '#6b7280', whiteSpace: 'nowrap' }}>
                           {p.sku || p.codigo || (p.id ? p.id.substring(0, 8) : 'N/A')}
                         </td>
                         
                         {/* Title & Brand */}
-                        <td style={{ padding: '18px 24px' }}>
+                        <td style={{ padding: '14px 20px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                            <div style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <div style={{ width: 48, height: 48, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                               {p.imagen ? (
                                 <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
                               ) : (
-                                <ImageIcon size={18} style={{ color: '#707070' }} />
+                                <ImageIcon size={16} style={{ color: '#6b7280' }} />
                               )}
                             </div>
                             <div style={{ minWidth: 0 }}>
-                              <span style={{ fontSize: 11, fontWeight: 900, color: '#fff', display: 'block', textTransform: 'uppercase', letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '240px' }}>{p.nombre}</span>
-                              <span style={{ fontSize: 8, fontWeight: 800, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: 4, display: 'block' }}>Fabricante: {p.marca || 'N/A'}</span>
+                              <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: '-0.01em' }}>{p.nombre}</span>
+                              <span style={{ fontSize: 9, fontWeight: 400, color: '#6b7280', marginTop: 3, display: 'block', fontFamily: "'Inter', system-ui, sans-serif" }}>{p.marca || 'Sin marca'}</span>
                             </div>
                           </div>
                         </td>
 
                         {/* Category */}
-                        <td style={{ padding: '18px 24px' }}>
-                          <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#a0a0a0', padding: '4px 10px', borderRadius: 20 }}>
+                        <td style={{ padding: '14px 20px' }}>
+                          <span style={{ fontSize: 9, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#9ca3af', padding: '4px 10px', borderRadius: 20, whiteSpace: 'nowrap', fontFamily: "'Inter', system-ui, sans-serif" }}>
                             {p.categoria || 'General'}
                           </span>
                         </td>
 
                         {/* Cost */}
-                        <td style={{ padding: '18px 24px', fontSize: 12, fontWeight: 900, fontFamily: 'monospace', color: '#707070' }}>
-                          {cost.toLocaleString()} <span style={{ fontSize: 8 }}>BS.</span>
+                        <td style={{ padding: '14px 20px' }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: '#9ca3af' }}>{cost.toLocaleString()}</span>
+                          <span style={{ fontSize: 8, color: '#6b7280', display: 'block', marginTop: 1 }}>BS costo</span>
                         </td>
 
                         {/* Sale Price */}
-                        <td style={{ padding: '18px 24px', fontSize: 12, fontWeight: 900, fontFamily: 'monospace', color: '#fff' }}>
-                          {sale.toLocaleString()} <span style={{ fontSize: 8, color: '#707070' }}>BS.</span>
+                        <td style={{ padding: '14px 20px' }}>
+                          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: '#f3f4f6' }}>{sale.toLocaleString()}</span>
+                          <span style={{ fontSize: 8, color: '#6b7280', display: 'block', marginTop: 1 }}>BS público</span>
                         </td>
 
-                        {/* Rentability (Potential Profit & Margin) */}
-                        <td style={{ padding: '18px 24px' }}>
-                          <span style={{ fontSize: 12, fontWeight: 900, fontFamily: 'monospace', color: totalProfit >= 0 ? '#10b981' : '#ef4444' }}>
-                            {totalProfit.toLocaleString()} <span style={{ fontSize: 8 }}>BS</span>
-                          </span>
-                          <span style={{ fontSize: 8, display: 'block', color: '#707070', marginTop: 2, fontWeight: 800 }}>M: {marginPct}% ({profit} BS/u)</span>
+                        {/* Ganancia & Margen por unidad */}
+                        <td style={{ padding: '14px 20px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: profit >= 0 ? '#e2e8f0' : '#ef4444' }}>+{profit.toLocaleString()}</span>
+                              <span style={{ fontSize: 8, color: '#6b7280' }}>BS/u</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{
+                                fontSize: 10, fontWeight: 700,
+                                color: parseFloat(marginPct) >= 30 ? '#10b981' : parseFloat(marginPct) >= 15 ? '#f59e0b' : '#ef4444',
+                                backgroundColor: parseFloat(marginPct) >= 30 ? 'rgba(16,185,129,0.1)' : parseFloat(marginPct) >= 15 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
+                                padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace'
+                              }}>{marginPct}%</span>
+                              <span style={{ fontSize: 8, color: '#6b7280', fontFamily: 'monospace' }}>{totalProfit.toLocaleString()} BS total</span>
+                            </div>
+                          </div>
                         </td>
 
                         {/* Stock pills + progress tracker bar */}
-                        <td style={{ padding: '18px 24px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100px' }}>
+                        <td style={{ padding: '14px 20px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 80 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: statusColor }} />
-                              <span style={{ fontSize: 10, fontWeight: 900, color: '#fff' }}>{stock} uds</span>
+                              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: statusColor, flexShrink: 0 }} />
+                              <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', fontFamily: 'monospace' }}>{stock}</span>
+                              <span style={{ fontSize: 9, color: '#6b7280' }}>uds</span>
                             </div>
-                            <div style={{ height: 4, width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 2, overflow: 'hidden' }}>
-                              <div style={{ height: '100%', width: `${percent}%`, backgroundColor: statusColor, borderRadius: 2 }} />
+                            <div style={{ height: 3, width: '100%', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 2, overflow: 'hidden' }}>
+                              <div style={{ height: '100%', width: `${percent}%`, backgroundColor: statusColor, borderRadius: 2, transition: 'width 0.3s' }} />
                             </div>
                           </div>
                         </td>
 
                         {/* Row actions */}
-                        <td style={{ padding: '18px 24px' }}>
+                        <td style={{ padding: '14px 20px' }}>
                           <div style={{ display: 'flex', gap: 8 }}>
                             <button onClick={() => handleEditProduct(p)} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
                               <Edit3 size={12} />
