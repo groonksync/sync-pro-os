@@ -414,7 +414,7 @@ const PublicCatalog = () => {
                       onClick={() => { setSelectedProduct(p); setSelectedImageIndex(0); setMediaTab('images'); }}
                       style={{ 
                         backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 20, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.15)', transition: 'all 0.3s', cursor: 'pointer'
+                        boxShadow: 'none', transition: 'all 0.3s', cursor: 'pointer'
                       }}
                     >
                       <div>
@@ -433,7 +433,7 @@ const PublicCatalog = () => {
                         </div>
 
                         {/* Real Image container */}
-                        <div style={{ height: 180, borderRadius: 16, backgroundColor: t.bg, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
+                        <div style={{ height: 250, borderRadius: 16, backgroundColor: t.bg, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
                           {p.imagen ? (
                             <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
                           ) : (
@@ -442,7 +442,23 @@ const PublicCatalog = () => {
                         </div>
 
                         {/* Title & Star Rating */}
-                        <h3 style={{ fontSize: 14, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.02em', marginTop: 16, marginBottom: 6 }}>{p.nombre}</h3>
+                        <h3 style={{ 
+                          fontSize: 13, 
+                          fontWeight: 900, 
+                          color: t.text, 
+                          textTransform: 'uppercase', 
+                          letterSpacing: '-0.02em', 
+                          marginTop: 16, 
+                          marginBottom: 6,
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          height: '2.8em',
+                          lineHeight: '1.4em'
+                        }} title={String(p.nombre || '').toUpperCase()}>
+                          {String(p.nombre || '').toUpperCase()}
+                        </h3>
                         
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                           <div style={{ display: 'flex', gap: 2 }}>

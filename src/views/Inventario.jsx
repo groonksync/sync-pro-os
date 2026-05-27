@@ -25,11 +25,21 @@ const Toast = ({ message, show, onClose, isDark, t }) => {
   );
 };
 
+const generateUUID = () => {
+  if (typeof window !== 'undefined' && window.crypto && window.crypto.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, t }) => {
   if (!isOpen) return null;
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}>
-      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, padding: 28, borderRadius: 24, maxWidth: 420, width: '90%', boxShadow: '0 25px 70px rgba(0,0,0,0.5)', animation: 'scaleIn 0.3s ease-out' }}>
+      <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, padding: 28, borderRadius: 24, maxWidth: 420, width: '90%', boxShadow: 'none', animation: 'scaleIn 0.3s ease-out' }}>
         <h4 style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '0.05em', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={18} color="#ef4444" /> {title}</h4>
         <p style={{ fontSize: 12, color: t.textMuted, lineHeight: '1.6', margin: '0 0 28px 0' }}>{message}</p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
@@ -588,6 +598,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
   
   // Custom dialog state
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, id: null });
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
 
   useEffect(() => { fetchData(); }, []);
@@ -622,7 +633,10 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         }
       };
       
-      const { error } = await supabase.from('productos').upsert(payload);
+      const { descripcion, video_url, ...cleanPayload } = payload;
+      cleanPayload.ficha_tecnica = descripcion || payload.ficha_tecnica || '';
+      
+      const { error } = await supabase.from('productos').upsert(cleanPayload);
       if (error) throw error;
       
       await fetchData();
@@ -654,7 +668,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
 
   const openNewProduct = () => {
     setEditingProduct({
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       nombre: '',
       categoria: 'Electrónica',
       marca: '',
@@ -802,10 +816,15 @@ const Inventario = ({ settings = {}, isDark = true }) => {
     return { totalCount, totalInv, totalSaleVal, totalEarns, lowStock, catMap };
   }, [productos]);
 
-  const exportToPDF = async () => {
+  const exportToPDF = () => {
+    setIsPdfModalOpen(true);
+  };
+
+  const confirmExportPDF = async () => {
+    setIsPdfModalOpen(false);
     try {
       const { default: jsPDF } = await import('jspdf');
-      await import('jspdf-autotable');
+      const { default: autoTable } = await import('jspdf-autotable');
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
@@ -890,7 +909,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         return [cat, `${data.count}`, `${data.investment.toLocaleString()} BS`, `${gananciaTotal.toLocaleString()} BS`, `${avgMargin.toFixed(1)}%`];
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 28,
         head: [['CATEGORÍA', 'PRODUCTOS', 'INVERSIÓN TOTAL', 'GANANCIA POTENCIAL', 'MARGEN PROM.']],
         body: catRows,
@@ -934,7 +953,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         ];
       });
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: 28,
         head: [['SKU', 'PRODUCTO', 'CATEGORÍA', 'MARCA', 'COSTO', 'PRECIO VENTA', 'GANANCIA/U', 'MARGEN%', 'GANANCIA TOTAL', 'STOCK', 'GARANTÍA']],
         body: tableRows,
@@ -980,6 +999,66 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         t={t} 
       />
 
+      {/* PDF EXPORT CONFIRMATION MODAL */}
+      {isPdfModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)' }}>
+          <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, padding: 32, borderRadius: 28, maxWidth: 480, width: '90%', boxShadow: 'none', animation: 'scaleIn 0.3s ease-out' }}>
+            <h4 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#fff', letterSpacing: '0.1em', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
+              <FileText size={18} color="#10b981" /> Confirmar Exportación PDF
+            </h4>
+            <span style={{ fontSize: 9, fontWeight: 900, color: t.accent, letterSpacing: '0.2em', textTransform: 'uppercase', display: 'block', marginBottom: 20 }}>
+              Resumen del Reporte Financiero
+            </span>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, padding: 20, borderRadius: 16, marginBottom: 24 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Total Activos (Refs)</span>
+                <span style={{ fontSize: 11, color: '#fff', fontWeight: 900, fontFamily: 'monospace' }}>{productos.length} productos</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Capital Invertido (Costo)</span>
+                <span style={{ fontSize: 11, color: '#fff', fontWeight: 900, fontFamily: 'monospace' }}>{stats.totalInv.toLocaleString()} BS</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Valor Estimado Venta</span>
+                <span style={{ fontSize: 11, color: '#3b82f6', fontWeight: 900, fontFamily: 'monospace' }}>{stats.totalSaleVal.toLocaleString()} BS</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Ganancia Neta Potencial</span>
+                <span style={{ fontSize: 11, color: '#10b981', fontWeight: 900, fontFamily: 'monospace' }}>{stats.totalEarns.toLocaleString()} BS ({stats.totalInv > 0 ? ((stats.totalEarns / stats.totalInv) * 100).toFixed(0) : 0}%)</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Categorías Activas</span>
+                <span style={{ fontSize: 11, color: '#8b5cf6', fontWeight: 900, fontFamily: 'monospace' }}>{Object.keys(stats.catMap).length} categorías</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Alertas de Stock Crítico</span>
+                <span style={{ fontSize: 11, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070', fontWeight: 900, fontFamily: 'monospace' }}>{stats.lowStock.length} alertas</span>
+              </div>
+            </div>
+            
+            <p style={{ fontSize: 11, color: t.textMuted, lineHeight: '1.6', margin: '0 0 24px 0' }}>
+              ¿Deseas generar y descargar el reporte financiero completo en formato PDF con el resumen arriba detallado?
+            </p>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button 
+                onClick={() => setIsPdfModalOpen(false)} 
+                style={{ padding: '10px 20px', borderRadius: 12, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.textDim, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={confirmExportPDF} 
+                style={{ padding: '10px 22px', borderRadius: 12, border: 'none', backgroundColor: '#10b981', color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)' }}
+              >
+                Sí, exportar PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* TOP HEADER PANEL */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16 }}>
@@ -1022,7 +1101,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
           { label: 'Ítems en Inventario', value: `${stats.totalCount} ref`, icon: Package, color: '#8b5cf6' },
           { label: 'Stock Crítico', value: stats.lowStock.length, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070' }
         ].map((m, i) => (
-          <div key={i} style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 8px 32px rgba(0,0,0,0.35)', position: 'relative', overflow: 'hidden' }}>
+          <div key={i} style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'none', position: 'relative', overflow: 'hidden' }}>
             <div>
               <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
               <p style={{ fontSize: 20, fontWeight: 900, color: m.color, fontFamily: 'monospace', margin: '4px 0 0 0', letterSpacing: '-0.02em' }}>{m.value}</p>
@@ -1121,7 +1200,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
                     )}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={p.nombre}>{p.nombre}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase' }} title={String(p.nombre || '').toUpperCase()}>{String(p.nombre || '').toUpperCase()}</span>
                     <span style={{ fontSize: 7, color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Stock: {p.stock_actual} uds</span>
                   </div>
                 </div>
@@ -1133,7 +1212,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
       </div>
 
       {/* FULL-WIDTH MASTER TABLE */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, overflow: 'hidden', boxShadow: '0 15px 40px rgba(0,0,0,0.35)' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, overflow: 'hidden', boxShadow: 'none' }}>
         
         {/* Table Header Filter search */}
         <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -1198,16 +1277,32 @@ const Inventario = ({ settings = {}, isDark = true }) => {
                       
                       <td style={{ padding: '14px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                          <div style={{ width: 48, height: 48, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <div style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             {p.imagen ? (
                               <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
                             ) : (
-                              <ImageIcon size={16} style={{ color: '#6b7280' }} />
+                              <ImageIcon size={20} style={{ color: '#6b7280' }} />
                             )}
                           </div>
-                          <div style={{ minWidth: 0 }}>
-                            <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '220px', fontFamily: "'Inter', system-ui, sans-serif", letterSpacing: '-0.01em' }}>{p.nombre}</span>
-                            <span style={{ fontSize: 9, fontWeight: 400, color: '#6b7280', marginTop: 3, display: 'block', fontFamily: "'Inter', system-ui, sans-serif" }}>{p.marca || 'Sin marca'}</span>
+                          <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <span style={{ 
+                              fontSize: 12, 
+                              fontWeight: 700, 
+                              color: '#f3f4f6', 
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden', 
+                              maxWidth: '280px', 
+                              fontFamily: "'Inter', system-ui, sans-serif", 
+                              letterSpacing: '-0.01em',
+                              textTransform: 'uppercase',
+                              lineHeight: '1.4em',
+                              maxHeight: '2.8em'
+                            }} title={String(p.nombre || '').toUpperCase()}>
+                              {String(p.nombre || '').toUpperCase()}
+                            </span>
+                            <span style={{ fontSize: 9, fontWeight: 400, color: '#6b7280', fontFamily: "'Inter', system-ui, sans-serif", textTransform: 'uppercase' }}>{p.marca || 'Sin marca'}</span>
                           </div>
                         </div>
                       </td>
@@ -1281,7 +1376,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
       {/* PRODUCT CREATION AND EDIT PANEL MODAL */}
       {isModalOpen && editingProduct && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9000, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 1060, borderRadius: 28, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.6)', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'scaleIn 0.3s ease-out' }}>
+          <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, width: '100%', maxWidth: 1060, borderRadius: 28, overflow: 'hidden', boxShadow: 'none', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'scaleIn 0.3s ease-out' }}>
             
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px', borderBottom: `1px solid ${t.border}` }}>
@@ -1425,7 +1520,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
                     <select 
                       value={editingProduct.categoria} 
                       onChange={e => setEditingProduct({ ...editingProduct, categoria: e.target.value })}
-                      style={{ width: '100%', backgroundColor: '#28282b', border: '1px solid #2e2e30', borderRadius: 14, padding: '12px 16px', fontSize: 11, outline: 'none', color: '#fff' }}
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }}
                     >
                       {AMAZON_CATEGORIES.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
@@ -1501,7 +1596,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
                     <select 
                       value={editingProduct.tipo_envio} 
                       onChange={e => setEditingProduct({ ...editingProduct, tipo_envio: e.target.value })}
-                      style={{ width: '100%', backgroundColor: '#28282b', border: '1px solid #2e2e30', borderRadius: 14, padding: '12px 16px', fontSize: 11, outline: 'none', color: '#fff' }}
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }}
                     >
                       <option value="Envío Gratuito">Envío Gratuito</option>
                       <option value="Costo Adicional">Costo Adicional</option>
