@@ -44,7 +44,7 @@ const Toast = ({ message, type = 'success', show, onClose, t }) => {
   );
 };
 
-const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
+const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile }) => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -101,45 +101,45 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{ 
-        backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: 20, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: isMobile ? 14 : 20, padding: isMobile ? 10 : 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
         boxShadow: '0 2px 12px rgba(0,0,0,0.3)', transition: 'all 0.3s', cursor: 'pointer', position: 'relative', overflow: 'hidden'
       }}
     >
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <span style={{ fontSize: 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.inputBg, color: t.textMuted, padding: '4px 10px', borderRadius: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 8 : 12 }}>
+          <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.inputBg, color: t.textMuted, padding: '3px 8px', borderRadius: 20 }}>
             {p.categoria || 'General'}
           </span>
           {isAgotado ? (
-            <span style={{ fontSize: 7, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sin Stock</span>
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sin Stock</span>
           ) : isLow ? (
-            <span style={{ fontSize: 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} disponibles</span>
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} Disp.</span>
           ) : (
-            <span style={{ fontSize: 7, fontWeight: 900, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} unidades</span>
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} uds</span>
           )}
         </div>
 
         {/* Image container — AGOTADO overlay lives ONLY here */}
-        <div style={{ height: 250, borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
+        <div style={{ height: isMobile ? 140 : 250, borderRadius: 12, backgroundColor: '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
           {isAgotado && (
             <div style={{
               position: 'absolute',
               inset: 0,
               backgroundColor: 'rgba(0,0,0,0.55)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               zIndex: 6,
-              borderRadius: 16
+              borderRadius: 12
             }}>
               <span style={{
                 backgroundColor: '#ef4444',
                 color: '#ffffff',
-                fontSize: 11,
+                fontSize: isMobile ? 8 : 11,
                 fontWeight: 900,
-                padding: '9px 22px',
+                padding: isMobile ? '5px 12px' : '9px 22px',
                 borderRadius: 30,
                 letterSpacing: '0.15em',
                 textTransform: 'uppercase',
@@ -149,9 +149,9 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
           )}
 
           {cardImages.length > 0 ? (
-            <img src={cardImages[activeImageIndex]} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 12 }} alt={p.nombre} />
+            <img src={cardImages[activeImageIndex]} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: isMobile ? 6 : 12 }} alt={p.nombre} />
           ) : (
-            <ImageIcon size={32} style={{ color: t.textDim }} />
+            <ImageIcon size={isMobile ? 20 : 32} style={{ color: t.textDim }} />
           )}
 
           {!isAgotado && cardImages.length > 1 && (
@@ -159,36 +159,36 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
               <button
                 onClick={handlePrevImage}
                 style={{
-                  position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
-                  width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)',
+                  position: 'absolute', left: 4, top: '50%', transform: 'translateY(-50%)',
+                  width: 20, height: 20, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)',
                   border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s', zIndex: 5
+                  cursor: 'pointer', opacity: isHovered || isMobile ? 1 : 0, transition: 'opacity 0.2s', zIndex: 5
                 }}
               >
-                <ChevronLeft size={14} />
+                <ChevronLeft size={10} />
               </button>
               <button
                 onClick={handleNextImage}
                 style={{
-                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
-                  width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)',
+                  position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
+                  width: 20, height: 20, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)',
                   border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s', zIndex: 5
+                  cursor: 'pointer', opacity: isHovered || isMobile ? 1 : 0, transition: 'opacity 0.2s', zIndex: 5
                 }}
               >
-                <ChevronRight size={14} />
+                <ChevronRight size={10} />
               </button>
             </>
           )}
 
           {!isAgotado && cardImages.length > 1 && (
-            <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 5 }}>
+            <div style={{ position: 'absolute', bottom: 6, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 4, zIndex: 5 }}>
               {cardImages.map((_, idx) => (
                 <span
                   key={idx}
                   onClick={(e) => handleSelectDot(e, idx)}
                   style={{
-                    width: 6, height: 6, borderRadius: '50%',
+                    width: 4, height: 4, borderRadius: '50%',
                     backgroundColor: idx === activeImageIndex ? t.accent : 'rgba(0,0,0,0.25)',
                     cursor: 'pointer', border: idx === activeImageIndex ? 'none' : '1px solid rgba(255,255,255,0.4)',
                     transition: 'all 0.2s'
@@ -200,13 +200,13 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
         </div>
 
         <h3 style={{ 
-          fontSize: 13, 
+          fontSize: isMobile ? 11 : 13, 
           fontWeight: 900, 
           color: t.text, 
           textTransform: 'uppercase', 
           letterSpacing: '-0.02em', 
-          marginTop: 16, 
-          marginBottom: 6,
+          marginTop: isMobile ? 10 : 16, 
+          marginBottom: 4,
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
@@ -217,37 +217,46 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
           {String(p.nombre || '').toUpperCase()}
         </h3>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-          <div style={{ display: 'flex', gap: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: isMobile ? 8 : 12 }}>
+          <div style={{ display: 'flex', gap: 1 }}>
             {[1, 2, 3, 4, 5].map(star => (
-              <Star key={star} size={11} fill={star <= Math.round(p.metadata?.rating || 4.5) ? t.accent : 'none'} stroke={star <= Math.round(p.metadata?.rating || 4.5) ? t.accent : t.textMuted} />
+              <Star key={star} size={isMobile ? 8 : 11} fill={star <= Math.round(p.metadata?.rating || 4.5) ? t.accent : 'none'} stroke={star <= Math.round(p.metadata?.rating || 4.5) ? t.accent : t.textMuted} />
             ))}
           </div>
-          <span style={{ fontSize: 9, fontWeight: 900, color: t.textMuted }}>{p.metadata?.rating || 4.5}</span>
+          <span style={{ fontSize: isMobile ? 8 : 9, fontWeight: 900, color: t.textMuted }}>{p.metadata?.rating || 4.5}</span>
         </div>
       </div>
 
       <div 
         onClick={e => e.stopPropagation()} 
-        style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        style={{ 
+          borderTop: `1px solid ${t.border}`, 
+          paddingTop: 10, 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row', 
+          alignItems: isMobile ? 'stretch' : 'center', 
+          justifyContent: 'space-between',
+          gap: isMobile ? 8 : 0
+        }}
       >
         <div>
           {hasDiscount && (
-            <span style={{ fontSize: 8, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, display: 'block', marginBottom: -2 }}>
+            <span style={{ fontSize: isMobile ? 7 : 8, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, display: 'block', marginBottom: -2 }}>
               {parseFloat(p.precio_antes).toLocaleString()} BS.
             </span>
           )}
-          <span style={{ fontSize: 20, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
-            {parseFloat(p.precio_venta).toLocaleString()} <span style={{ fontSize: 8, color: t.textMuted }}>BS.</span>
+          <span style={{ fontSize: isMobile ? 16 : 20, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
+            {parseFloat(p.precio_venta).toLocaleString()} <span style={{ fontSize: isMobile ? 7 : 8, color: t.textMuted }}>BS.</span>
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 4, width: isMobile ? '100%' : 'auto' }}>
           <button 
             onClick={() => addToCart(p)}
             style={{ 
-              padding: '8px 12px', borderRadius: 10, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 8, fontWeight: 900, 
-              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s' 
+              flex: isMobile ? 1 : 'none',
+              padding: isMobile ? '6px 8px' : '8px 12px', borderRadius: 8, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: isMobile ? 7 : 8, fontWeight: 900, 
+              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center'
             }}
           >
             + Carrito
@@ -255,8 +264,9 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
           <button 
             onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa comprar: ${p.nombre}`, '_blank')}
             style={{ 
-              padding: '8px 14px', borderRadius: 10, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: 8, fontWeight: 900, 
-              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s' 
+              flex: isMobile ? 1 : 'none',
+              padding: isMobile ? '6px 8px' : '8px 14px', borderRadius: 8, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: isMobile ? 7 : 8, fontWeight: 900, 
+              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center'
             }}
           >
             Comprar
@@ -277,6 +287,15 @@ const PublicCatalog = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [isDark, setIsDark] = useState(true);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // WhatsApp Pre-visualization States
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -675,11 +694,11 @@ const PublicCatalog = () => {
 
       {/* DETAIL MODAL WITH LARGE IMAGE GALLERY AND EMBEDDED VIDEOS */}
       {selectedProduct && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 740, borderRadius: 28, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? 12 : 24 }}>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 740, borderRadius: isMobile ? 18 : 28, overflow: 'hidden', boxShadow: '0 40px 100px rgba(0,0,0,0.5)', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
             
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 28px', borderBottom: `1px solid ${t.border}` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: isMobile ? '12px 16px' : '20px 28px', borderBottom: `1px solid ${t.border}` }}>
               <span style={{ fontSize: 8, fontWeight: 900, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Detalles del Producto</span>
               <button 
                 onClick={() => setSelectedProduct(null)} 
@@ -693,7 +712,7 @@ const PublicCatalog = () => {
             <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               
               {/* Media viewer on top (fully occupying width) */}
-              <div style={{ position: 'relative', width: '100%', height: 320, backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${t.border}` }}>
+              <div style={{ position: 'relative', width: '100%', height: isMobile ? 220 : 320, backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${t.border}` }}>
                 {mediaTab === 'video' && getVideoUrl(selectedProduct) ? (
                   <iframe 
                     src={getEmbedVideoUrl(getVideoUrl(selectedProduct))}
@@ -745,13 +764,13 @@ const PublicCatalog = () => {
 
               {/* Thumbnail Selector (Only shown in Images tab) */}
               {mediaTab === 'images' && allImages.length > 1 && (
-                <div style={{ display: 'flex', gap: 10, padding: '16px 28px', overflowX: 'auto', backgroundColor: t.inputBg, borderBottom: `1px solid ${t.border}` }}>
+                <div style={{ display: 'flex', gap: 10, padding: isMobile ? '10px 16px' : '16px 28px', overflowX: 'auto', backgroundColor: t.inputBg, borderBottom: `1px solid ${t.border}` }}>
                   {allImages.map((img, idx) => (
                     <button 
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
                       style={{ 
-                        width: 54, height: 54, borderRadius: 10, border: `2px solid ${selectedImageIndex === idx ? t.accent : t.border}`, overflow: 'hidden', padding: 0, cursor: 'pointer', flexShrink: 0 
+                        width: isMobile ? 44 : 54, height: isMobile ? 44 : 54, borderRadius: 10, border: `2px solid ${selectedImageIndex === idx ? t.accent : t.border}`, overflow: 'hidden', padding: 0, cursor: 'pointer', flexShrink: 0 
                       }}
                     >
                       <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
@@ -761,14 +780,14 @@ const PublicCatalog = () => {
               )}
 
               {/* Text Description Box */}
-              <div style={{ padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div style={{ padding: isMobile ? 16 : 28, display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 20 }}>
                 
                 {/* Title & Brand */}
                 <div>
-                  <h2 style={{ fontSize: 20, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0 }}>
+                  <h2 style={{ fontSize: isMobile ? 16 : 20, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.02em', margin: 0 }}>
                     {selectedProduct.nombre}
                   </h2>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginTop: 8, gap: isMobile ? 4 : 0 }}>
                     <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
                       Marca: {selectedProduct.marca || 'Sovereign'}
                     </span>
@@ -779,11 +798,11 @@ const PublicCatalog = () => {
                 </div>
 
                 {/* Price Display */}
-                <div style={{ backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 18, padding: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: isMobile ? 14 : 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <span style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Público</span>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
-                      <span style={{ fontSize: 24, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
+                      <span style={{ fontSize: isMobile ? 20 : 24, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
                         {parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}
                       </span>
                       <span style={{ fontSize: 10, fontWeight: 900, color: t.accent }}>BS.</span>
@@ -792,7 +811,7 @@ const PublicCatalog = () => {
                   {selectedProduct.precio_antes > selectedProduct.precio_venta && (
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: 8, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Antes</span>
-                      <p style={{ fontSize: 18, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, margin: '4px 0 0 0' }}>
+                      <p style={{ fontSize: isMobile ? 14 : 18, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, margin: '4px 0 0 0' }}>
                         {parseFloat(selectedProduct.precio_antes).toLocaleString()} BS.
                       </p>
                     </div>
@@ -800,7 +819,7 @@ const PublicCatalog = () => {
                 </div>
 
                 {/* Info parameters */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 8 : 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, backgroundColor: t.inputBg, padding: 14, borderRadius: 14, border: `1px solid ${t.border}` }}>
                     <Star size={16} style={{ color: t.accent }} fill={t.accent} />
                     <div>
@@ -831,10 +850,10 @@ const PublicCatalog = () => {
             </div>
 
             {/* Footer actions */}
-            <div style={{ padding: '20px 28px', borderTop: `1px solid ${t.border}`, display: 'flex', gap: 12, backgroundColor: t.inputBg }}>
+            <div style={{ padding: isMobile ? '12px 16px' : '20px 28px', borderTop: `1px solid ${t.border}`, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 8 : 12, backgroundColor: t.inputBg }}>
               <button 
                 onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
-                style={{ flex: 1, padding: '14px', borderRadius: 14, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+                style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
               >
                 + Añadir al Carrito
               </button>
@@ -843,7 +862,7 @@ const PublicCatalog = () => {
                   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre} (SKU: ${selectedProduct.sku || selectedProduct.codigo || 'N/A'})`, '_blank');
                   setSelectedProduct(null);
                 }}
-                style={{ flex: 1.2, padding: '14px', borderRadius: 14, border: 'none', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+                style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: 'none', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
               >
                 Preguntar por WhatsApp
               </button>
