@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Plus, Trash2, Table } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Plus, Trash2, Table, MoreHorizontal } from 'lucide-react';
 import { getTheme } from '../lib/theme';
 
 /**
@@ -8,6 +8,7 @@ import { getTheme } from '../lib/theme';
  */
 const NotaGuionTecnico = ({ bloques = [], onChange, isDark }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
+  const [activeColMenu, setActiveColMenu] = useState(null); // { bloqueId, colIndex }
 
   const parsed = (() => {
     if (!bloques || bloques.length === 0) {
@@ -89,6 +90,37 @@ const NotaGuionTecnico = ({ bloques = [], onChange, isDark }) => {
     }));
   };
 
+  const addColumnaAt = (bloqueId, index) => {
+    updateBloques(parsed.map(b => {
+      if (b.id !== bloqueId) return b;
+      const updatedCols = [...(b.columnas || [])];
+      updatedCols.splice(index, 0, 'Nueva');
+      return {
+        ...b,
+        columnas: updatedCols,
+        filas: (b.filas || []).map(f => {
+          const updatedCeldas = [...f.celdas];
+          updatedCeldas.splice(index, 0, '');
+          return { ...f, celdas: updatedCeldas };
+        })
+      };
+    }));
+  };
+
+  const removeColumnaAt = (bloqueId, index) => {
+    updateBloques(parsed.map(b => {
+      if (b.id !== bloqueId) return b;
+      return {
+        ...b,
+        columnas: (b.columnas || []).filter((_, i) => i !== index),
+        filas: (b.filas || []).map(f => ({
+          ...f,
+          celdas: f.celdas.filter((_, i) => i !== index)
+        }))
+      };
+    }));
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto space-y-3 pr-1">
@@ -125,22 +157,69 @@ const NotaGuionTecnico = ({ bloques = [], onChange, isDark }) => {
                   <thead>
                     <tr>
                       {(bloque.columnas || []).map((col, ci) => (
-                        <th key={ci} style={{
+                        <th key={ci} className="relative group" style={{
                           padding: '6px 8px', fontWeight: 600, textAlign: 'left',
                           backgroundColor: `${t.accent}10`, border: `1px solid ${t.border}`,
                           color: t.text, fontSize: '9px',
                         }}>
-                          <input
-                            type="text"
-                            value={col}
-                            onChange={e => {
-                              const updated = [...bloque.columnas];
-                              updated[ci] = e.target.value;
-                              updateBloque(bloque.id, 'columnas', updated);
-                            }}
-                            className="w-full bg-transparent border-0 outline-none text-[9px] font-semibold"
-                            style={{ color: t.text }}
-                          />
+                          <div className="flex items-center justify-between gap-1">
+                            <input
+                              type="text"
+                              value={col}
+                              onChange={e => {
+                                const updated = [...bloque.columnas];
+                                updated[ci] = e.target.value;
+                                updateBloque(bloque.id, 'columnas', updated);
+                              }}
+                              className="bg-transparent border-0 outline-none text-[9px] font-semibold flex-1 min-w-0"
+                              style={{ color: t.text, padding: 0 }}
+                            />
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveColMenu(activeColMenu?.bloqueId === bloque.id && activeColMenu?.colIndex === ci ? null : { bloqueId: bloque.id, colIndex: ci });
+                              }}
+                              className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 transition-all cursor-pointer shrink-0"
+                              style={{ color: t.textDim }}
+                            >
+                              <MoreHorizontal size={10} />
+                            </button>
+                            {activeColMenu?.bloqueId === bloque.id && activeColMenu?.colIndex === ci && (
+                              <>
+                                <div className="fixed inset-0 z-40" onClick={() => setActiveColMenu(null)} />
+                                <div className="absolute top-full left-0 mt-1 z-50 w-44 rounded-lg overflow-hidden shadow-xl"
+                                  style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
+                                  <button
+                                    onClick={() => { addColumnaAt(bloque.id, ci); setActiveColMenu(null); }}
+                                    className="w-full px-3 py-2 text-[10px] font-medium text-left transition-all"
+                                    style={{ color: t.text, borderBottom: `1px solid ${t.border}`, background: 'transparent' }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                  >
+                                    Agregar columna a la izquierda
+                                  </button>
+                                  <button
+                                    onClick={() => { addColumnaAt(bloque.id, ci + 1); setActiveColMenu(null); }}
+                                    className="w-full px-3 py-2 text-[10px] font-medium text-left transition-all"
+                                    style={{ color: t.text, borderBottom: `1px solid ${t.border}`, background: 'transparent' }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                  >
+                                    Agregar columna a la derecha
+                                  </button>
+                                  <button
+                                    onClick={() => { removeColumnaAt(bloque.id, ci); setActiveColMenu(null); }}
+                                    className="w-full px-3 py-2 text-[10px] font-medium text-left transition-all"
+                                    style={{ color: t.danger, background: 'transparent' }}
+                                    onMouseEnter={e => e.currentTarget.style.backgroundColor = `${t.danger}15`}
+                                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                  >
+                                    Eliminar columna
+                                  </button>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </th>
                       ))}
                     </tr>

@@ -391,3 +391,21 @@ button {
   background: #3f3f46;
 }
 
+/* ===== NOTES CANVAS APPLE NOTES CLEAN SHEET OVERRIDES ===== */
+.notes-canvas-title {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+
+.notes-canvas-textarea {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  min-height: 500px !important;
+}
+
