@@ -2,7 +2,8 @@
   "version": 2,
   "framework": "vite",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/api/meta-catalog", "destination": "/api/meta-catalog.js" },
+    { "source": "/api/refresh-token", "destination": "/api/refresh-token.js" },
     { "source": "/(.*)", "destination": "/" }
   ],
   "build": {
