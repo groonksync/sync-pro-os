@@ -28,7 +28,7 @@ function escapeXml(str) {
  */
 function formatPrice(precio) {
   const num = parseFloat(precio) || 0;
-  return `${num.toFixed(2)} DOP`;
+  return `${num.toFixed(2)} BOB`;
 }
 
 /**
@@ -80,15 +80,14 @@ function getAdditionalImages(producto) {
 
 /**
  * Genera la descripción del producto. Usa la ficha_técnica si está disponible,
- * limpiando los asteriscos usados como separadores en tu sistema.
+ * manteniendo los saltos de línea para que se vea estructurado y limpio en WhatsApp.
  */
 function getDescription(producto) {
   let desc = '';
   if (producto.ficha_tecnica) {
-    // Reemplaza asteriscos por puntos y saltos de línea por espacios
+    // Reemplaza asteriscos por viñetas, pero mantiene los saltos de línea (\n)
     desc = producto.ficha_tecnica
-      .replace(/\*/g, ' · ')
-      .replace(/\n/g, ' ')
+      .replace(/\*/g, '•')
       .trim();
   }
   if (!desc && producto.nombre) {
