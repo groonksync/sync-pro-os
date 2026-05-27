@@ -2,8 +2,8 @@
   "version": 2,
   "framework": "vite",
   "routes": [
-    { "src": "/api/meta-catalog", "dest": "api/meta-catalog.js" },
-    { "src": "/api/refresh-token", "dest": "api/refresh-token.js" },
+    { "src": "/api/meta-catalog", "dest": "/api/meta-catalog.js" },
+    { "src": "/api/refresh-token", "dest": "/api/refresh-token.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ],
   "build": {
