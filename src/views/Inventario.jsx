@@ -4,7 +4,8 @@ import {
   Truck, Tag, Box as BoxIcon, Layout, CheckCircle, ChevronLeft, ChevronRight,
   Briefcase, ShoppingBag, DollarSign, Hash, MapPin, ShieldCheck, FileText, Info, Zap, ShoppingCart,
   Layers, Ruler, Weight, Globe, Star, AlertTriangle, List, ArrowUpRight, ArrowLeft, ArrowRight,
-  Barcode, Shield, ZapOff, Activity, Palette, ClipboardList, RotateCcw, Search, TrendingUp, AlertOctagon, Video, Download
+  Barcode, Shield, ZapOff, Activity, Palette, ClipboardList, RotateCcw, Search, TrendingUp, AlertOctagon, Video, Download,
+  Music, Smartphone
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
