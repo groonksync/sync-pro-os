@@ -124,7 +124,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
         <div className="flex gap-4">
            <div className="flex -space-x-3 overflow-hidden">
               {[1,2,3].map(i => (
-                <div key={i} className="w-10 h-10 rounded-full border-2 border-[#121212] bg-neutral-800 flex items-center justify-center text-[10px] font-black text-white">
+                <div key={i} className="w-10 h-10 rounded-full border-2 border-[#141414] bg-neutral-800 flex items-center justify-center text-[10px] font-black text-white">
                    {String.fromCharCode(64 + i)}
                 </div>
               ))}
@@ -208,7 +208,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
            <div className="space-y-8 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-px before:bg-white/5">
               {cobrosActivos.slice(0, 4).map(c => (
                 <div key={c.id} className="relative pl-8 group">
-                   <div className="absolute left-0 top-1.5 w-[22px] h-[22px] rounded-full bg-[#121212] border-2 border-rose-500/30 flex items-center justify-center z-10 group-hover:border-rose-500 transition-all">
+                   <div className="absolute left-0 top-1.5 w-[22px] h-[22px] rounded-full bg-[#141414] border-2 border-rose-500/30 flex items-center justify-center z-10 group-hover:border-rose-500 transition-all">
                       <div className="w-2 h-2 rounded-full bg-rose-500"></div>
                    </div>
                    <div className="bg-white/[0.02] border border-white/5 p-5 rounded-[2rem] hover:bg-white/5 transition-all">

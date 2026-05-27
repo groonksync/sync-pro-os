@@ -62,7 +62,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
   const cobrosActivos = allCobros.filter(p => !p.isPaidThisMonth && p.diffDays <= 7).sort((a, b) => a.diffDays - b.diffDays);
 
   return (
-    <div className={`animate-in fade-in duration-1000 w-full ${isMobile ? 'space-y-8' : 'space-y-16'} pb-32 bg-[#121212]`}>
+    <div className={`animate-in fade-in duration-1000 w-full ${isMobile ? 'space-y-8' : 'space-y-16'} pb-32 bg-[#141414]`}>
       
       {/* SECCIÓN 1: EL CENTRO DE GRAVEDAD (CAPITAL) */}
       <section className="relative flex flex-col items-center justify-center pt-10 pb-20 overflow-hidden">

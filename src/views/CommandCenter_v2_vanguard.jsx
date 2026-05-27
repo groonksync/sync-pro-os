@@ -107,7 +107,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
       {/* KPI GRID (VISUAL) */}
       <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
         {/* CARD: CAPITAL CALLE */}
-        <div className="bg-[#1a1a1a] border border-white/5 p-6 rounded-[2.5rem] relative overflow-hidden group">
+        <div className="bg-[#141414] border border-white/5 p-6 rounded-[2.5rem] relative overflow-hidden group">
            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-all">
               <TrendingUp size={60} />
            </div>
@@ -128,7 +128,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
         </div>
 
         {/* CARD: EGRESOS MES */}
-        <div className="bg-[#1a1a1a] border border-white/5 p-6 rounded-[2.5rem] relative overflow-hidden group">
+        <div className="bg-[#141414] border border-white/5 p-6 rounded-[2.5rem] relative overflow-hidden group">
            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-all">
               <ShoppingBag size={60} />
            </div>
@@ -149,7 +149,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
         </div>
 
         {/* CARD: NEURAL STATUS */}
-        <div className="bg-[#1a1a1a] border border-white/5 p-6 rounded-[2.5rem] relative overflow-hidden group">
+        <div className="bg-[#141414] border border-white/5 p-6 rounded-[2.5rem] relative overflow-hidden group">
            <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-30 transition-all">
               <Cpu size={60} />
            </div>
@@ -179,7 +179,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
       <div className={`grid gap-8 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`}>
         
         {/* PORTAFOLIO DE PRÉSTAMOS (TABLA GRÁFICA) */}
-        <div className={`${isMobile ? '' : 'col-span-8'} bg-[#1a1a1a] border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl`}>
+        <div className={`${isMobile ? '' : 'col-span-8'} bg-[#141414] border border-white/5 rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl`}>
            <div className="p-8 border-b border-white/5 flex justify-between items-center">
               <div>
                  <h3 className="text-lg font-black uppercase tracking-tight text-white">Portafolio de Rendimiento</h3>
@@ -266,7 +266,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
         <div className={`${isMobile ? '' : 'col-span-4'} space-y-8`}>
            
            {/* DISTRIBUCIÓN DE LOGÍSTICA */}
-           <div className="bg-[#1a1a1a] border border-white/5 rounded-[2.5rem] p-8">
+           <div className="bg-[#141414] border border-white/5 rounded-[2.5rem] p-8">
               <h3 className="text-xs font-black uppercase tracking-widest text-neutral-500 mb-8 flex items-center gap-3">
                  <Layers size={16} /> Matriz de Logística
               </h3>
@@ -305,7 +305,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
            </div>
 
            {/* COBROS PRÓXIMOS (VALORES DE REFERENCIA) */}
-           <div className="bg-[#1a1a1a] border border-white/5 rounded-[2.5rem] p-8">
+           <div className="bg-[#141414] border border-white/5 rounded-[2.5rem] p-8">
               <h3 className="text-xs font-black uppercase tracking-widest text-neutral-500 mb-8 flex items-center gap-3">
                  <CalendarDays size={16} /> Próximos Eventos
               </h3>

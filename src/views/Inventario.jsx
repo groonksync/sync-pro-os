@@ -19,7 +19,7 @@ const Toast = ({ message, show, onClose, isDark, t }) => {
     <div style={{ position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)', zIndex: 9999 }}>
       <div style={{ backgroundColor: isDark ? 'rgba(20,20,20,0.95)' : 'rgba(245,245,247,0.98)', backdropFilter: 'blur(24px)', border: `1px solid ${t.border}`, padding: '14px 28px', borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', gap: 12, minWidth: 280, justifyContent: 'center' }}>
         <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}><CheckCircle size={16} /></div>
-        <span style={{ color: isDark ? '#fff' : '#1a1a1a', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>{message}</span>
+        <span style={{ color: isDark ? '#fff' : '#141414', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>{message}</span>
       </div>
     </div>
   );
@@ -1101,7 +1101,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
           { label: 'Ítems en Inventario', value: `${stats.totalCount} ref`, icon: Package, color: '#8b5cf6' },
           { label: 'Stock Crítico', value: stats.lowStock.length, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070' }
         ].map((m, i) => (
-          <div key={i} style={{ backgroundColor: '#0a0a0a', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'none', position: 'relative', overflow: 'hidden' }}>
+          <div key={i} style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'none', position: 'relative', overflow: 'hidden' }}>
             <div>
               <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
               <p style={{ fontSize: 20, fontWeight: 900, color: m.color, fontFamily: 'monospace', margin: '4px 0 0 0', letterSpacing: '-0.02em' }}>{m.value}</p>

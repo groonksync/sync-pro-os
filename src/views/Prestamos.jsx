@@ -1217,7 +1217,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
 // ─── COMPONENTE KPI CARD ────────────────────────────────────
 const KPICard = ({ t, icon: Icon, label, value, moneda, color }) => (
   <div style={{
-    padding: '16px', backgroundColor: '#0a0a0a',
+    padding: '16px', backgroundColor: '#141414',
     border: `1px solid ${t.border}`, borderRadius: '12px',
     display: 'flex', flexDirection: 'column', gap: '8px',
   }}>

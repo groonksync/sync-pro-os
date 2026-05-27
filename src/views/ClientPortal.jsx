@@ -121,7 +121,7 @@ const ClientPortal = ({ portalId }) => {
         {/* PROYECTOS GRID */}
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {sessions.map((session, idx) => (
-            <div key={session.id} className="bg-[#202022] border border-white/5 rounded-xl overflow-hidden flex flex-col group hover:border-white/20 transition-all duration-500 shadow-2xl">
+            <div key={session.id} className="bg-[#141414] border border-white/5 rounded-xl overflow-hidden flex flex-col group hover:border-white/20 transition-all duration-500 shadow-2xl">
               {/* VIDEO PREVIEW (PLACEHOLDER OR REAL) */}
               <div className="aspect-video bg-neutral-900 relative overflow-hidden flex items-center justify-center group-hover:bg-[#141414] transition-all">
                 <Video size={48} className="text-neutral-800 group-hover:scale-110 transition-all duration-700"/>

@@ -990,7 +990,7 @@ const PublicCatalog = () => {
                   <select 
                     value={paymentMethod} 
                     onChange={e => setPaymentMethod(e.target.value)}
-                    style={{ width: '100%', backgroundColor: '#28282b', border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }}
+                    style={{ width: '100%', backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }}
                   >
                     <option value="Efectivo">Efectivo contra entrega</option>
                     <option value="Transferencia QR">Transferencia Bancaria / QR</option>
