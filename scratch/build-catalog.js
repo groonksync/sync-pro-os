@@ -1,28 +1,19 @@
 import { createClient } from '@supabase/supabase-js';
+import fs from 'fs';
+import path from 'path';
 
-export default async function handler(req, res) {
-  // Configurar cabeceras de respuesta para XML y caché
-  res.setHeader('Content-Type', 'text/xml; charset=utf-8');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+// Este script se puede ejecutar localmente o mediante una tarea programada para escribir
+// directamente un archivo meta-catalog.xml estático en la carpeta /public.
+// Esto evita cualquier problema de enrutamiento o servidor con Vercel.
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = 'https://wcewgxkizvsnffhbqqet.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjZXdneGtpenZzbmZmaGJxcWV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTUwNDIsImV4cCI6MjA5MjMzMTA0Mn0.CeQqKNJKevS8RmQf-VMwOlJzvMpJWp1HUdswZRnufFo';
 
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return res.status(500).send(`<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>Error</title>
-    <description>Variables de entorno de Supabase no configuradas.</description>
-  </channel>
-</rss>`);
-  }
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  // Instanciar cliente de Supabase
-  const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
+async function generateStaticFeed() {
+  console.log('Iniciando generación del catálogo estático...');
   try {
-    // Consultar todos los productos
     const { data: productos, error } = await supabase
       .from('productos')
       .select('*')
@@ -30,41 +21,32 @@ export default async function handler(req, res) {
 
     if (error) throw error;
 
-    // Generar XML con formato RSS 2.0 de Meta Commerce
     let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
     <title>Catalogo SyncPro</title>
     <link>https://sync-pro-os.vercel.app</link>
-    <description>Feed automático de productos de SyncPro para Meta / WhatsApp Business</description>
+    <description>Feed estático de productos de SyncPro para Meta / WhatsApp Business</description>
 `;
 
     if (productos && productos.length > 0) {
       productos.forEach((p) => {
-        // ID único del producto
         const id = p.id || p.codigo || p.sku;
-        
-        // Limpiar textos y escapar caracteres especiales XML
         const title = escapeXml(p.nombre || '');
         const description = escapeXml(p.ficha_tecnica || p.descripcion || 'Sin descripción');
-        const price = `${parseFloat(p.precio_venta || 0).toFixed(2)} BOB`; // Bolivianos
+        const price = `${parseFloat(p.precio_venta || 0).toFixed(2)} BOB`;
         
-        // Disponibilidad basada en stock
         const stock = parseInt(p.stock_actual || 0);
         const availability = stock > 0 ? 'in stock' : 'out of stock';
         
-        // Imagen principal y adicionales
         const imageLink = p.imagen || '';
         const additionalImages = (p.imagenes || [])
           .filter(img => img && img !== imageLink)
           .map(img => `<g:additional_image_link>${escapeXml(img)}</g:additional_image_link>`)
           .join('\n        ');
 
-        // Categoría y marca
         const googleProductCategory = escapeXml(p.categoria || 'Apparel & Accessories');
         const brand = escapeXml(p.marca || 'Inefable');
-        
-        // SKU / Código
         const mpn = escapeXml(p.sku || p.codigo || id);
 
         xml += `    <item>
@@ -87,21 +69,20 @@ export default async function handler(req, res) {
     xml += `  </channel>
 </rss>`;
 
-    return res.status(200).send(xml);
+    const destDir = path.resolve('public');
+    if (!fs.existsSync(destDir)) {
+      fs.mkdirSync(destDir, { recursive: true });
+    }
+    const destPath = path.join(destDir, 'meta-catalog.xml');
+    
+    fs.writeFileSync(destPath, xml, 'utf8');
+    console.log(`¡Éxito! Catálogo XML generado en: ${destPath}`);
 
   } catch (error) {
-    console.error('Error al generar catálogo de Meta:', error);
-    return res.status(500).send(`<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>Error</title>
-    <description>Ocurrió un error al obtener los productos: ${escapeXml(error.message)}</description>
-  </channel>
-</rss>`);
+    console.error('Error al generar el archivo XML:', error);
   }
 }
 
-// Función auxiliar para escapar caracteres especiales XML de forma segura
 function escapeXml(unsafe) {
   if (typeof unsafe !== 'string') return '';
   return unsafe.replace(/[<>&'"]/g, (c) => {
@@ -115,3 +96,5 @@ function escapeXml(unsafe) {
     }
   });
 }
+
+generateStaticFeed();

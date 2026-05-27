@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
+  <channel>
+    <title>Catalogo SyncPro</title>
+    <link>https://sync-pro-os.vercel.app</link>
+    <description>Feed estático de productos de SyncPro para Meta / WhatsApp Business</description>
+    <item>
+      <g:id>2a195dd3-ef75-4b42-9706-c3ac3e3869d1</g:id>
+      <g:title>Fuente de alimentación portátil de 1200W</g:title>
+      <g:description>Capacidad: 1200VA/1200W • Voltaje: 220V • Tomas de corriente: 3 NEMA 5-15R + 8 CC • Factor de forma: Torre • Forma de onda: Onda sinusoidal pura</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778607812517-3pp1na.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778607812521-yg1n8d.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>9600.00 BOB</g:price>
+      <g:brand>FORZA</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Electrónica</g:google_product_category>
+      <g:mpn>FPP-T1202</g:mpn>
+    </item>
+    <item>
+      <g:id>bc5cfcd6-4bbc-49c2-b8bc-cd65a9d3f96d</g:id>
+      <g:title>MICROFONO + BRAZO HIDRAULICO RGB</g:title>
+      <g:description>MICROFONO + BRAZO HIDRAULICO RGB*MICROFONO PARA STREAMING RGB*BOTON DE MUTE TOUCH*CARDIOIDE*FRECUENCIA DE RESPUESTA 30Hz-20000Hz</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524527472-pkhsz.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524544597-rv37u.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524552653-odc0r.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>340.00 BOB</g:price>
+      <g:brand>HAVIT</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Audio y Sonido</g:google_product_category>
+      <g:mpn>GF0585</g:mpn>
+    </item>
+    <item>
+      <g:id>0ec31a2b-2568-4cac-8cbe-27551f780151</g:id>
+      <g:title>COMBO TECLADO+MOUSE ESTANDAR USB</g:title>
+      <g:description>COMBO TECLADO+MOUSE ESTANDAR USB*104 TECLAS*CABLE USB 1.5m*TECLADO EN ESPAÑOL</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524171300-5mzwg.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524188962-8l614.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778524197499-y9dwn.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>80.00 BOB</g:price>
+      <g:brand>HAVIT</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Computadoras</g:google_product_category>
+      <g:mpn>GF0548</g:mpn>
+    </item>
+    <item>
+      <g:id>0a997cd3-9ff4-405b-ba0c-ec0960bdfe73</g:id>
+      <g:title>MEMORIA MICRO SD 128GB EXTREME PRO</g:title>
+      <g:description>MEMORIA MICRO SD 128GB EXTREME PRO* SDXC 128GB V30/A1/C10 HASTA 100MB/s,NO INCLUYE ADAPTADOR</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523957003-4rx6a.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523963785-exjln.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>260.00 BOB</g:price>
+      <g:brand>NETAC</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Celulares y Accesorios</g:google_product_category>
+      <g:mpn>GN0037</g:mpn>
+    </item>
+    <item>
+      <g:id>2929769a-bdee-4513-9afe-e4caa748f572</g:id>
+      <g:title>CÁMARA PT WIFI 4MP PANEL SOLAR Y BATERIA</g:title>
+      <g:description>CÁMARA PT WIFI FULL COLOR 4MP CON PANEL SOLAR Y BATERIA INTEGRADA *FULL COLOR *DETEC. PERSONAS *SENSOR PIR *DIST. ILUM. 8M *IP65 *POTENCIA PANEL 2.25W</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523658489-fb6n8.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523663532-faixc.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523673740-1kxtx.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778523682797-qqpnt.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>720.00 BOB</g:price>
+      <g:brand>DIMAX</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Cámaras y Fotografía</g:google_product_category>
+      <g:mpn>G125</g:mpn>
+    </item>
+    <item>
+      <g:id>2c7948c6-fd90-4dfa-95bc-d5e52d2b414d</g:id>
+      <g:title>CÁMARA WIFI 4MP C/ PANEL SOLAR Y BATERIA</g:title>
+      <g:description>CÁMARA PT WIFI 4MP C/ PANEL SOLAR Y BATERIA *FUL COLOR *SENSOR PIR *AUDIO BIDIRECCIONAL *VISION NOCTURA HASTA 15M *IP65 *MICRO SD MAX 256GB</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522784817-dh027.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522791831-atwca.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522800707-b54bx.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522806050-rzcuw.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>850.00 BOB</g:price>
+      <g:brand>Inefable</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Electrónica</g:google_product_category>
+      <g:mpn>G119</g:mpn>
+    </item>
+    <item>
+      <g:id>457423b7-14cd-4c3e-a8f7-e4fc4fad0d1f</g:id>
+      <g:title>CAMARA IP WIFI CRUISER SC+ 5MP</g:title>
+      <g:description>CAMARA IP WIFI CRUISER SC+ 5MP *DETEC. HUMANOS *RASTREO INTELIGENTE *DISUACIÓN ACTIVA *IP66 *AUDIO BIDIRECCIONAL *SD MAS 512GB *FULL COLOR *1 RJ45 1 x 100MBPS</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522479249-9ms3r.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522489503-yjo02.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778522495497-gby1o.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>580.00 BOB</g:price>
+      <g:brand>IMOU</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Cámaras y Fotografía</g:google_product_category>
+      <g:mpn>ED0069</g:mpn>
+    </item>
+    <item>
+      <g:id>337aa9e7-16e7-4b00-81ff-672063bc87fc</g:id>
+      <g:title>CÁMARA PT WIFI 4MP TIPO FOCO</g:title>
+      <g:description>CÁMARA PT WIFI 4MP TIPO FOCO *DETEC. PERSONAS *DETEC. MOVIMIENTO *AUDIO BIDIRECCIONAL *DIT. IR 8-10M *WIFI 2.4GHz *RANURA MICRO SD MAX 256GB *MATERIAL PLASTICO</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778519157314-md024.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778519163140-424q9.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778519171164-mg8ng.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>300.00 BOB</g:price>
+      <g:brand>DIMAX</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Cámaras y Fotografía</g:google_product_category>
+      <g:mpn>G120</g:mpn>
+    </item>
+    <item>
+      <g:id>3ee1d877-2c86-44d3-b84b-8ee4ada1fef6</g:id>
+      <g:title>CÁMARA IP WIFI CRUISER SC 3MP *TIPO PT</g:title>
+      <g:description>CÁMARA IP WIFI CRUISER SC 3MP *TIPO PT *FULL COLOR *RASTERO INTELIGENTE *AUDIO BIDIRECCIONAL *1 PUERTO RJ45 *MICRO SD HASTA 512GB *PARA EXTERIORES *DISUASIVA</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518931626-0cin7.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518986261-ovd5y.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518993227-8zd5b.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>510.00 BOB</g:price>
+      <g:brand>IMOU</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Cámaras y Fotografía</g:google_product_category>
+      <g:mpn>ED0068</g:mpn>
+    </item>
+    <item>
+      <g:id>4b096443-0cc9-4482-9dc7-6a146d7e8208</g:id>
+      <g:title>CAMARA CRUISER DUAL 2 IP WIFI 3+5MP</g:title>
+      <g:description>CAMARA CRUISER DUAL 2 IP WIFI 3+5MP *TIPO PT *LENTE FIJO 3MP, LENTE PT 5MP *LUCES DISUASIVAS ROJO/AZUL *SIRENA INTEGRADA *FULL COLOR *AUDIO BIDIRECCIONAL</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518786231-n8bwv.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518796638-mk8wr.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518803815-0t502.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>810.00 BOB</g:price>
+      <g:brand>IMOU</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Cámaras y Fotografía</g:google_product_category>
+      <g:mpn>ED0055</g:mpn>
+    </item>
+    <item>
+      <g:id>9cb7e116-1e42-4ce4-8179-a7636047bb28</g:id>
+      <g:title>CAMARA IP WIFI 5X5MP DOBLE LENTE TIPO PT</g:title>
+      <g:description>CAMARA IP WIFI 5X5MP DOBLE LENTE TIPO PT **DETECCIÓN DUAL *CONTROL DE RONDA *SIRENA Y LUZ DE ALARMA *DETEC. PERSONAS Y VEHICULOS IA *IP66 *MICRO SD HASTA 256GB</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518465961-6a7x5.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518469333-7ukjd.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>780.00 BOB</g:price>
+      <g:brand>DAHUA TECHNOLOGY</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Cámaras y Fotografía</g:google_product_category>
+      <g:mpn>EA0849</g:mpn>
+    </item>
+    <item>
+      <g:id>c90c7397-76e5-401a-9d91-34279bde2685</g:id>
+      <g:title>CAMARA IP WIFI 3X3MP DOBLE LENTE TIPO PT</g:title>
+      <g:description>CAMARA IP WIFI 3X3 MP DOBLE LENTE TIPO PT *DETECCIÓN DUAL *CONTROL DE RONDA *SIRENA Y LUZ DE ALARMA *DETEC. PERSONAS Y VEHICULOS IA *IP66 *MICRO SD HASTA 256GB</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518105959-rnq57.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1778518110310-vzwwh.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>850.00 BOB</g:price>
+      <g:brand>DAHUA TECHNOLOGY</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Cámaras y Fotografía</g:google_product_category>
+      <g:mpn>EA0847</g:mpn>
+    </item>
+    <item>
+      <g:id>1777738484515</g:id>
+      <g:title>MICROFONO INALAMBRICO MINI</g:title>
+      <g:description>MICROFONO INALAMBRICO MINI*ULTRACOMPACTO Y PORTATIL*48KHz/16bits*CANCELACION DE RUIDO CON IA DE 4 NIVELES*30Hr DE BATERIA*TRANSMISION 100MT*FILTROS DE VOZ IA
+</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738496425-vhk57.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738505470-6ang9.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738513868-i6eu9.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738520729-kwxdb.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>340.00 BOB</g:price>
+      <g:brand>MAONO</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Accesorios</g:google_product_category>
+      <g:mpn>WAVE T1 MINI</g:mpn>
+    </item>
+    <item>
+      <g:id>1777737016011</g:id>
+      <g:title>MICROFONO INALAMBRICO TODO EN UNO BOYA</g:title>
+      <g:description>MICROFONO INALAMBRICO TODO EN UNO*TRUE AI*PARA USO PROFESIONAL*FULL KIT
+</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777737243332-143mi.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777737238297-kzxvz.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777737338736-6erzd.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>2550.00 BOB</g:price>
+      <g:brand>BOYA</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Accesorios</g:google_product_category>
+      <g:mpn>GV0027</g:mpn>
+    </item>
+    <item>
+      <g:id>1777694231123</g:id>
+      <g:title>MICROFONO INALAMBRICO TODO EN UNO</g:title>
+      <g:description>MICROFONO INALAMBRICO TODO EN UNO*BOTON DE GRABACION (REC) INTEGRADO*ALCANCE 300MTS*CONTROL DE CANCELACION DE RUIDO 48kHz/ 24bit HD*8GB DE MEMORIA INTERNA*
+</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777694339200-p6yj0.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777694345485-a6g8r.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777694358281-7xb0z.webp</g:additional_image_link>
+      <g:availability>out of stock</g:availability>
+      <g:price>1800.00 BOB</g:price>
+      <g:brand>Inefable</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Accesorios</g:google_product_category>
+      <g:mpn>GV0010</g:mpn>
+    </item>
+    <item>
+      <g:id>1777692467487</g:id>
+      <g:title>POWER BANK 10,000mAh NEGRO/GRIS</g:title>
+      <g:description>POWER BANK 10,000mAh NEGRO/GRIS*180g COMPACTO Y LIGERO*CARGA RAPIDA*2 PUERTOS 1X USB-A, 1x USB-C*MATERIAL PC+ABS
+</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777692539470-5t048.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777692521532-cmenx.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777692531562-3qxjo.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>155.00 BOB</g:price>
+      <g:brand>HAVIT</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Accesorios</g:google_product_category>
+      <g:mpn>GF0647</g:mpn>
+    </item>
+    <item>
+      <g:id>1777690172618</g:id>
+      <g:title>EXTENSION DE PANTALLA PARA LAPTOP</g:title>
+      <g:description>EXTENSION DE PANTALLA PARA LAPTOP*PANTALLA 14&quot; IPS FHD 1080P* 60Hz*COMPATIBLE PD 3.0 20V/5A*COMPATIBLE CON WIN/MAC/ANDROID/LINUX/CHROMEOS*DISEÑO PREMIUM*ALTAVOZ
+</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777690191316-n16ju.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777690186172-tbv7x.webp</g:additional_image_link>
+      <g:availability>out of stock</g:availability>
+      <g:price>1400.00 BOB</g:price>
+      <g:brand>Inefable</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Accesorios</g:google_product_category>
+      <g:mpn>SCM6</g:mpn>
+    </item>
+    <item>
+      <g:id>1777689470500</g:id>
+      <g:title>AURICULARES INALAMBRICOS DE OIDO ABIERTO</g:title>
+      <g:description>AURICULARES INALAMBRICOS DE OIDO ABIERTO*CANCELACION DE RUIDO*RESISTENCIA IPX5*BT V5.4*PUERTO USB-C
+</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689521868-z4295.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689530295-wgl5g.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689535371-zrj8w.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>250.00 BOB</g:price>
+      <g:brand>HAVIT</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Accesorios</g:google_product_category>
+      <g:mpn>GF0617</g:mpn>
+    </item>
+    <item>
+      <g:id>1777689113790</g:id>
+      <g:title>AUDIFONOS INALAMBRICOS CONFORT NEGRO</g:title>
+      <g:description>AUDIFONOS INALAMBRICOS CONFORT NEGRO* PESO 2,083gr*DISEO ERGONOMICO CONFORT IN-EAR*CASE CON DISPLAY PARA VER EL NIVEL DE BATERIA*BT V5,4*DISEOÑ COMPACTO
+</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777738066951-q83gf.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689299635-bbapj.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777689314364-m04w8.webp</g:additional_image_link>
+      <g:availability>out of stock</g:availability>
+      <g:price>230.00 BOB</g:price>
+      <g:brand>Inefable</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Computadoras</g:google_product_category>
+      <g:mpn>AIRBUDS 9-BK</g:mpn>
+    </item>
+    <item>
+      <g:id>1777683520096</g:id>
+      <g:title>AURICULARES INALAMBRICOS ESTEREO NEGRO</g:title>
+      <g:description>AURICULARES INALAMBRICOS ESTEREO NEGRO*TAMAÑO COMPACTO*CONTROL TACTIL*LLAMADAS NITIDAS*GRAVES POTENTES*BT 5.3*PUERTO TIPO-C*5HR BATERIA</g:description>
+      <g:link>https://sync-pro-os.vercel.app</g:link>
+      <g:image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777688997328-e4iyh.webp</g:image_link>
+      <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777688739198-qfsbk.webp</g:additional_image_link>
+        <g:additional_image_link>https://wcewgxkizvsnffhbqqet.supabase.co/storage/v1/object/public/productos/1777688742733-6iaes.webp</g:additional_image_link>
+      <g:availability>in stock</g:availability>
+      <g:price>200.00 BOB</g:price>
+      <g:brand>HAVIT</g:brand>
+      <g:condition>new</g:condition>
+      <g:google_product_category>Accesorios</g:google_product_category>
+      <g:mpn>GF0563</g:mpn>
+    </item>
+  </channel>
+</rss>
