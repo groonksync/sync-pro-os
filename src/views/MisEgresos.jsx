@@ -82,20 +82,20 @@ const MisEgresos = ({ data, setData, isDark = true }) => {
 
       {/* Tarjetas de resumen */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
-        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <div style={{ backgroundColor: '#0a0a0a', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
           <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><CreditCard size={12}/> Total Gastado</p>
           <p style={{ fontSize: 24, fontWeight: 300, color: t.text }}>${totalEgresos.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <div style={{ backgroundColor: '#0a0a0a', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
           <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><ArrowDownRight size={12}/> Egresos Este Mes</p>
           <p style={{ fontSize: 24, fontWeight: 300, color: t.danger }}>${egresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
         </div>
-        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <div style={{ backgroundColor: '#0a0a0a', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
           <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>Ingresos Este Mes</p>
           <p style={{ fontSize: 24, fontWeight: 300, color: t.success }}>${ingresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
           <p style={{ fontSize: 9, color: t.textMuted, marginTop: 4 }}>Ventas digitales</p>
         </div>
-        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <div style={{ backgroundColor: '#0a0a0a', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
           <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>Ganancia Neta Mes</p>
           <p style={{ fontSize: 24, fontWeight: 300, fontFamily: 'monospace', color: gananciaNeta >= 0 ? t.success : t.danger }}>
             {gananciaNeta >= 0 ? '+' : ''}${gananciaNeta.toLocaleString('en', { minimumFractionDigits: 2 })}

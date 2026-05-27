@@ -44,6 +44,230 @@ const Toast = ({ message, type = 'success', show, onClose, t }) => {
   );
 };
 
+const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const cardImages = useMemo(() => {
+    const list = [];
+    if (p.imagen) list.push(p.imagen);
+    if (Array.isArray(p.imagenes)) {
+      p.imagenes.forEach(img => {
+        if (img && !list.includes(img)) list.push(img);
+      });
+    }
+    return list;
+  }, [p]);
+
+  const stock = parseInt(p.stock_actual || 0);
+  const isAgotado = stock <= 0;
+  const isLow = stock > 0 && stock <= 5;
+  const hasDiscount = p.precio_antes && p.precio_antes > p.precio_venta;
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    if (cardImages.length > 1) {
+      setActiveImageIndex(1);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setActiveImageIndex(0);
+  };
+
+  const handleNextImage = (e) => {
+    e.stopPropagation();
+    if (cardImages.length > 1) {
+      setActiveImageIndex((prev) => (prev + 1) % cardImages.length);
+    }
+  };
+
+  const handlePrevImage = (e) => {
+    e.stopPropagation();
+    if (cardImages.length > 1) {
+      setActiveImageIndex((prev) => (prev - 1 + cardImages.length) % cardImages.length);
+    }
+  };
+
+  const handleSelectDot = (e, index) => {
+    e.stopPropagation();
+    setActiveImageIndex(index);
+  };
+
+  return (
+    <div 
+      onClick={() => onOpenDetails(p)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{ 
+        backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: 20, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.3)', transition: 'all 0.3s', cursor: 'pointer', position: 'relative', overflow: 'hidden'
+      }}
+    >
+      {isAgotado && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 10,
+          borderRadius: 20
+        }}>
+          <span style={{
+            backgroundColor: '#ef4444',
+            color: '#ffffff',
+            fontSize: 10,
+            fontWeight: 900,
+            padding: '8px 18px',
+            borderRadius: 30,
+            letterSpacing: '0.15em',
+            textTransform: 'uppercase',
+            boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)'
+          }}>
+            Agotado
+          </span>
+        </div>
+      )}
+
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontSize: 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.inputBg, color: t.textMuted, padding: '4px 10px', borderRadius: 20 }}>
+            {p.categoria || 'General'}
+          </span>
+          {isAgotado ? (
+            <span style={{ fontSize: 7, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sin Stock</span>
+          ) : isLow ? (
+            <span style={{ fontSize: 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} disponibles</span>
+          ) : (
+            <span style={{ fontSize: 7, fontWeight: 900, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} unidades</span>
+          )}
+        </div>
+
+        <div style={{ height: 250, borderRadius: 16, backgroundColor: '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
+          {cardImages.length > 0 ? (
+            <img src={cardImages[activeImageIndex]} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 12 }} alt={p.nombre} />
+          ) : (
+            <ImageIcon size={32} style={{ color: t.textDim }} />
+          )}
+
+          {cardImages.length > 1 && (
+            <>
+              <button
+                onClick={handlePrevImage}
+                style={{
+                  position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+                  width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)',
+                  border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s', zIndex: 5
+                }}
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                onClick={handleNextImage}
+                style={{
+                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                  width: 24, height: 24, borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.6)',
+                  border: 'none', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s', zIndex: 5
+                }}
+              >
+                <ChevronRight size={14} />
+              </button>
+            </>
+          )}
+
+          {cardImages.length > 1 && (
+            <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 5 }}>
+              {cardImages.map((_, idx) => (
+                <span
+                  key={idx}
+                  onClick={(e) => handleSelectDot(e, idx)}
+                  style={{
+                    width: 6, height: 6, borderRadius: '50%',
+                    backgroundColor: idx === activeImageIndex ? t.accent : 'rgba(0,0,0,0.25)',
+                    cursor: 'pointer', border: idx === activeImageIndex ? 'none' : '1px solid rgba(255,255,255,0.4)',
+                    transition: 'all 0.2s'
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <h3 style={{ 
+          fontSize: 13, 
+          fontWeight: 900, 
+          color: t.text, 
+          textTransform: 'uppercase', 
+          letterSpacing: '-0.02em', 
+          marginTop: 16, 
+          marginBottom: 6,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          height: '2.8em',
+          lineHeight: '1.4em'
+        }} title={String(p.nombre || '').toUpperCase()}>
+          {String(p.nombre || '').toUpperCase()}
+        </h3>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+          <div style={{ display: 'flex', gap: 2 }}>
+            {[1, 2, 3, 4, 5].map(star => (
+              <Star key={star} size={11} fill={star <= Math.round(p.metadata?.rating || 4.5) ? t.accent : 'none'} stroke={star <= Math.round(p.metadata?.rating || 4.5) ? t.accent : t.textMuted} />
+            ))}
+          </div>
+          <span style={{ fontSize: 9, fontWeight: 900, color: t.textMuted }}>{p.metadata?.rating || 4.5}</span>
+        </div>
+      </div>
+
+      <div 
+        onClick={e => e.stopPropagation()} 
+        style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+      >
+        <div>
+          {hasDiscount && (
+            <span style={{ fontSize: 8, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, display: 'block', marginBottom: -2 }}>
+              {parseFloat(p.precio_antes).toLocaleString()} BS.
+            </span>
+          )}
+          <span style={{ fontSize: 20, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
+            {parseFloat(p.precio_venta).toLocaleString()} <span style={{ fontSize: 8, color: t.textMuted }}>BS.</span>
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button 
+            onClick={() => addToCart(p)}
+            style={{ 
+              padding: '8px 12px', borderRadius: 10, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 8, fontWeight: 900, 
+              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s' 
+            }}
+          >
+            + Carrito
+          </button>
+          <button 
+            onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa comprar: ${p.nombre}`, '_blank')}
+            style={{ 
+              padding: '8px 14px', borderRadius: 10, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: 8, fontWeight: 900, 
+              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s' 
+            }}
+          >
+            Comprar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PublicCatalog = () => {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,10 +298,25 @@ const PublicCatalog = () => {
     return Array.from(list).sort();
   }, [productos]);
 
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useMemo(() => {
+    const baseTheme = getTheme(isDark);
+    return {
+      ...baseTheme,
+      accent: '#10b981',
+      accentSoft: 'rgba(16, 185, 129, 0.08)',
+      accentHover: '#059669',
+      accentGlow: 'rgba(16, 185, 129, 0.15)',
+    };
+  }, [isDark]);
   const WHATSAPP_NUMBER = "59169109766";
 
-  useEffect(() => { fetchProducts(); }, []);
+  useEffect(() => { 
+    fetchProducts(); 
+    document.body.style.setProperty('overflow', 'auto', 'important');
+    return () => {
+      document.body.style.removeProperty('overflow');
+    };
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -197,6 +436,9 @@ const PublicCatalog = () => {
     setToast({ show: true, message: 'Eliminado del carrito', type: 'success' });
   };
 
+  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.precio_venta * item.quantity), 0), [cart]);
+
   // WhatsApp Checkout integration
   const checkoutMessage = useMemo(() => {
     let text = `*NUEVO PEDIDO DESDE EL CATÁLOGO SYNCPRO*\n`;
@@ -257,9 +499,6 @@ const PublicCatalog = () => {
     }
   };
 
-  const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
-  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.precio_venta * item.quantity), 0), [cart]);
-
   // Product secondary media images array
   const allImages = useMemo(() => {
     if (!selectedProduct) return [];
@@ -274,7 +513,7 @@ const PublicCatalog = () => {
   }, [selectedProduct]);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: t.bg, color: t.text, fontFamily: 'Outfit, sans-serif', transition: 'background-color 0.4s' }}>
+    <div style={{ height: '100%', minHeight: '100vh', width: '100%', backgroundColor: t.bg, color: t.text, fontFamily: 'Outfit, sans-serif', transition: 'background-color 0.4s', overflowX: 'hidden', overflowY: 'auto' }}>
       <Toast message={toast.message} type={toast.type} show={toast.show} t={t} onClose={() => setToast(prev => ({ ...prev, show: false }))} />
 
       {/* TOP CONTROL PANEL */}
@@ -402,114 +641,16 @@ const PublicCatalog = () => {
           ) : (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-                {filteredProducts.map(p => {
-                  const stock = parseInt(p.stock_actual || 0);
-                  const isAgotado = stock <= 0;
-                  const isLow = stock > 0 && stock <= 5;
-                  const hasDiscount = p.precio_antes && p.precio_antes > p.precio_venta;
-
-                  return (
-                    <div 
-                      key={p.id}
-                      onClick={() => { setSelectedProduct(p); setSelectedImageIndex(0); setMediaTab('images'); }}
-                      style={{ 
-                        backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 20, padding: 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                        boxShadow: 'none', transition: 'all 0.3s', cursor: 'pointer'
-                      }}
-                    >
-                      <div>
-                        {/* Tag category & stock status */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                          <span style={{ fontSize: 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.inputBg, color: t.textMuted, padding: '4px 10px', borderRadius: 20 }}>
-                            {p.categoria || 'General'}
-                          </span>
-                          {isAgotado ? (
-                            <span style={{ fontSize: 7, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sin Stock</span>
-                          ) : isLow ? (
-                            <span style={{ fontSize: 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} disponibles</span>
-                          ) : (
-                            <span style={{ fontSize: 7, fontWeight: 900, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} unidades</span>
-                          )}
-                        </div>
-
-                        {/* Real Image container */}
-                        <div style={{ height: 250, borderRadius: 16, backgroundColor: t.bg, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
-                          {p.imagen ? (
-                            <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
-                          ) : (
-                            <ImageIcon size={32} style={{ color: t.textDim }} />
-                          )}
-                        </div>
-
-                        {/* Title & Star Rating */}
-                        <h3 style={{ 
-                          fontSize: 13, 
-                          fontWeight: 900, 
-                          color: t.text, 
-                          textTransform: 'uppercase', 
-                          letterSpacing: '-0.02em', 
-                          marginTop: 16, 
-                          marginBottom: 6,
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          height: '2.8em',
-                          lineHeight: '1.4em'
-                        }} title={String(p.nombre || '').toUpperCase()}>
-                          {String(p.nombre || '').toUpperCase()}
-                        </h3>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                          <div style={{ display: 'flex', gap: 2 }}>
-                            {[1, 2, 3, 4, 5].map(star => (
-                              <Star key={star} size={11} fill={star <= Math.round(getProductRating(p)) ? t.accent : 'none'} stroke={star <= Math.round(getProductRating(p)) ? t.accent : t.textMuted} />
-                            ))}
-                          </div>
-                          <span style={{ fontSize: 9, fontWeight: 900, color: t.textMuted }}>{getProductRating(p)}</span>
-                        </div>
-                      </div>
-
-                      {/* Pricing & Cart Action */}
-                      <div 
-                        onClick={e => e.stopPropagation()} 
-                        style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                      >
-                        <div>
-                          {hasDiscount && (
-                            <span style={{ fontSize: 8, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, display: 'block', marginBottom: -2 }}>
-                              {parseFloat(p.precio_antes).toLocaleString()} BS.
-                            </span>
-                          )}
-                          <span style={{ fontSize: 20, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
-                            {parseFloat(p.precio_venta).toLocaleString()} <span style={{ fontSize: 8, color: t.textMuted }}>BS.</span>
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: 6 }}>
-                          <button 
-                            onClick={() => addToCart(p)}
-                            style={{ 
-                              padding: '8px 12px', borderRadius: 10, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: 8, fontWeight: 900, 
-                              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s' 
-                            }}
-                          >
-                            + Carrito
-                          </button>
-                          <button 
-                            onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa comprar: ${p.nombre}`, '_blank')}
-                            style={{ 
-                              padding: '8px 14px', borderRadius: 10, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: 8, fontWeight: 900, 
-                              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s' 
-                            }}
-                          >
-                            Comprar
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {filteredProducts.map(p => (
+                  <ProductCard 
+                    key={p.id} 
+                    p={p} 
+                    t={t} 
+                    addToCart={addToCart} 
+                    onOpenDetails={(prod) => { setSelectedProduct(prod); setSelectedImageIndex(0); setMediaTab('images'); }} 
+                    WHATSAPP_NUMBER={WHATSAPP_NUMBER}
+                  />
+                ))}
               </div>
             </div>
           )}

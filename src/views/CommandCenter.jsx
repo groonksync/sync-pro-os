@@ -579,7 +579,7 @@ const CommandCenter = ({
       <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'}`} style={{ marginBottom: '20px' }}>
         
         {/* KPI 1: Capital */}
-        <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
+        <div style={{ padding: '20px', backgroundColor: '#0a0a0a', border: `1px solid ${t.border}`, borderRadius: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.accent}15` }}>
               <Wallet size={16} color={t.accent} />
@@ -599,7 +599,7 @@ const CommandCenter = ({
         </div>
 
         {/* KPI 2: Inventario */}
-        <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
+        <div style={{ padding: '20px', backgroundColor: '#0a0a0a', border: `1px solid ${t.border}`, borderRadius: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${stockBajo.length > 0 ? '#ef4444' : t.accent}15` }}>
               <Package size={16} color={stockBajo.length > 0 ? '#ef4444' : t.accent} />
@@ -624,7 +624,7 @@ const CommandCenter = ({
         </div>
 
         {/* KPI 3: Balance Mensual */}
-        <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
+        <div style={{ padding: '20px', backgroundColor: '#0a0a0a', border: `1px solid ${t.border}`, borderRadius: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${balanceMensual >= 0 ? '#22c55e' : '#ef4444'}15` }}>
               <BarChart3 size={16} color={balanceMensual >= 0 ? '#22c55e' : '#ef4444'} />
@@ -653,7 +653,7 @@ const CommandCenter = ({
         </div>
 
         {/* KPI 4: Cobros Pendientes */}
-        <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
+        <div style={{ padding: '20px', backgroundColor: '#0a0a0a', border: `1px solid ${t.border}`, borderRadius: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent}15` }}>
               <CalendarDays size={16} color={categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent} />

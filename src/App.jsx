@@ -256,6 +256,7 @@ const App = () => {
         case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} isDark={isDarkMode} />;
         case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} isDark={isDarkMode} />;
         case 'papelera': return <TrashView settings={appSettings} isDark={isDarkMode} />;
+        case 'catalogo': return <PublicCatalog />;
         case 'configuracion': return (
           <Ajustes
             settings={appSettings}
@@ -316,8 +317,8 @@ const App = () => {
           }} 
         />
         
-        <main className={`flex-1 h-full ${activeTab === 'notas' ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out ${appSettings.isMobileMode ? 'pb-24' : ''}`}>
-          <div className={`w-full relative z-10 flex flex-col ${activeTab === 'notas' ? 'h-full' : 'min-h-full'} max-w-[2000px] mx-auto transition-all ${activeTab === 'notas' ? '' : (appSettings.isMobileMode ? 'px-4 py-4' : 'px-6 py-8 lg:px-16 lg:py-12')}`}>
+        <main className={`flex-1 h-full ${(activeTab === 'notas' || activeTab === 'catalogo') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out ${appSettings.isMobileMode ? 'pb-24' : ''}`}>
+          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'notas' || activeTab === 'catalogo') ? 'h-full' : 'min-h-full'} max-w-[2000px] mx-auto transition-all ${(activeTab === 'notas' || activeTab === 'catalogo') ? '' : (appSettings.isMobileMode ? 'px-4 py-4' : 'px-6 py-8 lg:px-16 lg:py-12')}`}>
             {renderSafeContent()}
           </div>
         </main>

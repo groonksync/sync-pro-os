@@ -36,7 +36,11 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
   const [hoveredItem, setHoveredItem] = useState(null);
 
   const handleOpenCatalog = () => {
-    window.open(window.location.origin + '/catalogo', '_blank');
+    if (window.location.protocol === 'file:') {
+      setActiveTab('catalogo');
+    } else {
+      window.open(window.location.origin + '/catalogo', '_blank');
+    }
   };
 
   const menuItems = [
