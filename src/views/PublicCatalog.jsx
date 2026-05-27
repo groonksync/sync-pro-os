@@ -198,7 +198,6 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER }) => {
             </div>
           )}
         </div>
-      </div>
 
         <h3 style={{ 
           fontSize: 13, 
