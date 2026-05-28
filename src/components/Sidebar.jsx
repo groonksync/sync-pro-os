@@ -118,22 +118,17 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
       </button>
 
       {/* Logo */}
-      <div className="mb-8 px-2 flex items-center gap-3">
+      <div className="mb-6 px-2 flex items-center gap-3">
         <div 
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+          className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
           style={{ backgroundColor: 'transparent' }}
         >
           {isDark ? (
-            <img src="/logo_blanco.png" alt="Logo" className="w-8 h-8 object-contain" />
+            <img src="/logo_blanco.png" alt="Logo" className="w-11 h-11 object-contain" />
           ) : (
-            <img src="/logo_negro.png" alt="Logo" className="w-8 h-8 object-contain" />
+            <img src="/logo_negro.png" alt="Logo" className="w-11 h-11 object-contain" />
           )}
         </div>
-        {!isCollapsed && (
-          <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-            <p className="text-[10px] font-medium" style={{ color: t.textDim }}>Panel de Control</p>
-          </div>
-        )}
       </div>
 
 
