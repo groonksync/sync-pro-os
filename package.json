@@ -55,10 +55,10 @@
     },
     "mac": {
       "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
       "target": [
         "dmg"
       ],
-      "icon": "public/isologo.png",
       "identity": null
     },
     "files": [
