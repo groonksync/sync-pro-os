@@ -105,8 +105,7 @@ const BovedaSoberana = () => {
          </div>
          <div className="flex items-center gap-4">
             <div className="relative">
-               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={14}/>
-               <input value={terminoBusqueda} onChange={e=>setTerminoBusqueda(e.target.value)} className="bg-[#141414] border border-white/5 rounded-xl py-2.5 pl-10 pr-4 text-[11px] font-medium text-white outline-none focus:border-emerald-500/20 w-[200px]" placeholder="Buscar..."/>
+               <input value={terminoBusqueda} onChange={e=>setTerminoBusqueda(e.target.value)} className="bg-[#141414] border border-white/5 rounded-xl py-2.5 pl-4 pr-4 text-[11px] font-medium text-white outline-none focus:border-emerald-500/20 w-[200px]" placeholder="Buscar..."/>
             </div>
             <button onClick={() => setItemEditando({ type: 'new' })} className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-black font-black text-[10px] rounded-xl uppercase tracking-widest"><Plus size={16}/> Nueva Entrada</button>
             <button onClick={() => {setDesbloqueada(false); setMostrarModalLlave(true);}} className="p-3 bg-white/5 border border-white/5 rounded-xl text-neutral-500 hover:text-white"><Lock size={18}/></button>

@@ -377,7 +377,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             {/* KPI 1: Total Gastado */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Gastado Total</span>
                 <CreditCard size={14} className="text-neutral-500" />
@@ -389,10 +389,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 2: Presupuesto Mensual */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Presupuesto Mes</span>
-                <Sliders size={14} className="text-neutral-500 cursor-pointer hover:text-white transition-colors" onClick={handleOpenBudgetEditor} />
+                <button 
+                  onClick={handleOpenBudgetEditor} 
+                  className="p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10 transition-all text-neutral-400 hover:text-white flex items-center justify-center"
+                  title="Ajustar Presupuesto"
+                >
+                  <Sliders size={12} />
+                </button>
               </div>
               <div>
                 <div className="flex items-baseline gap-2">
@@ -404,7 +410,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 3: Ingresos del Mes */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Ingresos del Mes</span>
                 <TrendingUp size={14} className="text-emerald-500" />
@@ -416,7 +422,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 4: Margen Neto */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Margen Neto Mes</span>
                 {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
@@ -435,7 +441,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             {/* Columna Izquierda: Progreso General */}
-            <div className="lg:col-span-5 bg-zinc-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col justify-between gap-6">
+            <div className="lg:col-span-5 p-6 rounded-3xl border border-white/5 flex flex-col justify-between gap-6" style={{ backgroundColor: t.bg }}>
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-white mb-2">Presupuesto Mensual Consumido</h3>
                 <p className="text-[10px] text-neutral-400">Consumo total del presupuesto asignado para el periodo mensual actual</p>
@@ -443,7 +449,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
               {/* Progress Visual */}
               <div className="flex flex-col items-center justify-center py-4">
-                <div className="relative w-36 h-36 flex items-center justify-center rounded-full border border-white/5 bg-zinc-950/40">
+                <div className="relative w-36 h-36 flex items-center justify-center rounded-full border border-white/5" style={{ backgroundColor: t.bg }}>
                   {/* Círculo de progreso estilizado */}
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.02)" strokeWidth="6" fill="transparent" />
@@ -488,14 +494,14 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* Columna Derecha: Límites por Categoría */}
-            <div className="lg:col-span-7 bg-zinc-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col gap-6">
+            <div className="lg:col-span-7 p-6 rounded-3xl border border-white/5 flex flex-col gap-6" style={{ backgroundColor: t.bg }}>
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Presupuestos por Categoría</h3>
                   <p className="text-[10px] text-neutral-400">Control de gastos específicos del mes</p>
                 </div>
-                <button onClick={handleOpenBudgetEditor} className="text-[9px] font-black uppercase tracking-widest bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 hover:bg-white/10 transition-colors">
-                  Configurar Límites
+                <button onClick={handleOpenBudgetEditor} className="text-[9px] font-black uppercase tracking-widest rounded-lg px-3 py-1.5 transition-all border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10 text-white flex items-center gap-1.5">
+                  <Sliders size={10} /> Configurar Límites
                 </button>
               </div>
 
@@ -552,7 +558,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Estadística 1: Mayor Gasto */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center gap-4">
+            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.bg }}>
               <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
                 <TrendingDown size={20} />
               </div>
@@ -570,7 +576,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* Estadística 2: Promedio Diario */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center gap-4">
+            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.bg }}>
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center flex-shrink-0">
                 <Calendar size={20} />
               </div>
@@ -582,7 +588,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* Estadística 3: Frecuencia de Gastos */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center gap-4">
+            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.bg }}>
               <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center flex-shrink-0">
                 <Activity size={20} />
               </div>
@@ -603,18 +609,17 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
         <div className="flex flex-col gap-5 animate-in fade-in duration-500">
           
           {/* Controles de Búsqueda y Filtrado Sin Sombras */}
-          <div className="bg-zinc-900/40 backdrop-blur-xl p-4 rounded-2xl border border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between">
+          <div className="p-4 rounded-2xl border border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between" style={{ backgroundColor: t.bg }}>
             <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
               
               {/* Buscador */}
               <div className="relative w-full sm:w-[220px]">
-                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                 <input
                   type="text"
                   placeholder="Buscar gastos..."
                   value={filterText}
                   onChange={e => setFilterText(e.target.value)}
-                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-xs outline-none text-white focus:border-white/20 transition-all"
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl pl-4 pr-4 py-2 text-xs outline-none text-white focus:border-white/20 transition-all"
                 />
               </div>
 
@@ -670,7 +675,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           </div>
 
           {/* Tabla de Egresos Sin Sombras */}
-          <div className="bg-zinc-900/40 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
+          <div className="rounded-2xl border border-white/5 overflow-hidden" style={{ backgroundColor: t.bg }}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -746,7 +751,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
           
           {/* Cabecera Pestaña Sin Sombras */}
-          <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-xl p-4 rounded-2xl border border-white/5">
+          <div className="flex items-center justify-between p-4 rounded-2xl border border-white/5" style={{ backgroundColor: t.bg }}>
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Suscripciones Activas</h3>
               <p className="text-[10px] text-neutral-400">Gastos recurrentes y servicios fijos registrados ({servicios.length} activos)</p>
@@ -771,7 +776,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 return (
                   <div 
                     key={s.id}
-                    className="bg-zinc-900/40 backdrop-blur-xl rounded-2xl border border-white/5 p-5 flex flex-col justify-between min-h-[225px] transition-all hover:border-white/10 group"
+                    className="rounded-2xl border border-white/5 p-5 flex flex-col justify-between min-h-[225px] transition-all hover:border-white/10 group"
+                    style={{ backgroundColor: t.bg }}
                   >
                     <div>
                       {/* Top metadata */}
@@ -838,7 +844,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               })}
             </div>
           ) : (
-            <div className="py-20 text-center bg-zinc-900/40 border border-white/5 rounded-2xl">
+            <div className="py-20 text-center border border-white/5 rounded-2xl" style={{ backgroundColor: t.bg }}>
               <Wifi size={32} className="mx-auto text-neutral-600 mb-3" />
               <h5 className="text-sm font-bold text-white uppercase tracking-wider">Sin suscripciones</h5>
               <p className="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-1">Registra tu primer servicio recurrente</p>
@@ -851,7 +857,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       {/* ── MODAL 1: CONFIGURAR PRESUPUESTOS ──────────────────────────────────── */}
       {isEditingBudgets && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+          <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: t.bg }}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-sm font-black uppercase tracking-wider text-white">Presupuestos del Sistema</h3>
               <button onClick={() => setIsEditingBudgets(false)} className="text-neutral-400 hover:text-white transition-colors">
@@ -924,7 +930,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       {/* ── MODAL 2: NUEVO/EDITAR GASTO INDIVIDUAL ─────────────────────────────────── */}
       {showExpenseForm && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+          <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: t.bg }}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-sm font-black uppercase tracking-wider text-white">
                 {editingExpense ? 'Modificar Gasto' : 'Registrar Gasto'}
@@ -1016,7 +1022,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       {/* ── MODAL 3: NUEVA/EDITAR SUSCRIPCIÓN RECURRENTE ─────────────────────────── */}
       {showServiceForm && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
+          <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: t.bg }}>
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-sm font-black uppercase tracking-wider text-white">
                 {editingService ? 'Modificar Suscripción' : 'Nueva Suscripción'}

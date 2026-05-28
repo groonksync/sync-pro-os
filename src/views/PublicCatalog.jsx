@@ -564,13 +564,12 @@ const PublicCatalog = () => {
 
         {/* Search Input Centralized */}
         <div style={{ position: 'relative', width: '40%', minWidth: 260 }}>
-          <Search style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={16} />
           <input 
             type="text" 
             placeholder="Buscar por nombre, categoría, SKU o código..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 30, padding: '12px 20px 12px 42px', fontSize: 11, outline: 'none', color: t.text, transition: 'all 0.2s' }} 
+            style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 30, padding: '12px 20px 12px 20px', fontSize: 11, outline: 'none', color: t.text, transition: 'all 0.2s' }} 
           />
         </div>
 

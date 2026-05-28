@@ -306,9 +306,8 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
                <div className="flex gap-3">
                   <div className="relative group">
-                     <Search className="absolute left-4 top-1/2 -translate-y-1/2" size={14} color={t.textDim}/>
                      <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="BUSCAR..."
-                       className="rounded-xl py-3 pl-10 pr-5 text-[9px] font-black uppercase tracking-widest outline-none w-56 shadow-lg"
+                       className="rounded-xl py-3 pl-4 pr-5 text-[9px] font-black uppercase tracking-widest outline-none w-56 shadow-lg"
                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                   </div>
                   <button onClick={() => setIsClientModalOpen(true)} className="px-6 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-3 shadow-lg transition-all"
@@ -1707,7 +1706,7 @@ const ProjectEngineView = ({ isDark = true }) => {
                <div className="space-y-3">
                   <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Search size={16} color={t.accent}/>
+                       <Cpu size={16} color={t.accent}/>
                      </div>
                      <div>
                         <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>6. Buscador Atajos</h3>

@@ -191,12 +191,11 @@ const Recordatorios = ({ settings, isDark }) => {
           ))}
         </div>
         <div className="relative w-full md:w-[320px]">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2" color={t.textDim} />
           <input
             type="text" value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Buscar recordatorio..."
-            className="w-full rounded-xl py-3 pl-12 pr-4 text-xs outline-none transition-all"
+            className="w-full rounded-xl py-3 pl-4 pr-4 text-xs outline-none transition-all"
             style={{
               backgroundColor: t.panel,
               border: `1px solid ${t.border}`,

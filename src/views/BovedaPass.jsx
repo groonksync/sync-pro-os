@@ -580,9 +580,8 @@ const BovedaPass = ({ settings, isDark }) => {
           
           {/* Search */}
           <div className="relative">
-            <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={14} />
             <input type="text" placeholder="Buscar por sitio, usuario, notas..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-              style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 12px 10px 36px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', outline: 'none' }}/>
+              style={{ width: '100%', backgroundColor: t.bg, border: `1px solid ${t.border}`, borderRadius: 10, padding: '10px 12px 10px 12px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fff', outline: 'none' }}/>
           </div>
 
           {/* Grid */}

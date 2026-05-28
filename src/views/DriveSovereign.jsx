@@ -141,9 +141,8 @@ export default function DriveSovereign({ token, user, onLoginSuccess, isDark = t
         <div className="flex items-center gap-3">
           {/* SEARCH */}
           <div className="relative">
-            <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: t.textDim }} size={14}/>
             <input type="text" placeholder="FILTRAR..." value={search} onChange={e => setSearch(e.target.value)}
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12, padding: '10px 12px 10px 36px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', outline: 'none', width: 200 }}/>
+              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12, padding: '10px 12px 10px 12px', fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', outline: 'none', width: 200 }}/>
           </div>
 
           {/* VIEW TOGGLE */}
