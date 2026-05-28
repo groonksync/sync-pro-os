@@ -431,7 +431,7 @@ const PublicCatalog = () => {
     }
 
     if (activeSubfilter === 'Novedades') {
-      result = result.filter(p => p.metadata?.is_new === true || p.condicion === 'Nuevo');
+      result = result.filter(p => p.metadata?.is_new === true);
     } else if (activeSubfilter === 'Más Vendidos') {
       result = result.filter(p => p.metadata?.is_bestseller === true || p.stock_vendido > 10);
     } else if (activeSubfilter === 'En Descuento') {
@@ -498,8 +498,17 @@ const PublicCatalog = () => {
     setToast({ show: true, message: 'Eliminado del carrito', type: 'success' });
   };
 
+  const getItemFinalPrice = (item) => {
+    const isOferta = !!(item.es_oferta || item.metadata?.es_oferta);
+    if (isOferta) {
+      const ofertaPrice = parseFloat(item.precio_oferta || item.metadata?.precio_oferta);
+      if (ofertaPrice > 0) return ofertaPrice;
+    }
+    return parseFloat(item.precio_venta) || 0;
+  };
+
   const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.quantity, 0), [cart]);
-  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.precio_venta * item.quantity), 0), [cart]);
+  const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (getItemFinalPrice(item) * item.quantity), 0), [cart]);
 
   // WhatsApp Checkout integration
   const checkoutMessage = useMemo(() => {
@@ -523,13 +532,14 @@ const PublicCatalog = () => {
     text += `📦 *DETALLE DE PRODUCTOS (${cart.length} ítem${cart.length !== 1 ? 's' : ''})*\n\n`;
     cart.forEach((item, index) => {
       const itemSku = item.sku || item.codigo || 'S/C';
-      const itemTotal = parseFloat(item.precio_venta) * item.quantity;
+      const itemPrice = getItemFinalPrice(item);
+      const itemTotal = itemPrice * item.quantity;
       const categoria = item.categoria || 'General';
       text += `*${index + 1}.* 🏷️ *${String(item.nombre).toUpperCase()}*\n`;
       text += `   📂 Categoría: ${categoria}\n`;
       text += `   🔢 Código/SKU: \`${itemSku}\`\n`;
       text += `   📦 Cantidad: *${item.quantity}* ud(s)\n`;
-      text += `   💰 Precio unitario: *${parseFloat(item.precio_venta).toLocaleString()} BS.*\n`;
+      text += `   💰 Precio unitario: *${itemPrice.toLocaleString()} BS.*\n`;
       text += `   🧾 Subtotal: *${itemTotal.toLocaleString()} BS.*\n`;
       if (item.imagenes && item.imagenes[0]) {
         text += `   🖼️ Ver producto: ${item.imagenes[0]}\n`;
@@ -569,7 +579,8 @@ const PublicCatalog = () => {
             id: item.id,
             nombre: item.nombre,
             quantity: item.quantity,
-            precio_venta: parseFloat(item.precio_venta) || parseFloat(item.precio) || 0,
+            precio_venta: getItemFinalPrice(item),
+            precio_original: parseFloat(item.precio_venta) || 0,
             precio_costo: parseFloat(item.precio_costo) || 0,
             sku: item.sku || item.codigo || ''
           }))

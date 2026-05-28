@@ -752,6 +752,8 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
       descripcion: p.descripcion || p.ficha_tecnica || '',
       sku: p.sku || p.metadata?.sku || '',
       codigo: p.codigo || p.metadata?.codigo || '',
+      stock_minimo: p.stock_minimo || 5,
+      stock_vendido: p.stock_vendido || 0,
       garantia: p.garantia || '180 Días',
       tipo_envio: p.tipo_envio || 'Envío Gratuito',
       video_url: p.video_url || p.metadata?.video_url || '',

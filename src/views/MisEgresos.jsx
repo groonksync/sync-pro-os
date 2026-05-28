@@ -844,7 +844,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
               <div>
                 <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Transacciones del Mes</span>
-                <p className="text-sm font-bold text-white mt-1">{egresosMesActual.length} operaciones</p>
+                <p className="text-sm font-bold text-white mt-1">{egresosMesFiltrado.length} operaciones</p>
                 <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mt-0.5">En el periodo actual</p>
               </div>
             </div>

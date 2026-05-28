@@ -126,12 +126,21 @@ function generateXML(productos) {
     const extraImages = getAdditionalImages(p);
     const availability = getAvailability(p);
     const price = formatPrice(p.precio_venta);
-    const salePrice = (p.precio_antes && parseFloat(p.precio_antes) > parseFloat(p.precio_venta))
+    const metadataOferta = !!(p.metadata?.es_oferta);
+    const metadataPrecioOferta = parseFloat(p.metadata?.precio_oferta) || 0;
+    const hasSaleFromMetadata = metadataOferta && metadataPrecioOferta > 0;
+    const hasSaleFromPrecioAntes = p.precio_antes && parseFloat(p.precio_antes) > parseFloat(p.precio_venta);
+
+    const salePrice = hasSaleFromMetadata
+      ? formatPrice(metadataPrecioOferta)
+      : hasSaleFromPrecioAntes
+        ? formatPrice(p.precio_venta)
+        : null;
+    const originalPrice = hasSaleFromMetadata
       ? formatPrice(p.precio_venta)
-      : null;
-    const originalPrice = (p.precio_antes && parseFloat(p.precio_antes) > parseFloat(p.precio_venta))
-      ? formatPrice(p.precio_antes)
-      : null;
+      : hasSaleFromPrecioAntes
+        ? formatPrice(p.precio_antes)
+        : null;
 
     // ID único: usamos el id de Supabase si existe, si no el SKU o código
     const itemId = escapeXml(String(p.id || p.sku || p.codigo || p.nombre).replace(/\s+/g, '-'));
@@ -243,7 +252,7 @@ export default async function handler(req, res) {
     // Filtramos solo los que tienen stock > 0 o que no están marcados como Agotados
     const { data: productos, error } = await supabase
       .from('productos')
-      .select('id, nombre, categoria, precio_venta, precio_antes, precio_costo, stock_actual, estado, imagen, imagenes, sku, codigo, marca, color, condicion, ficha_tecnica, garantia, tipo_envio, metadata')
+      .select('id, nombre, categoria, precio_venta, precio_antes, precio_costo, stock_actual, estado, imagen, imagenes, sku, codigo, marca, color, condicion, ficha_tecnica, garantia, tipo_envio, metadata, updated_at')
       .order('created_at', { ascending: false });
 
     if (error) {
