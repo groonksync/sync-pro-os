@@ -573,7 +573,9 @@ const DEFAULT_PRODUCTS = [
 
 const AMAZON_CATEGORIES = [
   "Electrónica", "Computadoras", "Celulares y Accesorios", "Audio y Sonido", "Cámaras y Fotografía",
-  "Accesorios", "Hogar y Cocina", "Electrodomésticos", "Herramientas", "Mascotas"
+  "Hogar y Cocina", "Ropa y Calzado", "Belleza y Cuidado Personal", "Deportes y Fitness", "Juguetes y Juegos",
+  "Salud y Bienestar", "Libros", "Automotriz", "Herramientas y Bricolaje", "Oficina y Papelería",
+  "Jardín y Exteriores", "Mascotas", "Alimentos y Bebidas", "Accesorios", "Ofertas", "Combos/Packs"
 ];
 
 const getCategoryIcon = (category) => {
@@ -596,6 +598,11 @@ const Inventario = ({ settings = {}, isDark = true }) => {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('Todos');
   const [toast, setToast] = useState({ show: false, message: '' });
   
+  // Custom states for sorting and collapsible UI
+  const [sortBy, setSortBy] = useState('nombre');
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showAllLowStock, setShowAllLowStock] = useState(false);
+
   // Custom dialog state
   const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, id: null });
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
@@ -624,12 +631,20 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         precio_costo: parseFloat(editingProduct.precio_costo) || 0,
         precio_antes: parseFloat(editingProduct.precio_antes) || 0,
         stock_actual: parseInt(editingProduct.stock_actual) || 0,
+        es_oferta: !!editingProduct.es_oferta,
+        precio_oferta: parseFloat(editingProduct.precio_oferta) || 0,
+        es_combo: !!editingProduct.es_combo,
+        productos_regalo: editingProduct.productos_regalo || '',
         updated_at: new Date().toISOString(),
         metadata: {
           ...(editingProduct.metadata || {}),
           video_url: editingProduct.video_url || '',
           sku: editingProduct.sku || '',
-          codigo: editingProduct.codigo || ''
+          codigo: editingProduct.codigo || '',
+          es_oferta: !!editingProduct.es_oferta,
+          precio_oferta: parseFloat(editingProduct.precio_oferta) || 0,
+          es_combo: !!editingProduct.es_combo,
+          productos_regalo: editingProduct.productos_regalo || ''
         }
       };
       
@@ -661,6 +676,10 @@ const Inventario = ({ settings = {}, isDark = true }) => {
       garantia: p.garantia || '180 Días',
       tipo_envio: p.tipo_envio || 'Envío Gratuito',
       video_url: p.video_url || p.metadata?.video_url || '',
+      es_oferta: p.es_oferta !== undefined ? p.es_oferta : (p.metadata?.es_oferta || false),
+      precio_oferta: p.precio_oferta !== undefined ? p.precio_oferta : (p.metadata?.precio_oferta || 0),
+      es_combo: p.es_combo !== undefined ? p.es_combo : (p.metadata?.es_combo || false),
+      productos_regalo: p.productos_regalo !== undefined ? p.productos_regalo : (p.metadata?.productos_regalo || ''),
       metadata: p.metadata || {}
     });
     setIsModalOpen(true);
@@ -686,6 +705,10 @@ const Inventario = ({ settings = {}, isDark = true }) => {
       garantia: '180 Días',
       tipo_envio: 'Envío Gratuito',
       video_url: '',
+      es_oferta: false,
+      precio_oferta: 0,
+      es_combo: false,
+      productos_regalo: '',
       metadata: {}
     });
     setIsModalOpen(true);
@@ -781,7 +804,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
   };
 
   const filteredProducts = useMemo(() => {
-    let result = productos;
+    let result = [...productos];
     if (selectedCategoryFilter !== 'Todos') {
       result = result.filter(p => p.categoria === selectedCategoryFilter);
     }
@@ -794,8 +817,39 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         p.codigo?.toLowerCase().includes(lower)
       );
     }
+
+    // Apply sorting
+    result.sort((a, b) => {
+      if (sortBy === 'nombre') {
+        return (a.nombre || '').localeCompare(b.nombre || '');
+      }
+      if (sortBy === 'nombre-desc') {
+        return (b.nombre || '').localeCompare(a.nombre || '');
+      }
+      if (sortBy === 'categoria') {
+        return (a.categoria || '').localeCompare(b.categoria || '');
+      }
+      if (sortBy === 'fecha') {
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      }
+      if (sortBy === 'stock') {
+        return (parseInt(a.stock_actual) || 0) - (parseInt(b.stock_actual) || 0);
+      }
+      if (sortBy === 'stock-desc') {
+        return (parseInt(b.stock_actual) || 0) - (parseInt(a.stock_actual) || 0);
+      }
+      if (sortBy === 'ofertas') {
+        const aIsPromo = !!(a.es_oferta || a.es_combo || a.metadata?.es_oferta || a.metadata?.es_combo);
+        const bIsPromo = !!(b.es_oferta || b.es_combo || b.metadata?.es_oferta || b.metadata?.es_combo);
+        if (aIsPromo && !bIsPromo) return -1;
+        if (!aIsPromo && bIsPromo) return 1;
+        return 0;
+      }
+      return 0;
+    });
+
     return result;
-  }, [productos, searchTerm, selectedCategoryFilter]);
+  }, [productos, searchTerm, selectedCategoryFilter, sortBy]);
 
   const stats = useMemo(() => {
     const totalCount = productos.length;
@@ -1059,15 +1113,14 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         </div>
       )}
 
-
       {/* TOP HEADER PANEL */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16 }}>
         <div>
           <h2 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.04em', margin: 0, fontFamily: "'Inter', system-ui, sans-serif" }}>
-            Inventario
+            Empresa
           </h2>
           <p style={{ fontSize: 11, color: '#6b7280', marginTop: 3, fontWeight: 400, letterSpacing: '0.01em' }}>
-            Control de Inventario
+            Gestión de Empresa
           </p>
         </div>
 
@@ -1118,10 +1171,18 @@ const Inventario = ({ settings = {}, isDark = true }) => {
       <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexShrink: 0 }}>
         
         {/* Categories Pill Card */}
-        <div style={{ flex: 1, backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Layers size={15} style={{ color: '#10b981' }} />
-            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Categorías de Activos</h4>
+        <div style={{ flex: 1.3, backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Layers size={15} style={{ color: '#10b981' }} />
+              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Categorías de Activos</h4>
+            </div>
+            <button 
+              onClick={() => setShowAllCategories(!showAllCategories)}
+              style={{ background: 'none', border: 'none', color: '#10b981', fontSize: 9, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              {showAllCategories ? 'Ver menos' : 'Ver más categorías'}
+            </button>
           </div>
           
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -1141,7 +1202,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
               <span style={{ backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.06)', padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{productos.length}</span>
             </button>
 
-            {Object.keys(stats.catMap).map(catName => {
+            {Object.keys(stats.catMap).slice(0, showAllCategories ? undefined : 6).map(catName => {
               const item = stats.catMap[catName];
               const isActive = selectedCategoryFilter === catName;
               const CatIcon = getCategoryIcon(catName);
@@ -1170,11 +1231,18 @@ const Inventario = ({ settings = {}, isDark = true }) => {
 
         {/* Low Stock Alerts */}
         <div style={{ flex: 1, backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
-            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Control Stock Crítico</h4>
-            {stats.lowStock.length > 0 && (
-              <span style={{ marginLeft: 'auto', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', padding: '2px 10px', borderRadius: 20, fontSize: 9, fontWeight: 800, fontFamily: 'monospace' }}>{stats.lowStock.length} Alertas</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
+              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Control Stock Crítico</h4>
+            </div>
+            {stats.lowStock.length > 4 && (
+              <button 
+                onClick={() => setShowAllLowStock(!showAllLowStock)}
+                style={{ background: 'none', border: 'none', color: '#f59e0b', fontSize: 9, fontWeight: 800, cursor: 'pointer' }}
+              >
+                {showAllLowStock ? 'Ver menos' : `Ver todos (${stats.lowStock.length})`}
+              </button>
             )}
           </div>
 
@@ -1184,7 +1252,7 @@ const Inventario = ({ settings = {}, isDark = true }) => {
                 Todos los productos tienen stock suficiente.
               </div>
             ) : (
-              stats.lowStock.slice(0, 6).map(p => (
+              stats.lowStock.slice(0, showAllLowStock ? undefined : 4).map(p => (
                 <div
                   key={p.id}
                   onClick={() => { setSearchTerm(p.nombre); setSelectedCategoryFilter('Todos'); }}
@@ -1211,6 +1279,57 @@ const Inventario = ({ settings = {}, isDark = true }) => {
 
       </div>
 
+      {/* ADMIN PROMOTIONS & COMBOS DASHBOARD (PRIVADO) */}
+      {productos.some(p => !!(p.es_oferta || p.es_combo || p.metadata?.es_oferta || p.metadata?.es_combo)) && (
+        <div style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <Zap size={15} style={{ color: '#10b981' }} />
+            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Análisis de Ofertas y Combos Activos (Privado)</h4>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            {productos.filter(p => !!(p.es_oferta || p.es_combo || p.metadata?.es_oferta || p.metadata?.es_combo)).map(p => {
+              const isOferta = !!(p.es_oferta || p.metadata?.es_oferta);
+              const isCombo = !!(p.es_combo || p.metadata?.es_combo);
+              const cost = parseFloat(p.precio_costo) || 0;
+              const priceVal = isOferta ? (parseFloat(p.precio_oferta || p.metadata?.precio_oferta) || parseFloat(p.precio_venta) || 0) : (parseFloat(p.precio_venta) || 0);
+              const profit = priceVal - cost;
+              const totalProfit = profit * (parseInt(p.stock_actual) || 0);
+              return (
+                <div key={p.id} style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 16, padding: 14, display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <div style={{ width: 50, height: 50, borderRadius: 10, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {p.imagen ? (
+                      <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                    ) : (
+                      <ImageIcon size={16} style={{ color: '#707070' }} />
+                    )}
+                  </div>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 2 }}>
+                      {isOferta && <span style={{ fontSize: 7, fontWeight: 900, backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '1px 6px', borderRadius: 4 }}>OFERTA</span>}
+                      {isCombo && <span style={{ fontSize: 7, fontWeight: 900, backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '1px 6px', borderRadius: 4 }}>COMBO</span>}
+                    </div>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{String(p.nombre || '').toUpperCase()}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 8, color: '#707070', fontWeight: 700 }}>
+                      <span>INVERSIÓN: <strong style={{ color: '#fff', fontFamily: 'monospace' }}>{cost} Bs</strong></span>
+                      <span>VENTA: <strong style={{ color: '#10b981', fontFamily: 'monospace' }}>{priceVal} Bs</strong></span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 2, fontSize: 8, color: '#707070', fontWeight: 700 }}>
+                      <span>GANANCIA NETA: <strong style={{ color: '#10b981', fontFamily: 'monospace' }}>+{profit} Bs</strong></span>
+                      <span>TOTAL POTENCIAL: <strong style={{ color: '#3b82f6', fontFamily: 'monospace' }}>{totalProfit} Bs</strong></span>
+                    </div>
+                    {isCombo && (p.productos_regalo || p.metadata?.productos_regalo) && (
+                      <div style={{ fontSize: 7, color: '#3b82f6', fontWeight: 700, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                        🎁 Regalo: {p.productos_regalo || p.metadata?.productos_regalo}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* FULL-WIDTH MASTER TABLE */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, overflow: 'hidden', boxShadow: 'none' }}>
         
@@ -1224,6 +1343,24 @@ const Inventario = ({ settings = {}, isDark = true }) => {
               onChange={e => setSearchTerm(e.target.value)}
               style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '11px 18px', fontSize: 12, outline: 'none', color: '#e5e7eb', transition: 'all 0.2s', fontFamily: "'Inter', system-ui, sans-serif" }}
             />
+          </div>
+
+          {/* Sort Dropdown */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Ordenar por:</span>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px', fontSize: 10, color: '#fff', outline: 'none', cursor: 'pointer', fontWeight: 700 }}
+            >
+              <option value="nombre">Nombre (A-Z)</option>
+              <option value="nombre-desc">Nombre (Z-A)</option>
+              <option value="categoria">Categoría</option>
+              <option value="fecha">Más Recientes</option>
+              <option value="stock">Stock (Menor primero)</option>
+              <option value="stock-desc">Stock (Mayor primero)</option>
+              <option value="ofertas">Ofertas y Combos primero</option>
+            </select>
           </div>
           
           {selectedCategoryFilter !== 'Todos' && (
@@ -1614,6 +1751,59 @@ const Inventario = ({ settings = {}, isDark = true }) => {
                     placeholder="Ej: https://www.youtube.com/watch?v=VIDEO_ID"
                     style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
                   />
+                </div>
+
+                {/* Ofertas y Combos */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', padding: 16, borderRadius: 14 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input 
+                        type="checkbox" 
+                        id="modal-es-oferta"
+                        checked={!!editingProduct.es_oferta} 
+                        onChange={e => setEditingProduct({ ...editingProduct, es_oferta: e.target.checked })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <label htmlFor="modal-es-oferta" style={{ fontSize: 9, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>Activar como Oferta</label>
+                    </div>
+                    {editingProduct.es_oferta && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio de Oferta Especial (BS)</label>
+                        <input 
+                          type="number" 
+                          value={editingProduct.precio_oferta || ''} 
+                          onChange={e => setEditingProduct({ ...editingProduct, precio_oferta: e.target.value })}
+                          placeholder="Ej: 120"
+                          style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '10px 14px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <input 
+                        type="checkbox" 
+                        id="modal-es-combo"
+                        checked={!!editingProduct.es_combo} 
+                        onChange={e => setEditingProduct({ ...editingProduct, es_combo: e.target.checked })}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <label htmlFor="modal-es-combo" style={{ fontSize: 9, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>Activar como Combo / Pack</label>
+                    </div>
+                    {editingProduct.es_combo && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Regalos y Adicionales Incluidos</label>
+                        <input 
+                          type="text" 
+                          value={editingProduct.productos_regalo || ''} 
+                          onChange={e => setEditingProduct({ ...editingProduct, productos_regalo: e.target.value })}
+                          placeholder="Ej: + Estuche protector gratis"
+                          style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '10px 14px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Description extended */}

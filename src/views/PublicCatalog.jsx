@@ -62,7 +62,18 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
   const stock = parseInt(p.stock_actual || 0);
   const isAgotado = stock <= 0;
   const isLow = stock > 0 && stock <= 5;
-  const hasDiscount = p.precio_antes && p.precio_antes > p.precio_venta;
+
+  const isOferta = !!(p.es_oferta || p.metadata?.es_oferta);
+  const isCombo = !!(p.es_combo || p.metadata?.es_combo);
+  const precioOferta = parseFloat(p.precio_oferta || p.metadata?.precio_oferta) || 0;
+  const productosRegalo = p.productos_regalo || p.metadata?.productos_regalo || '';
+
+  const precioVentaFinal = isOferta && precioOferta > 0 ? precioOferta : parseFloat(p.precio_venta || 0);
+  const precioAntesVal = isOferta && precioOferta > 0 ? parseFloat(p.precio_venta || 0) : parseFloat(p.precio_antes || 0);
+  const hasDiscount = precioAntesVal > precioVentaFinal;
+
+  // Percentage discount calculate
+  const discountPercent = hasDiscount ? Math.round(((precioAntesVal - precioVentaFinal) / precioAntesVal) * 100) : 0;
 
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -107,9 +118,21 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
     >
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 8 : 12 }}>
-          <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.inputBg, color: t.textMuted, padding: '3px 8px', borderRadius: 20 }}>
-            {p.categoria || 'General'}
-          </span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: t.inputBg, color: t.textMuted, padding: '3px 8px', borderRadius: 20 }}>
+              {p.categoria || 'General'}
+            </span>
+            {isOferta && (
+              <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', padding: '3px 8px', borderRadius: 20 }}>
+                OFERTA
+              </span>
+            )}
+            {isCombo && (
+              <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', backgroundColor: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', padding: '3px 8px', borderRadius: 20 }}>
+                COMBO
+              </span>
+            )}
+          </div>
           {isAgotado ? (
             <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sin Stock</span>
           ) : isLow ? (
@@ -145,6 +168,18 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
                 textTransform: 'uppercase',
                 boxShadow: '0 4px 20px rgba(239, 68, 68, 0.5)'
               }}>AGOTADO</span>
+            </div>
+          )}
+
+          {/* Eye-catching badge overlays */}
+          {!isAgotado && isOferta && discountPercent > 0 && (
+            <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 5, backgroundColor: '#ef4444', color: '#fff', fontSize: 8, fontWeight: 950, padding: '4px 8px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 4px 10px rgba(239,68,68,0.3)' }}>
+              -{discountPercent}% OFF
+            </div>
+          )}
+          {!isAgotado && isCombo && (
+            <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 5, backgroundColor: '#3b82f6', color: '#fff', fontSize: 8, fontWeight: 950, padding: '4px 8px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 4px 10px rgba(59,130,Blue,0.3)' }}>
+              COMBO PACK
             </div>
           )}
 
@@ -217,7 +252,7 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
           {String(p.nombre || '').toUpperCase()}
         </h3>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: isMobile ? 8 : 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: isMobile ? 4 : 8 }}>
           <div style={{ display: 'flex', gap: 1 }}>
             {[1, 2, 3, 4, 5].map(star => (
               <Star key={star} size={isMobile ? 8 : 11} fill={star <= Math.round(p.metadata?.rating || 4.5) ? t.accent : 'none'} stroke={star <= Math.round(p.metadata?.rating || 4.5) ? t.accent : t.textMuted} />
@@ -225,6 +260,13 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
           </div>
           <span style={{ fontSize: isMobile ? 8 : 9, fontWeight: 900, color: t.textMuted }}>{p.metadata?.rating || 4.5}</span>
         </div>
+
+        {/* Combo Gifts List */}
+        {isCombo && productosRegalo && (
+          <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '6px 10px', borderRadius: 8, marginBottom: 12, fontSize: 9, color: '#60a5fa', fontWeight: 700, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 6 }}>
+            🎁 Regalo: {productosRegalo}
+          </div>
+        )}
       </div>
 
       <div 
@@ -242,11 +284,11 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
         <div>
           {hasDiscount && (
             <span style={{ fontSize: isMobile ? 7 : 8, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, display: 'block', marginBottom: -2 }}>
-              {parseFloat(p.precio_antes).toLocaleString()} BS.
+              {precioAntesVal.toLocaleString()} BS.
             </span>
           )}
           <span style={{ fontSize: isMobile ? 16 : 20, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
-            {parseFloat(p.precio_venta).toLocaleString()} <span style={{ fontSize: isMobile ? 7 : 8, color: t.textMuted }}>BS.</span>
+            {precioVentaFinal.toLocaleString()} <span style={{ fontSize: isMobile ? 7 : 8, color: t.textMuted }}>BS.</span>
           </span>
         </div>
 
@@ -288,6 +330,7 @@ const PublicCatalog = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [isDark, setIsDark] = useState(true);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  const [showAllCategories, setShowAllCategories] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -595,7 +638,17 @@ const PublicCatalog = () => {
         <aside style={{ width: 260, paddingRight: 32, display: 'flex', flexDirection: 'column', gap: 32, flexShrink: 0 }}>
           {/* Categorías */}
           <div>
-            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: t.textMuted, marginBottom: 16 }}>Categorías</h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: t.textMuted, margin: 0 }}>Categorías</h4>
+              {uniqueCategories.length > 7 && (
+                <button 
+                  onClick={() => setShowAllCategories(!showAllCategories)}
+                  style={{ background: 'none', border: 'none', color: t.accent, fontSize: 8, fontWeight: 900, cursor: 'pointer', textTransform: 'uppercase', padding: 0 }}
+                >
+                  {showAllCategories ? 'Menos' : 'Más'}
+                </button>
+              )}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <button 
                 onClick={() => setActiveCategory('Todos')}
@@ -613,7 +666,7 @@ const PublicCatalog = () => {
                 </span>
               </button>
 
-              {uniqueCategories.map(catName => {
+              {uniqueCategories.slice(0, showAllCategories ? undefined : 7).map(catName => {
                 const Icon = getCategoryIcon(catName);
                 const isActive = activeCategory === catName;
                 const count = categoryCounts[catName] || 0;
@@ -797,25 +850,49 @@ const PublicCatalog = () => {
                 </div>
 
                 {/* Price Display */}
-                <div style={{ backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: isMobile ? 14 : 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <span style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Público</span>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
-                      <span style={{ fontSize: isMobile ? 20 : 24, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
-                        {parseFloat(selectedProduct.precio_venta || 0).toLocaleString()}
-                      </span>
-                      <span style={{ fontSize: 10, fontWeight: 900, color: t.accent }}>BS.</span>
-                    </div>
-                  </div>
-                  {selectedProduct.precio_antes > selectedProduct.precio_venta && (
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: 8, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Antes</span>
-                      <p style={{ fontSize: isMobile ? 14 : 18, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, margin: '4px 0 0 0' }}>
-                        {parseFloat(selectedProduct.precio_antes).toLocaleString()} BS.
-                      </p>
-                    </div>
-                  )}
-                </div>
+                {(() => {
+                  const isOferta = !!(selectedProduct.es_oferta || selectedProduct.metadata?.es_oferta);
+                  const isCombo = !!(selectedProduct.es_combo || selectedProduct.metadata?.es_combo);
+                  const precioOferta = parseFloat(selectedProduct.precio_oferta || selectedProduct.metadata?.precio_oferta) || 0;
+                  const productosRegalo = selectedProduct.productos_regalo || selectedProduct.metadata?.productos_regalo || '';
+                  
+                  const precioVentaFinal = isOferta && precioOferta > 0 ? precioOferta : parseFloat(selectedProduct.precio_venta || 0);
+                  const precioAntesVal = isOferta && precioOferta > 0 ? parseFloat(selectedProduct.precio_venta || 0) : parseFloat(selectedProduct.precio_antes || 0);
+                  const hasDiscount = precioAntesVal > precioVentaFinal;
+
+                  return (
+                    <>
+                      {isCombo && productosRegalo && (
+                        <div style={{ backgroundColor: 'rgba(59, 130, 246, 0.08)', border: '1px solid rgba(59, 130, 246, 0.2)', padding: '12px 18px', borderRadius: 14, fontSize: 10, color: '#60a5fa', fontWeight: 700, textTransform: 'uppercase' }}>
+                          🎁 COMBO PACK — REGALO INCLUIDO:
+                          <div style={{ color: '#fff', fontSize: 11, marginTop: 4, fontWeight: 900 }}>{productosRegalo}</div>
+                        </div>
+                      )}
+
+                      <div style={{ backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 14, padding: isMobile ? 14 : 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <span style={{ fontSize: 8, fontWeight: 900, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                            {isOferta ? 'Precio de Oferta' : 'Precio Público'}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                            <span style={{ fontSize: isMobile ? 20 : 24, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>
+                              {precioVentaFinal.toLocaleString()}
+                            </span>
+                            <span style={{ fontSize: 10, fontWeight: 900, color: t.accent }}>BS.</span>
+                          </div>
+                        </div>
+                        {hasDiscount && (
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: 8, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Antes</span>
+                            <p style={{ fontSize: isMobile ? 14 : 18, fontFamily: 'monospace', textDecoration: 'line-through', color: t.textMuted, margin: '4px 0 0 0' }}>
+                              {precioAntesVal.toLocaleString()} BS.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
 
                 {/* Info parameters */}
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 8 : 16 }}>

@@ -44,6 +44,31 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
   const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | transacciones | suscripciones
 
+  // ── Doble Moneda (Bolivianos Bs. / Dólares USD) ──────────────────────────
+  const [currency, setCurrency] = useState(() => {
+    return localStorage.getItem('sovereign_egresos_currency') || 'Bs';
+  });
+  const exchangeRate = 6.96; // 1 USD = 6.96 Bs
+
+  useEffect(() => {
+    localStorage.setItem('sovereign_egresos_currency', currency);
+  }, [currency]);
+
+  // Formateador de moneda dinámico
+  const formatCurrency = (val) => {
+    const num = parseFloat(val) || 0;
+    if (currency === 'USD') {
+      const usdVal = num / exchangeRate;
+      return `$${usdVal.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+    }
+    return `${num.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} Bs.`;
+  };
+
+  // Helper para convertir el presupuesto en base a la moneda
+  const formatBudget = (val) => {
+    return formatCurrency(val);
+  };
+
   // ── Filtros para transacciones ──────────────────────────────────────────
   const [filterText, setFilterText] = useState('');
   const [filterCategory, setFilterCategory] = useState('Todas');
@@ -106,22 +131,28 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     if (onRefresh) onRefresh();
   }, []);
 
-  // ── Cálculos Financieros ──────────────────────────────────────────────────
+  // ── Cálculos Financieros Consolidados ──────────────────────────────────────
   const ahora = new Date();
   const mesActualStr = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
 
-  const totalEgresosAllTime = egresos.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
+  // Se consolidan gastos individuales + suscripciones recurrentes
+  const totalEgresosAllTime = egresos.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0) + servicios.reduce((acc, s) => acc + (parseFloat(s.monto) || 0), 0);
   const egresosMesActual = egresos.filter(e => e.fecha?.startsWith(mesActualStr));
-  const totalEgresosMes = egresosMesActual.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
+  const totalEgresosMes = egresosMesActual.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0) + servicios.reduce((acc, s) => acc + (parseFloat(s.monto) || 0), 0);
   const totalIngresosMes = ventas.filter(v => v.fecha?.startsWith(mesActualStr)).reduce((acc, v) => acc + (parseFloat(v.monto) || 0), 0);
   const gananciaNetaMes = totalIngresosMes - totalEgresosMes;
 
-  // Distribución de gastos del mes actual por categoría
+  // Distribución de gastos del mes actual por categoría consolidando suscripciones en la categoría "Suscripción"
   const egresosPorCategoriaMes = useMemo(() => {
     return GASTO_CATEGORIAS.map(cat => {
-      const totalCat = egresosMesActual
+      let totalCat = egresosMesActual
         .filter(e => e.categoria === cat.label)
         .reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
+      
+      if (cat.label === 'Suscripción') {
+        totalCat += servicios.reduce((acc, s) => acc + (parseFloat(s.monto) || 0), 0);
+      }
+
       return {
         ...cat,
         total: totalCat,
@@ -129,7 +160,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
         pct: Math.min(Math.round((totalCat / (categoryBudgets[cat.label] || cat.defaultLimit || 1)) * 100), 100)
       };
     }).sort((a, b) => b.total - a.total);
-  }, [egresosMesActual, categoryBudgets]);
+  }, [egresosMesActual, categoryBudgets, servicios]);
 
   // Transacciones Filtradas
   const filteredEgresos = useMemo(() => {
@@ -142,18 +173,20 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     }).sort((a, b) => b.fecha.localeCompare(a.fecha));
   }, [egresos, filterText, filterCategory, filterStartDate, filterEndDate]);
 
-  // Mayor gasto del mes
+  // Mayor gasto del mes (considerando también suscripciones individuales)
   const mayorGastoMes = useMemo(() => {
-    if (egresosMesActual.length === 0) return null;
-    return [...egresosMesActual].sort((a, b) => parseFloat(b.monto) - parseFloat(a.monto))[0];
-  }, [egresosMesActual]);
+    const listado = [...egresosMesActual];
+    servicios.forEach(s => listado.push({ descripcion: s.nombre, monto: s.monto, categoria: 'Suscripción' }));
+    if (listado.length === 0) return null;
+    return listado.sort((a, b) => parseFloat(b.monto) - parseFloat(a.monto))[0];
+  }, [egresosMesActual, servicios]);
 
   // Promedio diario del mes
   const promedioDiarioMes = useMemo(() => {
-    if (egresosMesActual.length === 0) return 0;
+    if (totalEgresosMes === 0) return 0;
     const diasTranscurridos = ahora.getDate();
     return totalEgresosMes / diasTranscurridos;
-  }, [egresosMesActual, totalEgresosMes]);
+  }, [totalEgresosMes]);
 
   // ── Operaciones Egresos ─────────────────────────────────────────────────────
   const handleSaveBudget = () => {
@@ -343,29 +376,55 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-white mb-1">Mis Egresos</h2>
-          <p className="text-xs text-neutral-400 font-medium">Dashboard financiero avanzado, control de presupuestos y servicios fijos</p>
+          <p className="text-xs text-neutral-400 font-medium">Dashboard financiero consolidado con control de presupuestos en múltiples monedas</p>
         </div>
-        
-        {/* Switcher de Pestañas */}
-        <div className="flex p-0.5 rounded-xl self-start lg:self-center" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: Activity },
-            { id: 'transacciones', label: 'Gastos Individuales', icon: Layers },
-            { id: 'suscripciones', label: 'Suscripciones & Servicios', icon: Wifi },
-          ].map(tab => (
+
+        <div className="flex flex-wrap gap-4 items-center self-start lg:self-center">
+          {/* Selector de moneda */}
+          <div className="flex p-0.5 rounded-xl border border-white/5" style={{ backgroundColor: t.accentSoft }}>
             <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+              onClick={() => setCurrency('Bs')}
+              className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
               style={{
-                backgroundColor: activeTab === tab.id ? t.accent : 'transparent',
-                color: activeTab === tab.id ? '#000' : t.textDim,
+                backgroundColor: currency === 'Bs' ? t.accent : 'transparent',
+                color: currency === 'Bs' ? '#000' : t.textDim,
               }}
             >
-              <tab.icon size={12} />
-              {tab.label}
+              Bs.
             </button>
-          ))}
+            <button
+              onClick={() => setCurrency('USD')}
+              className="px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all"
+              style={{
+                backgroundColor: currency === 'USD' ? t.accent : 'transparent',
+                color: currency === 'USD' ? '#000' : t.textDim,
+              }}
+            >
+              USD
+            </button>
+          </div>
+          
+          {/* Switcher de Pestañas */}
+          <div className="flex p-0.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+            {[
+              { id: 'dashboard', label: 'Dashboard', icon: Activity },
+              { id: 'transacciones', label: 'Gastos Individuales', icon: Layers },
+              { id: 'suscripciones', label: 'Suscripciones & Servicios', icon: Wifi },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+                style={{
+                  backgroundColor: activeTab === tab.id ? t.accent : 'transparent',
+                  color: activeTab === tab.id ? '#000' : t.textDim,
+                }}
+              >
+                <tab.icon size={12} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -379,12 +438,12 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             {/* KPI 1: Total Gastado */}
             <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
-                <span>Gastado Total</span>
+                <span>Gastado Total (Consolidado)</span>
                 <CreditCard size={14} className="text-neutral-500" />
               </div>
               <div>
-                <p className="text-2xl font-light text-white tracking-tight">${totalEgresosAllTime.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Acumulado histórico</p>
+                <p className="text-2xl font-light text-white tracking-tight">{formatCurrency(totalEgresosAllTime)}</p>
+                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Gastos + Suscripciones</p>
               </div>
             </div>
 
@@ -402,7 +461,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
               <div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-light text-white tracking-tight">${monthlyBudget.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                  <p className="text-2xl font-light text-white tracking-tight">{formatBudget(monthlyBudget)}</p>
                   <button onClick={handleOpenBudgetEditor} className="text-[8px] text-neutral-500 font-bold hover:text-white uppercase tracking-wider">Ajustar</button>
                 </div>
                 <p className="text-[9px] text-neutral-500 mt-1 font-bold">Límite mensual general</p>
@@ -416,7 +475,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 <TrendingUp size={14} className="text-emerald-500" />
               </div>
               <div>
-                <p className="text-2xl font-light text-emerald-400 tracking-tight">${totalIngresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-light text-emerald-400 tracking-tight">{formatCurrency(totalIngresosMes)}</p>
                 <p className="text-[9px] text-neutral-500 mt-1 font-bold">De ventas digitales</p>
               </div>
             </div>
@@ -429,7 +488,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
               <div>
                 <p className={`text-2xl font-semibold tracking-tight ${gananciaNetaMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {gananciaNetaMes >= 0 ? '+' : ''}${gananciaNetaMes.toLocaleString('en', { minimumFractionDigits: 2 })}
+                  {gananciaNetaMes >= 0 ? '+' : ''}{formatCurrency(gananciaNetaMes)}
                 </p>
                 <p className="text-[9px] text-neutral-500 mt-1 font-bold">Balance de ganancias</p>
               </div>
@@ -477,17 +536,17 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               <div className="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5 text-[11px] font-medium">
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Total Consumido:</span>
-                  <span className="text-white">${totalEgresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-white">{formatCurrency(totalEgresosMes)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-neutral-400">Presupuesto Límite:</span>
-                  <span className="text-white">${monthlyBudget.toLocaleString('en', { minimumFractionDigits: 2 })}</span>
+                  <span className="text-white">{formatBudget(monthlyBudget)}</span>
                 </div>
                 <div className="h-px bg-white/5 my-2"></div>
                 <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wide">
                   <span className="text-neutral-400">Remanente Disponible:</span>
                   <span className={monthlyBudget - totalEgresosMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                    ${(monthlyBudget - totalEgresosMes).toLocaleString('en', { minimumFractionDigits: 2 })}
+                    {formatCurrency(monthlyBudget - totalEgresosMes)}
                   </span>
                 </div>
               </div>
@@ -498,7 +557,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Presupuestos por Categoría</h3>
-                  <p className="text-[10px] text-neutral-400">Control de gastos específicos del mes</p>
+                  <p className="text-[10px] text-neutral-400">Control de gastos específicos del mes (Suscripciones incluidas)</p>
                 </div>
                 <button onClick={handleOpenBudgetEditor} className="text-[9px] font-black uppercase tracking-widest rounded-lg px-3 py-1.5 transition-all border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10 text-white flex items-center gap-1.5">
                   <Sliders size={10} /> Configurar Límites
@@ -518,10 +577,10 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                         </span>
                         <div className="flex items-center gap-1.5 font-mono text-[10px]">
                           <span className={isExceeded ? 'text-rose-400 font-bold' : 'text-white'}>
-                            ${cat.total.toLocaleString('en', { maximumFractionDigits: 0 })}
+                            {formatCurrency(cat.total)}
                           </span>
                           <span className="text-neutral-500">/</span>
-                          <span className="text-neutral-400">${cat.limit.toLocaleString('en', { maximumFractionDigits: 0 })}</span>
+                          <span className="text-neutral-400">{formatBudget(cat.limit)}</span>
                         </div>
                       </div>
                       
@@ -540,8 +599,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                       <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider">
                         <span className="text-neutral-500">{cat.pct}% del límite consumido</span>
                         {isExceeded && (
-                          <span className="text-rose-400 flex items-center gap-1">
-                            <AlertTriangle size={10} /> Presupuesto Excedido por ${(cat.total - cat.limit).toLocaleString('en', { maximumFractionDigits: 0 })}
+                          <span className="text-rose-400 flex items-center gap-1 font-mono text-[8px]">
+                            <AlertTriangle size={10} /> Excedido por {formatCurrency(cat.total - cat.limit)}
                           </span>
                         )}
                       </div>
@@ -567,7 +626,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 {mayorGastoMes ? (
                   <>
                     <h5 className="text-xs font-bold text-white truncate mt-1">{mayorGastoMes.descripcion}</h5>
-                    <p className="text-[11px] font-bold text-rose-400 mt-0.5 font-mono">-${parseFloat(mayorGastoMes.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                    <p className="text-[11px] font-bold text-rose-400 mt-0.5 font-mono">-{formatCurrency(mayorGastoMes.monto)}</p>
                   </>
                 ) : (
                   <p className="text-[10px] text-neutral-500 italic mt-1">Sin egresos registrados</p>
@@ -582,7 +641,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
               <div>
                 <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Gasto Diario Promedio</span>
-                <p className="text-sm font-bold text-white mt-1 font-mono">${promedioDiarioMes.toLocaleString('en', { minimumFractionDigits: 2 })} / día</p>
+                <p className="text-sm font-bold text-white mt-1 font-mono">{formatCurrency(promedioDiarioMes)} / día</p>
                 <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mt-0.5">Mes transcurrido</p>
               </div>
             </div>
@@ -710,7 +769,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                           </td>
                           <td className="px-5 py-4 font-mono text-[10px] text-neutral-400">{e.fecha}</td>
                           <td className="px-5 py-4 text-right font-mono text-xs font-black text-rose-400">
-                            -${parseFloat(e.monto).toLocaleString('en', { minimumFractionDigits: 2 })}
+                            -{formatCurrency(e.monto)}
                           </td>
                           <td className="px-5 py-4 text-center">
                             <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -765,91 +824,83 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </button>
           </div>
 
-          {/* Grid de Suscripciones Sin Sombras */}
-          {servicios.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {servicios.map(s => {
-                const sCat = catServicioConfig[s.categoria] || catServicioConfig['Otro'];
-                const MetodoIcon = getMetodoIcon(s.metodo);
-                const hasExpired = s.fecha_pago && new Date(s.fecha_pago) < new Date();
-                const SIcon = sCat.icon;
-                return (
-                  <div 
-                    key={s.id}
-                    className="rounded-2xl border border-white/5 p-5 flex flex-col justify-between min-h-[225px] transition-all hover:border-white/10 group"
-                    style={{ backgroundColor: t.bg }}
-                  >
-                    <div>
-                      {/* Top metadata */}
-                      <div className="flex justify-between items-start gap-4 mb-4">
-                        <div className="flex gap-2">
-                          <div className="p-2 rounded-xl bg-white/2 border border-white/5 text-neutral-400" title={s.metodo}>
-                            <MetodoIcon size={14} />
-                          </div>
-                          <div className="p-2 rounded-xl bg-white/2 border border-white/5 flex items-center gap-1 text-[8px] font-black uppercase tracking-wider" style={{ color: sCat.color }}>
-                            <SIcon size={10} />
-                            <span>{s.categoria || 'Streaming'}</span>
-                          </div>
-                        </div>
-                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => handleOpenEditService(s)}
-                            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
-                          >
-                            <Edit3 size={12} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteService(s.id)}
-                            className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Nombre y Costo */}
-                      <h4 className="text-sm font-bold text-white truncate mb-1">{s.nombre}</h4>
-                      <p className="text-xl font-bold tracking-tight text-white font-mono mb-4">
-                        {parseFloat(s.monto).toLocaleString('en', { minimumFractionDigits: 2 })}{' '}
-                        <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Bs.</span>
-                        <span className="text-[9px] text-neutral-400 font-medium lowercase tracking-normal"> ({s.tipo})</span>
-                      </p>
-                    </div>
-
-                    {/* Vencimiento y contacto */}
-                    <div className="pt-4 border-t border-white/5 flex flex-col gap-2.5 text-[10px] font-semibold tracking-wide uppercase">
-                      <div className="flex items-center justify-between">
-                        <span className="text-neutral-500 flex items-center gap-1.5"><Calendar size={12} /> Próximo Pago</span>
-                        <span className={`font-mono ${hasExpired ? 'text-rose-400 font-bold animate-pulse' : 'text-neutral-200'}`}>
-                          {s.fecha_pago || 'N/A'}
-                        </span>
-                      </div>
-                      
-                      {s.contacto && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-neutral-500 flex items-center gap-1.5"><Mail size={12} /> Soporte / Cont.</span>
-                          <span className="text-neutral-300 normal-case font-medium truncate max-w-[150px]">{s.contacto}</span>
-                        </div>
-                      )}
-
-                      {s.notas && (
-                        <div className="mt-2 bg-black/20 p-2.5 rounded-xl border border-white/5 text-[9px] text-neutral-400 font-medium normal-case flex gap-1.5 items-start">
-                          <FileText size={10} className="text-neutral-500 mt-0.5 flex-shrink-0" />
-                          <span className="italic">{s.notas}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+          {/* Tabla de Suscripciones y Servicios Sin Sombras */}
+          <div className="rounded-2xl border border-white/5 overflow-hidden" style={{ backgroundColor: t.bg }}>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 bg-white/2">
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Nombre / Soporte</th>
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Categoría</th>
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Próximo Pago</th>
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Periodo</th>
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400 text-right">Costo Mensual</th>
+                    <th className="px-5 py-4 w-24 text-center">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {servicios.length > 0 ? (
+                    servicios.map(s => {
+                      const sCat = catServicioConfig[s.categoria] || catServicioConfig['Otro'];
+                      const SIcon = sCat.icon;
+                      const hasExpired = s.fecha_pago && new Date(s.fecha_pago) < new Date();
+                      return (
+                        <tr 
+                          key={s.id}
+                          className="border-b border-white/5 hover:bg-white/1 transition-all group"
+                        >
+                          <td className="px-5 py-4">
+                            <p className="text-xs font-semibold text-white">{s.nombre}</p>
+                            {s.contacto && <p className="text-[10px] text-neutral-500 mt-1 max-w-md flex items-center gap-1.5"><Mail size={10} /> {s.contacto}</p>}
+                            {s.notas && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {s.notas}</p>}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-white/5 bg-white/2" style={{ color: sCat.color }}>
+                              <SIcon size={10} />
+                              {s.categoria || 'Streaming'}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-neutral-400">
+                            <span className={hasExpired ? 'text-rose-400 font-bold animate-pulse' : 'text-neutral-200'}>
+                              {s.fecha_pago || 'N/A'}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 text-[10px] text-neutral-300">
+                            <span className="capitalize">{s.tipo || 'Mensual'}</span>
+                          </td>
+                          <td className="px-5 py-4 text-right font-mono text-xs font-black text-rose-400">
+                            -{formatCurrency(s.monto)}
+                          </td>
+                          <td className="px-5 py-4 text-center">
+                            <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleOpenEditService(s)}
+                                className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-all"
+                              >
+                                <Edit3 size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteService(s.id)}
+                                className="p-2 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="px-5 py-12 text-center text-xs text-neutral-500 italic">
+                        No se encontraron suscripciones activas.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          ) : (
-            <div className="py-20 text-center border border-white/5 rounded-2xl" style={{ backgroundColor: t.bg }}>
-              <Wifi size={32} className="mx-auto text-neutral-600 mb-3" />
-              <h5 className="text-sm font-bold text-white uppercase tracking-wider">Sin suscripciones</h5>
-              <p className="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-1">Registra tu primer servicio recurrente</p>
-            </div>
-          )}
+          </div>
 
         </div>
       )}
