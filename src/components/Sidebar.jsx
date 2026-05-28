@@ -120,13 +120,13 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
       {/* Logo */}
       <div className="mb-6 flex justify-center">
         <div 
-          className="w-[60px] h-[60px] rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+          className="w-[120px] h-[120px] rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
           style={{ backgroundColor: 'transparent' }}
         >
           {isDark ? (
-            <img src="/logo_blanco.png" alt="Logo" className="w-[56px] h-[56px] object-contain" />
+            <img src="/logo_blanco.png" alt="Logo" className="w-[116px] h-[116px] object-contain" />
           ) : (
-            <img src="/logo_negro.png" alt="Logo" className="w-[56px] h-[56px] object-contain" />
+            <img src="/logo_negro.png" alt="Logo" className="w-[116px] h-[116px] object-contain" />
           )}
         </div>
       </div>
