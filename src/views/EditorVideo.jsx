@@ -38,6 +38,24 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
+  // ── Session extended states (Clientes) ─────────────────────────────────────
+  const [sessionCurrency, setSessionCurrency] = useState('USD');
+  const [sessionPrice, setSessionPrice] = useState('');
+  const [sessionMeetLink, setSessionMeetLink] = useState('');
+  const [sessionNextDate, setSessionNextDate] = useState('');
+  const [sessionDriveLink, setSessionDriveLink] = useState('');
+  const [sessionSideTab, setSessionSideTab] = useState('calc');
+  const [priceRegistered, setPriceRegistered] = useState(false);
+
+  // ── Session extended states (Agencia Pro) ──────────────────────────────────
+  const [agencySideTab, setAgencySideTab] = useState('calc');
+  const [agencySessionCurrency, setAgencySessionCurrency] = useState('USD');
+  const [agencySessionPrice, setAgencySessionPrice] = useState('');
+  const [agencyMeetLink, setAgencyMeetLink] = useState('');
+  const [agencyNextDate, setAgencyNextDate] = useState('');
+  const [agencyDriveLink, setAgencyDriveLink] = useState('');
+  const [agencyPriceRegistered, setAgencyPriceRegistered] = useState(false);
+
   const [agencyClients, setAgencyClients] = useState([]);
   const [activeAgencyPlan, setActiveAgencyPlan] = useState('Todos'); 
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -170,7 +188,19 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     if (!activeStrategy) return;
     try {
       const content = editorRef.current ? editorRef.current.innerHTML : editorContent;
-      const { error } = await supabase.from('estrategias_agencia').update({ contenido: content, total_time: time }).eq('id', activeStrategy.id);
+      const metadata = {
+        moneda: agencySessionCurrency,
+        precio_acordado: agencySessionPrice || null,
+        link_reunion: agencyMeetLink || null,
+        fecha_siguiente: agencyNextDate || null,
+        drive_folder: agencyDriveLink || null,
+        precio_registrado: agencyPriceRegistered
+      };
+      const { error } = await supabase.from('estrategias_agencia').update({
+        contenido: content,
+        total_time: time,
+        metadata: metadata
+      }).eq('id', activeStrategy.id);
       if (error) throw error;
       await fetchStrategies(selectedCompany.id);
       setViewState('agency-session');
@@ -179,7 +209,19 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
 
   const openClientProfile = (client) => { setActiveClient(client); setViewState('client-profile'); };
 
-  const openMeeting = (meeting) => { setActiveMeeting(meeting); setTime(meeting.total_time); setViewState('session'); };
+  const openMeeting = (meeting) => {
+    setActiveMeeting(meeting);
+    setTime(meeting.total_time || 0);
+    const meta = meeting.metadata || {};
+    setSessionCurrency(meta.moneda || 'USD');
+    setSessionPrice(meta.precio_acordado || '');
+    setSessionMeetLink(meta.link_reunion || '');
+    setSessionNextDate(meta.fecha_siguiente || '');
+    setSessionDriveLink(meta.drive_folder || '');
+    setPriceRegistered(meta.precio_registrado || false);
+    setSessionSideTab('calc');
+    setViewState('session');
+  };
 
   const createMeeting = async () => {
     if (!activeClient) return;
@@ -197,7 +239,19 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     if (!activeMeeting) return;
     try {
       const content = editorRef.current ? editorRef.current.innerHTML : activeMeeting.contenido;
-      const { error } = await supabase.from('reuniones').update({ contenido: content, total_time: time }).eq('id', activeMeeting.id);
+      const metadata = {
+        moneda: sessionCurrency,
+        precio_acordado: sessionPrice || null,
+        link_reunion: sessionMeetLink || null,
+        fecha_siguiente: sessionNextDate || null,
+        drive_folder: sessionDriveLink || null,
+        precio_registrado: priceRegistered
+      };
+      const { error } = await supabase.from('reuniones').update({
+        contenido: content,
+        total_time: time,
+        metadata: metadata
+      }).eq('id', activeMeeting.id);
       if (error) throw error;
       setViewState('client-profile');
       setActiveMeeting(null);
@@ -237,6 +291,27 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
   };
 
   const formatText = (cmd, val, e) => { e.preventDefault(); document.execCommand(cmd, false, val); };
+
+  const registerSessionIncome = async (clientName, meetingTitle, price, currency, isAgency = false) => {
+    if (!price || parseFloat(price) <= 0) return;
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const newVenta = {
+        id: crypto.randomUUID(),
+        fecha: today,
+        producto: `${clientName} — ${meetingTitle}`,
+        categoria: 'Edición de Video',
+        plataforma: 'Edición de Video',
+        monto: parseFloat(price),
+        notas: `Moneda original: ${price} ${currency}`
+      };
+      const { error } = await supabase.from('ventas').insert(newVenta);
+      if (error) throw error;
+      if (isAgency) setAgencyPriceRegistered(true);
+      else setPriceRegistered(true);
+      alert('✅ Ingreso registrado en Mis Ganancias');
+    } catch (e) { alert('Error al registrar: ' + e.message); }
+  };
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden font-sans"
@@ -537,7 +612,20 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
            </header>
            <div className="space-y-3">
              {strategies.map(s => (
-               <div key={s.id} onClick={() => { setActiveStrategy(s); setEditorContent(s.contenido); setTime(s.total_time); setViewState('agency-editor'); }}
+               <div key={s.id} onClick={() => {
+                  setActiveStrategy(s);
+                  setEditorContent(s.contenido);
+                  setTime(s.total_time || 0);
+                  const meta = s.metadata || {};
+                  setAgencySessionCurrency(meta.moneda || 'USD');
+                  setAgencySessionPrice(meta.precio_acordado || '');
+                  setAgencyMeetLink(meta.link_reunion || '');
+                  setAgencyNextDate(meta.fecha_siguiente || '');
+                  setAgencyDriveLink(meta.drive_folder || '');
+                  setAgencyPriceRegistered(meta.precio_registrado || false);
+                  setAgencySideTab('calc');
+                  setViewState('agency-editor');
+                }}
                  className="flex items-center justify-between p-4 cursor-pointer shadow-lg transition-all"
                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 16 }}>
                  <div className="flex items-center gap-6">
@@ -560,60 +648,156 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
 
       {viewState === 'agency-editor' && activeStrategy && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-500">
-           <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.accentSoft, borderBottom: `1px solid ${t.border}` }}>
-              <div className="flex items-center gap-4">
-                <button onClick={() => setViewState('agency-session')} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
-                  <ArrowLeft size={18} color={t.textMuted}/>
-                </button>
+          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.accentSoft, borderBottom: `1px solid ${t.border}` }}>
+            <div className="flex items-center gap-4">
+              <button onClick={saveStrategy} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
+                <ArrowLeft size={18} color={t.textMuted}/>
+              </button>
+              <div>
                 <h3 className="text-sm font-black uppercase" style={{ color: 'white' }}>{activeStrategy.titulo_estrategia}</h3>
+                <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>{selectedCompany?.nombre_empresa}</p>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-3 px-4 py-1.5 rounded-xl text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
-                  {formatTime(time)}
-                  <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accent }}>
-                    {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
-                  </button>
-                </div>
-                <button onClick={saveStrategy} className="px-5 py-2.5 text-[9px] font-black rounded-xl uppercase tracking-widest shadow-xl flex items-center gap-2"
-                  style={{ backgroundColor: 'white', color: '#000000' }}>
-                  <Save size={14}/> Guardar
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 px-4 py-1.5 rounded-xl text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
+                {formatTime(time)}
+                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accent }}>
+                  {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
+                </button>
+                <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                  <RotateCcw size={12} color={t.textMuted}/>
                 </button>
               </div>
-           </header>
-           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-              <div className="w-[260px] space-y-3">
-                <div className="p-3 rounded-xl text-right text-lg font-mono font-black shadow-inner" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
-                  {calcDisplay}
+              <button onClick={saveStrategy} className="px-5 py-2.5 text-[9px] font-black rounded-xl uppercase tracking-widest shadow-xl flex items-center gap-2"
+                style={{ backgroundColor: 'white', color: '#000000' }}>
+                <Save size={14}/> Guardar
+              </button>
+            </div>
+          </header>
+          <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
+            <div className="flex-1 rounded-xl overflow-hidden flex flex-col shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H1</button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H2</button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h3'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H3</button>
+                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Bold size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Italic size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-2 py-1 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim, textDecoration: 'underline', fontWeight: 900, fontSize: '13px' }}>U</button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('strikeThrough', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Strikethrough size={14}/></button>
+                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><List size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertOrderedList', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><ListOrdered size={14}/></button>
+                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'blockquote'); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Quote size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Table2 size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); const url = window.prompt('URL de imagen:'); if (url) document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:100%;border-radius:8px;margin:4px 0" alt="img"/><p></p>`); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><ImageIcon size={14}/></button>
+              </div>
+              <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true}
+                className="flex-1 p-6 font-medium text-base leading-relaxed outline-none mac-scrollbar overflow-y-auto"
+                style={{ color: t.text }}
+                dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} />
+            </div>
+            <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
+              <div className="grid grid-cols-2 p-1 rounded-xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                {[{ id: 'calc', label: 'Calc', icon: CalcIcon }, { id: 'info', label: 'Proyecto', icon: Target }].map(tab => (
+                  <button key={tab.id} onClick={() => setAgencySideTab(tab.id)}
+                    className="py-2 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
+                    style={{ backgroundColor: agencySideTab === tab.id ? t.accent : 'transparent', color: agencySideTab === tab.id ? '#000' : t.textDim }}>
+                    <tab.icon size={12}/> {tab.label}
+                  </button>
+                ))}
+              </div>
+              {agencySideTab === 'calc' && (
+                <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-4 p-1 rounded-xl gap-1" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                    {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
+                      <button key={cur} onClick={() => setAgencySessionCurrency(cur)}
+                        className="py-1.5 rounded-lg text-[7px] font-black uppercase tracking-widest transition-all"
+                        style={{ backgroundColor: agencySessionCurrency === cur ? t.accent : 'transparent', color: agencySessionCurrency === cur ? '#000' : t.textDim }}>
+                        {cur}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="p-3 rounded-xl text-right shadow-inner" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest mb-1" style={{ color: t.accent }}>{agencySessionCurrency}</p>
+                    <p className="text-xl font-mono font-black">{calcDisplay}</p>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
+                      <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-xl text-[9px] font-black transition-all"
+                        style={{ backgroundColor: btn === '=' ? t.accent : 'rgba(255,255,255,0.05)', color: btn === '=' ? '#000000' : t.textMuted }}>
+                        {btn}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => { setAgencySessionPrice(calcDisplay !== '0' ? calcDisplay : agencySessionPrice); setAgencySideTab('info'); }}
+                    className="w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                    style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
+                    <DollarSign size={12}/> Usar como precio
+                  </button>
                 </div>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                    <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-xl text-[9px] font-black transition-all"
-                      style={{
-                        backgroundColor: btn === '=' ? t.accent : 'rgba(255,255,255,0.05)',
-                        color: btn === '=' ? '#000000' : t.textMuted,
+              )}
+              {agencySideTab === 'info' && (
+                <div className="flex flex-col gap-3">
+                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Próxima Sesión</p>
+                    <input type="date" value={agencyNextDate} onChange={e => setAgencyNextDate(e.target.value)}
+                      className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
+                      style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                  </div>
+                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Links</p>
+                    <div>
+                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Link Reunión</p>
+                      <input type="url" value={agencyMeetLink} onChange={e => setAgencyMeetLink(e.target.value)} placeholder="meet.google.com / zoom..."
+                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
+                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                      {agencyMeetLink && <a href={agencyMeetLink} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.accent }}><ExternalLink size={10}/> Abrir</a>}
+                    </div>
+                    <div>
+                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Drive / Archivos</p>
+                      <input type="url" value={agencyDriveLink} onChange={e => setAgencyDriveLink(e.target.value)} placeholder="drive.google.com/..."
+                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
+                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                      {agencyDriveLink && <a href={agencyDriveLink} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.accent }}><ExternalLink size={10}/> Abrir Drive</a>}
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Precio Acordado</p>
+                    <div className="grid grid-cols-4 gap-1 p-1 rounded-lg" style={{ backgroundColor: t.bg }}>
+                      {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
+                        <button key={cur} onClick={() => setAgencySessionCurrency(cur)}
+                          className="py-1 rounded-md text-[7px] font-black transition-all"
+                          style={{ backgroundColor: agencySessionCurrency === cur ? t.accent : 'transparent', color: agencySessionCurrency === cur ? '#000' : t.textDim }}>
+                          {cur}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-[9px] font-black px-1" style={{ color: t.textDim }}>
+                        {agencySessionCurrency === 'BOB' ? 'Bs.' : agencySessionCurrency === 'USD' ? '$' : agencySessionCurrency === 'EUR' ? '€' : 'R$'}
+                      </span>
+                      <input type="number" value={agencySessionPrice} onChange={e => setAgencySessionPrice(e.target.value)}
+                        placeholder="0.00" min="0" step="0.01"
+                        className="flex-1 px-3 py-2 rounded-lg text-sm font-mono outline-none"
+                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                    </div>
+                    <button onClick={() => registerSessionIncome(selectedCompany?.nombre_empresa || 'Agencia', activeStrategy.titulo_estrategia, agencySessionPrice, agencySessionCurrency, true)}
+                      disabled={!agencySessionPrice || parseFloat(agencySessionPrice) <= 0 || agencyPriceRegistered}
+                      className="w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                      style={{ 
+                        backgroundColor: agencyPriceRegistered ? t.accentSoft : (agencySessionPrice && parseFloat(agencySessionPrice) > 0 ? t.accent : 'rgba(255,255,255,0.05)'),
+                        color: agencyPriceRegistered ? t.accent : (agencySessionPrice && parseFloat(agencySessionPrice) > 0 ? '#000' : t.textDim),
+                        cursor: agencyPriceRegistered || !agencySessionPrice ? 'not-allowed' : 'pointer'
                       }}>
-                      {btn}
+                      {agencyPriceRegistered ? <><Check size={12}/> Registrado</> : <><TrendingUp size={12}/> Registrar Ingreso</>}
                     </button>
-                  ))}
+                  </div>
                 </div>
-              </div>
-              <div className="flex-1 rounded-xl overflow-hidden flex flex-col shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                <div className="px-5 py-3 flex gap-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                  <button onMouseDown={(e)=>formatText('bold',null,e)} className="p-1.5 transition-all" style={{ color: t.textDim }}>
-                    <Bold size={16}/>
-                  </button>
-                  <button onMouseDown={(e)=>formatText('italic',null,e)} className="p-1.5 transition-all" style={{ color: t.textDim }}>
-                    <Italic size={16}/>
-                  </button>
-                  <button onMouseDown={(e)=>formatText('insertUnorderedList',null,e)} className="p-1.5 transition-all" style={{ color: t.textDim }}>
-                    <List size={16}/>
-                  </button>
-                </div>
-                <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="flex-1 p-8 text-white font-medium text-base leading-relaxed outline-none mac-scrollbar overflow-y-auto"
-                  style={{ color: t.text }}
-                  dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} />
-              </div>
-           </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -624,7 +808,10 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
               <button onClick={saveMeeting} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
                 <ArrowLeft size={18} color={t.textMuted}/>
               </button>
-              <h3 className="text-sm font-black uppercase" style={{ color: 'white' }}>{activeMeeting.session_title}</h3>
+              <div>
+                <h3 className="text-sm font-black uppercase" style={{ color: 'white' }}>{activeMeeting.session_title}</h3>
+                <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>{activeClient?.nombre}</p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-3 px-4 py-1.5 rounded-xl text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
@@ -632,45 +819,162 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accent }}>
                   {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
                 </button>
+                <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
+                  <RotateCcw size={12} color={t.textMuted}/>
+                </button>
               </div>
-              <button onClick={saveMeeting} className="px-5 py-2.5 text-[9px] font-black rounded-xl uppercase shadow-xl flex items-center gap-2"
+              <button onClick={saveMeeting} className="px-5 py-2.5 text-[9px] font-black rounded-xl uppercase tracking-widest shadow-xl flex items-center gap-2"
                 style={{ backgroundColor: 'white', color: '#000000' }}>
-                <Save size={14}/> Finalizar
+                <Save size={14}/> Guardar
               </button>
             </div>
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-            <div className="w-[260px] space-y-3">
-              <div className="p-3 rounded-xl text-right text-lg font-mono font-black shadow-inner" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
-                {calcDisplay}
+            <div className="flex-1 rounded-xl overflow-hidden flex flex-col shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H1</button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H2</button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h3'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H3</button>
+                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Bold size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Italic size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-2 py-1 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim, textDecoration: 'underline', fontWeight: 900, fontSize: '13px' }}>U</button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('strikeThrough', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Strikethrough size={14}/></button>
+                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><List size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertOrderedList', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><ListOrdered size={14}/></button>
+                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'blockquote'); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Quote size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Table2 size={14}/></button>
+                <button onMouseDown={e => { e.preventDefault(); const url = window.prompt('URL de imagen:'); if (url) document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:100%;border-radius:8px;margin:4px 0" alt="img"/><p></p>`); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><ImageIcon size={14}/></button>
               </div>
-              <div className="grid grid-cols-4 gap-1.5">
-                {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                  <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-xl text-[9px] font-black transition-all"
-                    style={{
-                      backgroundColor: btn === '=' ? t.accent : 'rgba(255,255,255,0.05)',
-                      color: btn === '=' ? '#000000' : t.textMuted,
-                    }}>
-                    {btn}
+              <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true}
+                className="flex-1 p-6 font-medium text-base leading-relaxed outline-none mac-scrollbar overflow-y-auto"
+                style={{ color: t.text }}
+                dangerouslySetInnerHTML={{ __html: activeMeeting.contenido }} />
+            </div>
+            <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
+              <div className="grid grid-cols-2 p-1 rounded-xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                {[{ id: 'calc', label: 'Calc', icon: CalcIcon }, { id: 'info', label: 'Reunión', icon: Calendar }].map(tab => (
+                  <button key={tab.id} onClick={() => setSessionSideTab(tab.id)}
+                    className="py-2 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
+                    style={{ backgroundColor: sessionSideTab === tab.id ? t.accent : 'transparent', color: sessionSideTab === tab.id ? '#000' : t.textDim }}>
+                    <tab.icon size={12}/> {tab.label}
                   </button>
                 ))}
               </div>
-            </div>
-            <div className="flex-1 rounded-xl overflow-hidden flex flex-col shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-              <div className="px-5 py-3 flex gap-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                <button onMouseDown={(e)=>formatText('bold',null,e)} className="p-1.5 transition-all" style={{ color: t.textDim }}>
-                  <Bold size={16}/>
-                </button>
-                <button onMouseDown={(e)=>formatText('italic',null,e)} className="p-1.5 transition-all" style={{ color: t.textDim }}>
-                  <Italic size={16}/>
-                </button>
-                <button onMouseDown={(e)=>formatText('insertUnorderedList',null,e)} className="p-1.5 transition-all" style={{ color: t.textDim }}>
-                  <List size={16}/>
-                </button>
-              </div>
-              <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true} className="flex-1 p-8 text-white font-medium text-base leading-relaxed outline-none mac-scrollbar overflow-y-auto"
-                style={{ color: t.text }}
-                dangerouslySetInnerHTML={{ __html: activeMeeting.contenido }} />
+              {sessionSideTab === 'calc' && (
+                <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-4 p-1 rounded-xl gap-1" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                    {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
+                      <button key={cur} onClick={() => setSessionCurrency(cur)}
+                        className="py-1.5 rounded-lg text-[7px] font-black uppercase tracking-widest transition-all"
+                        style={{ backgroundColor: sessionCurrency === cur ? t.accent : 'transparent', color: sessionCurrency === cur ? '#000' : t.textDim }}>
+                        {cur}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="p-3 rounded-xl text-right shadow-inner" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest mb-1" style={{ color: t.accent }}>{sessionCurrency}</p>
+                    <p className="text-xl font-mono font-black">{calcDisplay}</p>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
+                      <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-xl text-[9px] font-black transition-all"
+                        style={{ backgroundColor: btn === '=' ? t.accent : 'rgba(255,255,255,0.05)', color: btn === '=' ? '#000000' : t.textMuted }}>
+                        {btn}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => { setSessionPrice(calcDisplay !== '0' ? calcDisplay : sessionPrice); setSessionSideTab('info'); }}
+                    className="w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                    style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
+                    <DollarSign size={12}/> Usar como precio
+                  </button>
+                </div>
+              )}
+              {sessionSideTab === 'info' && (
+                <div className="flex flex-col gap-3">
+                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Fechas</p>
+                    <div>
+                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Reunión actual</p>
+                      <div className="px-3 py-2 rounded-lg text-[10px] font-mono" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.textMuted }}>{activeMeeting.fecha}</div>
+                    </div>
+                    <div>
+                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Próxima reunión</p>
+                      <input type="date" value={sessionNextDate} onChange={e => setSessionNextDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
+                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Links</p>
+                    <div>
+                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Link Reunión</p>
+                      <input type="url" value={sessionMeetLink} onChange={e => setSessionMeetLink(e.target.value)} placeholder="meet.google.com / zoom / wa.me..."
+                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
+                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                      {sessionMeetLink && <a href={sessionMeetLink} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.accent }}><ExternalLink size={10}/> Abrir</a>}
+                    </div>
+                    <div>
+                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Drive / Archivos</p>
+                      <input type="url" value={sessionDriveLink} onChange={e => setSessionDriveLink(e.target.value)} placeholder="drive.google.com/..."
+                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
+                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                      {sessionDriveLink && <a href={sessionDriveLink} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.accent }}><ExternalLink size={10}/> Abrir Drive</a>}
+                    </div>
+                  </div>
+                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Precio Acordado</p>
+                    <div className="grid grid-cols-4 gap-1 p-1 rounded-lg" style={{ backgroundColor: t.bg }}>
+                      {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
+                        <button key={cur} onClick={() => setSessionCurrency(cur)}
+                          className="py-1 rounded-md text-[7px] font-black transition-all"
+                          style={{ backgroundColor: sessionCurrency === cur ? t.accent : 'transparent', color: sessionCurrency === cur ? '#000' : t.textDim }}>
+                          {cur}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-[9px] font-black px-1" style={{ color: t.textDim }}>
+                        {sessionCurrency === 'BOB' ? 'Bs.' : sessionCurrency === 'USD' ? '$' : sessionCurrency === 'EUR' ? '€' : 'R$'}
+                      </span>
+                      <input type="number" value={sessionPrice} onChange={e => setSessionPrice(e.target.value)}
+                        placeholder="0.00" min="0" step="0.01"
+                        className="flex-1 px-3 py-2 rounded-lg text-sm font-mono outline-none"
+                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                    </div>
+                    <button onClick={() => registerSessionIncome(activeClient?.nombre || 'Cliente', activeMeeting.session_title, sessionPrice, sessionCurrency, false)}
+                      disabled={!sessionPrice || parseFloat(sessionPrice) <= 0 || priceRegistered}
+                      className="w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                      style={{ 
+                        backgroundColor: priceRegistered ? t.accentSoft : (sessionPrice && parseFloat(sessionPrice) > 0 ? t.accent : 'rgba(255,255,255,0.05)'),
+                        color: priceRegistered ? t.accent : (sessionPrice && parseFloat(sessionPrice) > 0 ? '#000' : t.textDim),
+                        cursor: priceRegistered || !sessionPrice ? 'not-allowed' : 'pointer'
+                      }}>
+                      {priceRegistered ? <><Check size={12}/> Registrado en Ganancias</> : <><TrendingUp size={12}/> Registrar Ingreso</>}
+                    </button>
+                  </div>
+                  {activeClient && (activeClient.telefono || activeClient.email) && (
+                    <div className="p-4 rounded-xl space-y-2" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                      <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📱 Contacto</p>
+                      {activeClient.telefono && (
+                        <a href={`https://wa.me/${activeClient.telefono.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-2 text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>
+                          <Smartphone size={12}/> {activeClient.telefono}
+                        </a>
+                      )}
+                      {activeClient.email && (
+                        <a href={`mailto:${activeClient.email}`}
+                          className="flex items-center gap-2 text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>
+                          <Mail size={12}/> {activeClient.email}
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
