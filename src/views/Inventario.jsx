@@ -648,7 +648,15 @@ const Inventario = ({ settings = {}, isDark = true }) => {
         }
       };
       
-      const { descripcion, video_url, ...cleanPayload } = payload;
+      const { 
+        descripcion, 
+        video_url, 
+        es_oferta, 
+        precio_oferta, 
+        es_combo, 
+        productos_regalo, 
+        ...cleanPayload 
+      } = payload;
       cleanPayload.ficha_tecnica = descripcion || payload.ficha_tecnica || '';
       
       const { error } = await supabase.from('productos').upsert(cleanPayload);
