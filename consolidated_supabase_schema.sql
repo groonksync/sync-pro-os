@@ -197,8 +197,12 @@ create table if not exists servicios (
   contacto    text,
   notas       text,
   tipo        text default 'Mensual',
+  categoria   text default 'Streaming',
   created_at  timestamptz default now()
 );
+
+-- Asegurar columna categoria en tabla servicios en caso de que ya exista
+alter table servicios add column if not exists categoria text default 'Streaming';
 
 -- 13. RECORDATORIOS
 create table if not exists recordatorios (

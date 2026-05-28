@@ -3,21 +3,39 @@ import {
   Plus, Trash2, CreditCard, ArrowDownRight, Tag, Coffee, Wrench, Wifi, User, 
   ShoppingCart, Calendar, Edit3, Save, X, Search, Mail, Phone, FileText, 
   AlertTriangle, TrendingUp, TrendingDown, Layers, Settings, DollarSign, Activity,
-  Sliders, Filter, Landmark, Banknote, AlertCircle, Sparkles, Check
+  Sliders, Filter, Landmark, Banknote, AlertCircle, Sparkles, Check, Megaphone, 
+  HelpCircle, Video, Cloud, Music, Palette, Scissors
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 
-const CATEGORIAS = [
+// Categorías para gastos individuales
+const GASTO_CATEGORIAS = [
   { label: 'Suscripción', icon: Wifi, color: '#a78bfa', defaultLimit: 200 },
   { label: 'Herramienta', icon: Wrench, color: '#38bdf8', defaultLimit: 500 },
   { label: 'Servicio',    icon: Tag, color: '#fb923c', defaultLimit: 400 },
   { label: 'Personal',   icon: User, color: '#4ade80', defaultLimit: 800 },
   { label: 'Compra',     icon: ShoppingCart, color: '#f472b6', defaultLimit: 600 },
-  { label: 'Otro',       icon: Coffee, color: '#94a3b8', defaultLimit: 300 },
+  { label: 'Crédito / Préstamo', icon: Landmark, color: '#60a5fa', defaultLimit: 700 },
+  { label: 'Deuda',      icon: AlertCircle, color: '#f87171', defaultLimit: 400 },
+  { label: 'Alimentación', icon: Coffee, color: '#f59e0b', defaultLimit: 300 },
+  { label: 'Otro',       icon: HelpCircle, color: '#94a3b8', defaultLimit: 300 },
 ];
 
-const catConfig = Object.fromEntries(CATEGORIAS.map(c => [c.label, c]));
+// Categorías para suscripciones / servicios
+const SERVICIO_CATEGORIAS = [
+  { label: 'Streaming', icon: Video, color: '#f472b6' },
+  { label: 'Cloud / Almacenamiento', icon: Cloud, color: '#38bdf8' },
+  { label: 'Inteligencia Artificial', icon: Sparkles, color: '#a78bfa' },
+  { label: 'Marketing / Anuncios', icon: Megaphone, color: '#fb923c' },
+  { label: 'SaaS / Software', icon: Layers, color: '#2dd4bf' },
+  { label: 'Servicio Básico', icon: Landmark, color: '#94a3b8' },
+  { label: 'Financiero / Crédito', icon: CreditCard, color: '#4ade80' },
+  { label: 'Otro', icon: HelpCircle, color: '#64748b' }
+];
+
+const catGastoConfig = Object.fromEntries(GASTO_CATEGORIAS.map(c => [c.label, c]));
+const catServicioConfig = Object.fromEntries(SERVICIO_CATEGORIAS.map(c => [c.label, c]));
 
 const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, isDark = true }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
@@ -41,7 +59,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   const [categoryBudgets, setCategoryBudgets] = useState(() => {
     const saved = localStorage.getItem('sovereign_category_budgets');
     if (saved) return JSON.parse(saved);
-    return Object.fromEntries(CATEGORIAS.map(c => [c.label, c.defaultLimit]));
+    return Object.fromEntries(GASTO_CATEGORIAS.map(c => [c.label, c.defaultLimit]));
   });
 
   const [isEditingBudgets, setIsEditingBudgets] = useState(false);
@@ -56,9 +74,10 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     localStorage.setItem('sovereign_category_budgets', JSON.stringify(categoryBudgets));
   }, [categoryBudgets]);
 
-  // ── Formulario de Gasto Individual ─────────────────────────────────────────
+  // ── Formulario de Gasto Individual (Crear / Editar) ─────────────────────────
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [expenseLoading, setExpenseLoading] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null); // null = nuevo, objeto = editando
   const [expenseForm, setExpenseForm] = useState({
     fecha: new Date().toISOString().split('T')[0],
     descripcion: '',
@@ -67,7 +86,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     notas: '',
   });
 
-  // ── Formulario de Servicio Recurrente ─────────────────────────────────────
+  // ── Formulario de Servicio Recurrente (Crear / Editar) ─────────────────────
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [serviceLoading, setServiceLoading] = useState(false);
   const [editingService, setEditingService] = useState(null); // null = nuevo, objeto = editando
@@ -78,7 +97,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     metodo: 'Tarjeta',
     contacto: '',
     notas: '',
-    tipo: 'Mensual'
+    tipo: 'Mensual',
+    categoria: 'Streaming'
   });
 
   // Cargar/actualizar datos al montar
@@ -98,7 +118,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
   // Distribución de gastos del mes actual por categoría
   const egresosPorCategoriaMes = useMemo(() => {
-    return CATEGORIAS.map(cat => {
+    return GASTO_CATEGORIAS.map(cat => {
       const totalCat = egresosMesActual
         .filter(e => e.categoria === cat.label)
         .reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
@@ -148,12 +168,36 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     setIsEditingBudgets(true);
   };
 
-  const handleCreateExpense = async () => {
+  const handleOpenNewExpense = () => {
+    setEditingExpense(null);
+    setExpenseForm({
+      fecha: new Date().toISOString().split('T')[0],
+      descripcion: '',
+      categoria: 'Suscripción',
+      monto: '',
+      notas: '',
+    });
+    setShowExpenseForm(true);
+  };
+
+  const handleOpenEditExpense = (e) => {
+    setEditingExpense(e);
+    setExpenseForm({
+      fecha: e.fecha,
+      descripcion: e.descripcion,
+      categoria: e.categoria,
+      monto: e.monto,
+      notas: e.notas || '',
+    });
+    setShowExpenseForm(true);
+  };
+
+  const handleSaveExpense = async () => {
     if (!expenseForm.descripcion.trim() || !expenseForm.monto) return;
     setExpenseLoading(true);
-    const newId = crypto.randomUUID();
-    const newEgreso = { 
-      id: newId, 
+
+    const payload = {
+      id: editingExpense ? editingExpense.id : crypto.randomUUID(),
       fecha: expenseForm.fecha,
       descripcion: expenseForm.descripcion.trim(),
       categoria: expenseForm.categoria,
@@ -162,11 +206,24 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     };
 
     try {
-      const { error } = await supabase.from('egresos').insert(newEgreso);
+      const { error } = await supabase.from('egresos').upsert(payload);
       if (error) throw error;
-      setData(prev => ({ ...prev, egresos: [newEgreso, ...prev.egresos] }));
+      
+      if (editingExpense) {
+        setData(prev => ({
+          ...prev,
+          egresos: prev.egresos.map(item => item.id === editingExpense.id ? payload : item)
+        }));
+      } else {
+        setData(prev => ({
+          ...prev,
+          egresos: [payload, ...prev.egresos]
+        }));
+      }
+
       setExpenseForm({ fecha: new Date().toISOString().split('T')[0], descripcion: '', categoria: 'Suscripción', monto: '', notas: '' });
       setShowExpenseForm(false);
+      setEditingExpense(null);
       if (onRefresh) onRefresh();
     } catch (err) { 
       alert('Error al guardar egreso: ' + err.message); 
@@ -197,7 +254,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       metodo: 'Tarjeta',
       contacto: '',
       notas: '',
-      tipo: 'Mensual'
+      tipo: 'Mensual',
+      categoria: 'Streaming'
     });
     setShowServiceForm(true);
   };
@@ -211,7 +269,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       metodo: s.metodo,
       contacto: s.contacto || '',
       notas: s.notas || '',
-      tipo: s.tipo || 'Mensual'
+      tipo: s.tipo || 'Mensual',
+      categoria: s.categoria || 'Streaming'
     });
     setShowServiceForm(true);
   };
@@ -231,7 +290,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       metodo: serviceForm.metodo,
       contacto: serviceForm.contacto.trim() || null,
       notas: serviceForm.notas.trim() || null,
-      tipo: serviceForm.tipo
+      tipo: serviceForm.tipo,
+      categoria: serviceForm.categoria
     };
 
     try {
@@ -313,11 +373,11 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       {activeTab === 'dashboard' && (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
           
-          {/* Tarjetas KPI */}
+          {/* Tarjetas KPI Sin Sombras */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             {/* KPI 1: Total Gastado */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 shadow-2xl flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Gastado Total</span>
                 <CreditCard size={14} className="text-neutral-500" />
@@ -329,7 +389,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 2: Presupuesto Mensual */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 shadow-2xl flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Presupuesto Mes</span>
                 <Sliders size={14} className="text-neutral-500 cursor-pointer hover:text-white transition-colors" onClick={handleOpenBudgetEditor} />
@@ -344,7 +404,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 3: Ingresos del Mes */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 shadow-2xl flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Ingresos del Mes</span>
                 <TrendingUp size={14} className="text-emerald-500" />
@@ -356,7 +416,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 4: Margen Neto */}
-            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 shadow-2xl flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Margen Neto Mes</span>
                 {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
@@ -371,11 +431,11 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
           </div>
 
-          {/* Segunda fila: Progreso Presupuesto y Límites Categorías */}
+          {/* Segunda fila: Progreso Presupuesto y Límites Categorías Sin Sombras */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             {/* Columna Izquierda: Progreso General */}
-            <div className="lg:col-span-5 bg-zinc-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl flex flex-col justify-between gap-6">
+            <div className="lg:col-span-5 bg-zinc-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col justify-between gap-6">
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-white mb-2">Presupuesto Mensual Consumido</h3>
                 <p className="text-[10px] text-neutral-400">Consumo total del presupuesto asignado para el periodo mensual actual</p>
@@ -383,7 +443,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
               {/* Progress Visual */}
               <div className="flex flex-col items-center justify-center py-4">
-                <div className="relative w-36 h-36 flex items-center justify-center rounded-full border border-white/5 bg-zinc-950/40 shadow-inner">
+                <div className="relative w-36 h-36 flex items-center justify-center rounded-full border border-white/5 bg-zinc-950/40">
                   {/* Círculo de progreso estilizado */}
                   <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.02)" strokeWidth="6" fill="transparent" />
@@ -428,7 +488,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* Columna Derecha: Límites por Categoría */}
-            <div className="lg:col-span-7 bg-zinc-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl flex flex-col gap-6">
+            <div className="lg:col-span-7 bg-zinc-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 flex flex-col gap-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Presupuestos por Categoría</h3>
@@ -488,7 +548,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
           </div>
 
-          {/* Fila 3: Estadísticas rápidas */}
+          {/* Fila 3: Estadísticas rápidas Sin Sombras */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Estadística 1: Mayor Gasto */}
@@ -542,7 +602,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       {activeTab === 'transacciones' && (
         <div className="flex flex-col gap-5 animate-in fade-in duration-500">
           
-          {/* Controles de Búsqueda y Filtrado */}
+          {/* Controles de Búsqueda y Filtrado Sin Sombras */}
           <div className="bg-zinc-900/40 backdrop-blur-xl p-4 rounded-2xl border border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
               
@@ -566,7 +626,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20"
                 >
                   <option value="Todas">Todas las Categorías</option>
-                  {CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+                  {GASTO_CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
                 </select>
               </div>
 
@@ -601,16 +661,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
             {/* Registrar Egreso */}
             <button
-              onClick={() => setShowExpenseForm(true)}
+              onClick={handleOpenNewExpense}
               className="w-full md:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95"
               style={{ backgroundColor: t.accent, color: '#000' }}
             >
-              <Plus size={14} strokeWidth={3} /> Registrar Egreso
+              <Plus size={14} strokeWidth={3} /> Registrar Gasto
             </button>
           </div>
 
-          {/* Tabla de Egresos */}
-          <div className="bg-zinc-900/40 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+          {/* Tabla de Egresos Sin Sombras */}
+          <div className="bg-zinc-900/40 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -619,13 +679,13 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                     <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Categoría</th>
                     <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Fecha</th>
                     <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400 text-right">Monto</th>
-                    <th className="px-5 py-4 w-12"></th>
+                    <th className="px-5 py-4 w-24 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEgresos.length > 0 ? (
                     filteredEgresos.map(e => {
-                      const cat = catConfig[e.categoria] || catConfig['Otro'];
+                      const cat = catGastoConfig[e.categoria] || catGastoConfig['Otro'];
                       const Icon = cat.icon;
                       return (
                         <tr 
@@ -634,7 +694,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                         >
                           <td className="px-5 py-4">
                             <p className="text-xs font-semibold text-white">{e.descripcion}</p>
-                            {e.notas && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {e.notas}</p>}
+                            {e.notes && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {e.notes}</p>}
+                            {e.notas && !e.notes && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {e.notas}</p>}
                           </td>
                           <td className="px-5 py-4">
                             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-white/5 bg-white/2" style={{ color: cat.color }}>
@@ -646,13 +707,21 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                           <td className="px-5 py-4 text-right font-mono text-xs font-black text-rose-400">
                             -${parseFloat(e.monto).toLocaleString('en', { minimumFractionDigits: 2 })}
                           </td>
-                          <td className="px-5 py-4">
-                            <button
-                              onClick={() => handleDeleteExpense(e.id)}
-                              className="p-2.5 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 size={13} />
-                            </button>
+                          <td className="px-5 py-4 text-center">
+                            <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => handleOpenEditExpense(e)}
+                                className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-all"
+                              >
+                                <Edit3 size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteExpense(e.id)}
+                                className="p-2 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );
@@ -676,7 +745,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       {activeTab === 'suscripciones' && (
         <div className="flex flex-col gap-6 animate-in fade-in duration-500">
           
-          {/* Cabecera Pestaña */}
+          {/* Cabecera Pestaña Sin Sombras */}
           <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-xl p-4 rounded-2xl border border-white/5">
             <div>
               <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Suscripciones Activas</h3>
@@ -691,22 +760,30 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </button>
           </div>
 
-          {/* Grid de Suscripciones */}
+          {/* Grid de Suscripciones Sin Sombras */}
           {servicios.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {servicios.map(s => {
+                const sCat = catServicioConfig[s.categoria] || catServicioConfig['Otro'];
                 const MetodoIcon = getMetodoIcon(s.metodo);
                 const hasExpired = s.fecha_pago && new Date(s.fecha_pago) < new Date();
+                const SIcon = sCat.icon;
                 return (
                   <div 
                     key={s.id}
-                    className="bg-zinc-900/40 backdrop-blur-xl rounded-2xl border border-white/5 p-5 flex flex-col justify-between min-h-[220px] transition-all hover:border-white/10 group"
+                    className="bg-zinc-900/40 backdrop-blur-xl rounded-2xl border border-white/5 p-5 flex flex-col justify-between min-h-[225px] transition-all hover:border-white/10 group"
                   >
                     <div>
                       {/* Top metadata */}
                       <div className="flex justify-between items-start gap-4 mb-4">
-                        <div className="p-2.5 rounded-xl bg-white/2 border border-white/5 text-neutral-400">
-                          <MetodoIcon size={16} />
+                        <div className="flex gap-2">
+                          <div className="p-2 rounded-xl bg-white/2 border border-white/5 text-neutral-400" title={s.metodo}>
+                            <MetodoIcon size={14} />
+                          </div>
+                          <div className="p-2 rounded-xl bg-white/2 border border-white/5 flex items-center gap-1 text-[8px] font-black uppercase tracking-wider" style={{ color: sCat.color }}>
+                            <SIcon size={10} />
+                            <span>{s.categoria || 'Streaming'}</span>
+                          </div>
                         </div>
                         <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
@@ -744,7 +821,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                       
                       {s.contacto && (
                         <div className="flex items-center justify-between">
-                          <span className="text-neutral-500 flex items-center gap-1.5"><Mail size={12} /> Contacto</span>
+                          <span className="text-neutral-500 flex items-center gap-1.5"><Mail size={12} /> Soporte / Cont.</span>
                           <span className="text-neutral-300 normal-case font-medium truncate max-w-[150px]">{s.contacto}</span>
                         </div>
                       )}
@@ -761,7 +838,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               })}
             </div>
           ) : (
-            <div className="py-20 text-center bg-zinc-900/40 border border-white/5 rounded-2xl shadow-2xl">
+            <div className="py-20 text-center bg-zinc-900/40 border border-white/5 rounded-2xl">
               <Wifi size={32} className="mx-auto text-neutral-600 mb-3" />
               <h5 className="text-sm font-bold text-white uppercase tracking-wider">Sin suscripciones</h5>
               <p className="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-1">Registra tu primer servicio recurrente</p>
@@ -774,7 +851,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       {/* ── MODAL 1: CONFIGURAR PRESUPUESTOS ──────────────────────────────────── */}
       {isEditingBudgets && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-sm font-black uppercase tracking-wider text-white">Presupuestos del Sistema</h3>
               <button onClick={() => setIsEditingBudgets(false)} className="text-neutral-400 hover:text-white transition-colors">
@@ -801,7 +878,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               {/* Categorías específicas */}
               <div className="space-y-4">
                 <h4 className="text-[10px] font-black uppercase tracking-widest text-white border-b border-white/5 pb-2">Límites por Categoría ($)</h4>
-                {CATEGORIAS.map(c => (
+                {GASTO_CATEGORIAS.map(c => (
                   <div key={c.label} className="flex items-center justify-between gap-4">
                     <span className="text-xs font-bold text-neutral-300 flex items-center gap-2">
                       <c.icon size={12} style={{ color: c.color }} />
@@ -844,13 +921,15 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
         </div>
       )}
 
-      {/* ── MODAL 2: NUEVO GASTO INDIVIDUAL ─────────────────────────────────────── */}
+      {/* ── MODAL 2: NUEVO/EDITAR GASTO INDIVIDUAL ─────────────────────────────────── */}
       {showExpenseForm && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-sm font-black uppercase tracking-wider text-white">Registrar Gasto</h3>
-              <button onClick={() => setShowExpenseForm(false)} className="text-neutral-400 hover:text-white transition-colors">
+              <h3 className="text-sm font-black uppercase tracking-wider text-white">
+                {editingExpense ? 'Modificar Gasto' : 'Registrar Gasto'}
+              </h3>
+              <button onClick={() => { setShowExpenseForm(false); setEditingExpense(null); }} className="text-neutral-400 hover:text-white transition-colors">
                 <X size={16} />
               </button>
             </div>
@@ -864,7 +943,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   value={expenseForm.descripcion}
                   onChange={e => setExpenseForm({...expenseForm, descripcion: e.target.value})}
                   className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
-                  placeholder="Ej: Suscripción Adobe CC"
+                  placeholder="Ej: Suscripción Adobe CC o Pago de crédito"
                 />
               </div>
 
@@ -897,7 +976,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   onChange={e => setExpenseForm({...expenseForm, categoria: e.target.value})}
                   className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20 transition-all"
                 >
-                  {CATEGORIAS.map(c => <option key={c.label}>{c.label}</option>)}
+                  {GASTO_CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
                 </select>
               </div>
 
@@ -907,7 +986,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   value={expenseForm.notas}
                   onChange={e => setExpenseForm({...expenseForm, notas: e.target.value})}
                   className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all resize-none h-16"
-                  placeholder="Detalles opcionales..."
+                  placeholder="Detalles opcionales (ej. cuota 3 de 12)..."
                 />
               </div>
 
@@ -915,19 +994,19 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
             <div className="flex gap-3 pt-6 border-t border-white/5 mt-6">
               <button
-                onClick={() => setShowExpenseForm(false)}
+                onClick={() => { setShowExpenseForm(false); setEditingExpense(null); }}
                 className="flex-1 py-3 bg-zinc-950/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white transition-colors"
                 disabled={expenseLoading}
               >
                 Cancelar
               </button>
               <button
-                onClick={handleCreateExpense}
+                onClick={handleSaveExpense}
                 className="flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                 style={{ backgroundColor: t.accent, color: '#000' }}
                 disabled={expenseLoading || !expenseForm.descripcion || !expenseForm.monto}
               >
-                {expenseLoading ? 'Registrando...' : 'Registrar Gasto'}
+                {expenseLoading ? 'Guardando...' : editingExpense ? 'Guardar Cambios' : 'Registrar Gasto'}
               </button>
             </div>
           </div>
@@ -937,7 +1016,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       {/* ── MODAL 3: NUEVA/EDITAR SUSCRIPCIÓN RECURRENTE ─────────────────────────── */}
       {showServiceForm && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-sm font-black uppercase tracking-wider text-white">
                 {editingService ? 'Modificar Suscripción' : 'Nueva Suscripción'}
@@ -1013,6 +1092,17 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
 
               <div>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Categoría del Servicio</label>
+                <select
+                  value={serviceForm.categoria}
+                  onChange={e => setServiceForm({...serviceForm, categoria: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20 transition-all"
+                >
+                  {SERVICIO_CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+                </select>
+              </div>
+
+              <div>
                 <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Contacto / Soporte</label>
                 <input
                   type="text"
@@ -1026,7 +1116,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               <div>
                 <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Notas / Enlaces</label>
                 <textarea
-                  value={serviceForm.notes}
+                  value={serviceForm.notas}
                   onChange={e => setServiceForm({...serviceForm, notas: e.target.value})}
                   className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all resize-none h-16"
                   placeholder="Credenciales de acceso, links de cobro..."
