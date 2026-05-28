@@ -295,15 +295,27 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
   const handleOpenEditService = (s) => {
     setEditingService(s);
+    
+    // Desempaquetar categoria de notas si viene del fallback
+    let cat = s.categoria || 'Streaming';
+    let cleanNotas = s.notas || '';
+    if (s.notas && s.notas.startsWith('[Categoría:')) {
+      const match = s.notas.match(/^\[Categoría:\s*([^\]]+)\]\s*(.*)/);
+      if (match) {
+        cat = match[1];
+        cleanNotas = match[2];
+      }
+    }
+
     setServiceForm({
       nombre: s.nombre,
       monto: s.monto,
       fecha_pago: s.fecha_pago,
       metodo: s.metodo,
       contacto: s.contacto || '',
-      notas: s.notas || '',
+      notas: cleanNotas,
       tipo: s.tipo || 'Mensual',
-      categoria: s.categoria || 'Streaming'
+      categoria: cat
     });
     setShowServiceForm(true);
   };
@@ -321,8 +333,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       monto: parseFloat(serviceForm.monto) || 0,
       fecha_pago: serviceForm.fecha_pago,
       metodo: serviceForm.metodo,
-      contacto: serviceForm.contacto.trim() || null,
-      notas: serviceForm.notas.trim() || null,
+      contacto: (serviceForm.contacto || '').trim() || null,
+      notas: (serviceForm.notas || '').trim() || null,
       tipo: serviceForm.tipo,
       categoria: serviceForm.categoria
     };
@@ -331,9 +343,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       let { error } = await supabase.from('servicios').upsert(payload);
       if (error) {
         // Fallback robusto por si no existe la columna categoria
-        if (error.message && (error.message.includes("categoria") || error.message.includes("column"))) {
+        if (error.message && (error.message.toLowerCase().includes("categoria") || error.message.toLowerCase().includes("column"))) {
           const { categoria, ...fallbackPayload } = payload;
-          fallbackPayload.notas = `[Categoría: ${serviceForm.categoria}] ${serviceForm.notas.trim() || ''}`.trim();
+          fallbackPayload.notas = `[Categoría: ${serviceForm.categoria}] ${(serviceForm.notas || '').trim()}`.trim() || null;
           const retry = await supabase.from('servicios').upsert(fallbackPayload);
           if (retry.error) throw retry.error;
         } else {
@@ -851,7 +863,17 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 <tbody>
                   {servicios.length > 0 ? (
                     servicios.map(s => {
-                      const sCat = catServicioConfig[s.categoria] || catServicioConfig['Otro'];
+                      // Desempaquetar categoria y notas de fallback
+                      let catName = s.categoria || 'Streaming';
+                      let cleanNotas = s.notas || '';
+                      if (s.notas && s.notas.startsWith('[Categoría:')) {
+                        const match = s.notas.match(/^\[Categoría:\s*([^\]]+)\]\s*(.*)/);
+                        if (match) {
+                          catName = match[1];
+                          cleanNotas = match[2];
+                        }
+                      }
+                      const sCat = catServicioConfig[catName] || catServicioConfig['Otro'];
                       const SIcon = sCat.icon;
                       const hasExpired = s.fecha_pago && new Date(s.fecha_pago) < new Date();
                       return (
@@ -862,12 +884,12 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                           <td className="px-5 py-4">
                             <p className="text-xs font-semibold text-white">{s.nombre}</p>
                             {s.contacto && <p className="text-[10px] text-neutral-500 mt-1 max-w-md flex items-center gap-1.5"><Mail size={10} /> {s.contacto}</p>}
-                            {s.notas && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {s.notas}</p>}
+                            {cleanNotas && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {cleanNotas}</p>}
                           </td>
                           <td className="px-5 py-4">
                             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-white/5 bg-white/2" style={{ color: sCat.color }}>
                               <SIcon size={10} />
-                              {s.categoria || 'Streaming'}
+                              {catName}
                             </span>
                           </td>
                           <td className="px-5 py-4 font-mono text-[10px] text-neutral-400">
