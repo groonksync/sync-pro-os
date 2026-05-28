@@ -1438,7 +1438,7 @@ const ProjectEngineView = ({ isDark = true }) => {
     { key: 'Espacio', desc: 'Reproducir / Pausar reproducción de video', soft: 'Premiere Pro / AE' },
     { key: 'J / K / L', desc: 'Retroceder / Parar / Avanzar velocidad variable', soft: 'Premiere Pro / AE' },
     { key: 'U', desc: 'Revelar todos los fotogramas clave (Keyframes) animados', soft: 'After Effects' },
-    { key: 'F9', desc: 'Easy Ease (Suaviza aceleración/deceleración)', soft: 'After Effects' },
+    { key: 'F9', desc: 'Easy Ease (Suaviza acelaración/deceleración)', soft: 'After Effects' },
     { key: 'Alt + [ o ]', desc: 'Recortar punto de entrada o salida de capa', soft: 'After Effects' },
     { key: 'Ctrl + D', desc: 'Duplicar pista o capa seleccionada', soft: 'Premiere Pro / AE' }
   ];
@@ -1451,773 +1451,597 @@ const ProjectEngineView = ({ isDark = true }) => {
 
   return (
     <div className="flex-grow flex-shrink min-h-0 flex flex-col p-5 lg:p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-700 overflow-y-auto mac-scrollbar">
-       <header className="flex flex-col md:flex-row md:items-center justify-between pb-5 gap-4">
+       <header className="flex flex-col md:flex-row md:items-center justify-between pb-4 gap-4" style={{ borderBottom: `1px solid ${t.border}` }}>
           <div>
              <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2.5" style={{ color: 'white' }}>
-                Edición de Video
+                Editor de Video
              </h2>
              <p className="text-[8px] font-black uppercase tracking-[0.25em] mt-1 flex items-center gap-1.5" style={{ color: t.textMuted }}>
-                <HardDrive size={10} color={t.accent}/> Suite de Producción y Herramientas Locales
+                <HardDrive size={10} color={t.accent}/> Workspace de Producción Profesional
              </p>
           </div>
-
-          <div className="flex rounded-xl p-0.5 shadow-lg" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-             <button 
-                onClick={() => setActiveTab('estructurador')}
-                className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2`}
-                style={{
-                  backgroundColor: activeTab === 'estructurador' ? t.accent : 'transparent',
-                  color: activeTab === 'estructurador' ? '#000000' : t.textDim,
-                }}
-             >
-                <Folder size={12} /> Estructurador Pro
-             </button>
-             <button 
-                onClick={() => setActiveTab('suite')}
-                className={`px-6 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-2`}
-                style={{
-                  backgroundColor: activeTab === 'suite' ? t.accent : 'transparent',
-                  color: activeTab === 'suite' ? '#000000' : t.textDim,
-                }}
-             >
-                <Wrench size={12} /> Suite de productividad
-             </button>
+          <div style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }} className="flex items-center gap-2">
+             <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: t.accent }} className="animate-pulse" />
+             Workspace Conectado
           </div>
        </header>
 
-       {activeTab === 'estructurador' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-             {/* LEFT COLUMN */}
-             <div className="lg:col-span-5 flex flex-col space-y-4">
-                {/* SELECT DESTINATION CARD */}
-                <div className="p-5 rounded-xl shadow-lg flex flex-col space-y-4"
-                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                         <FolderOpen size={16} color={t.textMuted}/>
-                      </div>
-                      <div>
-                         <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>1. Vincular Disco Duro</h3>
-                         <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Destino de las Carpetas</p>
-                      </div>
+       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start mt-2">
+          {/* COLUMNA 1: ESTRUCTURADOR & INYECCIÓN */}
+          <div className="flex flex-col space-y-5">
+             
+             {/* PANEL 1: ESTRUCTURADOR DE ENTORNO */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <Folder size={15} color={t.accent} />
                    </div>
-
-                   <div className="space-y-3">
-                      <div className="space-y-1.5">
-                         <p className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Ubicación Destino</p>
-                         <div className="flex gap-2">
-                            <input 
-                               type="text" 
-                               value={destinationPath || 'Ningún directorio seleccionado...'} 
-                               disabled 
-                               className="flex-1 rounded-xl p-3 text-xs font-mono outline-none truncate"
-                               style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.textMuted }} 
-                            />
-                            <button 
-                               onClick={handleSelectDirectory}
-                               className="px-4 rounded-xl text-[9px] font-black uppercase shadow-xl transition-all shrink-0"
-                               style={{ backgroundColor: t.accent, color: '#000000', border: `1px solid ${t.border}` }}
-                            >
-                               Examinar...
-                            </button>
-                         </div>
-                      </div>
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>1. ESTRUCTURADOR DE ENTORNO</h3>
+                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Estructuras locales y disco duro</p>
                    </div>
                 </div>
 
-                {/* NOMENCLATURA */}
-                <div className="p-5 rounded-xl shadow-lg flex flex-col space-y-4"
-                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                         <Folder size={16} color={t.textMuted}/>
-                      </div>
-                      <div>
-                         <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>2. Estructurar Nomenclatura</h3>
-                         <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Identificadores del Proyecto</p>
-                      </div>
-                   </div>
-
-                   <div className="space-y-3">
-                      <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Nombre de la Carpeta Maestra</label>
-                         <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)} placeholder="Ej: Base de Edición Principal"
-                           className="w-full rounded-xl p-4 text-sm outline-none transition-all shadow-inner"
-                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                      <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Nombre de la Empresa / Cliente</label>
-                         <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanización Bensa"
-                           className="w-full rounded-xl p-4 text-sm outline-none transition-all shadow-inner"
-                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                      <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Nombre del Proyecto / Temática</label>
-                         <input type="text" value={proyecto} onChange={e=>setProyecto(e.target.value)} placeholder="Ej: Spot Comercial"
-                           className="w-full rounded-xl p-4 text-sm outline-none transition-all shadow-inner"
-                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                   </div>
-                </div>
-             </div>
-
-             {/* RIGHT COLUMN */}
-             <div className="lg:col-span-7 flex flex-col space-y-4">
-                {/* TEMPLATE PICKER */}
-                <div className="p-5 rounded-xl shadow-lg space-y-4"
-                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                         <Layers size={16} color={t.textMuted}/>
-                      </div>
-                      <div>
-                         <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>3. Plantillas de Inyección</h3>
-                         <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Recursos Proyectados en Estructura</p>
+                <div className="space-y-4">
+                   <div className="space-y-1.5">
+                      <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Destino del Proyecto</p>
+                      <div className="flex gap-2">
+                         <input 
+                            type="text" 
+                            value={destinationPath || 'Ningún directorio seleccionado...'} 
+                            disabled 
+                            className="flex-1 rounded-xl p-3 text-[10px] font-mono outline-none truncate"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.textMuted }} 
+                         />
+                         <button 
+                            onClick={handleSelectDirectory}
+                            className="px-4 rounded-xl text-[9px] font-black uppercase transition-all shrink-0 animate-in fade-in"
+                            style={{ backgroundColor: t.accent, color: '#000000', border: `1px solid ${t.border}` }}
+                         >
+                            Vincular
+                         </button>
                       </div>
                    </div>
 
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Plantilla de Premiere Pro</label>
-                         <div className="relative">
-                            <select value={selectedPremiere} onChange={e=>setSelectedPremiere(e.target.value)}
-                              className="w-full rounded-xl p-4 pr-10 text-sm outline-none shadow-inner appearance-none cursor-pointer"
-                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
-                               <option value="">No incluir Premiere Pro</option>
-                               {templates.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textMuted }}>
-                              <ChevronRight size={14} className="rotate-90"/>
-                            </div>
-                         </div>
+                         <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Carpeta Maestra</label>
+                         <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)} placeholder="Ej: Base de Edición"
+                            className="w-full rounded-xl p-3 text-[11px] outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
                       <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Plantilla de After Effects</label>
-                         <div className="relative">
-                            <select value={selectedAE} onChange={e=>setSelectedAE(e.target.value)}
-                              className="w-full rounded-xl p-4 pr-10 text-sm outline-none shadow-inner appearance-none cursor-pointer"
-                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
-                               <option value="">No incluir After Effects</option>
-                               {templates.map(t => <option key={t} value={t}>{t}</option>)}
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textMuted }}>
-                              <ChevronRight size={14} className="rotate-90"/>
-                            </div>
+                         <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Cliente / Empresa</label>
+                         <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanización Bensa"
+                            className="w-full rounded-xl p-3 text-[11px] outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
+                   </div>
+                   <div className="space-y-1.5">
+                      <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Nombre del Proyecto / Temática</label>
+                      <input type="text" value={proyecto} onChange={e=>setProyecto(e.target.value)} placeholder="Ej: Spot Comercial"
+                         className="w-full rounded-xl p-3 text-[11px] outline-none shadow-inner"
+                         style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                      <div className="space-y-1.5">
+                         <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Plantilla Premiere Pro</label>
+                         <select value={selectedPremiere} onChange={e=>setSelectedPremiere(e.target.value)}
+                            className="w-full rounded-xl p-3 text-[11px] outline-none cursor-pointer"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="" style={{backgroundColor: '#141414'}}>No incluir Premiere</option>
+                            {templates.map(t => <option key={t} value={t} style={{backgroundColor: '#141414'}}>{t}</option>)}
+                         </select>
+                      </div>
+                      <div className="space-y-1.5">
+                         <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Plantilla After Effects</label>
+                         <select value={selectedAE} onChange={e=>setSelectedAE(e.target.value)}
+                            className="w-full rounded-xl p-3 text-[11px] outline-none cursor-pointer"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="" style={{backgroundColor: '#141414'}}>No incluir After Effects</option>
+                            {templates.map(t => <option key={t} value={t} style={{backgroundColor: '#141414'}}>{t}</option>)}
+                         </select>
+                      </div>
+                   </div>
+
+                   <div className="space-y-1.5">
+                      <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Inyecciones Adicionales</p>
+                      <div className="grid grid-cols-3 gap-2">
+                         <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2 transition-all" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                            <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="w-3 h-3 rounded accent-neutral-400 cursor-pointer" />
+                            <span className="text-[8px] font-black uppercase tracking-wider font-bold" style={{ color: t.textMuted }}>Audio SFX</span>
+                         </label>
+                         <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2 transition-all" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                            <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="w-3 h-3 rounded accent-neutral-400 cursor-pointer" />
+                            <span className="text-[8px] font-black uppercase tracking-wider font-bold" style={{ color: t.textMuted }}>Logotipos</span>
+                         </label>
+                         <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2 transition-all" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                            <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="w-3 h-3 rounded accent-neutral-400 cursor-pointer" />
+                            <span className="text-[8px] font-black uppercase tracking-wider font-bold" style={{ color: t.textMuted }}>MOGRTs</span>
+                         </label>
+                      </div>
+                   </div>
+                </div>
+             </div>
+
+             {/* PANEL 2: CONSOLA DE INYECCIÓN */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center justify-between pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="flex items-center gap-2">
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: t.accent }}></span>
+                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>CONSOLA DE INYECCIÓN</span>
+                   </div>
+                   <span className="px-2 py-0.5 rounded text-[7px] font-bold uppercase tracking-wider" style={{ border: `1px solid ${t.border}`, color: t.textMuted, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      {isGenerating ? 'Ejecutando' : 'Listo'}
+                   </span>
+                </div>
+
+                <div className="space-y-3">
+                   <div className="grid grid-cols-2 gap-3">
+                      <div className="p-3 rounded-xl space-y-1" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                         <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Disco Destino</p>
+                         <div className="flex items-center gap-1.5">
+                            <HardDrive size={11} color={destinationPath ? t.textMuted : t.textDim} />
+                            <span className="text-[10px] font-bold font-mono truncate" style={{ color: t.textMuted }}>
+                               {destinationPath ? (typeof destinationPath === 'string' ? destinationPath.split('/').pop() : destinationPath.name) : 'No vinculado'}
+                            </span>
+                         </div>
+                      </div>
+                      <div className="p-3 rounded-xl space-y-1" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                         <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Carpeta de Base</p>
+                         <div className="flex items-center gap-1.5">
+                            <Folder size={11} color={t.textMuted} />
+                            <span className="text-[10px] font-bold truncate" style={{ color: t.textMuted }}>
+                               {carpetaMaestra || 'Ninguna'}
+                            </span>
                          </div>
                       </div>
                    </div>
 
-                   <div className="grid grid-cols-3 gap-3 pt-1">
-                      <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2.5 transition-all"
-                        style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                         <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="accent-neutral-400 w-3.5 h-3.5 rounded cursor-pointer" />
-                         <span className="text-[8px] font-black uppercase tracking-wider" style={{ color: t.textMuted }}>Audio SFX</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2.5 transition-all"
-                        style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                         <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="accent-neutral-400 w-3.5 h-3.5 rounded cursor-pointer" />
-                         <span className="text-[8px] font-black uppercase tracking-wider" style={{ color: t.textMuted }}>Logotipos</span>
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2.5 transition-all"
-                        style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                         <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="accent-neutral-400 w-3.5 h-3.5 rounded cursor-pointer" />
-                         <span className="text-[8px] font-black uppercase tracking-wider" style={{ color: t.textMuted }}>MOGRTs</span>
-                      </label>
+                   <div className="p-4 rounded-xl space-y-2" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim, borderBottom: `1px solid ${t.border}`, paddingBottom: 6 }}>
+                         Carpeta Estructural Destino
+                      </p>
+                      <div className="flex justify-between items-center text-[10px]">
+                         <span style={{ color: t.textMuted }}>Nombre Proyecto:</span>
+                         <span className="font-mono font-bold truncate max-w-[180px]" style={{ color: 'white' }}>
+                            {empresa ? finalProjectFolderName : 'Esperando datos...'}
+                         </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                         <span style={{ color: t.textMuted }}>Plantillas:</span>
+                         <div className="flex gap-1.5">
+                            {selectedPremiere && <span className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase" style={{ border: `1px solid ${t.border}`, color: t.textMuted }}>[Pr] Premiere</span>}
+                            {selectedAE && <span className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase" style={{ border: `1px solid ${t.border}`, color: t.textMuted }}>[Ae] After Effects</span>}
+                            {!selectedPremiere && !selectedAE && <span className="text-[9px]" style={{ color: t.textDim }}>Ninguna</span>}
+                         </div>
+                      </div>
+                   </div>
+
+                   <button 
+                      onClick={handleGenerate} 
+                      disabled={isGenerating || !destinationPath} 
+                      className="w-full py-4 rounded-xl font-black uppercase tracking-[0.2em] text-[9px] flex items-center justify-center gap-2.5 transition-all duration-300 shadow-lg"
+                      style={{
+                         backgroundColor: isGenerating || !destinationPath ? 'transparent' : t.accent,
+                         color: isGenerating || !destinationPath ? t.textDim : '#000000',
+                         border: `1px solid ${t.border}`,
+                         cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer',
+                      }}
+                   >
+                      {isGenerating ? (
+                         <><div className="w-3.5 h-3.5 border-2 rounded-xl animate-spin" style={{ borderColor: t.accent, borderTopColor: 'transparent' }}></div> Inyectando...</>
+                      ) : !destinationPath ? (
+                         <>Vincula el disco para inyectar</>
+                      ) : (
+                         <><Zap size={14} fill="currentColor"/> Generar Entorno</>
+                      )}
+                   </button>
+                   {statusMsg && (
+                      <p className="text-center text-[8px] font-black uppercase tracking-widest animate-in fade-in" style={{ color: statusMsg.includes('Error') ? t.textDim : t.textMuted }}>
+                         {statusMsg}
+                      </p>
+                   )}
+                </div>
+             </div>
+
+          </div>
+
+          {/* COLUMNA 2: NOMENCLATURA & CÁLCULOS */}
+          <div className="flex flex-col space-y-5">
+             
+             {/* PANEL 3: NOMENCLATURA DE ARCHIVOS PRO */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <Type size={15} color={t.accent} />
+                   </div>
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>2. NOMENCLATURA DE ARCHIVOS PRO</h3>
+                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Estándar de entrega comercial</p>
                    </div>
                 </div>
 
-                {/* CONSOLA DE INYECCIÓN */}
-                 <div className="p-5 rounded-xl shadow-lg relative overflow-hidden flex flex-col justify-between min-h-[400px]"
-                   style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                    
-                    <div className="space-y-4">
-                       <div className="flex items-center justify-between pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                          <div className="flex items-center gap-2">
-                             <div className="w-2 h-2 rounded-xl" style={{ backgroundColor: t.accent }}></div>
-                             <span className="text-[9px] font-black uppercase tracking-[0.15em]" style={{ color: 'white' }}>Consola de Inyección</span>
-                          </div>
-                          <span className="px-2 py-0.5 rounded text-[7px] font-bold uppercase tracking-wider"
-                            style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.textMuted }}>
-                             Listo
-                          </span>
-                       </div>
+                <div className="space-y-3.5">
+                   <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                         <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Cliente</span>
+                         <input type="text" value={nomClient} onChange={e=>setNomClient(e.target.value)}
+                            className="w-full rounded-xl p-2.5 text-[11px] outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
+                      <div className="space-y-1">
+                         <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Proyecto</span>
+                         <input type="text" value={nomProj} onChange={e=>setNomProj(e.target.value)}
+                            className="w-full rounded-xl p-2.5 text-[11px] outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
+                      <div className="space-y-1">
+                         <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Versión</span>
+                         <input type="text" value={nomVer} onChange={e=>setNomVer(e.target.value)}
+                            className="w-full rounded-xl p-2.5 text-[11px] outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
+                      <div className="space-y-1">
+                         <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Orientación</span>
+                         <select value={nomAspect} onChange={e=>setNomAspect(e.target.value)}
+                            className="w-full rounded-xl p-2.5 text-[11px] outline-none cursor-pointer"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="H" style={{backgroundColor: '#141414'}}>Horizontal</option>
+                            <option value="V" style={{backgroundColor: '#141414'}}>Vertical</option>
+                         </select>
+                      </div>
+                   </div>
 
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="p-3 rounded-xl space-y-1" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                             <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Disco Duro Destino</p>
-                             <div className="flex items-center gap-1.5">
-                                <HardDrive size={11} color={destinationPath ? t.textMuted : t.textDim} />
-                                <span className="text-[10px] font-bold font-mono truncate" style={{ color: t.textMuted }}>
-                                   {destinationPath ? (typeof destinationPath === 'string' ? destinationPath.split('/').pop() : destinationPath.name) : 'No vinculado'}
-                                </span>
-                             </div>
-                          </div>
+                   <div className="p-3 rounded-xl" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                      <p className="text-[6px] font-black uppercase tracking-wider mb-1" style={{ color: t.textDim }}>Nombre Generado:</p>
+                      <p className="text-[9px] font-mono font-black break-all select-all text-white">{finalNamingResult}.mp4</p>
+                   </div>
 
-                          <div className="p-3 rounded-xl space-y-1" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                             <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Carpeta de Base</p>
-                             <div className="flex items-center gap-1.5">
-                                <Folder size={11} color={t.textMuted} />
-                                <span className="text-[10px] font-bold truncate" style={{ color: t.textMuted }}>
-                                   {carpetaMaestra || 'Ninguna'}
-                                </span>
-                             </div>
-                          </div>
-                       </div>
-
-                       <div className="p-4 rounded-xl space-y-2" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                          <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim, borderBottom: `1px solid ${t.border}`, paddingBottom: 6 }}>
-                            Configuración Estructural
-                          </p>
-                          
-                          <div className="flex justify-between items-center text-[10px]">
-                             <span style={{ color: t.textMuted }}>Nombre de Estructura:</span>
-                             <span className="font-mono font-bold truncate max-w-[180px]" style={{ color: 'white' }}>
-                                {empresa ? finalProjectFolderName : 'Esperando datos...'}
-                             </span>
-                          </div>
-
-                          <div className="flex justify-between items-center text-[10px] pt-1" style={{ borderTop: `1px solid ${t.border}20` }}>
-                             <span style={{ color: t.textMuted }}>Plantillas:</span>
-                             <div className="flex gap-1.5">
-                                {selectedPremiere && (
-                                   <span className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider"
-                                     style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.textMuted }}>
-                                     [Pr] Premiere</span>
-                                )}
-                                {selectedAE && (
-                                   <span className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-wider"
-                                     style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, color: t.textMuted }}>
-                                     [Ae] After Effects</span>
-                                )}
-                                {!selectedPremiere && !selectedAE && (
-                                   <span className="text-[9px]" style={{ color: t.textDim }}>Ninguna</span>
-                                )}
-                             </div>
-                          </div>
-                       </div>
-
-                       <div className="space-y-1.5">
-                          <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Módulos Auxiliares</p>
-                          <div className="flex flex-wrap gap-1.5">
-                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
-                               style={{
-                                 backgroundColor: incSFX ? t.surface : t.accentSoft,
-                                 border: `1px solid ${t.border}`,
-                                 color: incSFX ? t.textMuted : t.textDim,
-                               }}>Audio SFX</span>
-                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
-                               style={{
-                                 backgroundColor: incLogos ? t.surface : t.accentSoft,
-                                 border: `1px solid ${t.border}`,
-                                 color: incLogos ? t.textMuted : t.textDim,
-                               }}>Logotipos</span>
-                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
-                               style={{
-                                 backgroundColor: incMOGRTs ? t.surface : t.accentSoft,
-                                 border: `1px solid ${t.border}`,
-                                 color: incMOGRTs ? t.textMuted : t.textDim,
-                               }}>MOGRTs Pro</span>
-                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
-                               style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
-                               video subfolders</span>
-                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
-                               style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
-                               imágenes/png</span>
-                             <span className="px-2 py-0.5 rounded-xl text-[7px] font-black tracking-widest uppercase"
-                               style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
-                               ia subfolders</span>
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="pt-4 space-y-3" style={{ borderTop: `1px solid ${t.border}` }}>
-                       <button 
-                          onClick={handleGenerate} 
-                          disabled={isGenerating || !destinationPath} 
-                          className="w-full py-4 rounded-xl font-black uppercase tracking-[0.2em] text-[9px] flex items-center justify-center gap-2.5 transition-all duration-500 shadow-lg"
-                          style={{
-                            backgroundColor: isGenerating || !destinationPath ? t.accentSoft : t.accent,
-                            color: isGenerating || !destinationPath ? t.textDim : '#000000',
-                            border: `1px solid ${t.border}`,
-                            cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer',
-                          }}
-                       >
-                          {isGenerating ? (
-                             <><div className="w-3.5 h-3.5 border-2 rounded-xl animate-spin" style={{ borderColor: t.accent, borderTopColor: 'transparent' }}></div> Inyectando...</>
-                          ) : !destinationPath ? (
-                             <>Vincula el disco duro para estructurar</>
-                          ) : (
-                             <><Zap size={14} fill="currentColor"/> Generar Entorno</>
-                          )}
-                       </button>
-                       {statusMsg && (
-                          <p className="text-center text-[8px] font-black uppercase tracking-widest animate-in fade-in"
-                            style={{ color: statusMsg.includes('Error') ? t.textDim : t.textMuted }}>
-                             {statusMsg}
-                          </p>
-                       )}
-                    </div>
-                 </div>
+                   <button onClick={() => { navigator.clipboard.writeText(finalNamingResult + '.mp4'); alert('¡Copiado!'); }}
+                      className="w-full py-3 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
+                      style={{ backgroundColor: t.accent, color: '#000000', border: `1px solid ${t.border}` }}>
+                      <Copy size={11}/> Copiar Nombre
+                   </button>
+                </div>
              </div>
+
+             {/* PANEL 4: BITRATE & WEIGHT CALCULATOR */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <CalcIcon size={15} color={t.accent} />
+                   </div>
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>3. BITRATE & WEIGHT CALCULATOR</h3>
+                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Tamaño estimado de renderizado</p>
+                   </div>
+                </div>
+
+                <div className="space-y-3.5">
+                   <div className="grid grid-cols-3 gap-2">
+                      <div className="space-y-1">
+                         <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Resolución</span>
+                         <select value={calcRes} onChange={e=>setCalcRes(e.target.value)}
+                            className="w-full rounded-xl p-2.5 text-[10px] outline-none cursor-pointer"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="1080p" style={{backgroundColor: '#141414'}}>1080p</option>
+                            <option value="4K" style={{backgroundColor: '#141414'}}>4K UHD</option>
+                         </select>
+                      </div>
+                      <div className="space-y-1">
+                         <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>FPS</span>
+                         <select value={calcFps} onChange={e=>setCalcFps(parseInt(e.target.value))}
+                            className="w-full rounded-xl p-2.5 text-[10px] outline-none cursor-pointer"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="24" style={{backgroundColor: '#141414'}}>24 fps</option>
+                            <option value="30" style={{backgroundColor: '#141414'}}>30 fps</option>
+                            <option value="60" style={{backgroundColor: '#141414'}}>60 fps</option>
+                         </select>
+                      </div>
+                      <div className="space-y-1">
+                         <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Minutos</span>
+                         <input type="number" value={calcMin} onChange={e=>setCalcMin(parseInt(e.target.value) || 1)}
+                            className="w-full rounded-xl p-2.5 text-[10px] outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
+                   </div>
+
+                   <div className="p-3 rounded-xl space-y-1.5" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                      <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider">
+                         <span style={{ color: t.textDim }}>Tamaño Estimado:</span>
+                         <span className="text-[11px] font-bold" style={{ color: 'white', fontFamily: 'monospace' }}>{calcEstSizeGB} GB</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider">
+                         <span style={{ color: t.textDim }}>Bitrate Target:</span>
+                         <span className="text-[11px] font-bold" style={{ color: t.accent, fontFamily: 'monospace' }}>{recommendedBitrateMbps} Mbps</span>
+                      </div>
+                   </div>
+                   <div className="text-[6px] uppercase font-black tracking-wider text-center" style={{ color: t.textDim }}>Estándares recomendados para subida a web</div>
+                </div>
+             </div>
+
+             {/* PANEL 5: TIMECODE CONVERTER */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <Clock size={15} color={t.accent} />
+                   </div>
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>4. TIMECODE CONVERTER</h3>
+                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Conversión exacta de fotogramas</p>
+                   </div>
+                </div>
+
+                <div className="space-y-3.5">
+                   <div className="space-y-1">
+                      <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>FPS de Referencia</span>
+                      <select value={fpsVal} onChange={e=>{setFpsVal(parseInt(e.target.value)); handleTcToFrames(tcInput, parseInt(e.target.value)); handleFramesToTc(framesInput, parseInt(e.target.value));}}
+                         className="w-full rounded-xl p-2.5 text-[10px] outline-none cursor-pointer"
+                         style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
+                         <option value="24" style={{backgroundColor: '#141414'}}>24 fps (Cine)</option>
+                         <option value="25" style={{backgroundColor: '#141414'}}>25 fps (PAL)</option>
+                         <option value="30" style={{backgroundColor: '#141414'}}>30 fps (NTSC)</option>
+                         <option value="60" style={{backgroundColor: '#141414'}}>60 fps (Social)</option>
+                      </select>
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-3 p-3 rounded-xl" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                      <div className="space-y-1.5">
+                         <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>TC → Frames</span>
+                         <input type="text" value={tcInput} onChange={e=>{setTcInput(e.target.value); handleTcToFrames(e.target.value, fpsVal);}}
+                            className="w-full rounded-xl p-2 text-[10px] font-mono outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                         <p className="text-[9px] font-mono font-bold" style={{ color: t.accent }}>{framesOutput} frames</p>
+                      </div>
+                      <div className="space-y-1.5">
+                         <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Frames → TC</span>
+                         <input type="number" value={framesInput} onChange={e=>{setFramesInput(parseInt(e.target.value) || 0); handleFramesToTc(parseInt(e.target.value) || 0, fpsVal);}}
+                            className="w-full rounded-xl p-2 text-[10px] font-mono outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                         <p className="text-[9px] font-mono font-bold" style={{ color: t.accent }}>{tcOutput}</p>
+                      </div>
+                   </div>
+                </div>
+             </div>
+
           </div>
-       )}
 
-       {activeTab === 'suite' && (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* H1: COMPRESOR */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Monitor size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>1. Compresor de Video</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Presets de Entrega Directa</p>
-                     </div>
-                  </div>
-                  <div className="space-y-2.5">
-                     <div className="space-y-1">
-                        <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Preset de Compresión</p>
-                        <select value={compPreset} onChange={e=>setCompPreset(e.target.value)}
-                          className="w-full rounded-xl p-2.5 text-[9px] outline-none cursor-pointer"
-                          style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
-                           <option value="tiktok">TikTok / Reels 1080p (45MB)</option>
-                           <option value="preview">Client Preview 720p (22MB)</option>
-                           <option value="archival">Cinema 4K Archival (850MB)</option>
-                        </select>
-                     </div>
-                     <div className="p-4 flex flex-col items-center justify-center text-center space-y-1.5 rounded-xl cursor-pointer transition-all"
-                       style={{ border: `1px dashed ${t.border}`, backgroundColor: t.accentSoft }}>
-                        <Upload size={18} color={t.textDim}/>
-                        <p className="text-[8px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>Arrastra archivo RAW</p>
-                        <p className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>.mp4, .mov, .mkv</p>
-                     </div>
-                     {isCompressing && (
-                        <div className="space-y-1">
-                           <div className="flex justify-between text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>
-                              <span>Procesando...</span>
-                              <span>{compProgress}%</span>
-                           </div>
-                           <div className="w-full rounded-xl h-1 overflow-hidden" style={{ backgroundColor: t.accentSoft }}>
-                              <div className="h-full transition-all duration-200" style={{ width: `${compProgress}%`, backgroundColor: t.accent }}></div>
-                           </div>
-                        </div>
-                     )}
-                     {compSuccess && (
-                        <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
-                          <Check size={8}/> ¡Compresión finalizada!</p>
-                     )}
-                  </div>
-               </div>
-               <button onClick={runCompression} disabled={isCompressing}
-                 className="w-full py-3.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
-                 style={{
-                   backgroundColor: isCompressing ? t.accentSoft : t.accent,
-                   color: isCompressing ? t.textDim : '#000000',
-                 }}>
-                  {isCompressing ? 'Comprimiendo...' : 'Iniciar Compresión'}
-               </button>
-            </div>
+          {/* COLUMNA 3: UTILIDADES & VISUAL */}
+          <div className="flex flex-col space-y-5">
+             
+             {/* PANEL 6: CROP SAFE ZONES */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <Highlighter size={15} color={t.accent} />
+                   </div>
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>5. CROP SAFE ZONES</h3>
+                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Visualizador de guías de aspecto</p>
+                   </div>
+                </div>
 
-            {/* H2: BITRATE */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <CalcIcon size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>2. Bitrate Calc</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Estimación de Peso final</p>
-                     </div>
-                  </div>
-                  <div className="space-y-2.5">
-                     <div className="grid grid-cols-3 gap-1.5">
-                        <div className="space-y-1">
-                           <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Resolución</span>
-                           <select value={calcRes} onChange={e=>setCalcRes(e.target.value)}
-                             className="w-full rounded-xl p-2 text-[9px] outline-none"
-                             style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
-                              <option value="1080p">1080p</option>
-                              <option value="4K">4K UHD</option>
-                           </select>
-                        </div>
-                        <div className="space-y-1">
-                           <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>FPS</span>
-                           <select value={calcFps} onChange={e=>setCalcFps(parseInt(e.target.value))}
-                             className="w-full rounded-xl p-2 text-[9px] outline-none"
-                             style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
-                              <option value="24">24 fps</option>
-                              <option value="30">30 fps</option>
-                              <option value="60">60 fps</option>
-                           </select>
-                        </div>
-                        <div className="space-y-1">
-                           <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Dur. (min)</span>
-                           <input type="number" value={calcMin} onChange={e=>setCalcMin(parseInt(e.target.value) || 1)}
-                             className="w-full rounded-xl p-2 text-[9px] outline-none"
-                             style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                        </div>
-                     </div>
-                     <div className="p-3 rounded-xl space-y-1.5" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                        <div className="flex justify-between items-center text-[7px] font-black uppercase tracking-wider">
-                           <span style={{ color: t.textDim }}>Tamaño:</span>
-                           <span className="text-[10px]" style={{ color: 'white' }}>{calcEstSizeGB} GB</span>
-                        </div>
-                        <div className="flex justify-between items-center text-[7px] font-black uppercase tracking-wider">
-                           <span style={{ color: t.textDim }}>Bitrate:</span>
-                           <span className="text-[10px]" style={{ color: t.accent }}>{recommendedBitrateMbps} Mbps</span>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-               <div className="text-[6px] uppercase font-black tracking-wider text-center" style={{ color: t.textDim }}>Estándar YouTube/Vimeo PRO.</div>
-            </div>
-
-            {/* H3: TIMECODE */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Clock size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>3. Timecode Convert</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Conversiones de FPS exactos</p>
-                     </div>
-                  </div>
-                  <div className="space-y-2.5">
-                     <div className="space-y-1">
-                        <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>FPS</span>
-                        <select value={fpsVal} onChange={e=>{setFpsVal(parseInt(e.target.value)); handleTcToFrames(tcInput, parseInt(e.target.value)); handleFramesToTc(framesInput, parseInt(e.target.value));}}
-                          className="w-full rounded-xl p-2.5 text-[9px] outline-none"
-                          style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
-                           <option value="24">24 fps (Cine)</option>
-                           <option value="25">25 fps (PAL)</option>
-                           <option value="30">30 fps (NTSC)</option>
-                           <option value="60">60 fps (Social)</option>
-                        </select>
-                     </div>
-                     <div className="grid grid-cols-2 gap-2 p-2.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                        <div className="space-y-1">
-                           <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>TC → Frames</span>
-                           <input type="text" value={tcInput} onChange={e=>{setTcInput(e.target.value); handleTcToFrames(e.target.value, fpsVal);}}
-                             className="w-full rounded-xl p-1.5 text-[9px] font-mono outline-none"
-                             style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                           <p className="text-[8px] font-mono" style={{ color: t.accent }}>{framesOutput} frames</p>
-                        </div>
-                        <div className="space-y-1">
-                           <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Frames → TC</span>
-                           <input type="number" value={framesInput} onChange={e=>{setFramesInput(parseInt(e.target.value) || 0); handleFramesToTc(parseInt(e.target.value) || 0, fpsVal);}}
-                             className="w-full rounded-xl p-1.5 text-[9px] font-mono outline-none"
-                             style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                           <p className="text-[8px] font-mono" style={{ color: t.accent }}>{tcOutput}</p>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-               <div className="text-[6px] font-black uppercase tracking-wider text-center" style={{ color: t.textDim }}>Fórmula no-drop frame.</div>
-            </div>
-
-            {/* H4: EDIT NOTES */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Edit3 size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>4. Notas de Corte</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Exportar a TXT</p>
-                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                     <p className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Tiempos y comentarios</p>
-                     <textarea value={editNotes} onChange={e=>setEditNotes(e.target.value)}
-                       className="w-full rounded-xl p-3.5 text-[10px] font-mono outline-none h-[100px] resize-none mac-scrollbar"
-                       style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                  </div>
-               </div>
-               <button onClick={downloadNotes}
-                 className="w-full py-3.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
-                 style={{ backgroundColor: t.accent, color: '#000000' }}>
-                  Descargar Notas
-               </button>
-            </div>
-
-            {/* H5: NOMENCLATURA PRO */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Type size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>5. Nomenclatura PRO</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Nombres Profesionales</p>
-                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                     <div className="space-y-1">
-                        <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Cliente</span>
-                        <input type="text" value={nomClient} onChange={e=>setNomClient(e.target.value)}
-                          className="w-full rounded-xl p-2 text-[9px] outline-none"
-                          style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                     </div>
-                     <div className="space-y-1">
-                        <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Proyecto</span>
-                        <input type="text" value={nomProj} onChange={e=>setNomProj(e.target.value)}
-                          className="w-full rounded-xl p-2 text-[9px] outline-none"
-                          style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                     </div>
-                     <div className="space-y-1">
-                        <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Versión</span>
-                        <input type="text" value={nomVer} onChange={e=>setNomVer(e.target.value)}
-                          className="w-full rounded-xl p-2 text-[9px] outline-none"
-                          style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                     </div>
-                     <div className="space-y-1">
-                        <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Orientación</span>
-                        <select value={nomAspect} onChange={e=>setNomAspect(e.target.value)}
-                          className="w-full rounded-xl p-2 text-[9px] outline-none"
-                          style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }}>
-                           <option value="H">Horizontal</option>
-                           <option value="V">Vertical</option>
-                        </select>
-                     </div>
-                  </div>
-                  <div className="p-2.5 rounded-xl" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                     <p className="text-[6px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.textDim }}>Nombre Final:</p>
-                     <p className="text-[8px] font-mono font-black break-all select-all" style={{ color: t.accent }}>{finalNamingResult}.mp4</p>
-                  </div>
-               </div>
-               <button onClick={() => { navigator.clipboard.writeText(finalNamingResult + '.mp4'); alert('¡Copiado!'); }}
-                 className="w-full py-3.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
-                 style={{ backgroundColor: t.accent, color: '#000000' }}>
-                  <Copy size={10}/> Copiar Nombre
-               </button>
-            </div>
-
-            {/* H6: SHORTCUT SEARCH */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Cpu size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>6. Buscador Atajos</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Premiere/AE Shortcuts</p>
-                     </div>
-                  </div>
-                  <div className="space-y-1.5">
-                     <input type="text" value={shortcutQuery} onChange={e=>setShortcutQuery(e.target.value)} placeholder="Buscar atajo..."
-                       className="w-full rounded-xl p-2.5 text-[9px] outline-none"
-                       style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                     <div className="space-y-1.5 max-h-[120px] overflow-y-auto mac-scrollbar pr-1">
-                        {filteredShortcuts.map((s, idx) => (
-                           <div key={idx} className="flex items-center justify-between text-[8px] p-2 rounded-xl"
-                             style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                              <div className="min-w-0 flex-1">
-                                 <p className="font-bold truncate" style={{ color: 'white' }}>{s.desc}</p>
-                                 <p className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>{s.soft}</p>
-                               </div>
-                              <span className="px-1.5 py-0.5 rounded font-mono font-bold shrink-0 ml-2 text-[8px]"
-                                style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.accent }}>{s.key}</span>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-               </div>
-               <div className="text-[6px] font-black uppercase text-center" style={{ color: t.textDim }}>Presiona las teclas indicadas.</div>
-            </div>
-
-            {/* H7: CROP GUIDE */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Highlighter size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>7. Guías de Encuadre</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Crop Safe Zones</p>
-                     </div>
-                  </div>
-                  <div className="space-y-2.5">
-                     <div className="flex justify-between items-center p-0.5 rounded-xl text-[7px] font-black uppercase tracking-wider"
-                       style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                        {['916', '11', '239'].map(mode => (
-                           <button key={mode} onClick={() => setCropGuide(mode)}
-                             className="flex-1 py-1.5 text-center rounded-md"
-                             style={{
+                <div className="space-y-3.5">
+                   <div className="flex justify-between items-center p-0.5 rounded-xl text-[7px] font-black uppercase tracking-wider"
+                      style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                      {['916', '11', '239'].map(mode => (
+                         <button key={mode} onClick={() => setCropGuide(mode)}
+                            className="flex-1 py-1.5 text-center rounded-md transition-all text-[8px]"
+                            style={{
                                backgroundColor: cropGuide === mode ? t.accent : 'transparent',
                                color: cropGuide === mode ? '#000000' : t.textDim,
-                             }}>
-                              {mode === '916' ? 'TikTok (9:16)' : mode === '11' ? 'Insta (1:1)' : 'Cine (2.39:1)'}
-                           </button>
-                        ))}
-                     </div>
-                     <div className="relative w-full aspect-video rounded-xl overflow-hidden flex items-center justify-center"
-                       style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                        <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${t.surface}, ${t.panel})`, opacity: 0.8 }}></div>
-                        <div className="absolute z-10 text-[7px] font-mono font-black" style={{ color: t.textDim }}>16:9 Canvas</div>
-                        
-                        {cropGuide === '916' && (
-                           <div className="absolute top-0 bottom-0 aspect-[9/16] flex items-center justify-center"
-                             style={{ borderLeft: `2px dashed ${t.accent}99`, borderRight: `2px dashed ${t.accent}99`, backgroundColor: `${t.accent}0D` }}>
-                              <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center px-2" style={{ color: t.accent }}>9:16 safe area</span>
-                           </div>
-                        )}
-                        {cropGuide === '11' && (
-                           <div className="absolute top-0 bottom-0 aspect-[1/1] flex items-center justify-center"
-                             style={{ border: `2px dashed ${t.accent}99`, backgroundColor: `${t.accent}0D` }}>
-                              <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center px-2" style={{ color: t.accent }}>1:1 safe area</span>
-                           </div>
-                        )}
-                        {cropGuide === '239' && (
-                           <div className="absolute left-0 right-0 h-[70%] flex items-center justify-center"
-                             style={{ borderTop: `2px dashed ${t.accent}99`, borderBottom: `2px dashed ${t.accent}99`, backgroundColor: `${t.accent}0D` }}>
-                              <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center" style={{ color: t.accent }}>2.39:1 safe area</span>
-                           </div>
-                        )}
-                     </div>
-                  </div>
-               </div>
-               <div className="text-[6px] font-black uppercase tracking-wider text-center" style={{ color: t.textDim }}>Márgenes para Premiere Pro.</div>
-            </div>
+                            }}>
+                            {mode === '916' ? 'TikTok (9:16)' : mode === '11' ? 'Instagram (1:1)' : 'Cine (2.39:1)'}
+                         </button>
+                      ))}
+                   </div>
 
-            {/* H8: RESOURCES */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Layers size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>8. Recursos Frecuentes</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Inyectar en carpetas</p>
-                     </div>
-                  </div>
-                  <div className="space-y-2">
-                     <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Se copiarán al estructurar:</p>
-                     <div className="space-y-1.5">
-                        <div className="flex justify-between items-center p-2.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                           <span className="text-[8px] font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'white' }}>
-                             <Music size={10} color={t.accent}/> Sound Effects</span>
-                           <span className="text-[7px] font-bold uppercase" style={{ color: t.accent }}>Incluido</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                           <span className="text-[8px] font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'white' }}>
-                             <Palette size={10} color={t.textDim}/> Logotipos</span>
-                           <span className="text-[7px] font-bold uppercase" style={{ color: t.textDim }}>No</span>
-                        </div>
-                        <div className="flex justify-between items-center p-2.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                           <span className="text-[8px] font-black uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'white' }}>
-                             <Scissors size={10} color={t.textDim}/> Lower Thirds</span>
-                           <span className="text-[7px] font-bold uppercase" style={{ color: t.textDim }}>No</span>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-               <div className="text-[6px] font-black uppercase text-center" style={{ color: t.textDim }}>Configurable en Estructurador Pro.</div>
-            </div>
+                   <div className="relative w-full aspect-video rounded-xl overflow-hidden flex items-center justify-center"
+                      style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                      <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, rgba(255,255,255,0.01), rgba(0,0,0,0.3))`, opacity: 0.8 }}></div>
+                      <div className="absolute z-10 text-[7px] font-mono font-black" style={{ color: t.textDim }}>16:9 Canvas</div>
+                      
+                      {cropGuide === '916' && (
+                         <div className="absolute top-0 bottom-0 aspect-[9/16] flex items-center justify-center animate-in fade-in zoom-in-95"
+                            style={{ borderLeft: `1px dashed ${t.accent}aa`, borderRight: `1px dashed ${t.accent}aa`, backgroundColor: `${t.accent}05` }}>
+                            <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center px-2" style={{ color: t.accent }}>9:16 safe area</span>
+                         </div>
+                      )}
+                      {cropGuide === '11' && (
+                         <div className="absolute top-0 bottom-0 aspect-[1/1] flex items-center justify-center animate-in fade-in zoom-in-95"
+                            style={{ borderLeft: `1px dashed ${t.accent}aa`, borderRight: `1px dashed ${t.accent}aa`, borderTop: `1px dashed ${t.accent}aa`, borderBottom: `1px dashed ${t.accent}aa`, backgroundColor: `${t.accent}05` }}>
+                            <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center px-2" style={{ color: t.accent }}>1:1 safe area</span>
+                         </div>
+                      )}
+                      {cropGuide === '239' && (
+                         <div className="absolute left-0 right-0 h-[70%] flex items-center justify-center animate-in fade-in zoom-in-95"
+                            style={{ borderTop: `1px dashed ${t.accent}aa`, borderBottom: `1px dashed ${t.accent}aa`, backgroundColor: `${t.accent}05` }}>
+                            <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center" style={{ color: t.accent }}>2.39:1 safe area</span>
+                         </div>
+                      )}
+                   </div>
+                </div>
+             </div>
 
-            {/* H9: ZIP */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Cloud size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>9. Archivador ZIP</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Comprimir Proyecto</p>
-                     </div>
-                  </div>
-                  <div className="space-y-2.5">
-                     <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Empaqueta estructura local en ZIP.</p>
-                     {isZipping && (
-                        <div className="space-y-1">
-                           <div className="flex justify-between text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>
-                              <span>Comprimiendo...</span>
-                              <span>{zipProgress}%</span>
-                           </div>
-                           <div className="w-full rounded-xl h-1 overflow-hidden" style={{ backgroundColor: t.accentSoft }}>
-                              <div className="h-full transition-all duration-200" style={{ width: `${zipProgress}%`, backgroundColor: t.accent }}></div>
-                           </div>
-                        </div>
-                     )}
-                     {zipSuccess && (
-                        <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
-                          <Check size={8}/> ¡ZIP Generado!</p>
-                     )}
-                  </div>
-               </div>
-               <button onClick={runZip} disabled={isZipping}
-                 className="w-full py-3.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
-                 style={{
-                   backgroundColor: isZipping ? t.accentSoft : t.accent,
-                   color: isZipping ? t.textDim : '#000000',
-                 }}>
-                  {isZipping ? 'Archivando...' : 'Iniciar Archivado ZIP'}
-               </button>
-            </div>
+             {/* PANEL 7: NOTAS DE CORTE */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <Edit3 size={15} color={t.accent} />
+                   </div>
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>6. NOTAS DE CORTE</h3>
+                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Marcas de tiempo exportables</p>
+                   </div>
+                </div>
 
-            {/* H10: SSD CACHE */}
-            <div className="p-5 rounded-xl shadow-lg flex flex-col justify-between space-y-4"
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="space-y-3">
-                  <div className="flex items-center gap-2.5 pb-2.5" style={{ borderBottom: `1px solid ${t.border}` }}>
-                     <div className="w-8 h-8 rounded-xl flex items-center justify-center shadow-inner" style={{ backgroundColor: t.accentSoft }}>
-                       <Cpu size={16} color={t.accent}/>
-                     </div>
-                     <div>
-                        <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>10. Auditor Caché SSD</h3>
-                        <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Rendimiento Local</p>
-                     </div>
-                  </div>
-                  <div className="space-y-3">
-                     <div className="flex justify-between items-center p-3 rounded-xl" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                        <div>
-                           <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Caché (Adobe)</p>
-                           <p className="text-base font-black font-mono" style={{ color: 'white' }}>{ssdCacheSize.toFixed(1)} GB</p>
-                        </div>
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center text-[9px] font-bold font-mono"
-                          style={{ border: `2px solid ${t.accent}4D`, color: t.accent }}>98%</div>
-                     </div>
-                     {isCleaningCache && (
-                        <p className="text-[7px] font-black uppercase tracking-wider text-center" style={{ color: t.textDim }}>Liberando espacio...</p>
-                     )}
-                     {cacheSuccess && (
-                        <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
-                          <Check size={8}/> ¡Caché purgado!</p>
-                     )}
-                  </div>
-               </div>
-               <button onClick={cleanSsdCache} disabled={isCleaningCache || ssdCacheSize === 0}
-                 className="w-full py-3.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
-                 style={{
-                   backgroundColor: isCleaningCache || ssdCacheSize === 0 ? t.accentSoft : t.accent,
-                   color: isCleaningCache || ssdCacheSize === 0 ? t.textDim : '#000000',
-                 }}>
-                  {isCleaningCache ? 'Liberando...' : ssdCacheSize === 0 ? 'Cache Limpio' : 'Limpiar Caché'}
-               </button>
-            </div>
-         </div>
-      )}
-   </div>
+                <div className="space-y-3">
+                   <textarea value={editNotes} onChange={e=>setEditNotes(e.target.value)}
+                      className="w-full rounded-xl p-3 text-[10px] font-mono outline-none h-[95px] resize-none mac-scrollbar shadow-inner"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+
+                   <button onClick={downloadNotes}
+                      className="w-full py-2.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
+                      style={{ backgroundColor: t.accent, color: '#000000', border: `1px solid ${t.border}` }}>
+                      Descargar Notas (TXT)
+                   </button>
+                </div>
+             </div>
+
+             {/* PANEL 8: COMPRESOR DE VIDEO */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <Monitor size={15} color={t.accent} />
+                   </div>
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>7. COMPRESOR DE VIDEO</h3>
+                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Compresión rápida de salida</p>
+                   </div>
+                </div>
+
+                <div className="space-y-3">
+                   <div className="space-y-1">
+                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Preset de Salida</p>
+                      <select value={compPreset} onChange={e=>setCompPreset(e.target.value)}
+                         className="w-full rounded-xl p-2 text-[10px] outline-none cursor-pointer"
+                         style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
+                         <option value="tiktok" style={{backgroundColor: '#141414'}}>TikTok / Reels 1080p (45MB)</option>
+                         <option value="preview" style={{backgroundColor: '#141414'}}>Client Preview 720p (22MB)</option>
+                         <option value="archival" style={{backgroundColor: '#141414'}}>Cinema 4K Archival (850MB)</option>
+                      </select>
+                   </div>
+
+                   <div className="p-4 flex flex-col items-center justify-center text-center space-y-1.5 rounded-xl"
+                      style={{ border: `1px dashed ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                      <Upload size={16} color={t.textDim}/>
+                      <p className="text-[8px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>Arrastra tu archivo RAW</p>
+                      <p className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>.mp4, .mov, .mkv</p>
+                   </div>
+
+                   {isCompressing && (
+                      <div className="space-y-1">
+                         <div className="flex justify-between text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>
+                            <span>Procesando...</span>
+                            <span>{compProgress}%</span>
+                         </div>
+                         <div className="w-full rounded-xl h-1 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
+                            <div className="h-full transition-all duration-200" style={{ width: `${compProgress}%`, backgroundColor: t.accent }}></div>
+                         </div>
+                      </div>
+                   )}
+
+                   {compSuccess && (
+                      <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
+                         <Check size={8}/> ¡Compresión finalizada!
+                      </p>
+                   )}
+
+                   <button onClick={runCompression} disabled={isCompressing}
+                      className="w-full py-2.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
+                      style={{
+                         backgroundColor: isCompressing ? 'transparent' : t.accent,
+                         color: isCompressing ? t.textDim : '#000000',
+                         border: `1px solid ${t.border}`,
+                      }}>
+                      {isCompressing ? 'Comprimiendo...' : 'Iniciar Compresión'}
+                   </button>
+                </div>
+             </div>
+
+             {/* PANEL 9: SYSTEM STORAGE & UTILS */}
+             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                      <Wrench size={15} color={t.accent} />
+                   </div>
+                   <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>8. ARCHIVOS & CACHÉ DEL SISTEMA</h3>
+                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Limpieza local y empaquetado</p>
+                   </div>
+                </div>
+
+                <div className="space-y-4">
+                   <div className="space-y-2">
+                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Empaquetar en ZIP</p>
+                      {isZipping && (
+                         <div className="space-y-1">
+                            <div className="flex justify-between text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>
+                               <span>Comprimiendo...</span>
+                               <span>{zipProgress}%</span>
+                            </div>
+                            <div className="w-full rounded-xl h-1 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
+                               <div className="h-full transition-all duration-200" style={{ width: `${zipProgress}%`, backgroundColor: t.accent }}></div>
+                            </div>
+                         </div>
+                      )}
+                      {zipSuccess && (
+                         <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
+                            <Check size={8}/> ¡ZIP Generado!
+                         </p>
+                      )}
+                      <button onClick={runZip} disabled={isZipping}
+                         className="w-full py-2.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
+                         style={{
+                            backgroundColor: isZipping ? 'transparent' : 'rgba(255,255,255,0.02)',
+                            color: isZipping ? t.textDim : '#ffffff',
+                            border: `1px solid ${t.border}`,
+                         }}>
+                         {isZipping ? 'Archivando...' : 'Comprimir en ZIP'}
+                      </button>
+                   </div>
+
+                   <div className="space-y-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                      <div className="flex justify-between items-center">
+                         <div>
+                            <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Caché de Adobe</p>
+                            <p className="text-sm font-black font-mono" style={{ color: 'white' }}>{ssdCacheSize.toFixed(1)} GB</p>
+                         </div>
+                         <button onClick={cleanSsdCache} disabled={isCleaningCache || ssdCacheSize === 0}
+                            className="px-4 py-2 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
+                            style={{
+                               backgroundColor: isCleaningCache || ssdCacheSize === 0 ? 'transparent' : t.accent,
+                               color: isCleaningCache || ssdCacheSize === 0 ? t.textDim : '#000000',
+                               border: `1px solid ${t.border}`,
+                            }}>
+                            {isCleaningCache ? 'Purgando...' : 'Purgar'}
+                         </button>
+                      </div>
+                      {cacheSuccess && (
+                         <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
+                            <Check size={8}/> ¡Caché purgado!
+                         </p>
+                      )}
+                   </div>
+
+                   <div className="space-y-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
+                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Atajos & Módulos Rápidos</p>
+                      <div className="relative">
+                         <input type="text" value={shortcutQuery} onChange={e=>setShortcutQuery(e.target.value)} placeholder="Buscar atajo..."
+                            className="w-full rounded-xl p-2 pl-7 text-[10px] outline-none shadow-inner"
+                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                         <Search size={10} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: t.textDim }} />
+                      </div>
+                      <div className="space-y-1 max-h-[90px] overflow-y-auto mac-scrollbar pr-1">
+                         {filteredShortcuts.map((s, idx) => (
+                            <div key={idx} className="flex items-center justify-between text-[8px] p-2 rounded-lg"
+                              style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                              <span className="font-bold truncate text-white" style={{ maxWidth: '70%' }}>{s.desc}</span>
+                              <span className="font-mono text-[7px] px-1 py-0.2 rounded border border-white/5" style={{ color: t.accent }}>{s.key}</span>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                </div>
+             </div>
+
+          </div>
+       </div>
+    </div>
   );
 };
+
 
 export default EditorVideo;

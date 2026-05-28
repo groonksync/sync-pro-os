@@ -345,6 +345,7 @@ const PublicCatalog = () => {
   const [clientName, setClientName] = useState('');
   const [clientAddress, setClientAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Efectivo');
+  const [pedidoId, setPedidoId] = useState('');
 
   // Detail Modal State
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -505,11 +506,10 @@ const PublicCatalog = () => {
     const now = new Date();
     const fecha = now.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
     const hora = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    const pedidoId = `#SP-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     let text = `🛒 *NUEVO PEDIDO — SYNCPRO CATALOG*\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
-    text += `🔖 *Pedido:* ${pedidoId}\n`;
+    text += `🔖 *Pedido:* *${pedidoId || 'Generando...'}*\n`;
     text += `📅 *Fecha:* ${fecha} — ${hora}\n`;
     text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     if (clientName.trim()) {
@@ -541,27 +541,48 @@ const PublicCatalog = () => {
     text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
     text += `_Pedido generado automáticamente desde SyncPro Catalog_`;
     return text;
-  }, [cart, cartTotal, clientName, clientAddress, paymentMethod]);
+  }, [cart, cartTotal, clientName, clientAddress, paymentMethod, pedidoId]);
 
   const handleWhatsAppCheckout = async () => {
     try {
       setLoading(true);
       
-      // Dec stock
-      for (const item of cart) {
-        const currentStock = parseInt(item.stock_actual || 0);
-        const nextStock = Math.max(0, currentStock - item.quantity);
-        const nextVendido = parseInt(item.stock_vendido || 0) + item.quantity;
-        await supabase
-          .from('productos')
-          .update({ stock_actual: nextStock, stock_vendido: nextVendido })
-          .eq('id', item.id);
-      }
+      const now = new Date();
+      const fechaStr = now.toISOString().split('T')[0];
+
+      // Insert pending sale to Supabase
+      const newVenta = {
+        id: crypto.randomUUID(),
+        fecha: fechaStr,
+        producto: `Pedido ${pedidoId} — ${clientName.trim() || 'Cliente Catálogo'}`,
+        categoria: 'Catálogo',
+        plataforma: 'WhatsApp',
+        monto: parseFloat(cartTotal),
+        estado: 'Pendiente',
+        notas: `Envío a: ${clientAddress.trim() || 'No especificado'}. Pago: ${paymentMethod}`,
+        metadata: {
+          pedidoCode: pedidoId,
+          clientName: clientName.trim(),
+          clientAddress: clientAddress.trim(),
+          paymentMethod: paymentMethod,
+          cart: cart.map(item => ({
+            id: item.id,
+            nombre: item.nombre,
+            quantity: item.quantity,
+            precio_venta: parseFloat(item.precio_venta) || parseFloat(item.precio) || 0,
+            precio_costo: parseFloat(item.precio_costo) || 0,
+            sku: item.sku || item.codigo || ''
+          }))
+        }
+      };
+
+      const { error } = await supabase.from('ventas').insert(newVenta);
+      if (error) throw error;
 
       const encodedText = encodeURIComponent(checkoutMessage);
       const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedText}`;
 
-      setToast({ show: true, message: 'Pedido procesado. Abriendo WhatsApp...', type: 'success' });
+      setToast({ show: true, message: 'Pedido registrado como pendiente. Abriendo WhatsApp...', type: 'success' });
       setCart([]);
       setIsCheckoutOpen(false);
       setClientName('');
@@ -1041,7 +1062,14 @@ const PublicCatalog = () => {
                 </div>
 
                 <button 
-                  onClick={() => { setIsCheckoutOpen(true); setIsCartOpen(false); }}
+                  onClick={() => {
+                    const now = new Date();
+                    const randomId = Math.floor(1000 + Math.random() * 9000);
+                    const code = `PED-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${randomId}`;
+                    setPedidoId(code);
+                    setIsCheckoutOpen(true);
+                    setIsCartOpen(false);
+                  }}
                   style={{ 
                     width: '100%', padding: '16px', borderRadius: 14, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: 10, fontWeight: 900, 
                     textTransform: 'uppercase', letterSpacing: '0.15em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s' 

@@ -596,6 +596,10 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
 
+  const [activeSection, setActiveSection] = useState('productos'); // 'productos' | 'pedidos'
+  const [pedidosPendientes, setPedidosPendientes] = useState([]);
+  const [pedidosLoading, setPedidosLoading] = useState(false);
+
   useEffect(() => {
     setSearchTerm(initialSearch);
   }, [initialSearch]);
@@ -613,7 +617,10 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData(); 
+    fetchPedidos();
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -622,6 +629,65 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
       if (error) throw error;
       setProductos(data || []);
     } catch (e) { console.error(e); } finally { setLoading(false); }
+  };
+
+  const fetchPedidos = async () => {
+    try {
+      setPedidosLoading(true);
+      const { data, error } = await supabase
+        .from('ventas')
+        .select('*')
+        .eq('estado', 'Pendiente')
+        .order('fecha', { ascending: false });
+      if (error) throw error;
+      setPedidosPendientes(data || []);
+    } catch (e) { 
+      console.error(e); 
+    } finally { 
+      setPedidosLoading(false); 
+    }
+  };
+
+  const handleAprobarPedido = async (pedido) => {
+    if (!pedido || !pedido.metadata || !Array.isArray(pedido.metadata.cart)) return;
+    try {
+      setLoading(true);
+      for (const item of pedido.metadata.cart) {
+        const { data: prodData } = await supabase.from('productos').select('stock_actual, stock_vendido').eq('id', item.id).single();
+        if (prodData) {
+          const currentStock = parseInt(prodData.stock_actual || 0);
+          const nextStock = Math.max(0, currentStock - (parseInt(item.quantity) || 1));
+          const nextVendido = parseInt(prodData.stock_vendido || 0) + (parseInt(item.quantity) || 1);
+          await supabase.from('productos').update({ stock_actual: nextStock, stock_vendido: nextVendido }).eq('id', item.id);
+        }
+      }
+      
+      const { error } = await supabase.from('ventas').update({ estado: 'Aprobado' }).eq('id', pedido.id);
+      if (error) throw error;
+      
+      setToast({ show: true, message: 'Pedido Aprobado y Stock Actualizado' });
+      await fetchPedidos();
+      await fetchData();
+    } catch (e) {
+      alert('Error al aprobar pedido: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelarPedido = async (pedidoId) => {
+    if (!confirm('¿Estás seguro de que deseas cancelar este pedido? Se eliminará de la lista.')) return;
+    try {
+      setLoading(true);
+      const { error } = await supabase.from('ventas').delete().eq('id', pedidoId);
+      if (error) throw error;
+      setToast({ show: true, message: 'Pedido Cancelado' });
+      await fetchPedidos();
+    } catch (e) {
+      alert('Error al cancelar pedido: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
 
@@ -1128,37 +1194,82 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
 
       {/* TOP HEADER PANEL */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16 }}>
-        <div>
-          <h2 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.04em', margin: 0, fontFamily: "'Inter', system-ui, sans-serif" }}>
-            Empresa
-          </h2>
-          <p style={{ fontSize: 11, color: '#6b7280', marginTop: 3, fontWeight: 400, letterSpacing: '0.01em' }}>
-            Gestión de Empresa
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+          <div>
+            <h2 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.04em', margin: 0, fontFamily: "'Inter', system-ui, sans-serif" }}>
+              Empresa
+            </h2>
+            <p style={{ fontSize: 11, color: '#6b7280', marginTop: 3, fontWeight: 400, letterSpacing: '0.01em' }}>
+              Gestión de Empresa
+            </p>
+          </div>
+          {/* Selector de Sección */}
+          <div className="flex p-0.5 rounded-xl border border-white/5" style={{ backgroundColor: 'rgba(255,255,255,0.02)', height: '36px', boxSizing: 'border-box' }}>
+            <button
+              onClick={() => setActiveSection('productos')}
+              className="px-4 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+              style={{
+                backgroundColor: activeSection === 'productos' ? t.accent : 'transparent',
+                color: activeSection === 'productos' ? '#000' : t.textDim,
+              }}
+            >
+              Inventario
+            </button>
+            <button
+              onClick={() => setActiveSection('pedidos')}
+              className="px-4 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5"
+              style={{
+                backgroundColor: activeSection === 'pedidos' ? t.accent : 'transparent',
+                color: activeSection === 'pedidos' ? '#000' : t.textDim,
+              }}
+            >
+              Pedidos Pendientes
+              {pedidosPendientes.length > 0 && (
+                <span className="w-4 h-4 rounded-full bg-rose-500 text-white font-mono text-[8px] flex items-center justify-center font-bold">
+                  {pedidosPendientes.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <button 
-            onClick={exportToPDF}
-            style={{ padding: '12px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
-          >
-            <Download size={13} /> Exportar PDF
-          </button>
+          {activeSection === 'productos' ? (
+            <>
+              <button 
+                onClick={exportToPDF}
+                style={{ padding: '12px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+              >
+                <Download size={13} /> Exportar PDF
+              </button>
 
-          <button 
-            onClick={openNewProduct}
-            style={{ padding: '12px 22px', backgroundColor: '#10b981', border: 'none', borderRadius: 14, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)' }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <Plus size={14} /> Nuevo Activo Maestro
-          </button>
+              <button 
+                onClick={openNewProduct}
+                style={{ padding: '12px 22px', backgroundColor: '#10b981', border: 'none', borderRadius: 14, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)' }}
+                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                <Plus size={14} /> Nuevo Activo Maestro
+              </button>
+            </>
+          ) : (
+            <button 
+              onClick={fetchPedidos}
+              style={{ padding: '12px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
+            >
+              Recargar Pedidos
+            </button>
+          )}
         </div>
       </header>
 
-      {/* METRICS DASHBOARD */}
+      {activeSection === 'productos' && (
+        <>
+          {/* METRICS DASHBOARD */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
           { label: 'Inversión de Capital (Costo)', value: `${stats.totalInv.toLocaleString()} BS`, icon: Briefcase, color: '#a0a0a0' },
@@ -1522,6 +1633,158 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
           </table>
         </div>
       </div>
+        </>
+      )}
+
+      {activeSection === 'pedidos' && (
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
+          {pedidosLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: 12 }}>
+              <div className="animate-spin" style={{ width: 32, height: 32, borderRadius: '50%', border: `2px solid ${t.accent}`, borderTopColor: 'transparent' }} />
+              <span style={{ fontSize: 11, color: t.textDim, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Cargando pedidos...</span>
+            </div>
+          ) : pedidosPendientes.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: 16, backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 24, padding: 40 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#707070' }}>
+                <CheckCircle size={32} />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <h4 style={{ fontSize: 14, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Todo al día</h4>
+                <p style={{ fontSize: 11, color: t.textDim, margin: 0 }}>No hay nuevos pedidos pendientes por procesar.</p>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: 20 }}>
+              {pedidosPendientes.map((pedido) => {
+                const cart = pedido.metadata?.cart || [];
+                const clientName = pedido.metadata?.clientName || 'Cliente Catálogo';
+                const clientAddress = pedido.metadata?.clientAddress || 'No especificada';
+                const paymentMethod = pedido.metadata?.paymentMethod || 'Efectivo';
+                const pedidoCode = pedido.metadata?.pedidoCode || pedido.id.slice(0, 8);
+                
+                return (
+                  <div 
+                    key={pedido.id} 
+                    style={{ 
+                      backgroundColor: '#141414', 
+                      border: `1px solid ${t.border}`, 
+                      borderRadius: 24, 
+                      padding: 24, 
+                      display: 'flex', 
+                      flexDirection: 'column', 
+                      gap: 16,
+                      transition: 'transform 0.2s',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 16 }}>
+                      <div>
+                        <span style={{ fontSize: 8, fontWeight: 900, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'monospace' }}>
+                          Código: {pedidoCode}
+                        </span>
+                        <h3 style={{ fontSize: 14, fontWeight: 900, color: '#fff', margin: '4px 0 0 0' }}>
+                          {clientName}
+                        </h3>
+                      </div>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: 20, backgroundColor: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', color: '#f59e0b', fontSize: 8, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+                        Pendiente
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 11, color: t.textDim }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                        <MapPin size={13} style={{ color: '#707070', marginTop: 1, flexShrink: 0 }} />
+                        <span><strong>Dirección:</strong> {clientAddress}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <Tag size={13} style={{ color: '#707070', flexShrink: 0 }} />
+                        <span><strong>Pago:</strong> {paymentMethod}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <FileText size={13} style={{ color: '#707070', flexShrink: 0 }} />
+                        <span><strong>Fecha:</strong> {pedido.fecha}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: 6 }}>
+                        Productos ({cart.reduce((acc, c) => acc + (parseInt(c.quantity) || 1), 0)} uds)
+                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 180, overflowY: 'auto' }}>
+                        {cart.map((item, idx) => (
+                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11 }}>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span style={{ color: '#fff', fontWeight: 600 }}>{item.nombre}</span>
+                              <span style={{ fontSize: 9, color: '#707070', fontFamily: 'monospace' }}>SKU/Cód: {item.sku || 'N/A'}</span>
+                            </div>
+                            <span style={{ color: '#d4d4d4', fontFamily: 'monospace' }}>
+                              {item.quantity} x {parseFloat(item.precio_venta).toLocaleString()} BS
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16, marginTop: 'auto' }}>
+                      <div>
+                        <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Monto a Cobrar</span>
+                        <p style={{ fontSize: 18, fontWeight: 900, color: '#fff', fontFamily: 'monospace', margin: 0 }}>
+                          {parseFloat(pedido.monto).toLocaleString()} BS
+                        </p>
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <button
+                          onClick={() => handleCancelarPedido(pedido.id)}
+                          style={{
+                            padding: '10px 16px',
+                            backgroundColor: 'transparent',
+                            border: `1px solid rgba(239, 68, 68, 0.2)`,
+                            borderRadius: 12,
+                            color: '#ef4444',
+                            fontSize: 9,
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.05)'}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        >
+                          Rechazar
+                        </button>
+                        
+                        <button
+                          onClick={() => handleAprobarPedido(pedido)}
+                          style={{
+                            padding: '10px 20px',
+                            backgroundColor: '#10b981',
+                            border: 'none',
+                            borderRadius: 12,
+                            color: '#000',
+                            fontSize: 9,
+                            fontWeight: 900,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.2)',
+                          }}
+                          onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                          onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                        >
+                          Aprobar Pago
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* PRODUCT CREATION AND EDIT PANEL MODAL */}
       {isModalOpen && editingProduct && (

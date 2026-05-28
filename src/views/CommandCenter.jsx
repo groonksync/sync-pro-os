@@ -241,7 +241,7 @@ const CommandCenter = ({
   const ventas = Array.isArray(data?.ventas) ? data.ventas : [];
   const ingresosMes = ventas.filter(v => {
     const fecha = new Date(v.fecha || v.created_at);
-    return fecha.getMonth() === hoy.getMonth() && fecha.getFullYear() === hoy.getFullYear();
+    return fecha.getMonth() === hoy.getMonth() && fecha.getFullYear() === hoy.getFullYear() && v.estado !== 'Pendiente';
   }).reduce((s, v) => s + Number(v.monto || 0), 0);
   const egresosMes = egresos.filter(e => {
     const fecha = new Date(e.fecha_pago || e.fecha || e.created_at);

@@ -41,8 +41,28 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const egresos = data.egresos || [];
   const ventas  = data.ventas  || [];
+  const prestamosList = data.prestamos || [];
 
-  const [activeTab, setActiveTab] = useState(initialFilterText ? 'transacciones' : 'dashboard'); // dashboard | transacciones | suscripciones
+  const [activeTab, setActiveTab] = useState(initialFilterText ? 'transacciones' : 'dashboard'); // dashboard | ganancias | transacciones | suscripciones
+
+  const ahora = new Date();
+  const mesActualStr = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+
+  // ── Selector de Período ──────────────────────────────────────────────────
+  const [periodoMes, setPeriodoMes] = useState(mesActualStr);
+
+  const generarPeriodos = () => {
+    const periodos = [];
+    const baseDate = new Date();
+    for (let i = -6; i <= 2; i++) {
+      const d = new Date(baseDate.getFullYear(), baseDate.getMonth() + i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+      periodos.push({ key, label, esActual: i === 0 });
+    }
+    return periodos;
+  };
+  const periodosDisponibles = useMemo(() => generarPeriodos(), []);
 
   // ── Doble Moneda (Bolivianos Bs. / Dólares USD) ──────────────────────────
   const [currency, setCurrency] = useState(() => {
@@ -134,26 +154,100 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     categoria: 'Streaming'
   });
 
+  // ── Formulario de Ganancia Manual (Crear) ──────────────────────────────────
+  const [showIncomeForm, setShowIncomeForm] = useState(false);
+  const [incomeLoading, setIncomeLoading] = useState(false);
+  const [incomeForm, setIncomeForm] = useState({
+    fecha: new Date().toISOString().split('T')[0],
+    producto: '',
+    categoria: 'Edición de Video',
+    plataforma: 'Directo',
+    monto: '',
+    costo: '0',
+    notas: ''
+  });
+
   // Cargar/actualizar datos al montar
   useEffect(() => {
     if (onRefresh) onRefresh();
   }, []);
 
   // ── Cálculos Financieros Consolidados ──────────────────────────────────────
-  const ahora = new Date();
-  const mesActualStr = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
 
-  // Se consolidan gastos individuales + suscripciones recurrentes
+  // Se consolidan gastos individuales + suscripciones recurrentes del período seleccionado
   const totalEgresosAllTime = egresos.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0) + servicios.reduce((acc, s) => acc + (parseFloat(s.monto) || 0), 0);
-  const egresosMesActual = egresos.filter(e => e.fecha?.startsWith(mesActualStr));
-  const totalEgresosMes = egresosMesActual.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0) + servicios.reduce((acc, s) => acc + (parseFloat(s.monto) || 0), 0);
-  const totalIngresosMes = ventas.filter(v => v.fecha?.startsWith(mesActualStr)).reduce((acc, v) => acc + (parseFloat(v.monto) || 0), 0);
+  
+  const egresosMesFiltrado = useMemo(() => {
+    return egresos.filter(e => e.fecha?.startsWith(periodoMes));
+  }, [egresos, periodoMes]);
+
+  const totalEgresosMes = useMemo(() => {
+    return egresosMesFiltrado.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0) + servicios.reduce((acc, s) => acc + (parseFloat(s.monto) || 0), 0);
+  }, [egresosMesFiltrado, servicios]);
+
+  // Cálculos detallados de ingresos/ganancias por categoría del periodo seleccionado:
+  
+  // 1. Intereses cobrados de préstamos activos
+  const prestamosInteresMes = useMemo(() => {
+    return prestamosList.reduce((acc, p) => {
+      const isPaidThisMonth = Array.isArray(p.pagos) && p.pagos.includes(periodoMes);
+      if (isPaidThisMonth) {
+        const interest = (parseFloat(p.capital) || 0) * ((parseFloat(p.interes) || 0) / 100);
+        return acc + interest;
+      }
+      return acc;
+    }, 0);
+  }, [prestamosList, periodoMes]);
+
+  const prestamosAcreditadosMes = useMemo(() => {
+    return prestamosList.filter(p => Array.isArray(p.pagos) && p.pagos.includes(periodoMes));
+  }, [prestamosList, periodoMes]);
+
+  // 2. Utilidades obtenidas de ventas de catálogo (monto venta - costo de productos)
+  const ventasCatalogoMes = useMemo(() => {
+    return ventas.filter(v => v.fecha?.startsWith(periodoMes) && v.categoria === 'Catálogo' && v.estado !== 'Pendiente');
+  }, [ventas, periodoMes]);
+
+  const utilidadVentasCatalogoMes = useMemo(() => {
+    return ventasCatalogoMes.reduce((acc, v) => {
+      const cost = parseFloat(v.metadata?.cart?.reduce((sum, item) => sum + (parseFloat(item.precio_costo || 0) * (parseInt(item.quantity) || 1)), 0) || v.metadata?.precio_costo || 0);
+      const saleValue = parseFloat(v.monto) || 0;
+      return acc + (saleValue - cost);
+    }, 0);
+  }, [ventasCatalogoMes]);
+
+  // 3. Trabajos de edición de video / freelance
+  const ventasVideoMes = useMemo(() => {
+    return ventas.filter(v => v.fecha?.startsWith(periodoMes) && (v.categoria === 'Edición de Video' || v.categoria === 'Freelance') && v.estado !== 'Pendiente');
+  }, [ventas, periodoMes]);
+
+  const totalVideoMes = useMemo(() => {
+    return ventasVideoMes.reduce((acc, v) => acc + (parseFloat(v.monto) || 0), 0);
+  }, [ventasVideoMes]);
+
+  // 4. Otras ganancias manuales o secundarias
+  const ventasOtrasMes = useMemo(() => {
+    return ventas.filter(v => v.fecha?.startsWith(periodoMes) && v.categoria !== 'Catálogo' && v.categoria !== 'Edición de Video' && v.categoria !== 'Freelance' && v.estado !== 'Pendiente');
+  }, [ventas, periodoMes]);
+
+  const totalOtrasMes = useMemo(() => {
+    return ventasOtrasMes.reduce((acc, v) => {
+      const cost = parseFloat(v.metadata?.precio_costo || 0);
+      return acc + (parseFloat(v.monto) || 0) - cost;
+    }, 0);
+  }, [ventasOtrasMes]);
+
+  // Suma total de ganancias netas del período
+  const totalIngresosMes = useMemo(() => {
+    return prestamosInteresMes + utilidadVentasCatalogoMes + totalVideoMes + totalOtrasMes;
+  }, [prestamosInteresMes, utilidadVentasCatalogoMes, totalVideoMes, totalOtrasMes]);
+
   const gananciaNetaMes = totalIngresosMes - totalEgresosMes;
 
-  // Distribución de gastos del mes actual por categoría consolidando suscripciones en la categoría "Suscripción"
+  // Distribución de gastos del mes seleccionado por categoría
   const egresosPorCategoriaMes = useMemo(() => {
     return GASTO_CATEGORIAS.map(cat => {
-      let totalCat = egresosMesActual
+      let totalCat = egresosMesFiltrado
         .filter(e => e.categoria === cat.label)
         .reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
       
@@ -168,9 +262,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
         pct: Math.min(Math.round((totalCat / (categoryBudgets[cat.label] || cat.defaultLimit || 1)) * 100), 100)
       };
     }).sort((a, b) => b.total - a.total);
-  }, [egresosMesActual, categoryBudgets, servicios]);
+  }, [egresosMesFiltrado, categoryBudgets, servicios]);
 
-  // Transacciones Filtradas
+  // Transacciones Filtradas (lista general)
   const filteredEgresos = useMemo(() => {
     return egresos.filter(e => {
       const matchText = !filterText || e.descripcion?.toLowerCase().includes(filterText.toLowerCase()) || e.notas?.toLowerCase().includes(filterText.toLowerCase());
@@ -181,20 +275,21 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     }).sort((a, b) => b.fecha.localeCompare(a.fecha));
   }, [egresos, filterText, filterCategory, filterStartDate, filterEndDate]);
 
-  // Mayor gasto del mes (considerando también suscripciones individuales)
+  // Mayor gasto del mes seleccionado
   const mayorGastoMes = useMemo(() => {
-    const listado = [...egresosMesActual];
+    const listado = [...egresosMesFiltrado];
     servicios.forEach(s => listado.push({ descripcion: s.nombre, monto: s.monto, categoria: 'Suscripción' }));
     if (listado.length === 0) return null;
     return listado.sort((a, b) => parseFloat(b.monto) - parseFloat(a.monto))[0];
-  }, [egresosMesActual, servicios]);
+  }, [egresosMesFiltrado, servicios]);
 
-  // Promedio diario del mes
+  // Promedio diario del mes seleccionado
   const promedioDiarioMes = useMemo(() => {
     if (totalEgresosMes === 0) return 0;
-    const diasTranscurridos = ahora.getDate();
+    const isCurrentMonth = periodoMes === mesActualStr;
+    const diasTranscurridos = isCurrentMonth ? ahora.getDate() : 30;
     return totalEgresosMes / diasTranscurridos;
-  }, [totalEgresosMes]);
+  }, [totalEgresosMes, periodoMes, mesActualStr, ahora]);
 
   // ── Operaciones Egresos ─────────────────────────────────────────────────────
   const handleSaveBudget = () => {
@@ -270,6 +365,57 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       alert('Error al guardar egreso: ' + err.message); 
     } finally { 
       setExpenseLoading(false); 
+    }
+  };
+
+  const handleSaveIncome = async () => {
+    if (!incomeForm.producto.trim() || !incomeForm.monto) return;
+    setIncomeLoading(true);
+    const newVenta = {
+      id: crypto.randomUUID(),
+      fecha: incomeForm.fecha,
+      producto: incomeForm.producto.trim(),
+      categoria: incomeForm.categoria,
+      plataforma: incomeForm.plataforma,
+      monto: parseFloat(incomeForm.monto),
+      estado: 'Aprobado',
+      notas: incomeForm.notas.trim() || null,
+      metadata: {
+        precio_costo: parseFloat(incomeForm.costo) || 0
+      }
+    };
+    try {
+      const { error } = await supabase.from('ventas').insert(newVenta);
+      if (error) throw error;
+      if (onRefresh) await onRefresh();
+      setShowIncomeForm(false);
+      setIncomeForm({
+        fecha: new Date().toISOString().split('T')[0],
+        producto: '',
+        categoria: 'Edición de Video',
+        plataforma: 'Directo',
+        monto: '',
+        costo: '0',
+        notes: '',
+        notas: ''
+      });
+      alert('✅ Ganancia registrada correctamente');
+    } catch (err) {
+      alert('Error al registrar ganancia: ' + err.message);
+    } finally {
+      setIncomeLoading(false);
+    }
+  };
+
+  const handleDeleteIncome = async (id) => {
+    if (!confirm('¿Seguro que deseas eliminar este registro de ganancia?')) return;
+    try {
+      const { error } = await supabase.from('ventas').delete().eq('id', id);
+      if (error) throw error;
+      if (onRefresh) await onRefresh();
+      alert('✅ Registro de ganancia eliminado');
+    } catch (err) {
+      alert('Error al eliminar ganancia: ' + err.message);
     }
   };
 
@@ -390,7 +536,6 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     return Banknote;
   };
 
-  // Helper de colores para la barra de presupuesto
   const getProgressColor = (pct) => {
     if (pct < 70) return '#4ade80'; // verde
     if (pct < 90) return '#fb923c'; // naranja
@@ -404,9 +549,24 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       
       {/* ── CABECERA ────────────────────────────────────────────────────────── */}
       <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-        <div>
-          <h2 className="text-xl font-bold tracking-tight text-white mb-1">Mis Egresos</h2>
-          <p className="text-xs text-neutral-400 font-medium">Dashboard financiero consolidado con control de presupuestos en múltiples monedas</p>
+        <div className="flex items-center gap-4 flex-wrap">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-white mb-1">Mis Egresos</h2>
+            <p className="text-xs text-neutral-400 font-medium">Dashboard financiero consolidado con control de presupuestos en múltiples monedas</p>
+          </div>
+          {/* Selector de Período */}
+          <select
+            value={periodoMes}
+            onChange={(e) => setPeriodoMes(e.target.value)}
+            className="rounded-xl px-3 py-1.5 text-[9px] font-black uppercase tracking-widest outline-none bg-zinc-900 border border-white/5 text-white hover:border-white/15 cursor-pointer transition-all"
+            style={{ height: '36px' }}
+          >
+            {periodosDisponibles.map(p => (
+              <option key={p.key} value={p.key}>
+                {p.label} {p.esActual ? ' (Mes Actual)' : ''}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex flex-wrap gap-4 items-center self-start lg:self-center">
@@ -438,6 +598,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           <div className="flex p-0.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
             {[
               { id: 'dashboard', label: 'Dashboard', icon: Activity },
+              { id: 'ganancias', label: 'Ingresos & Ganancias', icon: TrendingUp },
               { id: 'transacciones', label: 'Gastos Individuales', icon: Layers },
               { id: 'suscripciones', label: 'Suscripciones & Servicios', icon: Wifi },
             ].map(tab => (
@@ -685,6 +846,234 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Transacciones del Mes</span>
                 <p className="text-sm font-bold text-white mt-1">{egresosMesActual.length} operaciones</p>
                 <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mt-0.5">En el periodo actual</p>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ── VISTA EXTRA: INGRESOS & GANANCIAS ───────────────────────────────────── */}
+      {activeTab === 'ganancias' && (
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+          
+          {/* Fila superior: KPIs de Ganancias */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* KPI 1: Ingresos Totales Periodo */}
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                <span>Ingresos Totales (Período)</span>
+                <TrendingUp size={14} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-light text-emerald-400 tracking-tight">{formatCurrency(totalIngresosMes)}</p>
+                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Intereses + Ventas + Freelance</p>
+              </div>
+            </div>
+
+            {/* KPI 2: Egresos Totales Periodo */}
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                <span>Egresos Totales (Período)</span>
+                <TrendingDown size={14} className="text-rose-400" />
+              </div>
+              <div>
+                <p className="text-2xl font-light text-rose-400 tracking-tight">{formatCurrency(totalEgresosMes)}</p>
+                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Gastos + Suscripciones</p>
+              </div>
+            </div>
+
+            {/* KPI 3: Margen Neto Consolidado */}
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                <span>Balance Neto Consolidado</span>
+                {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
+              </div>
+              <div>
+                <p className={`text-2xl font-semibold tracking-tight ${gananciaNetaMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {gananciaNetaMes >= 0 ? '+' : ''}{formatCurrency(gananciaNetaMes)}
+                </p>
+                <p className="text-[9px] text-neutral-500 mt-1 font-bold">{gananciaNetaMes >= 0 ? 'Superávit Financiero' : 'Déficit en el Periodo'}</p>
+              </div>
+            </div>
+
+            {/* KPI 4: Registrar Ganancia Manual */}
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02] cursor-pointer" 
+                 style={{ backgroundColor: t.bg }} onClick={() => setShowIncomeForm(true)}>
+              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                <span>Acción Rápida</span>
+                <Plus size={14} className="text-neutral-400" />
+              </div>
+              <div>
+                <button className="w-full py-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-white text-[9px] font-black uppercase tracking-widest transition-all">
+                  + Registrar Ingreso Manual
+                </button>
+                <p className="text-[9px] text-neutral-500 mt-2 font-bold text-center">Añadir trabajo freelance, ventas, etc.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Grilla principal de desglose */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            {/* Columna Izquierda Panel 1: Préstamos (Intereses Cobrados) */}
+            <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.bg }}>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Préstamos (Intereses Cobrados)</h3>
+                <p className="text-[10px] text-neutral-400">Rendimiento e intereses cobrados en el mes seleccionado</p>
+              </div>
+
+              <div className="flex flex-col gap-3 min-h-[200px]">
+                {prestamosAcreditadosMes.length > 0 ? (
+                  prestamosAcreditadosMes.map(p => {
+                    const interes = (parseFloat(p.capital) || 0) * ((parseFloat(p.interes) || 0) / 100);
+                    return (
+                      <div key={p.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
+                        <div>
+                          <p className="font-bold text-white">{p.nombre}</p>
+                          <p className="text-[9px] text-neutral-500 mt-0.5">Capital: {parseFloat(p.capital).toLocaleString()} BOB | Tasa: {p.interes}%</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-black text-emerald-400">+{formatCurrency(interes)}</p>
+                          <p className="text-[8px] text-neutral-500 uppercase font-black">Interés Cobrado</p>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
+                    <p className="text-[10px] uppercase font-black tracking-wider mb-1">Sin Intereses Cobrados</p>
+                    <p className="text-[9px]">Registra los pagos mensuales en la pestaña de Préstamos para verlos aquí.</p>
+                  </div>
+                )}
+              </div>
+              <div className="bg-black/20 p-3 rounded-xl border border-white/5 text-[10px] font-bold flex justify-between uppercase text-neutral-400">
+                <span>Total Intereses Recibidos:</span>
+                <span className="text-emerald-400">{formatCurrency(prestamosInteresMes)}</span>
+              </div>
+            </div>
+
+            {/* Columna Derecha Panel 2: Ventas del Catálogo */}
+            <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.bg }}>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Ventas del Catálogo (WhatsApp)</h3>
+                <p className="text-[10px] text-neutral-400">Ventas procesadas y aprobadas en este periodo</p>
+              </div>
+
+              <div className="flex flex-col gap-3 min-h-[200px]">
+                {ventasCatalogoMes.length > 0 ? (
+                  ventasCatalogoMes.map(v => {
+                    const cost = parseFloat(v.metadata?.cart?.reduce((sum, item) => sum + (parseFloat(item.precio_costo || 0) * (parseInt(item.quantity) || 1)), 0) || v.metadata?.precio_costo || 0);
+                    const profit = (parseFloat(v.monto) || 0) - cost;
+                    return (
+                      <div key={v.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 text-xs">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-bold text-white">{v.producto}</p>
+                            <p className="text-[9px] text-neutral-500 mt-0.5">Fecha: {v.fecha} | Plataforma: {v.plataforma}</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-black uppercase">Aprobada</span>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center text-[10px] bg-black/20 p-2 rounded-lg border border-white/5">
+                          <span className="text-neutral-400">Venta: {formatCurrency(v.monto)}</span>
+                          <span className="text-neutral-500">|</span>
+                          <span className="text-neutral-400">Costo: {formatCurrency(cost)}</span>
+                          <span className="text-neutral-500">|</span>
+                          <span className="font-bold text-emerald-400">Utilidad: {formatCurrency(profit)}</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
+                    <p className="text-[10px] uppercase font-black tracking-wider mb-1">Sin Ventas de Catálogo</p>
+                    <p className="text-[9px]">Las ventas aprobadas del catálogo de WhatsApp se listarán aquí.</p>
+                  </div>
+                )}
+              </div>
+              <div className="bg-black/20 p-3 rounded-xl border border-white/5 text-[10px] font-bold flex justify-between uppercase text-neutral-400">
+                <span>Utilidad Total de Ventas:</span>
+                <span className="text-emerald-400">{formatCurrency(utilidadVentasCatalogoMes)}</span>
+              </div>
+            </div>
+
+            {/* Fila 2 - Panel 3: Trabajos de Edición de Video / Freelance */}
+            <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.bg }}>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Trabajos de Edición & Freelance</h3>
+                <p className="text-[10px] text-neutral-400">Ingresos directos por sesiones de edición de video</p>
+              </div>
+
+              <div className="flex flex-col gap-3 min-h-[200px]">
+                {ventasVideoMes.length > 0 ? (
+                  ventasVideoMes.map(v => (
+                    <div key={v.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
+                      <div>
+                        <p className="font-bold text-white">{v.producto}</p>
+                        <p className="text-[9px] text-neutral-500 mt-0.5">Fecha: {v.fecha} | Notas: {v.notas || 'Sin notas'}</p>
+                      </div>
+                      <div className="text-right flex items-center gap-3">
+                        <span className="font-black text-emerald-400">+{formatCurrency(v.monto)}</span>
+                        <button onClick={() => handleDeleteIncome(v.id)} className="text-rose-500 hover:text-rose-400 p-1" title="Eliminar">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
+                    <p className="text-[10px] uppercase font-black tracking-wider mb-1">Sin Trabajos de Edición</p>
+                    <p className="text-[9px]">Registra precios en el Editor de Video o agrégalos de forma manual.</p>
+                  </div>
+                )}
+              </div>
+              <div className="bg-black/20 p-3 rounded-xl border border-white/5 text-[10px] font-bold flex justify-between uppercase text-neutral-400">
+                <span>Total Edición & Freelance:</span>
+                <span className="text-emerald-400">{formatCurrency(totalVideoMes)}</span>
+              </div>
+            </div>
+
+            {/* Fila 2 - Panel 4: Otras Ganancias Manuales */}
+            <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.bg }}>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Otras Ganancias / Registros Manuales</h3>
+                <p className="text-[10px] text-neutral-400">Otros ingresos registrados de forma directa</p>
+              </div>
+
+              <div className="flex flex-col gap-3 min-h-[200px]">
+                {ventasOtrasMes.length > 0 ? (
+                  ventasOtrasMes.map(v => {
+                    const cost = parseFloat(v.metadata?.precio_costo || 0);
+                    const netIncome = (parseFloat(v.monto) || 0) - cost;
+                    return (
+                      <div key={v.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
+                        <div>
+                          <p className="font-bold text-white">{v.producto}</p>
+                          <p className="text-[9px] text-neutral-500 mt-0.5">Fecha: {v.fecha} | Categoría: {v.categoria} | Plataforma: {v.plataforma}</p>
+                          {cost > 0 && <p className="text-[8px] text-neutral-500 mt-0.5">Monto: {formatCurrency(v.monto)} | Costo: {formatCurrency(cost)}</p>}
+                        </div>
+                        <div className="text-right flex items-center gap-3">
+                          <span className="font-black text-emerald-400">+{formatCurrency(netIncome)}</span>
+                          <button onClick={() => handleDeleteIncome(v.id)} className="text-rose-500 hover:text-rose-400 p-1" title="Eliminar">
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
+                    <p className="text-[10px] uppercase font-black tracking-wider mb-1">Sin Otros Ingresos</p>
+                    <p className="text-[9px]">Usa el botón de arriba para registrar otros ingresos.</p>
+                  </div>
+                )}
+              </div>
+              <div className="bg-black/20 p-3 rounded-xl border border-white/5 text-[10px] font-bold flex justify-between uppercase text-neutral-400">
+                <span>Total Otros Ingresos:</span>
+                <span className="text-emerald-400">{formatCurrency(totalOtrasMes)}</span>
               </div>
             </div>
 
@@ -1237,6 +1626,139 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 disabled={serviceLoading || !serviceForm.nombre || !serviceForm.monto || !serviceForm.fecha_pago}
               >
                 {serviceLoading ? 'Guardando...' : editingService ? 'Guardar Cambios' : 'Registrar Servicio'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── DIÁLOGO MODAL: REGISTRAR INGRESO / GANANCIA MANUAL ─────────────────── */}
+      {showIncomeForm && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-300">
+          <div 
+            className="w-full max-w-lg border border-white/5 rounded-3xl p-8 max-h-[90vh] overflow-y-auto mac-scrollbar animate-in zoom-in-95 duration-300"
+            style={{ backgroundColor: t.bg }}
+          >
+            <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-6">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-widest text-white">Registrar Ingreso Manual</h3>
+                <p className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider mt-1">Agregar ganancia o cobro consolidado</p>
+              </div>
+              <button 
+                onClick={() => setShowIncomeForm(false)} 
+                className="w-8 h-8 rounded-xl border border-white/5 hover:bg-white/5 text-neutral-400 hover:text-white flex items-center justify-center transition-all"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Fecha del Ingreso</label>
+                  <input
+                    type="date"
+                    value={incomeForm.fecha}
+                    onChange={e => setIncomeForm({...incomeForm, fecha: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Categoría</label>
+                  <select
+                    value={incomeForm.categoria}
+                    onChange={e => setIncomeForm({...incomeForm, categoria: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all cursor-pointer"
+                  >
+                    <option value="Edición de Video">Edición de Video</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Venta de Productos">Venta de Productos</option>
+                    <option value="Préstamos">Préstamos</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Concepto / Producto / Cliente</label>
+                <input
+                  type="text"
+                  value={incomeForm.producto}
+                  onChange={e => setIncomeForm({...incomeForm, producto: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                  placeholder="Ej: Cliente Juan - Edición Clip 5, Venta Teclado..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Monto de Venta ({currency})</label>
+                  <input
+                    type="number"
+                    value={incomeForm.monto}
+                    onChange={e => setIncomeForm({...incomeForm, monto: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all font-mono"
+                    placeholder="Monto total ingresado"
+                  />
+                </div>
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Costo del Producto ({currency})</label>
+                  <input
+                    type="number"
+                    value={incomeForm.costo}
+                    onChange={e => setIncomeForm({...incomeForm, costo: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all font-mono"
+                    placeholder="Opcional. Para utilidad"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Plataforma</label>
+                  <input
+                    type="text"
+                    value={incomeForm.plataforma}
+                    onChange={e => setIncomeForm({...incomeForm, plataforma: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                    placeholder="Ej: Directo, Gumroad, WhatsApp..."
+                  />
+                </div>
+                <div className="flex flex-col justify-end">
+                  <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mb-2">Utilidad Estimada</p>
+                  <div className="w-full bg-zinc-950/60 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-emerald-400 font-bold font-mono">
+                    {formatCurrency((parseFloat(incomeForm.monto) || 0) - (parseFloat(incomeForm.costo) || 0))}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Notas Adicionales</label>
+                <textarea
+                  value={incomeForm.notas}
+                  onChange={e => setIncomeForm({...incomeForm, notas: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all resize-none h-16"
+                  placeholder="Detalles sobre el cobro o la entrega..."
+                />
+              </div>
+
+            </div>
+
+            <div className="flex gap-3 pt-6 border-t border-white/5 mt-6">
+              <button
+                onClick={() => setShowIncomeForm(false)}
+                className="flex-1 py-3 bg-zinc-950/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white transition-colors"
+                disabled={incomeLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveIncome}
+                className="flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                style={{ backgroundColor: t.accent, color: '#000' }}
+                disabled={incomeLoading || !incomeForm.producto || !incomeForm.monto}
+              >
+                {incomeLoading ? 'Registrando...' : 'Registrar Ganancia'}
               </button>
             </div>
           </div>
