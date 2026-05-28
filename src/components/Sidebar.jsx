@@ -120,10 +120,15 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
       {/* Logo */}
       <div className="mb-8 px-2 flex items-center gap-3">
         <div 
-          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-          style={{ backgroundColor: t.accentSoft }}
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+          style={{ backgroundColor: 'transparent' }}
         >
-          <Zap size={18} color={t.accent} fill={t.accent} />
+          <img 
+            src="/logo.png" 
+            alt="Sovereign OS" 
+            className="w-8 h-8 object-contain"
+            style={{ filter: 'brightness(1)' }}
+          />
         </div>
         {!isCollapsed && (
           <div className="animate-in fade-in slide-in-from-left-4 duration-500">
@@ -132,6 +137,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
           </div>
         )}
       </div>
+
 
       {/* Main Navigation */}
       <nav className="flex-1 space-y-1">

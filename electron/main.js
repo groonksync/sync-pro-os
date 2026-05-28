@@ -13,12 +13,14 @@ function createWindow() {
     width: 1280,
     height: 800,
     titleBarStyle: 'hiddenInset',
+    icon: path.join(__dirname, '../public/logo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
   });
+
 
   mainWindow.webContents.on('console-message', async (event, level, message, line, sourceId) => {
     try {
