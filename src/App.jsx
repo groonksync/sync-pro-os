@@ -160,7 +160,18 @@ const App = () => {
     setActiveTab('prestamos');
   };
 
-  const handleNavigateTo = (viewName) => {
+  const [inventarioSearch, setInventarioSearch] = useState('');
+  const [recordatoriosSearch, setRecordatoriosSearch] = useState('');
+  const [egresosSearch, setEgresosSearch] = useState('');
+
+  const handleNavigateTo = (viewName, searchOptions = {}) => {
+    if (viewName === 'inventario') {
+      setInventarioSearch(searchOptions.search || '');
+    } else if (viewName === 'recordatorios') {
+      setRecordatoriosSearch(searchOptions.search || '');
+    } else if (viewName === 'pagos') {
+      setEgresosSearch(searchOptions.search || '');
+    }
     setActiveTab(viewName);
   };
 
@@ -252,9 +263,9 @@ const App = () => {
           />
         );
         case 'notificaciones': return <Notifications data={data} isDark={isDarkMode} />;
-        case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} />;
-        case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} />;
-        case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} />;
+        case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} initialFilterText={egresosSearch} />;
+        case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} initialSearch={inventarioSearch} />;
+        case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} />;
         case 'notas': return <Notas isDark={isDarkMode} />;
         case 'boveda': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;
         case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} isDark={isDarkMode} />;

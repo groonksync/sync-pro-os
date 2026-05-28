@@ -588,13 +588,18 @@ const getCategoryIcon = (category) => {
   return Tag;
 };
 
-const Inventario = ({ settings = {}, isDark = true }) => {
+const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+
+  useEffect(() => {
+    setSearchTerm(initialSearch);
+  }, [initialSearch]);
+
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('Todos');
   const [toast, setToast] = useState({ show: false, message: '' });
   

@@ -37,12 +37,12 @@ const SERVICIO_CATEGORIAS = [
 const catGastoConfig = Object.fromEntries(GASTO_CATEGORIAS.map(c => [c.label, c]));
 const catServicioConfig = Object.fromEntries(SERVICIO_CATEGORIAS.map(c => [c.label, c]));
 
-const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, isDark = true }) => {
+const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, isDark = true, initialFilterText = '' }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const egresos = data.egresos || [];
   const ventas  = data.ventas  || [];
 
-  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | transacciones | suscripciones
+  const [activeTab, setActiveTab] = useState(initialFilterText ? 'transacciones' : 'dashboard'); // dashboard | transacciones | suscripciones
 
   // ── Doble Moneda (Bolivianos Bs. / Dólares USD) ──────────────────────────
   const [currency, setCurrency] = useState(() => {
@@ -70,7 +70,15 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   };
 
   // ── Filtros para transacciones ──────────────────────────────────────────
-  const [filterText, setFilterText] = useState('');
+  const [filterText, setFilterText] = useState(initialFilterText);
+
+  useEffect(() => {
+    if (initialFilterText) {
+      setFilterText(initialFilterText);
+      setActiveTab('transacciones');
+    }
+  }, [initialFilterText]);
+
   const [filterCategory, setFilterCategory] = useState('Todas');
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');

@@ -314,6 +314,7 @@ const CommandCenter = ({
         accion: 'Ir',
         color: '#f97316',
         navigateTo: 'inventario',
+        searchTerm: p.nombre,
       });
     });
     
@@ -327,6 +328,7 @@ const CommandCenter = ({
         accion: 'Ir',
         color: '#ef4444',
         navigateTo: 'recordatorios',
+        searchTerm: r.titulo,
       });
     });
     
@@ -350,6 +352,7 @@ const CommandCenter = ({
           accion: 'Pagar',
           color: '#ef4444',
           navigateTo: 'pagos',
+          searchTerm: s.nombre,
         });
       } else if (diffDays <= 5) {
         notifs.push({
@@ -360,6 +363,7 @@ const CommandCenter = ({
           accion: 'Ver',
           color: '#f59e0b',
           navigateTo: 'pagos',
+          searchTerm: s.nombre,
         });
       }
     });
@@ -956,129 +960,7 @@ const CommandCenter = ({
         </div>
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          FILA 3: WIDGET GRID 3x3 (Módulos Colapsables)
-          ══════════════════════════════════════════════════════ */}
-      <section style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <h3 style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Box size={16} color={t.accent} /> Módulos del Sistema
-          </h3>
-          <button
-            onClick={() => setConfigWidgetOpen(!configWidgetOpen)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 14px', borderRadius: '10px', border: `1px solid ${t.border}`,
-              backgroundColor: t.input, color: t.textDim, cursor: 'pointer',
-              fontSize: '10px', fontWeight: 600, transition: 'all 0.2s',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; }}
-          >
-            <Settings size={12} /> Personalizar
-          </button>
-        </div>
 
-        {/* Panel de configuración de widgets */}
-        {configWidgetOpen && (
-          <div style={{
-            marginBottom: '14px', padding: '16px', borderRadius: '14px',
-            backgroundColor: t.panel, border: `1px solid ${t.border}`,
-          }}>
-            <p style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Mostrar / Ocultar Módulos
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {MODULE_WIDGETS.map(w => (
-                <button
-                  key={w.id}
-                  onClick={() => toggleWidget(w.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '8px 14px', borderRadius: '10px', cursor: 'pointer',
-                    border: `1px solid ${widgetVisibility[w.id] ? w.color : t.border}`,
-                    backgroundColor: widgetVisibility[w.id] ? `${w.color}15` : t.input,
-                    color: widgetVisibility[w.id] ? w.color : t.textDim,
-                    fontSize: '11px', fontWeight: 600,
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <w.icono size={14} />
-                  {w.titulo}
-                  <span style={{
-                    width: '16px', height: '16px', borderRadius: '50%',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: widgetVisibility[w.id] ? w.color : t.hover,
-                    color: widgetVisibility[w.id] ? '#fff' : t.textDim,
-                    fontSize: '9px', fontWeight: 700,
-                  }}>
-                    {widgetVisibility[w.id] ? '✓' : '×'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Grid de widgets */}
-        {(() => {
-          const widgetsVisibles = MODULE_WIDGETS.filter(w => widgetVisibility[w.id]);
-          const cols = widgetsVisibles.length >= 6 ? 3 : widgetsVisibles.length >= 4 ? 2 : 1;
-          const colClass = isMobile ? 'grid-cols-1' : cols === 3 ? 'grid-cols-3' : cols === 2 ? 'grid-cols-2' : 'grid-cols-1';
-          
-          return widgetsVisibles.length > 0 ? (
-            <div className={`grid gap-3 ${colClass}`}>
-              {widgetsVisibles.map(w => {
-                const wData = w.getData({ meetingsList, data, servicios });
-                const WIcon = w.icono;
-                return (
-                  <div
-                    key={w.id}
-                    onClick={() => onNavigateTo && onNavigateTo(w.accion)}
-                    style={{
-                      padding: '16px', borderRadius: '14px', cursor: 'pointer',
-                      backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = w.color; e.currentTarget.style.backgroundColor = t.hoverActive; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.backgroundColor = t.panel; }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '10px' }}>
-                      <div style={{
-                        width: '36px', height: '36px', borderRadius: '12px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        backgroundColor: `${w.color}15`,
-                      }}>
-                        <WIcon size={16} color={w.color} />
-                      </div>
-                      {wData.alerta && (
-                        <span style={{
-                          padding: '2px 8px', borderRadius: '8px',
-                          backgroundColor: `${w.color}20`, color: w.color,
-                          fontSize: '8px', fontWeight: 700,
-                        }}>
-                          {wData.alerta}
-                        </span>
-                      )}
-                    </div>
-                    <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: '0 0 2px 0' }}>{w.titulo}</p>
-                    <p style={{ fontSize: '14px', fontWeight: 700, color: w.color, margin: '4px 0 2px 0', letterSpacing: '-0.01em' }}>
-                      {wData.principal}
-                    </p>
-                    <p style={{ fontSize: '9px', color: t.textDim, margin: 0 }}>{wData.secundaria}</p>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div style={{ padding: '32px', textAlign: 'center', border: `1px dashed ${t.border}`, borderRadius: '12px' }}>
-              <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>
-                Todos los módulos están ocultos. Usa "Personalizar" para mostrarlos.
-              </p>
-            </div>
-          );
-        })()}
-      </section>
 
       {/* ══════════════════════════════════════════════════════
           FILA 4: CENTRO DE NOTIFICACIONES
@@ -1111,9 +993,17 @@ const CommandCenter = ({
                     padding: '12px 14px', borderRadius: '12px',
                     backgroundColor: `${n.color}08`, border: `1px solid ${n.color}20`,
                     transition: 'all 0.2s',
+                    cursor: 'pointer',
                   }}
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${n.color}15`; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${n.color}08`; }}
+                  onClick={() => {
+                    if (n.prestamoId && onNavigateToPrestamo) {
+                      onNavigateToPrestamo(n.prestamoId);
+                    } else if (n.navigateTo && onNavigateTo) {
+                      onNavigateTo(n.navigateTo, { search: n.searchTerm });
+                    }
+                  }}
                 >
                   {(() => {
                     const NotifIcon = DIALOG_ICONS[n.icono] || Bell;
@@ -1122,8 +1012,8 @@ const CommandCenter = ({
                   <p style={{ flex: 1, fontSize: '11px', fontWeight: 600, color: t.text, margin: 0, lineHeight: 1.4 }}>
                     {n.mensaje}
                   </p>
-                  <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                    {n.tipo === 'critico' && (
+                  <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                    {n.tipo === 'critico' && n.prestamoId && (
                       <button
                         onClick={() => {
                           const p = categorias.deudorCritico.find(d => d.id === n.prestamoId);
@@ -1140,7 +1030,11 @@ const CommandCenter = ({
                     )}
                     <button
                       onClick={() => {
-                        if (n.navigateTo && onNavigateTo) onNavigateTo(n.navigateTo);
+                        if (n.prestamoId && onNavigateToPrestamo) {
+                          onNavigateToPrestamo(n.prestamoId);
+                        } else if (n.navigateTo && onNavigateTo) {
+                          onNavigateTo(n.navigateTo, { search: n.searchTerm });
+                        }
                       }}
                       style={{
                         padding: '6px 12px', borderRadius: '8px', border: `1px solid ${t.border}`,

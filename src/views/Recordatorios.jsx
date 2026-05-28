@@ -7,13 +7,17 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 
-const Recordatorios = ({ settings, isDark }) => {
+const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const [recordatorios, setRecordatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+
+  useEffect(() => {
+    setSearchTerm(initialSearch);
+  }, [initialSearch]);
   
   const [subtareasTemp, setSubtareasTemp] = useState([]);
   const [nuevaSubtarea, setNuevaSubtarea] = useState('');
