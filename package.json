@@ -8,7 +8,7 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "node scratch/build-catalog.js && vite build",
+    "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && electron .\"",
