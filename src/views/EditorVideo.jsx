@@ -18,7 +18,7 @@ import GoogleTasks from '../components/GoogleTasks';
 import { aiService } from '../services/aiService';
 import { getTheme } from '../lib/theme';
 
-const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDark = true, token }) => {
+const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark = true, token }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const [viewState, setViewState] = useState('client-list'); 
   const [activeClient, setActiveClient] = useState(null);
@@ -245,8 +245,8 @@ const MeetingStudio = ({ meetingsList = [], setMeetingsList, settings = {}, isDa
         style={{ backgroundColor: t.bg, borderBottom: `1px solid ${t.border}` }}>
          <div className="flex items-center gap-8">
             <div>
-               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Meeting Studio</h2>
-               <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '2px', fontWeight: 500 }}>Sistema de producción audiovisual</p>
+               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Editor de Video</h2>
+               <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '2px', fontWeight: 500 }}>Workspace de Control de Producción de Video</p>
             </div>
             <div className="flex rounded-xl p-0.5" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
                 <button onClick={() => setViewState('client-list')} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
@@ -1917,4 +1917,4 @@ const ProjectEngineView = ({ isDark = true }) => {
   );
 };
 
-export default MeetingStudio;
+export default EditorVideo;

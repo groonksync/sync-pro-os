@@ -29,9 +29,9 @@ const MODULE_WIDGETS = [
     titulo: 'Editor de Video',
     icono: Video,
     color: '#a78bfa',
-    getData: ({ meetingsList, servicios }) => ({
+    getData: ({ meetingsList }) => ({
       principal: `${meetingsList?.length || 0} proyectos`,
-      secundaria: `${servicios?.filter(s => s.estado === 'activo').length || 0} activos`,
+      secundaria: `${meetingsList?.length || 0} sesiones activas`,
       alerta: null,
     }),
     accion: 'editor'
@@ -119,7 +119,7 @@ const MODULE_WIDGETS = [
         alerta: null,
       };
     },
-    accion: 'egresos'
+    accion: 'pagos'
   },
   {
     id: 'proyectos',
@@ -330,6 +330,40 @@ const CommandCenter = ({
       });
     });
     
+    // Servicios / Suscripciones
+    servicios.forEach(s => {
+      if (!s.fecha_pago) return;
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const venc = new Date(s.fecha_pago);
+      venc.setHours(0, 0, 0, 0);
+      
+      const diffTime = venc.getTime() - hoy.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays < 0) {
+        notifs.push({
+          id: `servicio-vencido-${s.id}`,
+          tipo: 'critico',
+          icono: 'XCircle',
+          mensaje: `⚠️ Pago vencido: ${s.nombre} (${parseFloat(s.monto || 0).toFixed(0)} Bs) venció el ${s.fecha_pago}`,
+          accion: 'Pagar',
+          color: '#ef4444',
+          navigateTo: 'pagos',
+        });
+      } else if (diffDays <= 5) {
+        notifs.push({
+          id: `servicio-prox-${s.id}`,
+          tipo: 'pago-proximo',
+          icono: 'AlertTriangle',
+          mensaje: `📅 Próximo pago: ${s.nombre} (${parseFloat(s.monto || 0).toFixed(0)} Bs) vence en ${diffDays} días (${s.fecha_pago})`,
+          accion: 'Ver',
+          color: '#f59e0b',
+          navigateTo: 'pagos',
+        });
+      }
+    });
+    
     // Pendientes
     if (categorias.pendientes.length > 0) {
       notifs.push({
@@ -346,7 +380,7 @@ const CommandCenter = ({
       const prioridad = { critico: 0, 'pago-proximo': 1, stock: 2, tarea: 3, pendiente: 4 };
       return (prioridad[a.tipo] || 99) - (prioridad[b.tipo] || 99);
     });
-  }, [categorias, stockBajo, tareasCriticas, listaPrestamos]);
+  }, [categorias, stockBajo, tareasCriticas, listaPrestamos, servicios]);
 
   // ─── Handlers ───────────────────────────────────────────────
   const toggleWidget = (widgetId) => {

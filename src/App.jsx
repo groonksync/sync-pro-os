@@ -2,10 +2,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import CommandCenter from './views/CommandCenter';
-import MeetingStudio from './views/MeetingStudio';
+import EditorVideo from './views/EditorVideo';
 import Prestamos from './views/Prestamos';
 import Notifications from './views/Notifications';
-import Pagos from './views/Pagos';
+import MisEgresos from './views/MisEgresos';
 import Inventario from './views/Inventario';
 import Ajustes from './views/Ajustes';
 import DriveSovereign from './views/DriveSovereign';
@@ -129,6 +129,10 @@ const App = () => {
       const { data: egresosData } = await supabase.from('egresos').select('*').order('created_at', { ascending: false });
       if (egresosData) setData(prev => ({ ...prev, egresos: egresosData }));
 
+      // NUEVO: Traer ventas para el CommandCenter y MisEgresos
+      const { data: ventasData } = await supabase.from('ventas').select('*').order('created_at', { ascending: false });
+      if (ventasData) setData(prev => ({ ...prev, ventas: ventasData }));
+
       // NUEVO: Traer notas (conteo básico) para el CommandCenter
       const { data: notasData } = await supabase.from('notas').select('id, titulo, created_at').order('created_at', { ascending: false });
       if (notasData) setData(prev => ({ ...prev, notas: notasData }));
@@ -236,7 +240,7 @@ const App = () => {
             onNavigateTo={handleNavigateTo}
           />
         );
-        case 'editor': return <MeetingStudio meetingsList={meetingsList} setMeetingsList={setMeetingsList} settings={appSettings} isDark={isDarkMode} token={googleToken} />;
+        case 'editor': return <EditorVideo meetingsList={meetingsList} setMeetingsList={setMeetingsList} settings={appSettings} isDark={isDarkMode} token={googleToken} />;
         case 'prestamos': return (
           <Prestamos 
             data={data} 
@@ -248,7 +252,7 @@ const App = () => {
           />
         );
         case 'notificaciones': return <Notifications data={data} isDark={isDarkMode} />;
-        case 'pagos': return <Pagos isDark={isDarkMode} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} />;
+        case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} />;
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} />;
         case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} />;
         case 'notas': return <Notas isDark={isDarkMode} />;

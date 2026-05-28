@@ -1,26 +1,65 @@
-import React, { useState, useMemo } from 'react';
-import { Plus, Trash2, CreditCard, ArrowDownRight, Tag, Coffee, Wrench, Wifi, User, ShoppingCart } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { 
+  Plus, Trash2, CreditCard, ArrowDownRight, Tag, Coffee, Wrench, Wifi, User, 
+  ShoppingCart, Calendar, Edit3, Save, X, Search, Mail, Phone, FileText, 
+  AlertTriangle, TrendingUp, TrendingDown, Layers, Settings, DollarSign, Activity,
+  Sliders, Filter, Landmark, Banknote, AlertCircle, Sparkles, Check
+} from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 
 const CATEGORIAS = [
-  { label: 'Suscripción', icon: Wifi },
-  { label: 'Herramienta', icon: Wrench },
-  { label: 'Servicio',    icon: Tag },
-  { label: 'Personal',   icon: User },
-  { label: 'Compra',     icon: ShoppingCart },
-  { label: 'Otro',       icon: Coffee },
+  { label: 'Suscripción', icon: Wifi, color: '#a78bfa', defaultLimit: 200 },
+  { label: 'Herramienta', icon: Wrench, color: '#38bdf8', defaultLimit: 500 },
+  { label: 'Servicio',    icon: Tag, color: '#fb923c', defaultLimit: 400 },
+  { label: 'Personal',   icon: User, color: '#4ade80', defaultLimit: 800 },
+  { label: 'Compra',     icon: ShoppingCart, color: '#f472b6', defaultLimit: 600 },
+  { label: 'Otro',       icon: Coffee, color: '#94a3b8', defaultLimit: 300 },
 ];
 
 const catConfig = Object.fromEntries(CATEGORIAS.map(c => [c.label, c]));
 
-const MisEgresos = ({ data, setData, isDark = true }) => {
+const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, isDark = true }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const egresos = data.egresos || [];
   const ventas  = data.ventas  || [];
-  const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
+
+  const [activeTab, setActiveTab] = useState('dashboard'); // dashboard | transacciones | suscripciones
+
+  // ── Filtros para transacciones ──────────────────────────────────────────
+  const [filterText, setFilterText] = useState('');
+  const [filterCategory, setFilterCategory] = useState('Todas');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+
+  // ── Presupuestos (Persistencia en localStorage) ──────────────────────────
+  const [monthlyBudget, setMonthlyBudget] = useState(() => {
+    const saved = localStorage.getItem('sovereign_monthly_budget');
+    return saved ? parseFloat(saved) : 2500;
+  });
+
+  const [categoryBudgets, setCategoryBudgets] = useState(() => {
+    const saved = localStorage.getItem('sovereign_category_budgets');
+    if (saved) return JSON.parse(saved);
+    return Object.fromEntries(CATEGORIAS.map(c => [c.label, c.defaultLimit]));
+  });
+
+  const [isEditingBudgets, setIsEditingBudgets] = useState(false);
+  const [tempMonthlyBudget, setTempMonthlyBudget] = useState(monthlyBudget);
+  const [tempCategoryBudgets, setTempCategoryBudgets] = useState(categoryBudgets);
+
+  useEffect(() => {
+    localStorage.setItem('sovereign_monthly_budget', monthlyBudget.toString());
+  }, [monthlyBudget]);
+
+  useEffect(() => {
+    localStorage.setItem('sovereign_category_budgets', JSON.stringify(categoryBudgets));
+  }, [categoryBudgets]);
+
+  // ── Formulario de Gasto Individual ─────────────────────────────────────────
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
+  const [expenseLoading, setExpenseLoading] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({
     fecha: new Date().toISOString().split('T')[0],
     descripcion: '',
     categoria: 'Suscripción',
@@ -28,216 +67,995 @@ const MisEgresos = ({ data, setData, isDark = true }) => {
     notas: '',
   });
 
-  // ── Cálculos ──────────────────────────────────────────────────────────────
+  // ── Formulario de Servicio Recurrente ─────────────────────────────────────
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [serviceLoading, setServiceLoading] = useState(false);
+  const [editingService, setEditingService] = useState(null); // null = nuevo, objeto = editando
+  const [serviceForm, setServiceForm] = useState({
+    nombre: '',
+    monto: '',
+    fecha_pago: new Date().toISOString().split('T')[0],
+    metodo: 'Tarjeta',
+    contacto: '',
+    notas: '',
+    tipo: 'Mensual'
+  });
+
+  // Cargar/actualizar datos al montar
+  useEffect(() => {
+    if (onRefresh) onRefresh();
+  }, []);
+
+  // ── Cálculos Financieros ──────────────────────────────────────────────────
   const ahora = new Date();
-  const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+  const mesActualStr = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
 
-  const totalEgresos    = egresos.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
-  const egresosMes      = egresos.filter(e => e.fecha?.startsWith(mesActual)).reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
-  const ingresosMes     = ventas.filter(v => v.fecha?.startsWith(mesActual)).reduce((acc, v) => acc + (parseFloat(v.monto) || 0), 0);
-  const gananciaNeta    = ingresosMes - egresosMes;
+  const totalEgresosAllTime = egresos.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
+  const egresosMesActual = egresos.filter(e => e.fecha?.startsWith(mesActualStr));
+  const totalEgresosMes = egresosMesActual.reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
+  const totalIngresosMes = ventas.filter(v => v.fecha?.startsWith(mesActualStr)).reduce((acc, v) => acc + (parseFloat(v.monto) || 0), 0);
+  const gananciaNetaMes = totalIngresosMes - totalEgresosMes;
 
-  // ── Crear egreso ──────────────────────────────────────────────────────────
-  const handleCreate = async () => {
-    if (!form.descripcion.trim() || !form.monto) return;
-    setLoading(true);
-    const newEgreso = { id: crypto.randomUUID(), ...form, monto: parseFloat(form.monto) };
+  // Distribución de gastos del mes actual por categoría
+  const egresosPorCategoriaMes = useMemo(() => {
+    return CATEGORIAS.map(cat => {
+      const totalCat = egresosMesActual
+        .filter(e => e.categoria === cat.label)
+        .reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0);
+      return {
+        ...cat,
+        total: totalCat,
+        limit: categoryBudgets[cat.label] || cat.defaultLimit,
+        pct: Math.min(Math.round((totalCat / (categoryBudgets[cat.label] || cat.defaultLimit || 1)) * 100), 100)
+      };
+    }).sort((a, b) => b.total - a.total);
+  }, [egresosMesActual, categoryBudgets]);
+
+  // Transacciones Filtradas
+  const filteredEgresos = useMemo(() => {
+    return egresos.filter(e => {
+      const matchText = !filterText || e.descripcion?.toLowerCase().includes(filterText.toLowerCase()) || e.notas?.toLowerCase().includes(filterText.toLowerCase());
+      const matchCategory = filterCategory === 'Todas' || e.categoria === filterCategory;
+      const matchStart = !filterStartDate || e.fecha >= filterStartDate;
+      const matchEnd = !filterEndDate || e.fecha <= filterEndDate;
+      return matchText && matchCategory && matchStart && matchEnd;
+    }).sort((a, b) => b.fecha.localeCompare(a.fecha));
+  }, [egresos, filterText, filterCategory, filterStartDate, filterEndDate]);
+
+  // Mayor gasto del mes
+  const mayorGastoMes = useMemo(() => {
+    if (egresosMesActual.length === 0) return null;
+    return [...egresosMesActual].sort((a, b) => parseFloat(b.monto) - parseFloat(a.monto))[0];
+  }, [egresosMesActual]);
+
+  // Promedio diario del mes
+  const promedioDiarioMes = useMemo(() => {
+    if (egresosMesActual.length === 0) return 0;
+    const diasTranscurridos = ahora.getDate();
+    return totalEgresosMes / diasTranscurridos;
+  }, [egresosMesActual, totalEgresosMes]);
+
+  // ── Operaciones Egresos ─────────────────────────────────────────────────────
+  const handleSaveBudget = () => {
+    setMonthlyBudget(parseFloat(tempMonthlyBudget) || 0);
+    setCategoryBudgets(tempCategoryBudgets);
+    setIsEditingBudgets(false);
+  };
+
+  const handleOpenBudgetEditor = () => {
+    setTempMonthlyBudget(monthlyBudget);
+    setTempCategoryBudgets(categoryBudgets);
+    setIsEditingBudgets(true);
+  };
+
+  const handleCreateExpense = async () => {
+    if (!expenseForm.descripcion.trim() || !expenseForm.monto) return;
+    setExpenseLoading(true);
+    const newId = crypto.randomUUID();
+    const newEgreso = { 
+      id: newId, 
+      fecha: expenseForm.fecha,
+      descripcion: expenseForm.descripcion.trim(),
+      categoria: expenseForm.categoria,
+      monto: parseFloat(expenseForm.monto),
+      notas: expenseForm.notas.trim() || null
+    };
+
     try {
       const { error } = await supabase.from('egresos').insert(newEgreso);
       if (error) throw error;
       setData(prev => ({ ...prev, egresos: [newEgreso, ...prev.egresos] }));
-      setForm({ fecha: new Date().toISOString().split('T')[0], descripcion: '', categoria: 'Suscripción', monto: '', notas: '' });
-      setShowForm(false);
-    } catch (err) { alert('Error: ' + err.message); }
-    finally { setLoading(false); }
+      setExpenseForm({ fecha: new Date().toISOString().split('T')[0], descripcion: '', categoria: 'Suscripción', monto: '', notas: '' });
+      setShowExpenseForm(false);
+      if (onRefresh) onRefresh();
+    } catch (err) { 
+      alert('Error al guardar egreso: ' + err.message); 
+    } finally { 
+      setExpenseLoading(false); 
+    }
   };
 
-  // ── Eliminar ──────────────────────────────────────────────────────────────
-  const handleDelete = async (id) => {
-    if (!confirm('¿Eliminar este egreso?')) return;
+  const handleDeleteExpense = async (id) => {
+    if (!confirm('¿Seguro que deseas eliminar este registro de gasto?')) return;
     try {
-      await supabase.from('egresos').delete().eq('id', id);
+      const { error } = await supabase.from('egresos').delete().eq('id', id);
+      if (error) throw error;
       setData(prev => ({ ...prev, egresos: prev.egresos.filter(e => e.id !== id) }));
-    } catch (err) { alert('Error: ' + err.message); }
+      if (onRefresh) onRefresh();
+    } catch (err) { 
+      alert('Error al eliminar: ' + err.message); 
+    }
   };
 
-  // ── Gastos por categoría ──────────────────────────────────────────────────
-  const porCategoria = CATEGORIAS.map(cat => ({
-    ...cat,
-    total: egresos.filter(e => e.categoria === cat.label).reduce((acc, e) => acc + (parseFloat(e.monto) || 0), 0),
-  })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
+  // ── Operaciones Servicios/Suscripciones ──────────────────────────────────────
+  const handleOpenNewService = () => {
+    setEditingService(null);
+    setServiceForm({
+      nombre: '',
+      monto: '',
+      fecha_pago: new Date().toISOString().split('T')[0],
+      metodo: 'Tarjeta',
+      contacto: '',
+      notas: '',
+      tipo: 'Mensual'
+    });
+    setShowServiceForm(true);
+  };
+
+  const handleOpenEditService = (s) => {
+    setEditingService(s);
+    setServiceForm({
+      nombre: s.nombre,
+      monto: s.monto,
+      fecha_pago: s.fecha_pago,
+      metodo: s.metodo,
+      contacto: s.contacto || '',
+      notas: s.notas || '',
+      tipo: s.tipo || 'Mensual'
+    });
+    setShowServiceForm(true);
+  };
+
+  const handleSaveService = async () => {
+    if (!serviceForm.nombre.trim() || !serviceForm.monto || !serviceForm.fecha_pago) {
+      alert('Por favor completa los campos obligatorios (*).');
+      return;
+    }
+    setServiceLoading(true);
+
+    const payload = {
+      id: editingService ? editingService.id : crypto.randomUUID(),
+      nombre: serviceForm.nombre.trim(),
+      monto: parseFloat(serviceForm.monto) || 0,
+      fecha_pago: serviceForm.fecha_pago,
+      metodo: serviceForm.metodo,
+      contacto: serviceForm.contacto.trim() || null,
+      notas: serviceForm.notas.trim() || null,
+      tipo: serviceForm.tipo
+    };
+
+    try {
+      const { error } = await supabase.from('servicios').upsert(payload);
+      if (error) throw error;
+      
+      // Forzar recarga en componente principal
+      if (onRefresh) await onRefresh();
+      
+      setShowServiceForm(false);
+      setEditingService(null);
+    } catch (err) {
+      alert('Error al guardar servicio: ' + err.message);
+    } finally {
+      setServiceLoading(false);
+    }
+  };
+
+  const handleDeleteService = async (id) => {
+    if (!confirm('¿Deseas dar de baja o eliminar esta suscripción recurrente?')) return;
+    try {
+      const { error } = await supabase.from('servicios').delete().eq('id', id);
+      if (error) throw error;
+      if (onRefresh) onRefresh();
+    } catch (err) {
+      alert('Error al eliminar: ' + err.message);
+    }
+  };
+
+  const getMetodoIcon = (metodo) => {
+    if (metodo === 'Tarjeta') return CreditCard;
+    if (metodo === 'Banco') return Landmark;
+    return Banknote;
+  };
+
+  // Helper de colores para la barra de presupuesto
+  const getProgressColor = (pct) => {
+    if (pct < 70) return '#4ade80'; // verde
+    if (pct < 90) return '#fb923c'; // naranja
+    return '#f87171'; // rojo
+  };
+
+  const budgetUsagePercent = Math.min(Math.round((totalEgresosMes / (monthlyBudget || 1)) * 100), 100);
 
   return (
-    <div className="flex flex-col h-full w-full animate-in fade-in duration-300">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32 }}>
+    <div className="flex flex-col h-full w-full select-none" style={{ color: t.text }}>
+      
+      {/* ── CABECERA ────────────────────────────────────────────────────────── */}
+      <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Mis Egresos</h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Control de gastos y balance mensual</p>
+          <h2 className="text-xl font-bold tracking-tight text-white mb-1">Mis Egresos</h2>
+          <p className="text-xs text-neutral-400 font-medium">Dashboard financiero avanzado, control de presupuestos y servicios fijos</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)}
-          style={{ padding: '10px 24px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'flex', alignItems: 'center', gap: 10, border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}>
-          <Plus size={16} strokeWidth={3}/> Registrar Egreso
-        </button>
+        
+        {/* Switcher de Pestañas */}
+        <div className="flex p-0.5 rounded-xl self-start lg:self-center" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: Activity },
+            { id: 'transacciones', label: 'Gastos Individuales', icon: Layers },
+            { id: 'suscripciones', label: 'Suscripciones & Servicios', icon: Wifi },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all"
+              style={{
+                backgroundColor: activeTab === tab.id ? t.accent : 'transparent',
+                color: activeTab === tab.id ? '#000' : t.textDim,
+              }}
+            >
+              <tab.icon size={12} />
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </header>
 
-      {/* Tarjetas de resumen */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 32 }}>
-        <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><CreditCard size={12}/> Total Gastado</p>
-          <p style={{ fontSize: 24, fontWeight: 300, color: t.text }}>${totalEgresos.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-        </div>
-        <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}><ArrowDownRight size={12}/> Egresos Este Mes</p>
-          <p style={{ fontSize: 24, fontWeight: 300, color: t.danger }}>${egresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-        </div>
-        <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>Ingresos Este Mes</p>
-          <p style={{ fontSize: 24, fontWeight: 300, color: t.success }}>${ingresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-          <p style={{ fontSize: 9, color: t.textMuted, marginTop: 4 }}>Ventas digitales</p>
-        </div>
-        <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-          <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 12 }}>Ganancia Neta Mes</p>
-          <p style={{ fontSize: 24, fontWeight: 300, fontFamily: 'monospace', color: gananciaNeta >= 0 ? t.success : t.danger }}>
-            {gananciaNeta >= 0 ? '+' : ''}${gananciaNeta.toLocaleString('en', { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-      </div>
+      {/* ── VISTA 1: DASHBOARD FINANCIERO ─────────────────────────────────────── */}
+      {activeTab === 'dashboard' && (
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+          
+          {/* Tarjetas KPI */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {/* KPI 1: Total Gastado */}
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 shadow-2xl flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                <span>Gastado Total</span>
+                <CreditCard size={14} className="text-neutral-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-light text-white tracking-tight">${totalEgresosAllTime.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Acumulado histórico</p>
+              </div>
+            </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 20, marginBottom: 32 }}>
-        {/* Gastos por categoría */}
-        {porCategoria.length > 0 && (
-          <div style={{ gridColumn: 'span 4', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, padding: 20, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-            <p style={{ fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: 16 }}>Por Categoría</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {porCategoria.map(cat => {
-                const Icon = cat.icon;
-                const pct = Math.round((cat.total / (totalEgresos || 1)) * 100);
-                return (
-                  <div key={cat.label}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6, color: t.textDim }}>
-                        <Icon size={10} color={t.accent}/>{cat.label}
-                      </span>
-                      <span style={{ fontSize: 10, color: t.textMuted, fontFamily: 'monospace' }}>${cat.total.toLocaleString('en', { maximumFractionDigits: 0 })}</span>
+            {/* KPI 2: Presupuesto Mensual */}
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 shadow-2xl flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                <span>Presupuesto Mes</span>
+                <Sliders size={14} className="text-neutral-500 cursor-pointer hover:text-white transition-colors" onClick={handleOpenBudgetEditor} />
+              </div>
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-light text-white tracking-tight">${monthlyBudget.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                  <button onClick={handleOpenBudgetEditor} className="text-[8px] text-neutral-500 font-bold hover:text-white uppercase tracking-wider">Ajustar</button>
+                </div>
+                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Límite mensual general</p>
+              </div>
+            </div>
+
+            {/* KPI 3: Ingresos del Mes */}
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 shadow-2xl flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                <span>Ingresos del Mes</span>
+                <TrendingUp size={14} className="text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-2xl font-light text-emerald-400 tracking-tight">${totalIngresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                <p className="text-[9px] text-neutral-500 mt-1 font-bold">De ventas digitales</p>
+              </div>
+            </div>
+
+            {/* KPI 4: Margen Neto */}
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 shadow-2xl flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]">
+              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
+                <span>Margen Neto Mes</span>
+                {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
+              </div>
+              <div>
+                <p className={`text-2xl font-semibold tracking-tight ${gananciaNetaMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {gananciaNetaMes >= 0 ? '+' : ''}${gananciaNetaMes.toLocaleString('en', { minimumFractionDigits: 2 })}
+                </p>
+                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Balance de ganancias</p>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Segunda fila: Progreso Presupuesto y Límites Categorías */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Columna Izquierda: Progreso General */}
+            <div className="lg:col-span-5 bg-zinc-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl flex flex-col justify-between gap-6">
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-2">Presupuesto Mensual Consumido</h3>
+                <p className="text-[10px] text-neutral-400">Consumo total del presupuesto asignado para el periodo mensual actual</p>
+              </div>
+
+              {/* Progress Visual */}
+              <div className="flex flex-col items-center justify-center py-4">
+                <div className="relative w-36 h-36 flex items-center justify-center rounded-full border border-white/5 bg-zinc-950/40 shadow-inner">
+                  {/* Círculo de progreso estilizado */}
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.02)" strokeWidth="6" fill="transparent" />
+                    <circle 
+                      cx="50" 
+                      cy="50" 
+                      r="42" 
+                      stroke={getProgressColor(budgetUsagePercent)} 
+                      strokeWidth="6" 
+                      fill="transparent" 
+                      strokeDasharray={2 * Math.PI * 42}
+                      strokeDashoffset={(2 * Math.PI * 42) * (1 - budgetUsagePercent / 100)}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className="absolute text-center">
+                    <span className="text-3xl font-black text-white">{budgetUsagePercent}%</span>
+                    <span className="text-[8px] text-neutral-500 font-bold uppercase tracking-widest block mt-1">Consumido</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status details */}
+              <div className="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5 text-[11px] font-medium">
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">Total Consumido:</span>
+                  <span className="text-white">${totalEgresosMes.toLocaleString('en', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">Presupuesto Límite:</span>
+                  <span className="text-white">${monthlyBudget.toLocaleString('en', { minimumFractionDigits: 2 })}</span>
+                </div>
+                <div className="h-px bg-white/5 my-2"></div>
+                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wide">
+                  <span className="text-neutral-400">Remanente Disponible:</span>
+                  <span className={monthlyBudget - totalEgresosMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                    ${(monthlyBudget - totalEgresosMes).toLocaleString('en', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Columna Derecha: Límites por Categoría */}
+            <div className="lg:col-span-7 bg-zinc-900/40 backdrop-blur-xl p-6 rounded-3xl border border-white/5 shadow-2xl flex flex-col gap-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Presupuestos por Categoría</h3>
+                  <p className="text-[10px] text-neutral-400">Control de gastos específicos del mes</p>
+                </div>
+                <button onClick={handleOpenBudgetEditor} className="text-[9px] font-black uppercase tracking-widest bg-white/5 border border-white/5 rounded-lg px-3 py-1.5 hover:bg-white/10 transition-colors">
+                  Configurar Límites
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                {egresosPorCategoriaMes.map(cat => {
+                  const Icon = cat.icon;
+                  const isExceeded = cat.total > cat.limit;
+                  return (
+                    <div key={cat.label} className="bg-zinc-950/20 p-3 rounded-xl border border-white/5 flex flex-col gap-2">
+                      <div className="flex items-center justify-between text-[11px] font-semibold">
+                        <span className="flex items-center gap-2" style={{ color: cat.color }}>
+                          <Icon size={12} />
+                          {cat.label}
+                        </span>
+                        <div className="flex items-center gap-1.5 font-mono text-[10px]">
+                          <span className={isExceeded ? 'text-rose-400 font-bold' : 'text-white'}>
+                            ${cat.total.toLocaleString('en', { maximumFractionDigits: 0 })}
+                          </span>
+                          <span className="text-neutral-500">/</span>
+                          <span className="text-neutral-400">${cat.limit.toLocaleString('en', { maximumFractionDigits: 0 })}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Bar */}
+                      <div className="h-2 w-full bg-white/5 rounded-xl overflow-hidden">
+                        <div 
+                          className="h-full rounded-xl transition-all duration-700"
+                          style={{
+                            width: `${cat.pct}%`,
+                            backgroundColor: getProgressColor(cat.pct)
+                          }}
+                        />
+                      </div>
+
+                      {/* Warning if exceeded */}
+                      <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider">
+                        <span className="text-neutral-500">{cat.pct}% del límite consumido</span>
+                        {isExceeded && (
+                          <span className="text-rose-400 flex items-center gap-1">
+                            <AlertTriangle size={10} /> Presupuesto Excedido por ${(cat.total - cat.limit).toLocaleString('en', { maximumFractionDigits: 0 })}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ height: 4, backgroundColor: t.accentSoft, borderRadius: 10, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', backgroundColor: t.accent, borderRadius: 10, transition: 'all 0.5s', width: `${pct}%` }}/>
+                  );
+                })}
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Fila 3: Estadísticas rápidas */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            {/* Estadística 1: Mayor Gasto */}
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
+                <TrendingDown size={20} />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Mayor Gasto del Mes</span>
+                {mayorGastoMes ? (
+                  <>
+                    <h5 className="text-xs font-bold text-white truncate mt-1">{mayorGastoMes.descripcion}</h5>
+                    <p className="text-[11px] font-bold text-rose-400 mt-0.5 font-mono">-${parseFloat(mayorGastoMes.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
+                  </>
+                ) : (
+                  <p className="text-[10px] text-neutral-500 italic mt-1">Sin egresos registrados</p>
+                )}
+              </div>
+            </div>
+
+            {/* Estadística 2: Promedio Diario */}
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center flex-shrink-0">
+                <Calendar size={20} />
+              </div>
+              <div>
+                <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Gasto Diario Promedio</span>
+                <p className="text-sm font-bold text-white mt-1 font-mono">${promedioDiarioMes.toLocaleString('en', { minimumFractionDigits: 2 })} / día</p>
+                <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mt-0.5">Mes transcurrido</p>
+              </div>
+            </div>
+
+            {/* Estadística 3: Frecuencia de Gastos */}
+            <div className="bg-zinc-900/40 backdrop-blur-xl p-5 rounded-2xl border border-white/5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center flex-shrink-0">
+                <Activity size={20} />
+              </div>
+              <div>
+                <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Transacciones del Mes</span>
+                <p className="text-sm font-bold text-white mt-1">{egresosMesActual.length} operaciones</p>
+                <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mt-0.5">En el periodo actual</p>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* ── VISTA 2: LISTADO DE GASTOS ─────────────────────────────────────────── */}
+      {activeTab === 'transacciones' && (
+        <div className="flex flex-col gap-5 animate-in fade-in duration-500">
+          
+          {/* Controles de Búsqueda y Filtrado */}
+          <div className="bg-zinc-900/40 backdrop-blur-xl p-4 rounded-2xl border border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
+              
+              {/* Buscador */}
+              <div className="relative w-full sm:w-[220px]">
+                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar gastos..."
+                  value={filterText}
+                  onChange={e => setFilterText(e.target.value)}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl pl-10 pr-4 py-2 text-xs outline-none text-white focus:border-white/20 transition-all"
+                />
+              </div>
+
+              {/* Categorías */}
+              <div className="relative">
+                <select
+                  value={filterCategory}
+                  onChange={e => setFilterCategory(e.target.value)}
+                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20"
+                >
+                  <option value="Todas">Todas las Categorías</option>
+                  {CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
+                </select>
+              </div>
+
+              {/* Rango de Fechas */}
+              <div className="flex items-center gap-2 text-neutral-500 text-xs font-semibold">
+                <input
+                  type="date"
+                  value={filterStartDate}
+                  onChange={e => setFilterStartDate(e.target.value)}
+                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 focus:border-white/20"
+                />
+                <span>a</span>
+                <input
+                  type="date"
+                  value={filterEndDate}
+                  onChange={e => setFilterEndDate(e.target.value)}
+                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 focus:border-white/20"
+                />
+              </div>
+
+              {/* Limpiar Filtros */}
+              {(filterText || filterCategory !== 'Todas' || filterStartDate || filterEndDate) && (
+                <button
+                  onClick={() => { setFilterText(''); setFilterCategory('Todas'); setFilterStartDate(''); setFilterEndDate(''); }}
+                  className="text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white px-2 py-1 transition-all"
+                >
+                  Limpiar Filtros
+                </button>
+              )}
+
+            </div>
+
+            {/* Registrar Egreso */}
+            <button
+              onClick={() => setShowExpenseForm(true)}
+              className="w-full md:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95"
+              style={{ backgroundColor: t.accent, color: '#000' }}
+            >
+              <Plus size={14} strokeWidth={3} /> Registrar Egreso
+            </button>
+          </div>
+
+          {/* Tabla de Egresos */}
+          <div className="bg-zinc-900/40 backdrop-blur-xl rounded-2xl border border-white/5 overflow-hidden shadow-2xl">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/5 bg-white/2">
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Descripción / Detalles</th>
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Categoría</th>
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Fecha</th>
+                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400 text-right">Monto</th>
+                    <th className="px-5 py-4 w-12"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredEgresos.length > 0 ? (
+                    filteredEgresos.map(e => {
+                      const cat = catConfig[e.categoria] || catConfig['Otro'];
+                      const Icon = cat.icon;
+                      return (
+                        <tr 
+                          key={e.id}
+                          className="border-b border-white/5 hover:bg-white/1 transition-all group"
+                        >
+                          <td className="px-5 py-4">
+                            <p className="text-xs font-semibold text-white">{e.descripcion}</p>
+                            {e.notas && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {e.notas}</p>}
+                          </td>
+                          <td className="px-5 py-4">
+                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-white/5 bg-white/2" style={{ color: cat.color }}>
+                              <Icon size={10} />
+                              {e.categoria}
+                            </span>
+                          </td>
+                          <td className="px-5 py-4 font-mono text-[10px] text-neutral-400">{e.fecha}</td>
+                          <td className="px-5 py-4 text-right font-mono text-xs font-black text-rose-400">
+                            -${parseFloat(e.monto).toLocaleString('en', { minimumFractionDigits: 2 })}
+                          </td>
+                          <td className="px-5 py-4">
+                            <button
+                              onClick={() => handleDeleteExpense(e.id)}
+                              className="p-2.5 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="px-5 py-12 text-center text-xs text-neutral-500 italic">
+                        No se encontraron registros de gastos.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ── VISTA 3: SUSCRIPCIONES Y SERVICIOS ──────────────────────────────────── */}
+      {activeTab === 'suscripciones' && (
+        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+          
+          {/* Cabecera Pestaña */}
+          <div className="flex items-center justify-between bg-zinc-900/40 backdrop-blur-xl p-4 rounded-2xl border border-white/5">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Suscripciones Activas</h3>
+              <p className="text-[10px] text-neutral-400">Gastos recurrentes y servicios fijos registrados ({servicios.length} activos)</p>
+            </div>
+            <button
+              onClick={handleOpenNewService}
+              className="px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95"
+              style={{ backgroundColor: t.accent, color: '#000' }}
+            >
+              <Plus size={14} strokeWidth={3} /> Registrar Suscripción
+            </button>
+          </div>
+
+          {/* Grid de Suscripciones */}
+          {servicios.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {servicios.map(s => {
+                const MetodoIcon = getMetodoIcon(s.metodo);
+                const hasExpired = s.fecha_pago && new Date(s.fecha_pago) < new Date();
+                return (
+                  <div 
+                    key={s.id}
+                    className="bg-zinc-900/40 backdrop-blur-xl rounded-2xl border border-white/5 p-5 flex flex-col justify-between min-h-[220px] transition-all hover:border-white/10 group"
+                  >
+                    <div>
+                      {/* Top metadata */}
+                      <div className="flex justify-between items-start gap-4 mb-4">
+                        <div className="p-2.5 rounded-xl bg-white/2 border border-white/5 text-neutral-400">
+                          <MetodoIcon size={16} />
+                        </div>
+                        <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleOpenEditService(s)}
+                            className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-colors"
+                          >
+                            <Edit3 size={12} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteService(s.id)}
+                            className="p-1.5 rounded-lg text-neutral-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Nombre y Costo */}
+                      <h4 className="text-sm font-bold text-white truncate mb-1">{s.nombre}</h4>
+                      <p className="text-xl font-bold tracking-tight text-white font-mono mb-4">
+                        {parseFloat(s.monto).toLocaleString('en', { minimumFractionDigits: 2 })}{' '}
+                        <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Bs.</span>
+                        <span className="text-[9px] text-neutral-400 font-medium lowercase tracking-normal"> ({s.tipo})</span>
+                      </p>
+                    </div>
+
+                    {/* Vencimiento y contacto */}
+                    <div className="pt-4 border-t border-white/5 flex flex-col gap-2.5 text-[10px] font-semibold tracking-wide uppercase">
+                      <div className="flex items-center justify-between">
+                        <span className="text-neutral-500 flex items-center gap-1.5"><Calendar size={12} /> Próximo Pago</span>
+                        <span className={`font-mono ${hasExpired ? 'text-rose-400 font-bold animate-pulse' : 'text-neutral-200'}`}>
+                          {s.fecha_pago || 'N/A'}
+                        </span>
+                      </div>
+                      
+                      {s.contacto && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-neutral-500 flex items-center gap-1.5"><Mail size={12} /> Contacto</span>
+                          <span className="text-neutral-300 normal-case font-medium truncate max-w-[150px]">{s.contacto}</span>
+                        </div>
+                      )}
+
+                      {s.notas && (
+                        <div className="mt-2 bg-black/20 p-2.5 rounded-xl border border-white/5 text-[9px] text-neutral-400 font-medium normal-case flex gap-1.5 items-start">
+                          <FileText size={10} className="text-neutral-500 mt-0.5 flex-shrink-0" />
+                          <span className="italic">{s.notas}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="py-20 text-center bg-zinc-900/40 border border-white/5 rounded-2xl shadow-2xl">
+              <Wifi size={32} className="mx-auto text-neutral-600 mb-3" />
+              <h5 className="text-sm font-bold text-white uppercase tracking-wider">Sin suscripciones</h5>
+              <p className="text-[10px] text-neutral-500 font-semibold uppercase tracking-widest mt-1">Registra tu primer servicio recurrente</p>
+            </div>
+          )}
 
-        {/* Formulario si está abierto */}
-        {showForm && (
-          <div style={{ gridColumn: 'span 8', backgroundColor: t.panel, border: `1px solid ${t.accent}33`, borderRadius: 14, padding: 24, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-            <h3 style={{ fontSize: 11, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 700, marginBottom: 16 }}>Nuevo Egreso</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              <div style={{ gridColumn: 'span 2' }}>
-                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Descripción *</label>
-                <input type="text" value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})}
-                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
-                  placeholder="Ej: Adobe Creative Cloud" autoFocus
-                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
-                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
+        </div>
+      )}
+
+      {/* ── MODAL 1: CONFIGURAR PRESUPUESTOS ──────────────────────────────────── */}
+      {isEditingBudgets && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-black uppercase tracking-wider text-white">Presupuestos del Sistema</h3>
+              <button onClick={() => setIsEditingBudgets(false)} className="text-neutral-400 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-5 max-h-[60vh] overflow-y-auto pr-1 mac-scrollbar">
+              
+              {/* Presupuesto General */}
+              <div className="bg-black/20 p-4 rounded-xl border border-white/5">
+                <label className="text-[9px] font-black uppercase tracking-wider text-neutral-400 display: block mb-2">Presupuesto Mensual General ($)</label>
+                <div className="flex items-center gap-2 bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2">
+                  <span className="text-neutral-400 text-xs font-bold">$</span>
+                  <input
+                    type="number"
+                    value={tempMonthlyBudget}
+                    onChange={e => setTempMonthlyBudget(parseFloat(e.target.value) || 0)}
+                    className="w-full bg-transparent border-none text-xs outline-none text-white font-bold"
+                  />
+                </div>
               </div>
+
+              {/* Categorías específicas */}
+              <div className="space-y-4">
+                <h4 className="text-[10px] font-black uppercase tracking-widest text-white border-b border-white/5 pb-2">Límites por Categoría ($)</h4>
+                {CATEGORIAS.map(c => (
+                  <div key={c.label} className="flex items-center justify-between gap-4">
+                    <span className="text-xs font-bold text-neutral-300 flex items-center gap-2">
+                      <c.icon size={12} style={{ color: c.color }} />
+                      {c.label}
+                    </span>
+                    <div className="flex items-center gap-1.5 bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-1.5 w-28">
+                      <span className="text-neutral-500 text-[10px] font-bold">$</span>
+                      <input
+                        type="number"
+                        value={tempCategoryBudgets[c.label] || 0}
+                        onChange={e => {
+                          const val = parseFloat(e.target.value) || 0;
+                          setTempCategoryBudgets(prev => ({ ...prev, [c.label]: val }));
+                        }}
+                        className="w-full bg-transparent border-none text-xs text-right outline-none text-white font-mono"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+
+            <div className="flex gap-3 pt-6 border-t border-white/5 mt-6">
+              <button
+                onClick={() => setIsEditingBudgets(false)}
+                className="flex-1 py-3 bg-zinc-950/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveBudget}
+                className="flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: t.accent, color: '#000' }}
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 2: NUEVO GASTO INDIVIDUAL ─────────────────────────────────────── */}
+      {showExpenseForm && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-black uppercase tracking-wider text-white">Registrar Gasto</h3>
+              <button onClick={() => setShowExpenseForm(false)} className="text-neutral-400 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              
               <div>
-                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Categoría</label>
-                <select value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})}
-                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', cursor: 'pointer', boxSizing: 'border-box' }}>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Descripción *</label>
+                <input
+                  type="text"
+                  value={expenseForm.descripcion}
+                  onChange={e => setExpenseForm({...expenseForm, descripcion: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                  placeholder="Ej: Suscripción Adobe CC"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Monto ($) *</label>
+                  <input
+                    type="number"
+                    value={expenseForm.monto}
+                    onChange={e => setExpenseForm({...expenseForm, monto: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all font-mono"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Fecha</label>
+                  <input
+                    type="date"
+                    value={expenseForm.fecha}
+                    onChange={e => setExpenseForm({...expenseForm, fecha: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-neutral-400 focus:border-white/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Categoría</label>
+                <select
+                  value={expenseForm.categoria}
+                  onChange={e => setExpenseForm({...expenseForm, categoria: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20 transition-all"
+                >
                   {CATEGORIAS.map(c => <option key={c.label}>{c.label}</option>)}
                 </select>
               </div>
+
               <div>
-                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Monto ($) *</label>
-                <input type="number" value={form.monto} onChange={e => setForm({...form, monto: e.target.value})}
-                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
-                  placeholder="0.00"
-                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
-                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Notas / Detalles</label>
+                <textarea
+                  value={expenseForm.notas}
+                  onChange={e => setExpenseForm({...expenseForm, notas: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all resize-none h-16"
+                  placeholder="Detalles opcionales..."
+                />
               </div>
-              <div>
-                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Fecha</label>
-                <input type="date" value={form.fecha} onChange={e => setForm({...form, fecha: e.target.value})}
-                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.textMuted, outline: 'none', boxSizing: 'border-box', transition: 'border-color 0.2s' }}
-                  onFocus={e => e.currentTarget.style.borderColor = t.accent}
-                  onBlur={e => e.currentTarget.style.borderColor = t.borderLight}/>
-              </div>
-              <div>
-                <label style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontWeight: 700, marginBottom: 6, display: 'block' }}>Notas</label>
-                <input type="text" value={form.notas} onChange={e => setForm({...form, notas: e.target.value})}
-                  style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, color: t.text, outline: 'none', boxSizing: 'border-box' }}
-                  placeholder="Opcional..."/>
-              </div>
+
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 20 }}>
-              <button onClick={() => setShowForm(false)}
-                style={{ padding: '8px 16px', fontSize: 11, color: t.textDim, background: 'none', border: 'none', cursor: 'pointer', transition: 'color 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.color = t.text}
-                onMouseLeave={e => e.currentTarget.style.color = t.textDim}>
+
+            <div className="flex gap-3 pt-6 border-t border-white/5 mt-6">
+              <button
+                onClick={() => setShowExpenseForm(false)}
+                className="flex-1 py-3 bg-zinc-950/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white transition-colors"
+                disabled={expenseLoading}
+              >
                 Cancelar
               </button>
-              <button onClick={handleCreate} disabled={loading || !form.descripcion || !form.monto}
-                style={{ padding: '10px 24px', backgroundColor: loading || !form.descripcion || !form.monto ? t.textMuted : t.accent, color: '#000', borderRadius: 12, fontWeight: 900, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', border: 'none', cursor: loading || !form.descripcion || !form.monto ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}>
-                {loading ? 'Guardando...' : 'Registrar Egreso'}
+              <button
+                onClick={handleCreateExpense}
+                className="flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                style={{ backgroundColor: t.accent, color: '#000' }}
+                disabled={expenseLoading || !expenseForm.descripcion || !expenseForm.monto}
+              >
+                {expenseLoading ? 'Registrando...' : 'Registrar Gasto'}
               </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Tabla de egresos */}
-      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-        <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
-              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Descripción</th>
-              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Categoría</th>
-              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em' }}>Fecha</th>
-              <th style={{ padding: '12px 16px', fontSize: 9, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.2em', textAlign: 'right' }}>Monto</th>
-              <th style={{ padding: '12px 16px', width: 40 }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {egresos.length > 0 ? [...egresos].sort((a, b) => b.fecha?.localeCompare(a.fecha)).map(e => {
-              const cat = catConfig[e.categoria] || catConfig['Otro'];
-              const Icon = cat.icon;
-              return (
-                <tr key={e.id}
-                  style={{ borderBottom: `1px solid ${t.border}`, transition: 'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                  <td style={{ padding: '12px 16px' }}>
-                    <p style={{ fontSize: 12, color: t.text, fontWeight: 500, margin: 0 }}>{e.descripcion}</p>
-                    {e.notas && <p style={{ fontSize: 10, color: t.textMuted, marginTop: 2 }}>{e.notas}</p>}
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, color: t.textDim }}>
-                      <Icon size={10} color={t.accent}/>{e.categoria}
-                    </span>
-                  </td>
-                  <td style={{ padding: '12px 16px', fontSize: 11, color: t.textDim, fontFamily: 'monospace' }}>{e.fecha}</td>
-                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                    <p style={{ fontSize: 13, fontFamily: 'monospace', fontWeight: 700, color: t.danger, margin: 0 }}>-${parseFloat(e.monto).toLocaleString('en', { minimumFractionDigits: 2 })}</p>
-                  </td>
-                  <td style={{ padding: '12px 16px' }}>
-                    <button onClick={() => handleDelete(e.id)}
-                      style={{ padding: 6, borderRadius: 8, border: 'none', backgroundColor: 'transparent', color: t.textMuted, cursor: 'pointer', transition: 'all 0.2s' }}
-                      onMouseEnter={e => { e.currentTarget.style.color = t.danger; }}
-                      onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; }}>
-                      <Trash2 size={13}/>
-                    </button>
-                  </td>
-                </tr>
-              );
-            }) : (
-              <tr><td colSpan="5" style={{ padding: '40px 16px', textAlign: 'center', color: t.textDim, fontSize: 11, fontStyle: 'italic' }}>Sin egresos registrados.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* ── MODAL 3: NUEVA/EDITAR SUSCRIPCIÓN RECURRENTE ─────────────────────────── */}
+      {showServiceForm && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-black uppercase tracking-wider text-white">
+                {editingService ? 'Modificar Suscripción' : 'Nueva Suscripción'}
+              </h3>
+              <button onClick={() => { setShowServiceForm(false); setEditingService(null); }} className="text-neutral-400 hover:text-white transition-colors">
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              
+              <div>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Nombre del Servicio *</label>
+                <input
+                  type="text"
+                  value={serviceForm.nombre}
+                  onChange={e => setServiceForm({...serviceForm, nombre: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                  placeholder="Ej: Netflix, Google Workspace..."
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Costo Mensual (Bs.) *</label>
+                  <input
+                    type="number"
+                    value={serviceForm.monto}
+                    onChange={e => setServiceForm({...serviceForm, monto: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all font-mono"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Próxima Fecha de Pago *</label>
+                  <input
+                    type="date"
+                    value={serviceForm.fecha_pago}
+                    onChange={e => setServiceForm({...serviceForm, fecha_pago: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-neutral-400 focus:border-white/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Frecuencia / Tipo</label>
+                  <select
+                    value={serviceForm.tipo}
+                    onChange={e => setServiceForm({...serviceForm, tipo: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20 transition-all"
+                  >
+                    <option value="Mensual">Mensual</option>
+                    <option value="Bimestral">Bimestral</option>
+                    <option value="Trimestral">Trimestral</option>
+                    <option value="Semestral">Semestral</option>
+                    <option value="Anual">Anual</option>
+                    <option value="Único">Pago Único</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Método de Pago</label>
+                  <select
+                    value={serviceForm.metodo}
+                    onChange={e => setServiceForm({...serviceForm, metodo: e.target.value})}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20 transition-all"
+                  >
+                    <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
+                    <option value="Banco">Transferencia Bancaria</option>
+                    <option value="Efectivo">Efectivo</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Contacto / Soporte</label>
+                <input
+                  type="text"
+                  value={serviceForm.contacto}
+                  onChange={e => setServiceForm({...serviceForm, contacto: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                  placeholder="Ej: Correo, Teléfono de soporte o URL"
+                />
+              </div>
+
+              <div>
+                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Notas / Enlaces</label>
+                <textarea
+                  value={serviceForm.notes}
+                  onChange={e => setServiceForm({...serviceForm, notas: e.target.value})}
+                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all resize-none h-16"
+                  placeholder="Credenciales de acceso, links de cobro..."
+                />
+              </div>
+
+            </div>
+
+            <div className="flex gap-3 pt-6 border-t border-white/5 mt-6">
+              <button
+                onClick={() => { setShowServiceForm(false); setEditingService(null); }}
+                className="flex-1 py-3 bg-zinc-950/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white transition-colors"
+                disabled={serviceLoading}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveService}
+                className="flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                style={{ backgroundColor: t.accent, color: '#000' }}
+                disabled={serviceLoading || !serviceForm.nombre || !serviceForm.monto || !serviceForm.fecha_pago}
+              >
+                {serviceLoading ? 'Guardando...' : editingService ? 'Guardar Cambios' : 'Registrar Servicio'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
