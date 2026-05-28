@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 /**
- * Genera un PDF profesional de factura/recibo para Sovereign OS
+ * Genera un PDF profesional de factura/recibo
  * @param {Object} client - Datos del cliente
  * @param {Object} meeting - Datos de la sesión/proyecto
  * @param {Object} item - Hito de pago específico
@@ -92,7 +92,7 @@ export const generateSovereignInvoice = (client, meeting, item, studioName = 'Sy
   // --- FOOTER ---
   doc.setFontSize(8);
   doc.setTextColor(180, 180, 180);
-  doc.text('Gracias por confiar en el sistema de producción Sovereign OS.', 105, 285, { align: 'center' });
+  doc.text('Gracias por confiar en Sync Pro.', 105, 285, { align: 'center' });
 
   // Descargar el PDF
   const filename = `Recibo_${client.nombre.replace(/\s+/g, '_')}_${dateStr.replace(/\//g, '-')}.pdf`;

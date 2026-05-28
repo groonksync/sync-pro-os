@@ -9,11 +9,11 @@ const __dirname = path.dirname(__filename);
 let mainWindow;
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
     titleBarStyle: 'hiddenInset',
-    icon: path.join(__dirname, '../public/logo.png'),
+    icon: path.join(__dirname, '../public/isologo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,

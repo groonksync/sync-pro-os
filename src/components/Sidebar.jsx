@@ -123,16 +123,14 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
           className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
           style={{ backgroundColor: 'transparent' }}
         >
-          <img 
-            src="/logo.png" 
-            alt="Sovereign OS" 
-            className="w-8 h-8 object-contain"
-            style={{ filter: 'brightness(1)' }}
-          />
+          {isDark ? (
+            <img src="/logo_blanco.png" alt="Logo" className="w-8 h-8 object-contain" />
+          ) : (
+            <img src="/logo_negro.png" alt="Logo" className="w-8 h-8 object-contain" />
+          )}
         </div>
         {!isCollapsed && (
           <div className="animate-in fade-in slide-in-from-left-4 duration-500">
-            <h1 className="text-sm font-bold tracking-tight" style={{ color: t.text }}>Sovereign OS</h1>
             <p className="text-[10px] font-medium" style={{ color: t.textDim }}>Panel de Control</p>
           </div>
         )}

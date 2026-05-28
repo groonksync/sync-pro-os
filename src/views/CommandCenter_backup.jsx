@@ -76,7 +76,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
       {/* HEADER ADAPTATIVO CON MONITOR DE IA */}
       <header className={`grid ${isMobile ? 'grid-cols-1 gap-6' : 'grid-cols-3 gap-8'} items-start`}>
         <div className={isMobile ? 'text-center space-y-2' : 'col-span-1'}>
-          <h2 className={`font-black tracking-tighter uppercase ${isMobile ? 'text-3xl' : 'text-4xl'}`}>Sovereign OS</h2>
+          <h2 className={`font-black tracking-tighter uppercase ${isMobile ? 'text-3xl' : 'text-4xl'}`}>Principal</h2>
           <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.4em] flex items-center justify-center md:justify-start gap-2">
             <Activity size={14} className="text-emerald-500" /> Centro de Control Activo
           </p>

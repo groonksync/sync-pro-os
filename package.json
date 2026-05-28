@@ -58,6 +58,7 @@
       "target": [
         "dmg"
       ],
+      "icon": "public/isologo.png",
       "identity": null
     },
     "files": [

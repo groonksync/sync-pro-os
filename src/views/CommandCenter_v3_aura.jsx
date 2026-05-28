@@ -116,7 +116,7 @@ const CommandCenter = ({ meetingsList = [], data = { prestamos: [] }, servicios 
       {/* SECCIÓN DE BIENVENIDA (ESTILO LUXURY) */}
       <section className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
         <div className="space-y-2">
-           <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.4em] mb-4">Sovereign OS / v4.2 Aura</p>
+           <p className="text-[10px] text-neutral-500 font-black uppercase tracking-[0.4em] mb-4">v4.2 Aura</p>
            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-none">
               {getGreeting()}, <span className="text-white/40 font-medium italic">Carlos</span>
            </h2>

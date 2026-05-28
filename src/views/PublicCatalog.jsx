@@ -770,6 +770,7 @@ const PublicCatalog = () => {
                     WHATSAPP_NUMBER={WHATSAPP_NUMBER}
                   />
                 ))}
+
               </div>
             </div>
           )}

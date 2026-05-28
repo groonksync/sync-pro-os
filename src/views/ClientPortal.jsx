@@ -192,7 +192,7 @@ const ClientPortal = ({ portalId }) => {
       {/* FOOTER */}
       <footer className="mt-40 border-t border-white/5 py-20 text-center px-10">
          <div className="max-w-md mx-auto space-y-6">
-            <h4 className="text-xl font-black uppercase tracking-tighter text-white">Sovereign OS</h4>
+            <h4 className="text-xl font-black uppercase tracking-tighter text-white">Principal</h4>
             <p className="text-[10px] text-neutral-700 font-black uppercase tracking-[0.4em] leading-relaxed">
               Sistema de Gestión de Talento & Producción de Video de Alta Gama. Desarrollado para Creadores de Élite.
             </p>

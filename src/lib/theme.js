@@ -1,4 +1,4 @@
-// Tema compartido para todo Sovereign OS
+// Tema compartido
 // Modo Noche (default) y Modo Día
 export const getTheme = (isDark = true) => ({
   isDark,

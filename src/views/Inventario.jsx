@@ -1194,6 +1194,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
         </div>
       )}
 
+
       {/* TOP HEADER PANEL */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
