@@ -120,16 +120,23 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
       {/* Logo - fixed height to keep nav items aligned in both states */}
       <div className="flex justify-center items-center" style={{ height: '135px' }}>
         <div 
-          className={`rounded-xl flex items-center justify-center shrink-0 overflow-hidden ${isCollapsed ? 'w-10 h-10' : 'w-[127px] h-[127px]'}`}
-          style={{ backgroundColor: 'transparent' }}
+          className="rounded-xl flex items-center justify-center shrink-0 overflow-hidden transition-all duration-500 ease-in-out"
+          style={{ backgroundColor: 'transparent', width: isCollapsed ? '40px' : '127px', height: isCollapsed ? '40px' : '127px' }}
         >
-          {isCollapsed ? (
-            <img src="/isologo.png" alt="Logo" className="w-9 h-9 object-contain" />
-          ) : isDark ? (
-            <img src="/logo_blanco.png" alt="Logo" className="w-[123px] h-[123px] object-contain" />
-          ) : (
-            <img src="/logo_negro.png" alt="Logo" className="w-[123px] h-[123px] object-contain" />
-          )}
+          <div className="relative w-[123px] h-[123px] flex items-center justify-center">
+            <img 
+              src={isDark ? "/logo_blanco.png" : "/logo_negro.png"} 
+              alt="Logo" 
+              className="absolute w-[123px] h-[123px] object-contain transition-all duration-500 ease-in-out"
+              style={{ opacity: isCollapsed ? 0 : 1 }}
+            />
+            <img 
+              src="/isologo.png" 
+              alt="Logo" 
+              className="absolute w-9 h-9 object-contain transition-all duration-500 ease-in-out"
+              style={{ opacity: isCollapsed ? 1 : 0 }}
+            />
+          </div>
         </div>
       </div>
 
