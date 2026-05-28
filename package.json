@@ -2,7 +2,7 @@
   "name": "sync-pro-os",
   "private": true,
   "version": "0.0.0",
-  "description": "Sovereign OS - Estación de Trabajo Profesional",
+  "description": "Sync Pro - Estación de Trabajo Profesional",
   "author": "Groonk",
   "type": "module",
   "main": "electron/main.js",
@@ -12,7 +12,7 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && electron .\"",
-    "electron:build": "vite build && xattr -cr dist && electron-builder && rm -rf \"./Sovereign OS.app\" && cp -R \"release/mac-arm64/Sovereign OS.app\" \"./\" && cp \"release/Sovereign OS-0.0.0-arm64.dmg\" \"./Sovereign OS (Instalador).dmg\""
+    "electron:build": "vite build && xattr -cr dist && electron-builder && rm -rf \"./Sync Pro.app\" && cp -R \"release/mac-arm64/Sync Pro.app\" \"./\" && cp \"release/Sync Pro-0.0.0-arm64.dmg\" \"./Sync Pro.dmg\""
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.3",
@@ -48,8 +48,8 @@
     "wait-on": "^9.0.10"
   },
   "build": {
-    "appId": "com.sovereign.os",
-    "productName": "Sovereign OS",
+    "appId": "com.syncpro.os",
+    "productName": "Sync Pro",
     "directories": {
       "output": "release"
     },

@@ -118,12 +118,14 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
       </button>
 
       {/* Logo */}
-      <div className="mb-0 mt-1 flex justify-center">
+      <div className={`${isCollapsed ? 'mb-2 mt-2' : 'mb-0 mt-1'} flex justify-center`}>
         <div 
-          className="w-[127px] h-[127px] rounded-xl flex items-center justify-center shrink-0 overflow-hidden"
+          className={`rounded-xl flex items-center justify-center shrink-0 overflow-hidden ${isCollapsed ? 'w-9 h-9' : 'w-[127px] h-[127px]'}`}
           style={{ backgroundColor: 'transparent' }}
         >
-          {isDark ? (
+          {isCollapsed ? (
+            <img src="/isologo.png" alt="Logo" className="w-8 h-8 object-contain" />
+          ) : isDark ? (
             <img src="/logo_blanco.png" alt="Logo" className="w-[123px] h-[123px] object-contain" />
           ) : (
             <img src="/logo_negro.png" alt="Logo" className="w-[123px] h-[123px] object-contain" />
