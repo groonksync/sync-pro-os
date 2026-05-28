@@ -328,8 +328,18 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     };
 
     try {
-      const { error } = await supabase.from('servicios').upsert(payload);
-      if (error) throw error;
+      let { error } = await supabase.from('servicios').upsert(payload);
+      if (error) {
+        // Fallback robusto por si no existe la columna categoria
+        if (error.message && (error.message.includes("categoria") || error.message.includes("column"))) {
+          const { categoria, ...fallbackPayload } = payload;
+          fallbackPayload.notas = `[Categoría: ${serviceForm.categoria}] ${serviceForm.notas.trim() || ''}`.trim();
+          const retry = await supabase.from('servicios').upsert(fallbackPayload);
+          if (retry.error) throw retry.error;
+        } else {
+          throw error;
+        }
+      }
       
       // Forzar recarga en componente principal
       if (onRefresh) await onRefresh();
