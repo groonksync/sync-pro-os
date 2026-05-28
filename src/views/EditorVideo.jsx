@@ -11,7 +11,8 @@ import {
   Upload, Download, Bold, Italic, Strikethrough, List, CheckSquare, Table2, Heading1, Heading2,
   Facebook, Smartphone as TiktokIcon, Cloud, Sparkles, Type, Highlighter, TrendingUp, BarChart3,
   AlignLeft, AlignCenter, AlignRight, ListOrdered, ClipboardList, Briefcase, Edit3, Mail as MailIcon,
-  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2, Eye, EyeOff, Cpu, Wrench
+  Crown, Grid, LayoutGrid, Star, Gift, Shield, Building2, Eye, EyeOff, Cpu, Wrench,
+  ChevronDown
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
@@ -260,7 +261,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
   };
 
   const uniqueClients = useMemo(() => {
-    return clients.filter(c => normalizeText(t.nombre).includes(normalizeText(clientSearch)));
+    return clients.filter(c => normalizeText(c.nombre).includes(normalizeText(clientSearch)));
   }, [clients, clientSearch]);
 
   const filteredMeetings = useMemo(() => {
@@ -271,7 +272,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
   const filteredAgencyClients = useMemo(() => {
     let list = agencyClients;
     if (activeAgencyPlan !== 'Todos') {
-      list = list.filter(c => t.plan === activeAgencyPlan);
+      list = list.filter(c => c.plan === activeAgencyPlan);
     }
     return list;
   }, [agencyClients, activeAgencyPlan]);
@@ -289,8 +290,6 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     else if (val === 'DEL') setCalcDisplay(calcDisplay.length > 1 ? calcDisplay.slice(0, -1) : '0');
     else setCalcDisplay(prev => prev === '0' ? val : prev + val);
   };
-
-  const formatText = (cmd, val, e) => { e.preventDefault(); document.execCommand(cmd, false, val); };
 
   const registerSessionIncome = async (clientName, meetingTitle, price, currency, isAgency = false) => {
     if (!price || parseFloat(price) <= 0) return;
@@ -313,268 +312,275 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     } catch (e) { alert('Error al registrar: ' + e.message); }
   };
 
+  // Modern minimalism theme variables aligned with #141414
+  const backgroundStyle = { backgroundColor: '#141414', minHeight: '100vh' };
+
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden font-sans"
-      style={{ backgroundColor: t.bg, color: t.text }}>
+      style={{ backgroundColor: '#141414', color: t.text }}>
+      
+      {/* HEADER NAV */}
       <nav className="h-16 flex items-center justify-between px-6 relative z-50"
-        style={{ backgroundColor: t.bg, borderBottom: `1px solid ${t.border}` }}>
+        style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
          <div className="flex items-center gap-8">
             <div>
-               <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Editor de Video</h2>
-               <p style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '2px', fontWeight: 500 }}>Workspace de Control de Producción de Video</p>
+               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Editor de Video</h2>
+               <p style={{ fontSize: '0.7rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>Control de Producción & Hub de Negocios</p>
             </div>
-            <div className="flex rounded-xl p-0.5" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                <button onClick={() => setViewState('client-list')} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+            <div className="flex rounded-xl p-0.5" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
+                <button onClick={() => setViewState('client-list')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
-                    backgroundColor: viewState.includes('client') || viewState === 'session' ? t.accent : 'transparent',
-                    color: viewState.includes('client') || viewState === 'session' ? '#000000' : t.textDim,
+                    backgroundColor: viewState.includes('client') || viewState === 'session' ? '#141414' : 'transparent',
+                    border: viewState.includes('client') || viewState === 'session' ? `1px solid ${t.accent}` : '1px solid transparent',
+                    color: viewState.includes('client') || viewState === 'session' ? t.accent : t.textDim,
                   }}>Clientes</button>
-                <button onClick={() => setViewState('agency-hub')} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                <button onClick={() => setViewState('agency-hub')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
-                    backgroundColor: viewState.includes('agency') ? t.accent : 'transparent',
-                    color: viewState.includes('agency') ? '#000000' : t.textDim,
+                    backgroundColor: viewState.includes('agency') ? '#141414' : 'transparent',
+                    border: viewState.includes('agency') ? `1px solid ${t.accent}` : '1px solid transparent',
+                    color: viewState.includes('agency') ? t.accent : t.textDim,
                   }}>Agencia Pro</button>
-                <button onClick={() => setViewState('project-engine')} className="px-6 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"
+                <button onClick={() => setViewState('project-engine')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
-                    backgroundColor: viewState === 'project-engine' ? t.accent : 'transparent',
-                    color: viewState === 'project-engine' ? '#000000' : t.textDim,
+                    backgroundColor: viewState === 'project-engine' ? '#141414' : 'transparent',
+                    border: viewState === 'project-engine' ? `1px solid ${t.accent}` : '1px solid transparent',
+                    color: viewState === 'project-engine' ? t.accent : t.textDim,
                   }}>Edición de Video</button>
             </div>
          </div>
          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-               <div className="w-1.5 h-1.5 rounded-xl" style={{ backgroundColor: t.accent }}></div>
-               <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.accent }}>System Ready</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
+               <div className="w-1.5 h-1.5 rounded-xl animate-pulse" style={{ backgroundColor: t.accent }}></div>
+               <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.accent }}>System Online</span>
             </div>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
               <UserIcon size={16} color={t.textDim}/>
             </div>
          </div>
        </nav>
 
+       {/* CLIENTS LIST */}
        {viewState === 'client-list' && (
-        <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-700 overflow-y-auto mac-scrollbar">
-            {/* KPI STATUS BAR */}
+        <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
+            {/* Minimal KPI Board */}
             <div className="grid grid-cols-4 gap-3">
                {[
                  { label: 'Capacidad Operativa', val: '98.4%', icon: Activity },
                  { label: 'Proyectos en Render', val: uniqueClients.length, icon: Video },
-                 { label: 'Latencia Neural', val: '0.4ms', icon: Cpu },
+                 { label: 'Latencia de Sistema', val: '0.4ms', icon: Cpu },
                  { label: 'Base de Clientes', val: uniqueClients.length, icon: Users }
                ].map((s, i) => (
-                 <div key={i} className="flex items-center justify-between p-4 shadow-lg"
-                   style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 16 }}>
+                 <div key={i} className="flex items-center justify-between p-4"
+                   style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
                     <div>
                        <p className="text-[8px] font-black uppercase tracking-widest mb-1" style={{ color: t.textDim }}>{s.label}</p>
-                       <p className="text-xl font-black" style={{ color: 'white' }}>{s.val}</p>
+                       <p className="text-xl font-bold" style={{ color: 'white' }}>{s.val}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accentSoft }}>
-                      <s.icon size={18} color={t.accent}/>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}`, color: t.accent }}>
+                      <s.icon size={16} />
                     </div>
                  </div>
                ))}
             </div>
 
-            <header className="flex justify-between items-end pt-6">
+            <header className="flex justify-between items-end pt-4">
                <div>
-                  <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: 'white' }}>Agenda de Clientes</h2>
+                  <h2 className="text-base font-black uppercase tracking-wider text-white">Directorio de Nexus Clientes</h2>
                </div>
                <div className="flex gap-3">
-                  <div className="relative group">
-                     <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="BUSCAR..."
-                       className="rounded-xl py-3 pl-4 pr-5 text-[9px] font-black uppercase tracking-widest outline-none w-56 shadow-lg"
-                       style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
+                  <div className="relative">
+                     <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="FILTRAR..."
+                       className="rounded-lg py-2.5 pl-4 pr-5 text-[9px] font-black uppercase tracking-widest outline-none w-56 transition-all"
+                       style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                   </div>
-                  <button onClick={() => setIsClientModalOpen(true)} className="px-6 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-3 shadow-lg transition-all"
-                    style={{ backgroundColor: t.accent, color: '#000000' }}>
-                     <Plus size={16} strokeWidth={3}/> Nuevo Registro
+                  <button onClick={() => setIsClientModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
+                    style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                     <Plus size={14} strokeWidth={2}/> Añadir Registro
                   </button>
                </div>
             </header>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-2">
                {uniqueClients.map(cl => (
-                 <div key={cl.id} onClick={() => openClientProfile(cl)} className="p-5 flex flex-col items-center justify-center group relative overflow-hidden shadow-lg aspect-square cursor-pointer transition-all"
-                   style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 16 }}>
-                    <div className="absolute top-0 left-0 w-full h-0.5 opacity-0 group-hover:opacity-100 transition-all" style={{ background: `linear-gradient(to right, transparent, ${t.accent}66, transparent)` }}></div>
+                 <div key={cl.id} onClick={() => openClientProfile(cl)} className="p-5 flex flex-col items-center justify-center group relative overflow-hidden aspect-square cursor-pointer transition-all"
+                   style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
                     
-                    <div className="w-20 h-20 rounded-xl flex items-center justify-center overflow-hidden shadow-inner group-hover:scale-105 transition-all mb-5" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden mb-4" style={{ border: `1px solid ${t.border}` }}>
                        {cl.foto_url ? (
                          <img src={cl.foto_url} alt={cl.nombre} className="w-full h-full object-cover" />
                        ) : (
-                         <span className="text-2xl font-black transition-all" style={{ color: t.textDim }}>{cl.nombre.charAt(0)}</span>
+                         <span className="text-xl font-bold" style={{ color: t.textDim }}>{cl.nombre.charAt(0)}</span>
                        )}
                     </div>
 
-                    <p className="text-sm font-black uppercase tracking-widest truncate w-full text-center mb-1" style={{ color: 'white' }}>{cl.nombre}</p>
-                    <p className="text-[8px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: t.textDim }}>{cl.empresa || 'Independiente'}</p>
+                    <p className="text-xs font-black uppercase tracking-wider truncate w-full text-center mb-1 text-white">{cl.nombre}</p>
+                    <p className="text-[7px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textDim }}>{cl.empresa || 'Independiente'}</p>
                     
-                    <div className="flex flex-col items-center gap-0.5 mb-4">
-                       <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.textMuted }}>{cl.nacionalidad || 'Global'}</span>
-                       <span className="text-[7px] font-mono font-black uppercase tracking-widest" style={{ color: t.textDim }}>{cl.telefono || 'No Phone'}</span>
+                    <div className="flex flex-col items-center gap-0.5 mb-2">
+                       <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>{cl.nacionalidad || 'Global'}</span>
+                       <span className="text-[7px] font-mono" style={{ color: t.textDim }}>{cl.telefono || 'Sin Teléfono'}</span>
                     </div>
 
-                    <div className="mt-3 w-full pt-4 flex items-center justify-between opacity-30 group-hover:opacity-100 transition-all" style={{ borderTop: `1px solid ${t.border}` }}>
-                       <div className="flex gap-1">
-                          {[...Array(3)].map((_,i)=><Star key={i} size={8} color={t.accent} fill={t.accent}/>)}
-                       </div>
-                       <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>Active</span>
+                    <div className="mt-2 w-full pt-3 flex items-center justify-between opacity-50 group-hover:opacity-100 transition-all" style={{ borderTop: `1px solid ${t.border}` }}>
+                       <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>Enlace</span>
+                       <ChevronRight size={10} color={t.accent}/>
                     </div>
                  </div>
                ))}
             </div>
         </div>
-      )}
+       )}
 
-      {viewState === 'client-profile' && activeClient && (
-        <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1200px] mx-auto w-full animate-in slide-in-from-right duration-500 overflow-y-auto mac-scrollbar">
+       {/* CLIENT PROFILE */}
+       {viewState === 'client-profile' && activeClient && (
+        <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1200px] mx-auto w-full animate-in slide-in-from-right duration-400 overflow-y-auto mac-scrollbar">
            <header className="flex items-center justify-between">
-             <div className="flex items-center gap-5">
-               <button onClick={() => setViewState('client-list')} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                 style={{ backgroundColor: t.accentSoft }}>
-                 <ArrowLeft size={18} color={t.textMuted}/>
+             <div className="flex items-center gap-4">
+               <button onClick={() => setViewState('client-list')} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                 style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                 <ArrowLeft size={16} color={t.textDim}/>
                </button>
                <div>
-                 <h3 className="text-xl font-black uppercase tracking-tight" style={{ color: 'white' }}>{activeClient.nombre}</h3>
-                 <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>{activeClient.empresa || 'Independent Production'}</p>
+                 <h3 className="text-base font-black uppercase tracking-wider text-white">{activeClient.nombre}</h3>
+                 <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: t.textDim }}>{activeClient.empresa || 'Independent Production'}</p>
                </div>
              </div>
-             <button onClick={createMeeting} className="px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-3 shadow-xl transition-all"
-               style={{ backgroundColor: t.accent, color: '#000000' }}>
-               <Video size={16}/> Iniciar Producción
+             <button onClick={createMeeting} className="px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all"
+               style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+               <Video size={14}/> Iniciar Sesión
              </button>
            </header>
-           <div className="space-y-3">
+
+           <div className="space-y-3 pt-2">
              {filteredMeetings.map(m => (
-               <div key={m.id} onClick={() => openMeeting(m)} className="flex items-center justify-between p-4 shadow-lg cursor-pointer transition-all"
-                 style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 16 }}>
-                 <div className="flex items-center gap-6">
-                   <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accentSoft }}>
-                     <FileVideo size={22} color={t.accent}/>
+               <div key={m.id} onClick={() => openMeeting(m)} className="flex items-center justify-between p-4 cursor-pointer transition-all"
+                 style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
+                 <div className="flex items-center gap-4">
+                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
+                     <FileVideo size={18} color={t.accent}/>
                    </div>
                    <div>
-                     <h4 className="text-lg font-black uppercase tracking-tight" style={{ color: 'white' }}>{m.session_title}</h4>
-                     <p className="text-[9px] font-bold uppercase" style={{ color: t.textDim }}>{m.fecha}</p>
+                     <h4 className="text-sm font-black uppercase tracking-wider text-white">{m.session_title}</h4>
+                     <p className="text-[8px] font-mono text-neutral-400">{m.fecha}</p>
                    </div>
                  </div>
                  <div className="text-right">
-                   <p className="text-[7px] font-black uppercase mb-0.5" style={{ color: t.textDim }}>Elapsed</p>
-                   <p className="text-lg font-black font-mono" style={{ color: 'white' }}>{formatTime(m.total_time)}</p>
+                   <p className="text-[7px] font-bold uppercase mb-0.5" style={{ color: t.textDim }}>Tiempo Registrado</p>
+                   <p className="text-sm font-bold font-mono text-white">{formatTime(m.total_time)}</p>
                  </div>
                </div>
              ))}
              {filteredMeetings.length === 0 && (
-               <div className="text-center py-10 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px dashed ${t.border}` }}>
-                 <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin reuniones aún. Inicia una producción.</p>
+               <div className="text-center py-10 rounded-lg" style={{ backgroundColor: '#141414', border: `1px dashed ${t.border}` }}>
+                 <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin sesiones registradas. Comienza un nuevo flujo.</p>
                </div>
              )}
            </div>
         </div>
-      )}
+       )}
 
-      {viewState === 'agency-hub' && (
-        <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-700 overflow-y-auto mac-scrollbar">
-            {/* AGENCY KPI */}
+       {/* AGENCY HUB */}
+       {viewState === 'agency-hub' && (
+        <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
+            {/* Agency KPIs */}
             <div className="grid grid-cols-4 gap-3">
                {[
-                 { label: 'Proyectos Activos', val: agencyClients.length, icon: Target },
+                 { label: 'Campañas Activas', val: agencyClients.length, icon: Target },
                  { label: 'Conversión Mensual', val: '24%', icon: TrendingUp },
-                 { label: 'Nivel de Satisfacción', val: '9.8', icon: Star },
-                 { label: 'Empresas Vinculadas', val: agencyClients.length, icon: Building2 }
+                 { label: 'Nivel NPS', val: '9.8', icon: Star },
+                 { label: 'Marcas Aliadas', val: agencyClients.length, icon: Building2 }
                ].map((s, i) => (
-                 <div key={i} className="flex items-center justify-between p-4 shadow-lg"
-                   style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 16 }}>
+                 <div key={i} className="flex items-center justify-between p-4"
+                   style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
                     <div>
                        <p className="text-[8px] font-black uppercase tracking-widest mb-1" style={{ color: t.textDim }}>{s.label}</p>
-                       <p className="text-xl font-black" style={{ color: 'white' }}>{s.val}</p>
+                       <p className="text-xl font-bold" style={{ color: 'white' }}>{s.val}</p>
                     </div>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accentSoft }}>
-                      <s.icon size={18} color={t.accent}/>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}`, color: t.accent }}>
+                      <s.icon size={16} />
                     </div>
                  </div>
                ))}
             </div>
 
-            <header className="flex justify-between items-end pt-6">
+            <header className="flex justify-between items-end pt-4">
                <div>
-                  <h2 className="text-xl font-black uppercase tracking-tight" style={{ color: 'white' }}>Agency Pro Hub</h2>
+                  <h2 className="text-base font-black uppercase tracking-wider text-white">Agency Pro Planificador</h2>
                </div>
-               <button onClick={() => setIsCompanyModalOpen(true)} className="px-8 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-3 shadow-xl"
-                 style={{ backgroundColor: t.accent, color: '#000000' }}>
-                 <Plus size={18} strokeWidth={3}/> New Strategy Project
+               <button onClick={() => setIsCompanyModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
+                 style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                 <Plus size={14} strokeWidth={2}/> Nueva Marca
                </button>
             </header>
 
-            <div className="grid grid-cols-4 gap-2 p-2 rounded-xl shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+            {/* Filter buttons styled minimal */}
+            <div className="grid grid-cols-4 gap-2 p-1 rounded-xl" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
                {['Básico', 'Intermedio', 'Avanzado', 'Personalizado'].map(p => {
                  const count = agencyClients.filter(cl => cl.plan === p).length;
                  return (
-                   <button key={p} onClick={() => setActiveAgencyPlan(p)} className="p-4 rounded-xl transition-all flex flex-col items-center gap-1.5"
+                   <button key={p} onClick={() => setActiveAgencyPlan(p)} className="p-3 rounded-lg transition-all flex flex-col items-center gap-1"
                      style={{
-                       backgroundColor: activeAgencyPlan === p ? t.accent : 'transparent',
-                       color: activeAgencyPlan === p ? '#000000' : t.textDim,
+                       backgroundColor: activeAgencyPlan === p ? '#141414' : 'transparent',
+                       border: activeAgencyPlan === p ? `1px solid ${t.accent}` : '1px solid transparent',
+                       color: activeAgencyPlan === p ? t.accent : t.textDim,
                      }}>
-                     <h4 className="text-[9px] font-black uppercase tracking-widest">{p}</h4>
-                     <p className="text-xl font-black">{count}</p>
+                     <h4 className="text-[8px] font-black uppercase tracking-widest">{p}</h4>
+                     <p className="text-base font-bold">{count}</p>
                    </button>
                  );
                })}
             </div>
 
-            <div className="space-y-5">
-              <div className="flex items-center justify-between px-3">
-                <h3 className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2" style={{ color: 'white' }}>
-                  <div className="w-1.5 h-1.5 rounded-xl" style={{ backgroundColor: t.accent }}></div>
-                  Strategic Graphical Timeline
+            <div className="space-y-4">
+              <div className="flex items-center justify-between px-1">
+                <h3 className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 text-white">
+                  <div className="w-1 h-1 rounded-full" style={{ backgroundColor: t.accent }}></div>
+                  Tablero de Proyectos Estratégicos
                 </h3>
-                <div className="flex gap-3">
-                  <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-xl" style={{ backgroundColor: t.accent }}></div><span className="text-[7px] font-black uppercase" style={{ color: t.textDim }}>On Time</span></div>
-                  <div className="flex items-center gap-1.5"><div className="w-1.5 h-1.5 rounded-xl" style={{ backgroundColor: t.textDim }}></div><span className="text-[7px] font-black uppercase" style={{ color: t.textDim }}>Critical</span></div>
-                </div>
               </div>
 
-              <div className="p-5 rounded-xl mac-scrollbar overflow-x-auto" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                <div className="min-w-[900px] space-y-4">
+              <div className="p-4 rounded-xl overflow-x-auto mac-scrollbar" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="min-w-[900px] space-y-3">
                   {filteredAgencyClients.map((company, idx) => {
                     const meta = company.metadata || {};
                     const metrics = meta.metrics || { loyalty: 'Normal', payment: 'A tiempo', growth: 'Estable' };
                     const isPremium = metrics.loyalty === 'VIP' || metrics.growth === 'Top Tier';
                     
                     return (
-                      <div key={company.id} onClick={() => { setSelectedCompany(company); fetchStrategies(company.id); setViewState('agency-session'); }} className="flex items-center gap-6 p-4 rounded-xl cursor-pointer relative overflow-hidden shadow-lg transition-all"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                        {isPremium && <div className="absolute top-0 right-0 p-3"><Crown size={12} color={t.accent}/></div>}
+                      <div key={company.id} onClick={() => { setSelectedCompany(company); fetchStrategies(company.id); setViewState('agency-session'); }} className="flex items-center gap-6 p-4 rounded-lg cursor-pointer relative overflow-hidden transition-all"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                        {isPremium && <div className="absolute top-1 right-1"><Crown size={10} color={t.accent}/></div>}
                         
-                        <div className="w-20 shrink-0">
-                          <h4 className="text-xs font-black uppercase truncate" style={{ color: 'white' }}>{company.nombre_empresa}</h4>
-                          <p className="text-[7px] font-black uppercase" style={{ color: t.textDim }}>{company.dueño}</p>
+                        <div className="w-24 shrink-0">
+                          <h4 className="text-xs font-black uppercase truncate text-white">{company.nombre_empresa}</h4>
+                          <p className="text-[7px] font-bold uppercase" style={{ color: t.textDim }}>{company.dueño}</p>
                         </div>
 
                         <div className="flex-1 flex items-center gap-3">
-                          <div className="flex-1 h-2 rounded-xl overflow-hidden relative" style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                            <div className="absolute inset-y-0 left-0 rounded-xl transition-all duration-1000" style={{ width: `${30 + (idx * 15) % 70}%`, backgroundColor: t.accent }}></div>
+                          <div className="flex-1 h-1.5 rounded-full overflow-hidden relative" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                            <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000" style={{ width: `${30 + (idx * 15) % 70}%`, backgroundColor: t.accent }}></div>
                           </div>
-                          <span className="text-[8px] font-mono font-black" style={{ color: t.textMuted }}>{30 + (idx * 15) % 70}%</span>
+                          <span className="text-[8px] font-mono text-neutral-400">{30 + (idx * 15) % 70}%</span>
                         </div>
 
                         <div className="flex items-center gap-4 shrink-0">
-                           <div className="flex gap-1.5">
+                           <div className="flex gap-1">
                              {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
-                               <div key={red} className="w-7 h-7 rounded-xl flex items-center justify-center"
+                               <div key={red} className="w-6 h-6 rounded-md flex items-center justify-center"
                                  style={{
-                                   border: meta.redes?.[red] ? `1px solid ${t.accent}66` : `1px solid ${t.border}`,
-                                   backgroundColor: meta.redes?.[red] ? t.accentSoft : 'transparent',
+                                   border: meta.redes?.[red] ? `1px solid ${t.accent}aa` : `1px solid ${t.border}`,
+                                   backgroundColor: '#141414',
                                    color: meta.redes?.[red] ? t.accent : t.textDim,
                                  }}>
-                                 {red === 'instagram' && <Instagram size={12}/>}
-                                 {red === 'tiktok' && <TiktokIcon size={12}/>}
-                                 {red === 'facebook' && <Facebook size={12}/>}
-                                 {red === 'youtube' && <Youtube size={12}/>}
+                                 {red === 'instagram' && <Instagram size={10}/>}
+                                 {red === 'tiktok' && <TiktokIcon size={10}/>}
+                                 {red === 'facebook' && <Facebook size={10}/>}
+                                 {red === 'youtube' && <Youtube size={10}/>}
                                </div>
                              ))}
                            </div>
-                           <div className="px-3 py-1.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                             <p className="text-[6px] font-black uppercase mb-0.5" style={{ color: t.textDim }}>Status</p>
+                           <div className="px-2.5 py-1 rounded-md" style={{ border: `1px solid ${t.border}` }}>
+                             <p className="text-[6px] font-bold uppercase mb-0.5" style={{ color: t.textDim }}>Pago</p>
                              <p className="text-[7px] font-black uppercase" style={{ color: metrics.payment === 'A tiempo' ? t.accent : t.textDim }}>{metrics.payment}</p>
                            </div>
                         </div>
@@ -582,35 +588,36 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                     );
                   })}
                   {filteredAgencyClients.length === 0 && (
-                    <div className="py-14 text-center rounded-xl" style={{ border: `1px dashed ${t.border}`, backgroundColor: t.accentSoft }}>
-                      <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>No Strategic Projects in this Tier</p>
+                    <div className="py-10 text-center rounded-lg animate-fade-in" style={{ border: `1px dashed ${t.border}`, backgroundColor: '#141414' }}>
+                      <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>No se encontraron marcas en esta categoría</p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
         </div>
-      )}
+       )}
 
-      {viewState === 'agency-session' && selectedCompany && (
-        <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1200px] mx-auto w-full animate-in slide-in-from-right duration-500 overflow-y-auto mac-scrollbar">
+       {/* AGENCY SESSION HUB */}
+       {viewState === 'agency-session' && selectedCompany && (
+        <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1200px] mx-auto w-full animate-in slide-in-from-right duration-400 overflow-y-auto mac-scrollbar">
            <header className="flex items-center justify-between">
-             <div className="flex items-center gap-5">
-               <button onClick={() => setViewState('agency-hub')} className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
-                 style={{ backgroundColor: t.accentSoft }}>
-                 <ArrowLeft size={18} color={t.textMuted}/>
+             <div className="flex items-center gap-4">
+               <button onClick={() => setViewState('agency-hub')} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
+                 style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                 <ArrowLeft size={16} color={t.textDim}/>
                </button>
                <div>
-                 <h3 className="text-xl font-black uppercase tracking-tight" style={{ color: 'white' }}>{selectedCompany.nombre_empresa}</h3>
-                 <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.accent }}>{selectedCompany.plan}</p>
+                 <h3 className="text-base font-black uppercase tracking-wider text-white">{selectedCompany.nombre_empresa}</h3>
+                 <p className="text-[8px] font-bold uppercase tracking-widest" style={{ color: t.accent }}>{selectedCompany.plan}</p>
                </div>
              </div>
-             <button onClick={createStrategy} className="px-6 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center gap-3 shadow-xl transition-all"
-               style={{ backgroundColor: t.accent, color: '#000000' }}>
-               <Sparkles size={16}/> Nueva Estrategia
+             <button onClick={createStrategy} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
+               style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+               <Sparkles size={14}/> Crear Estrategia
              </button>
            </header>
-           <div className="space-y-3">
+           <div className="space-y-3 pt-2">
              {strategies.map(s => (
                <div key={s.id} onClick={() => {
                   setActiveStrategy(s);
@@ -625,173 +632,158 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                   setAgencyPriceRegistered(meta.precio_registrado || false);
                   setAgencySideTab('calc');
                   setViewState('agency-editor');
-                }}
-                 className="flex items-center justify-between p-4 cursor-pointer shadow-lg transition-all"
-                 style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 16 }}>
-                 <div className="flex items-center gap-6">
-                   <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accentSoft }}>
-                     <Target size={22} color={t.accent}/>
+               }}
+                 className="flex items-center justify-between p-4 cursor-pointer transition-all"
+                 style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
+                 <div className="flex items-center gap-4">
+                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
+                     <Target size={18} color={t.accent}/>
                    </div>
-                   <h4 className="text-lg font-black uppercase tracking-tight" style={{ color: 'white' }}>{s.titulo_estrategia}</h4>
+                   <h4 className="text-sm font-black uppercase tracking-wider text-white">{s.titulo_estrategia}</h4>
                  </div>
-                 <ChevronRight size={20} color={t.textDim}/>
+                 <ChevronRight size={16} color={t.textDim}/>
                </div>
              ))}
              {strategies.length === 0 && (
-               <div className="text-center py-10 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px dashed ${t.border}` }}>
-                 <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin estrategias aún. Crea una nueva.</p>
+               <div className="text-center py-10 rounded-lg" style={{ backgroundColor: '#141414', border: `1px dashed ${t.border}` }}>
+                 <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin estrategias planeadas para esta marca.</p>
                </div>
              )}
            </div>
         </div>
-      )}
+       )}
 
-      {viewState === 'agency-editor' && activeStrategy && (
-        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-500">
-          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.accentSoft, borderBottom: `1px solid ${t.border}` }}>
-            <div className="flex items-center gap-4">
-              <button onClick={saveStrategy} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
-                <ArrowLeft size={18} color={t.textMuted}/>
+       {/* AGENCY STRATEGY EDITOR */}
+       {viewState === 'agency-editor' && activeStrategy && (
+        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-400">
+          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
+            <div className="flex items-center gap-3">
+              <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <ArrowLeft size={16} color={t.textDim}/>
               </button>
               <div>
-                <h3 className="text-sm font-black uppercase" style={{ color: 'white' }}>{activeStrategy.titulo_estrategia}</h3>
-                <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>{selectedCompany?.nombre_empresa}</p>
+                <h3 className="text-xs font-black uppercase text-white">{activeStrategy.titulo_estrategia}</h3>
+                <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{selectedCompany?.nombre_empresa}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3 px-4 py-1.5 rounded-xl text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
                 {formatTime(time)}
-                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accent }}>
-                  {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
+                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                  {isTimerRunning ? <Pause size={10}/> : <Play size={10}/>}
                 </button>
-                <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                  <RotateCcw size={12} color={t.textMuted}/>
+                <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-6 h-6 rounded flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
+                  <RotateCcw size={10} color={t.textDim}/>
                 </button>
               </div>
-              <button onClick={saveStrategy} className="px-5 py-2.5 text-[9px] font-black rounded-xl uppercase tracking-widest shadow-xl flex items-center gap-2"
-                style={{ backgroundColor: 'white', color: '#000000' }}>
-                <Save size={14}/> Guardar
+              <button onClick={saveStrategy} className="px-4 py-2 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                <Save size={12}/> Guardar
               </button>
             </div>
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-            <div className="flex-1 rounded-xl overflow-hidden flex flex-col shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H1</button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H2</button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h3'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H3</button>
-                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Bold size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Italic size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-2 py-1 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim, textDecoration: 'underline', fontWeight: 900, fontSize: '13px' }}>U</button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('strikeThrough', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Strikethrough size={14}/></button>
-                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><List size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertOrderedList', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><ListOrdered size={14}/></button>
-                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'blockquote'); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Quote size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Table2 size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); const url = window.prompt('URL de imagen:'); if (url) document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:100%;border-radius:8px;margin:4px 0" alt="img"/><p></p>`); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><ImageIcon size={14}/></button>
+            <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: '#141414' }}>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H1</button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H2</button>
+                <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Bold size={12}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Italic size={12}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-1.5 py-0.5 text-xs font-black" style={{ color: t.textDim, textDecoration: 'underline' }}>U</button>
+                <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><List size={12}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Table2 size={12}/></button>
               </div>
               <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true}
-                className="flex-1 p-6 font-medium text-base leading-relaxed outline-none mac-scrollbar overflow-y-auto"
+                className="flex-1 p-5 text-sm leading-relaxed outline-none mac-scrollbar overflow-y-auto"
                 style={{ color: t.text }}
                 dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} />
             </div>
             <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
-              <div className="grid grid-cols-2 p-1 rounded-xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                {[{ id: 'calc', label: 'Calc', icon: CalcIcon }, { id: 'info', label: 'Proyecto', icon: Target }].map(tab => (
+              <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Estrategia', icon: Target }].map(tab => (
                   <button key={tab.id} onClick={() => setAgencySideTab(tab.id)}
-                    className="py-2 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
-                    style={{ backgroundColor: agencySideTab === tab.id ? t.accent : 'transparent', color: agencySideTab === tab.id ? '#000' : t.textDim }}>
-                    <tab.icon size={12}/> {tab.label}
+                    className="py-1.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                    style={{ backgroundColor: agencySideTab === tab.id ? '#141414' : 'transparent', border: agencySideTab === tab.id ? `1px solid ${t.accent}` : '1px solid transparent', color: agencySideTab === tab.id ? t.accent : t.textDim }}>
+                    <tab.icon size={10}/> {tab.label}
                   </button>
                 ))}
               </div>
               {agencySideTab === 'calc' && (
                 <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-4 p-1 rounded-xl gap-1" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                  <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
                     {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
                       <button key={cur} onClick={() => setAgencySessionCurrency(cur)}
-                        className="py-1.5 rounded-lg text-[7px] font-black uppercase tracking-widest transition-all"
-                        style={{ backgroundColor: agencySessionCurrency === cur ? t.accent : 'transparent', color: agencySessionCurrency === cur ? '#000' : t.textDim }}>
+                        className="py-1 rounded text-[7px] font-black"
+                        style={{ backgroundColor: agencySessionCurrency === cur ? '#141414' : 'transparent', border: agencySessionCurrency === cur ? `1px solid ${t.accent}` : '1px solid transparent', color: agencySessionCurrency === cur ? t.accent : t.textDim }}>
                         {cur}
                       </button>
                     ))}
                   </div>
-                  <div className="p-3 rounded-xl text-right shadow-inner" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest mb-1" style={{ color: t.accent }}>{agencySessionCurrency}</p>
-                    <p className="text-xl font-mono font-black">{calcDisplay}</p>
+                  <div className="p-3 rounded-lg text-right" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
+                    <p className="text-[7px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>{agencySessionCurrency}</p>
+                    <p className="text-base font-mono font-bold">{calcDisplay}</p>
                   </div>
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-4 gap-1">
                     {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                      <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-xl text-[9px] font-black transition-all"
-                        style={{ backgroundColor: btn === '=' ? t.accent : 'rgba(255,255,255,0.05)', color: btn === '=' ? '#000000' : t.textMuted }}>
+                      <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
                         {btn}
                       </button>
                     ))}
                   </div>
                   <button onClick={() => { setAgencySessionPrice(calcDisplay !== '0' ? calcDisplay : agencySessionPrice); setAgencySideTab('info'); }}
-                    className="w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                    style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
-                    <DollarSign size={12}/> Usar como precio
+                    className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                    style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textMuted }}>
+                    <DollarSign size={10}/> Fijar Presupuesto
                   </button>
                 </div>
               )}
               {agencySideTab === 'info' && (
                 <div className="flex flex-col gap-3">
-                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Próxima Sesión</p>
-                    <input type="date" value={agencyNextDate} onChange={e => setAgencyNextDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
-                      style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                  </div>
-                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Links</p>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Reunión Planificada</p>
                     <div>
-                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Link Reunión</p>
-                      <input type="url" value={agencyMeetLink} onChange={e => setAgencyMeetLink(e.target.value)} placeholder="meet.google.com / zoom..."
-                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                      {agencyMeetLink && <a href={agencyMeetLink} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.accent }}><ExternalLink size={10}/> Abrir</a>}
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Siguiente Sesión</p>
+                      <input type="date" value={agencyNextDate} onChange={e => setAgencyNextDate(e.target.value)}
+                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces Nexus</p>
+                    <div>
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Link de Llamada</p>
+                      <input type="url" value={agencyMeetLink} onChange={e => setAgencyMeetLink(e.target.value)} placeholder="meet.google.com/..."
+                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                     <div>
-                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Drive / Archivos</p>
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Carpeta de Contenidos</p>
                       <input type="url" value={agencyDriveLink} onChange={e => setAgencyDriveLink(e.target.value)} placeholder="drive.google.com/..."
-                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                      {agencyDriveLink && <a href={agencyDriveLink} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.accent }}><ExternalLink size={10}/> Abrir Drive</a>}
+                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                   </div>
-                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Precio Acordado</p>
-                    <div className="grid grid-cols-4 gap-1 p-1 rounded-lg" style={{ backgroundColor: t.bg }}>
-                      {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
-                        <button key={cur} onClick={() => setAgencySessionCurrency(cur)}
-                          className="py-1 rounded-md text-[7px] font-black transition-all"
-                          style={{ backgroundColor: agencySessionCurrency === cur ? t.accent : 'transparent', color: agencySessionCurrency === cur ? '#000' : t.textDim }}>
-                          {cur}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Ingreso Estimado</p>
                     <div className="flex gap-2 items-center">
-                      <span className="text-[9px] font-black px-1" style={{ color: t.textDim }}>
-                        {agencySessionCurrency === 'BOB' ? 'Bs.' : agencySessionCurrency === 'USD' ? '$' : agencySessionCurrency === 'EUR' ? '€' : 'R$'}
-                      </span>
+                      <span className="text-[9px] font-bold text-neutral-400">{agencySessionCurrency}</span>
                       <input type="number" value={agencySessionPrice} onChange={e => setAgencySessionPrice(e.target.value)}
-                        placeholder="0.00" min="0" step="0.01"
-                        className="flex-1 px-3 py-2 rounded-lg text-sm font-mono outline-none"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                        placeholder="0.00" className="flex-1 px-2.5 py-1.5 rounded text-[10px] font-mono outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
-                    <button onClick={() => registerSessionIncome(selectedCompany?.nombre_empresa || 'Agencia', activeStrategy.titulo_estrategia, agencySessionPrice, agencySessionCurrency, true)}
+                    <button onClick={() => registerSessionIncome(selectedCompany?.nombre_empresa || 'Empresa', activeStrategy.titulo_estrategia, agencySessionPrice, agencySessionCurrency, true)}
                       disabled={!agencySessionPrice || parseFloat(agencySessionPrice) <= 0 || agencyPriceRegistered}
-                      className="w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
                       style={{ 
-                        backgroundColor: agencyPriceRegistered ? t.accentSoft : (agencySessionPrice && parseFloat(agencySessionPrice) > 0 ? t.accent : 'rgba(255,255,255,0.05)'),
-                        color: agencyPriceRegistered ? t.accent : (agencySessionPrice && parseFloat(agencySessionPrice) > 0 ? '#000' : t.textDim),
-                        cursor: agencyPriceRegistered || !agencySessionPrice ? 'not-allowed' : 'pointer'
+                        backgroundColor: '#141414',
+                        border: `1px solid ${agencyPriceRegistered ? t.border : t.accent}`,
+                        color: agencyPriceRegistered ? t.textDim : t.accent,
+                        cursor: agencyPriceRegistered ? 'not-allowed' : 'pointer'
                       }}>
-                      {agencyPriceRegistered ? <><Check size={12}/> Registrado</> : <><TrendingUp size={12}/> Registrar Ingreso</>}
+                      {agencyPriceRegistered ? 'Registrado en Ganancias' : 'Registrar Pago'}
                     </button>
                   </div>
                 </div>
@@ -799,260 +791,215 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
             </div>
           </div>
         </div>
-      )}
+       )}
 
-      {viewState === 'session' && activeMeeting && (
-        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-500">
-          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.accentSoft, borderBottom: `1px solid ${t.border}` }}>
-            <div className="flex items-center gap-4">
-              <button onClick={saveMeeting} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
-                <ArrowLeft size={18} color={t.textMuted}/>
+       {/* SESSIONS / MEETING EDITOR */}
+       {viewState === 'session' && activeMeeting && (
+        <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-400">
+          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
+            <div className="flex items-center gap-3">
+              <button onClick={saveMeeting} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <ArrowLeft size={16} color={t.textDim}/>
               </button>
               <div>
-                <h3 className="text-sm font-black uppercase" style={{ color: 'white' }}>{activeMeeting.session_title}</h3>
-                <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>{activeClient?.nombre}</p>
+                <h3 className="text-xs font-black uppercase text-white">{activeMeeting.session_title}</h3>
+                <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{activeClient?.nombre}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-3 px-4 py-1.5 rounded-xl text-lg font-mono font-black" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
                 {formatTime(time)}
-                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.accent }}>
-                  {isTimerRunning ? <Pause size={12}/> : <Play size={12}/>}
+                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                  {isTimerRunning ? <Pause size={10}/> : <Play size={10}/>}
                 </button>
-                <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}>
-                  <RotateCcw size={12} color={t.textMuted}/>
+                <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-6 h-6 rounded flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
+                  <RotateCcw size={10} color={t.textDim}/>
                 </button>
               </div>
-              <button onClick={saveMeeting} className="px-5 py-2.5 text-[9px] font-black rounded-xl uppercase tracking-widest shadow-xl flex items-center gap-2"
-                style={{ backgroundColor: 'white', color: '#000000' }}>
-                <Save size={14}/> Guardar
+              <button onClick={saveMeeting} className="px-4 py-2 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                <Save size={12}/> Guardar
               </button>
             </div>
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-            <div className="flex-1 rounded-xl overflow-hidden flex flex-col shadow-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H1</button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H2</button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h3'); }} className="px-2 py-1 rounded-lg text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>H3</button>
-                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Bold size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Italic size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-2 py-1 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim, textDecoration: 'underline', fontWeight: 900, fontSize: '13px' }}>U</button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('strikeThrough', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Strikethrough size={14}/></button>
-                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><List size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertOrderedList', false, null); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><ListOrdered size={14}/></button>
-                <div className="w-px h-5 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'blockquote'); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Quote size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><Table2 size={14}/></button>
-                <button onMouseDown={e => { e.preventDefault(); const url = window.prompt('URL de imagen:'); if (url) document.execCommand('insertHTML', false, `<img src="${url}" style="max-width:100%;border-radius:8px;margin:4px 0" alt="img"/><p></p>`); }} className="p-1.5 rounded-lg hover:opacity-80 transition-all" style={{ color: t.textDim }}><ImageIcon size={14}/></button>
+            <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: '#141414' }}>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H1</button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H2</button>
+                <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Bold size={12}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Italic size={12}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-1.5 py-0.5 text-xs font-black" style={{ color: t.textDim, textDecoration: 'underline' }}>U</button>
+                <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><List size={12}/></button>
+                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Table2 size={12}/></button>
               </div>
               <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true}
-                className="flex-1 p-6 font-medium text-base leading-relaxed outline-none mac-scrollbar overflow-y-auto"
+                className="flex-1 p-5 text-sm leading-relaxed outline-none mac-scrollbar overflow-y-auto"
                 style={{ color: t.text }}
                 dangerouslySetInnerHTML={{ __html: activeMeeting.contenido }} />
             </div>
             <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
-              <div className="grid grid-cols-2 p-1 rounded-xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                {[{ id: 'calc', label: 'Calc', icon: CalcIcon }, { id: 'info', label: 'Reunión', icon: Calendar }].map(tab => (
+              <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Sesión', icon: Calendar }].map(tab => (
                   <button key={tab.id} onClick={() => setSessionSideTab(tab.id)}
-                    className="py-2 rounded-lg text-[8px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all"
-                    style={{ backgroundColor: sessionSideTab === tab.id ? t.accent : 'transparent', color: sessionSideTab === tab.id ? '#000' : t.textDim }}>
-                    <tab.icon size={12}/> {tab.label}
+                    className="py-1.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                    style={{ backgroundColor: sessionSideTab === tab.id ? '#141414' : 'transparent', border: sessionSideTab === tab.id ? `1px solid ${t.accent}` : '1px solid transparent', color: sessionSideTab === tab.id ? t.accent : t.textDim }}>
+                    <tab.icon size={10}/> {tab.label}
                   </button>
                 ))}
               </div>
               {sessionSideTab === 'calc' && (
                 <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-4 p-1 rounded-xl gap-1" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+                  <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
                     {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
                       <button key={cur} onClick={() => setSessionCurrency(cur)}
-                        className="py-1.5 rounded-lg text-[7px] font-black uppercase tracking-widest transition-all"
-                        style={{ backgroundColor: sessionCurrency === cur ? t.accent : 'transparent', color: sessionCurrency === cur ? '#000' : t.textDim }}>
+                        className="py-1 rounded text-[7px] font-black"
+                        style={{ backgroundColor: sessionCurrency === cur ? '#141414' : 'transparent', border: sessionCurrency === cur ? `1px solid ${t.accent}` : '1px solid transparent', color: sessionCurrency === cur ? t.accent : t.textDim }}>
                         {cur}
                       </button>
                     ))}
                   </div>
-                  <div className="p-3 rounded-xl text-right shadow-inner" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest mb-1" style={{ color: t.accent }}>{sessionCurrency}</p>
-                    <p className="text-xl font-mono font-black">{calcDisplay}</p>
+                  <div className="p-3 rounded-lg text-right" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
+                    <p className="text-[7px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>{sessionCurrency}</p>
+                    <p className="text-base font-mono font-bold">{calcDisplay}</p>
                   </div>
-                  <div className="grid grid-cols-4 gap-1.5">
+                  <div className="grid grid-cols-4 gap-1">
                     {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                      <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-9 rounded-xl text-[9px] font-black transition-all"
-                        style={{ backgroundColor: btn === '=' ? t.accent : 'rgba(255,255,255,0.05)', color: btn === '=' ? '#000000' : t.textMuted }}>
+                      <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
                         {btn}
                       </button>
                     ))}
                   </div>
                   <button onClick={() => { setSessionPrice(calcDisplay !== '0' ? calcDisplay : sessionPrice); setSessionSideTab('info'); }}
-                    className="w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
-                    style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textDim }}>
-                    <DollarSign size={12}/> Usar como precio
+                    className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                    style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textMuted }}>
+                    <DollarSign size={10}/> Fijar Cobro
                   </button>
                 </div>
               )}
               {sessionSideTab === 'info' && (
                 <div className="flex flex-col gap-3">
-                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Fechas</p>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Control Temporal</p>
                     <div>
-                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Reunión actual</p>
-                      <div className="px-3 py-2 rounded-lg text-[10px] font-mono" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.textMuted }}>{activeMeeting.fecha}</div>
-                    </div>
-                    <div>
-                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Próxima reunión</p>
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Fecha Próxima</p>
                       <input type="date" value={sessionNextDate} onChange={e => setSessionNextDate(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                   </div>
-                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Links</p>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces</p>
                     <div>
-                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Link Reunión</p>
-                      <input type="url" value={sessionMeetLink} onChange={e => setSessionMeetLink(e.target.value)} placeholder="meet.google.com / zoom / wa.me..."
-                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                      {sessionMeetLink && <a href={sessionMeetLink} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.accent }}><ExternalLink size={10}/> Abrir</a>}
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Sala de Video</p>
+                      <input type="url" value={sessionMeetLink} onChange={e => setSessionMeetLink(e.target.value)} placeholder="meet.google.com/..."
+                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                     <div>
-                      <p className="text-[7px] font-black uppercase ml-1 mb-1" style={{ color: t.textDim }}>Drive / Archivos</p>
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Enlace del Proyecto</p>
                       <input type="url" value={sessionDriveLink} onChange={e => setSessionDriveLink(e.target.value)} placeholder="drive.google.com/..."
-                        className="w-full px-3 py-2 rounded-lg text-[10px] outline-none"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                      {sessionDriveLink && <a href={sessionDriveLink} target="_blank" rel="noopener noreferrer" className="mt-1 flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.accent }}><ExternalLink size={10}/> Abrir Drive</a>}
+                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                   </div>
-                  <div className="p-4 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Precio Acordado</p>
-                    <div className="grid grid-cols-4 gap-1 p-1 rounded-lg" style={{ backgroundColor: t.bg }}>
-                      {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
-                        <button key={cur} onClick={() => setSessionCurrency(cur)}
-                          className="py-1 rounded-md text-[7px] font-black transition-all"
-                          style={{ backgroundColor: sessionCurrency === cur ? t.accent : 'transparent', color: sessionCurrency === cur ? '#000' : t.textDim }}>
-                          {cur}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Tarifación</p>
                     <div className="flex gap-2 items-center">
-                      <span className="text-[9px] font-black px-1" style={{ color: t.textDim }}>
-                        {sessionCurrency === 'BOB' ? 'Bs.' : sessionCurrency === 'USD' ? '$' : sessionCurrency === 'EUR' ? '€' : 'R$'}
-                      </span>
+                      <span className="text-[9px] font-bold text-neutral-400">{sessionCurrency}</span>
                       <input type="number" value={sessionPrice} onChange={e => setSessionPrice(e.target.value)}
-                        placeholder="0.00" min="0" step="0.01"
-                        className="flex-1 px-3 py-2 rounded-lg text-sm font-mono outline-none"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                        placeholder="0.00" className="flex-1 px-2.5 py-1.5 rounded text-[10px] font-mono outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                     <button onClick={() => registerSessionIncome(activeClient?.nombre || 'Cliente', activeMeeting.session_title, sessionPrice, sessionCurrency, false)}
                       disabled={!sessionPrice || parseFloat(sessionPrice) <= 0 || priceRegistered}
-                      className="w-full py-2.5 rounded-xl text-[8px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                      className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
                       style={{ 
-                        backgroundColor: priceRegistered ? t.accentSoft : (sessionPrice && parseFloat(sessionPrice) > 0 ? t.accent : 'rgba(255,255,255,0.05)'),
-                        color: priceRegistered ? t.accent : (sessionPrice && parseFloat(sessionPrice) > 0 ? '#000' : t.textDim),
-                        cursor: priceRegistered || !sessionPrice ? 'not-allowed' : 'pointer'
+                        backgroundColor: '#141414',
+                        border: `1px solid ${priceRegistered ? t.border : t.accent}`,
+                        color: priceRegistered ? t.textDim : t.accent,
+                        cursor: priceRegistered ? 'not-allowed' : 'pointer'
                       }}>
-                      {priceRegistered ? <><Check size={12}/> Registrado en Ganancias</> : <><TrendingUp size={12}/> Registrar Ingreso</>}
+                      {priceRegistered ? 'Venta Registrada' : 'Registrar Venta'}
                     </button>
                   </div>
-                  {activeClient && (activeClient.telefono || activeClient.email) && (
-                    <div className="p-4 rounded-xl space-y-2" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                      <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📱 Contacto</p>
-                      {activeClient.telefono && (
-                        <a href={`https://wa.me/${activeClient.telefono.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>
-                          <Smartphone size={12}/> {activeClient.telefono}
-                        </a>
-                      )}
-                      {activeClient.email && (
-                        <a href={`mailto:${activeClient.email}`}
-                          className="flex items-center gap-2 text-[9px] font-black hover:opacity-80 transition-all" style={{ color: t.textDim }}>
-                          <Mail size={12}/> {activeClient.email}
-                        </a>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
           </div>
         </div>
-      )}
+       )}
 
-      {isClientModalOpen && (
+       {/* MODAL: NUEVO CLIENTE (Minimal #141414 styled) */}
+       {isClientModalOpen && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 animate-in zoom-in duration-300"
-          style={{ backgroundColor: 'rgba(20, 20, 20, 0.95)', backdropFilter: 'blur(24px)' }}>
-           <div className="w-full max-w-lg p-6 space-y-5 shadow-2xl rounded-xl"
-             style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
+          style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(12px)' }}>
+           <div className="w-full max-w-md p-6 space-y-5 rounded-xl"
+             style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
                 <div className="flex justify-between items-center">
-                   <h3 className="text-xl font-black uppercase tracking-tight" style={{ color: 'white' }}>Nuevo <span style={{ color: t.accent }}>Registro</span></h3>
-                   <button onClick={() => setIsClientModalOpen(false)} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
-                     <X size={18} color={t.textMuted}/>
+                   <h3 className="text-sm font-black uppercase tracking-wider text-white">Nuevo Nexus Registro</h3>
+                   <button onClick={() => setIsClientModalOpen(false)} className="w-6 h-6 rounded flex items-center justify-center transition-all" style={{ border: `1px solid ${t.border}` }}>
+                     <X size={14} color={t.textDim}/>
                    </button>
                 </div>
                 
                 <div className="space-y-3">
-                   <div className="space-y-1.5">
-                      <p className="text-[7px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Información Básica</p>
+                   <div className="space-y-1">
+                      <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Identidad</p>
                       <input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Nombre completo..."
-                        className="w-full rounded-xl p-4 text-sm outline-none transition-all"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                      <input type="text" value={newClient.empresa} onChange={e=>setNewClient({...newClient, empresa: e.target.value})} placeholder="Empresa / Marca..."
-                        className="w-full rounded-xl p-4 text-sm outline-none transition-all mt-1.5"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                        className="w-full rounded-lg p-3 text-xs outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                      <input type="text" value={newClient.empresa} onChange={e=>setNewClient({...newClient, empresa: e.target.value})} placeholder="Organización / Empresa..."
+                        className="w-full rounded-lg p-3 text-xs outline-none mt-2"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                    </div>
 
-                   <div className="grid grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                         <p className="text-[7px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Nacionalidad</p>
+                   <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                         <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Nacionalidad</p>
                          <input type="text" value={newClient.nacionalidad} onChange={e=>setNewClient({...newClient, nacionalidad: e.target.value})} placeholder="Ej: Peruana"
-                           className="w-full rounded-xl p-4 text-sm outline-none transition-all"
-                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                           className="w-full rounded-lg p-3 text-xs outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
-                      <div className="space-y-1.5">
-                         <p className="text-[7px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Teléfono</p>
+                      <div className="space-y-1">
+                         <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Canal de Contacto</p>
                          <input type="text" value={newClient.telefono} onChange={e=>setNewClient({...newClient, telefono: e.target.value})} placeholder="+00 000..."
-                           className="w-full rounded-xl p-4 text-sm outline-none transition-all"
-                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                           className="w-full rounded-lg p-3 text-xs outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
-                   </div>
-
-                   <div className="space-y-1.5">
-                      <p className="text-[7px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>URL de Foto de Perfil</p>
-                      <input type="text" value={newClient.foto} onChange={e=>setNewClient({...newClient, foto: e.target.value})} placeholder="https://..."
-                        className="w-full rounded-xl p-4 text-sm outline-none transition-all"
-                        style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
                    </div>
                 </div>
 
-                <div className="flex gap-3 pt-3">
-                   <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-4 font-black uppercase text-[9px] tracking-widest transition-all" style={{ color: t.textDim }}>Cancelar</button>
-                   <button onClick={handleCreateClient} className="flex-[2] py-4 rounded-xl font-black uppercase text-[9px] shadow-xl transition-all tracking-widest"
-                     style={{ backgroundColor: t.accent, color: '#000000' }}>Vincular Nexus</button>
+                <div className="flex gap-2 pt-2">
+                   <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-3 text-[8px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Cerrar</button>
+                   <button onClick={handleCreateClient} className="flex-[2] py-3 rounded-lg font-black uppercase text-[8px] tracking-wider transition-all"
+                     style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>Vincular Nexus</button>
                 </div>
             </div>
          </div>
-      )}
+       )}
 
-      {isCompanyModalOpen && (
+       {/* MODAL: NUEVA MARCA / EMPRESA (Minimal #141414 styled) */}
+       {isCompanyModalOpen && (
         <div className="fixed inset-0 z-[800] flex items-center justify-center p-6 animate-in zoom-in duration-300"
-          style={{ backgroundColor: 'rgba(20, 20, 20, 0.95)', backdropFilter: 'blur(24px)' }}>
-           <div className="w-full max-w-2xl overflow-hidden shadow-2xl rounded-xl"
-             style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-              <header className="px-6 py-5 flex justify-between items-center" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.accentSoft }}>
+          style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(12px)' }}>
+           <div className="w-full max-w-xl overflow-hidden rounded-xl"
+             style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+              <header className="px-6 py-4 flex justify-between items-center" style={{ borderBottom: `1px solid ${t.border}` }}>
                  <div>
-                   <h3 className="text-xl font-black uppercase tracking-tight" style={{ color: 'white' }}>Strategic <span style={{ color: t.accent }}>Link</span></h3>
-                   <p className="text-[7px] font-black uppercase tracking-[0.3em] mt-0.5" style={{ color: t.textDim }}>Agency Connection Node</p>
+                   <h3 className="text-sm font-black uppercase tracking-wider text-white">Nuevo Enlace Nexus Agency</h3>
                  </div>
-                 <button onClick={() => setIsCompanyModalOpen(false)} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all" style={{ backgroundColor: t.accentSoft }}>
-                   <X size={18} color={t.textMuted}/>
+                 <button onClick={() => setIsCompanyModalOpen(false)} className="w-6 h-6 rounded flex items-center justify-center transition-all" style={{ border: `1px solid ${t.border}` }}>
+                   <X size={14} color={t.textDim}/>
                  </button>
               </header>
 
-              <div className="flex" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.bg }}>
+              <div className="flex bg-[#141414]" style={{ borderBottom: `1px solid ${t.border}` }}>
                  {['general', 'redes', 'cm'].map(tab => (
-                    <button key={tab} onClick={() => setAgencyTab(tab)} className="flex-1 py-3.5 text-[8px] font-black uppercase tracking-widest transition-all"
+                    <button key={tab} onClick={() => setAgencyTab(tab)} className="flex-1 py-3 text-[8px] font-black uppercase tracking-widest transition-all"
                       style={{
                         color: agencyTab === tab ? t.accent : t.textDim,
                         borderBottom: agencyTab === tab ? `2px solid ${t.accent}` : '2px solid transparent',
@@ -1064,80 +1011,61 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
 
               <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto mac-scrollbar">
                  {agencyTab === 'general' && (
-                    <div className="space-y-3 animate-in fade-in duration-500">
-                       <div className="space-y-1.5">
-                         <p className="text-[7px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Empresa / Marca</p>
+                    <div className="space-y-3">
+                       <div className="space-y-1">
+                         <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Marca / Empresa</p>
                          <input type="text" value={newCompany.nombre_empresa} onChange={e=>setNewCompany({...newCompany, nombre_empresa: e.target.value})} placeholder="Nombre de la marca..."
-                           className="w-full rounded-xl p-4 text-sm outline-none transition-all"
-                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                           className="w-full rounded-lg p-3 text-xs outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                        </div>
-                       <div className="space-y-1.5">
-                         <p className="text-[7px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Director / Socio</p>
+                       <div className="space-y-1">
+                         <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Propietario / Representante</p>
                          <input type="text" value={newCompany.dueño} onChange={e=>setNewCompany({...newCompany, dueño: e.target.value})} placeholder="Nombre del responsable..."
-                           className="w-full rounded-xl p-4 text-sm outline-none transition-all"
-                           style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
+                           className="w-full rounded-lg p-3 text-xs outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                        </div>
-                       <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-1.5">
-                            <p className="text-[7px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Email Corporativo</p>
-                            <input type="email" value={newCompany.email} onChange={e=>setNewCompany({...newCompany, email: e.target.value})} placeholder="email@empresa.com"
-                              className="w-full rounded-xl p-4 text-sm outline-none transition-all"
-                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                          </div>
-                          <div className="space-y-1.5">
-                            <p className="text-[7px] font-black uppercase ml-1 tracking-widest" style={{ color: t.textDim }}>Teléfono / WhatsApp</p>
-                            <input type="text" value={newCompany.telefono} onChange={e=>setNewCompany({...newCompany, telefono: e.target.value})} placeholder="+00 000 000 000"
-                              className="w-full rounded-xl p-4 text-sm outline-none transition-all"
-                              style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                          </div>
+                       <div className="grid grid-cols-2 gap-2">
+                          <input type="email" value={newCompany.email} onChange={e=>setNewCompany({...newCompany, email: e.target.value})} placeholder="email@empresa.com"
+                            className="w-full rounded-lg p-3 text-xs outline-none"
+                            style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                          <input type="text" value={newCompany.telefono} onChange={e=>setNewCompany({...newCompany, telefono: e.target.value})} placeholder="+00 000..."
+                            className="w-full rounded-lg p-3 text-xs outline-none"
+                            style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                        </div>
                     </div>
                  )}
 
                  {agencyTab === 'redes' && (
-                    <div className="space-y-3 animate-in fade-in duration-500">
+                    <div className="space-y-2">
                        {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
-                          <div key={red} className="flex items-center gap-3 p-2 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                             <div className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg" style={{ backgroundColor: t.accentSoft }}>
-                                {red === 'instagram' && <Instagram size={18} color={t.accent}/>}
-                                {red === 'tiktok' && <TiktokIcon size={18} color={t.accent}/>}
-                                {red === 'facebook' && <Facebook size={18} color={t.accent}/>}
-                                {red === 'youtube' && <Youtube size={18} color={t.accent}/>}
+                          <div key={red} className="flex items-center gap-3 p-1 rounded-lg" style={{ border: `1px solid ${t.border}` }}>
+                             <div className="w-8 h-8 rounded flex items-center justify-center" style={{ color: t.accent }}>
+                                {red === 'instagram' && <Instagram size={14}/>}
+                                {red === 'tiktok' && <TiktokIcon size={14}/>}
+                                {red === 'facebook' && <Facebook size={14}/>}
+                                {red === 'youtube' && <Youtube size={14}/>}
                              </div>
-                             <input type="text" value={newCompany.redes[red]} onChange={e=>setNewCompany({...newCompany, redes: {...newCompany.redes, [red]: e.target.value}})} placeholder={`URL o @User de ${red}...`}
-                               className="flex-1 bg-transparent p-3 text-sm outline-none tracking-widest" style={{ color: t.text }} />
+                             <input type="text" value={newCompany.redes[red]} onChange={e=>setNewCompany({...newCompany, redes: {...newCompany.redes, [red]: e.target.value}})} placeholder={`URL de ${red}...`}
+                               className="flex-1 bg-transparent p-2 text-xs outline-none" style={{ color: t.text }} />
                           </div>
                        ))}
                     </div>
                  )}
 
                  {agencyTab === 'cm' && (
-                    <div className="space-y-4 animate-in fade-in duration-500">
-                       <div className="p-4 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                         <p className="text-[8px] font-black uppercase mb-1 tracking-widest" style={{ color: t.accent }}>Security Protocol</p>
-                         <p className="text-[9px] font-bold uppercase leading-relaxed tracking-wider" style={{ color: t.textDim }}>Las credenciales se encriptan y se almacenan exclusivamente para gestión de Community Manager.</p>
-                       </div>
+                    <div className="space-y-3">
                        {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
-                          <div key={red} className="space-y-2 p-4 rounded-xl shadow-inner" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
-                             <h4 className="text-[8px] font-black uppercase tracking-[0.15em] flex items-center gap-2" style={{ color: t.accent }}>
-                                {red === 'instagram' && <Instagram size={10}/>}
-                                {red === 'tiktok' && <TiktokIcon size={10}/>}
-                                {red === 'facebook' && <Facebook size={10}/>}
-                                {red === 'youtube' && <Youtube size={10}/>}
+                          <div key={red} className="space-y-1.5 p-3 rounded-lg" style={{ border: `1px solid ${t.border}` }}>
+                             <h4 className="text-[7px] font-black uppercase tracking-wider flex items-center gap-1.5 text-white">
                                 Access {red}
                              </h4>
                              <div className="grid grid-cols-2 gap-2">
-                                <input type="text" value={newCompany.credentials[red].user} onChange={e=>setNewCompany({...newCompany, credentials: {...newCompany.credentials, [red]: {...newCompany.credentials[red], user: e.target.value}}})} placeholder="Usuario / Email"
-                                  className="w-full rounded-xl p-3.5 text-[10px] outline-none transition-all"
-                                  style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                                <div className="relative">
-                                   <input type={showPass[red] ? 'text' : 'password'} value={newCompany.credentials[red].pass} onChange={e=>setNewCompany({...newCompany, credentials: {...newCompany.credentials, [red]: {...newCompany.credentials[red], pass: e.target.value}}})} placeholder="Contraseña"
-                                     className="w-full rounded-xl p-3.5 text-[10px] outline-none pr-10 transition-all"
-                                     style={{ backgroundColor: t.bg, border: `1px solid ${t.border}`, color: t.text }} />
-                                   <button onClick={() => setShowPass({...showPass, [red]: !showPass[red]})} className="absolute right-3 top-1/2 -translate-y-1/2 transition-all" style={{ color: t.textDim }}>
-                                      {showPass[red] ? <EyeOff size={14}/> : <Eye size={14}/>}
-                                   </button>
-                                </div>
+                                <input type="text" value={newCompany.credentials[red].user} onChange={e=>setNewCompany({...newCompany, credentials: {...newCompany.credentials, [red]: {...newCompany.credentials[red], user: e.target.value}}})} placeholder="Usuario"
+                                  className="w-full rounded-lg p-2.5 text-[10px] outline-none"
+                                  style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                                <input type="password" value={newCompany.credentials[red].pass} onChange={e=>setNewCompany({...newCompany, credentials: {...newCompany.credentials, [red]: {...newCompany.credentials[red], pass: e.target.value}}})} placeholder="Contraseña"
+                                  className="w-full rounded-lg p-2.5 text-[10px] outline-none"
+                                  style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                              </div>
                           </div>
                        ))}
@@ -1145,26 +1073,27 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                  )}
               </div>
 
-              <footer className="px-6 py-5 flex gap-3" style={{ backgroundColor: t.accentSoft, borderTop: `1px solid ${t.border}` }}>
-                 <button onClick={() => setIsCompanyModalOpen(false)} className="flex-1 py-4 font-black uppercase text-[9px] transition-all tracking-[0.15em]" style={{ color: t.textDim }}>Descartar</button>
-                 <button onClick={handleCreateAgencyClient} className="flex-[2] py-4 rounded-xl font-black uppercase text-[9px] transition-all tracking-[0.15em] shadow-lg"
-                   style={{ backgroundColor: t.accent, color: '#000000' }}>Sincronizar Nexus Agency</button>
+              <footer className="px-6 py-4 flex gap-2" style={{ borderTop: `1px solid ${t.border}` }}>
+                 <button onClick={() => setIsCompanyModalOpen(false)} className="flex-1 py-3 text-[8px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Descartar</button>
+                 <button onClick={handleCreateAgencyClient} className="flex-[2] py-3 rounded-lg font-black uppercase text-[8px] tracking-wider transition-all"
+                   style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>Sincronizar Nexus</button>
               </footer>
            </div>
-        </div>
-      )}
+         </div>
+       )}
 
-      {viewState === 'project-engine' && (
-        <ProjectEngineView isDark={isDark} />
-      )}
+       {/* PROJECT ENGINE VIEW (VIDEO EDITING TAB) */}
+       {viewState === 'project-engine' && (
+         <ProjectEngineView isDark={isDark} />
+       )}
     </div>
   );
 };
 
+// ── REDESIGNED PROJECT ENGINE VIEW (3 COLUMNS, VISUAL INTERACTIVE ELEMENTS) ──
 const ProjectEngineView = ({ isDark = true }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
 
-  const [activeTab, setActiveTab] = useState('estructurador');
   const [carpetaMaestra, setCarpetaMaestra] = useState('Base de Edición Principal');
   const [empresa, setEmpresa] = useState('');
   const [proyecto, setProyecto] = useState('');
@@ -1172,67 +1101,67 @@ const ProjectEngineView = ({ isDark = true }) => {
   const [selectedAE, setSelectedAE] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
-
   const [destinationPath, setDestinationPath] = useState('');
   const [dirHandle, setDirHandle] = useState(null);
 
-  // H1: Compresor
-  const [compPreset, setCompPreset] = useState('tiktok');
-  const [isCompressing, setIsCompressing] = useState(false);
-  const [compProgress, setCompProgress] = useState(0);
-  const [compSuccess, setCompSuccess] = useState(false);
-
-  // H2: Bitrate Calc
+  // Timecode & Bitrate calculator states
   const [calcRes, setCalcRes] = useState('1080p');
   const [calcFps, setCalcFps] = useState(30);
   const [calcMin, setCalcMin] = useState(5);
 
-  // H3: Timecode Calc
   const [fpsVal, setFpsVal] = useState(30);
   const [tcInput, setTcInput] = useState('00:01:24:12');
   const [framesOutput, setFramesOutput] = useState(2532);
   const [framesInput, setFramesInput] = useState(3000);
   const [tcOutput, setTcOutput] = useState('00:01:40:00');
 
-  // H4: Notas de Edición
+  // Edit notes
   const [editNotes, setEditNotes] = useState('00:15 - Cortar silencio inicial\n01:30 - Aplicar zoom en el gancho\n02:45 - Inserción de CTA final');
 
-  // H5: Nomenclatura PRO
+  // Nomenclatura states
   const [nomClient, setNomClient] = useState('CLIENTE');
   const [nomProj, setNomProj] = useState('PROYECTO');
   const [nomVer, setNomVer] = useState('V1');
   const [nomAspect, setNomAspect] = useState('H');
 
-  // H6: Atajos
-  const [shortcutQuery, setShortcutQuery] = useState('');
-
-  // H7: Crop Guide Overlay
+  // Safe Zones
   const [cropGuide, setCropGuide] = useState('916');
 
-  // H8: Recursos adicionales
+  // Injections
   const [incSFX, setIncSFX] = useState(true);
   const [incLogos, setIncLogos] = useState(false);
   const [incMOGRTs, setIncMOGRTs] = useState(false);
 
-  // H9: ZIP Archivador
-  const [isZipping, setIsZipping] = useState(false);
-  const [zipProgress, setZipProgress] = useState(0);
-  const [zipSuccess, setZipSuccess] = useState(false);
+  // Interactive local tree navigation
+  const [treeCollapsed, setTreeCollapsed] = useState({
+    root: false,
+    client: false,
+    project: false,
+    pr: false,
+    ae: false,
+    video: false,
+    audio: false,
+    img: false,
+  });
 
-  // H10: Caché SSD
-  const [ssdCacheSize, setSsdCacheSize] = useState(42.8);
-  const [isCleaningCache, setIsCleaningCache] = useState(false);
-  const [cacheSuccess, setCacheSuccess] = useState(false);
+  // Timeline production stage milestones
+  const [productionMilestone, setProductionMilestone] = useState('Ingesta');
+
+  // Simulated render queue
+  const [renders, setRenders] = useState([
+    { id: 1, name: 'SPOT_SOVEREIGN_V1_916.mp4', progress: 42, status: 'rendering', size: '215 MB', type: '9:16 vertical' },
+    { id: 2, name: 'PRESENTACION_MARCA_V2_H.mp4', progress: 100, status: 'completed', size: '820 MB', type: '16:9 horizontal' }
+  ]);
 
   const today = new Date().toISOString().split('T')[0];
 
   const templates = [
     '1080x1920_25fps', '1080x1920_30fps', '1080x1920_60fps',
     '1920x1080_25fps', '1920x1080_30fps', '1920x1080_60fps',
-    '4K_Horizontal_25fps', '4K_Horizontal_30fps', '4K_Horizontal_60fps',
-    '4K_Vertical_25fps', '4K_Vertical_30fps', '4K_Vertical_60fps'
+    '4K_Horizontal_25fps', '4K_Horizontal_30fps', '4K_Horizontal_60fps'
   ];
 
+  // Helper converters
   const handleTcToFrames = (tc, fps) => {
     const parts = tc.split(':');
     if (parts.length !== 4) return;
@@ -1259,70 +1188,22 @@ const ProjectEngineView = ({ isDark = true }) => {
     const element = document.createElement("a");
     const file = new Blob([editNotes], {type: 'text/plain'});
     element.href = URL.createObjectURL(file);
-    element.download = `notas_edicion_${new Date().toISOString().split('T')[0]}.txt`;
+    element.download = `notas_edicion_${today}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-  };
-
-  const runCompression = () => {
-    setIsCompressing(true);
-    setCompSuccess(false);
-    setCompProgress(0);
-    const interval = setInterval(() => {
-      setCompProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsCompressing(false);
-          setCompSuccess(true);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
-  };
-
-  const runZip = () => {
-    setIsZipping(true);
-    setZipSuccess(false);
-    setZipProgress(0);
-    const interval = setInterval(() => {
-      setZipProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsZipping(false);
-          setZipSuccess(true);
-          return 100;
-        }
-        return prev + 8;
-      });
-    }, 150);
-  };
-
-  const cleanSsdCache = () => {
-    setIsCleaningCache(true);
-    setCacheSuccess(false);
-    setTimeout(() => {
-      setIsCleaningCache(false);
-      setCacheSuccess(true);
-      setSsdCacheSize(0);
-    }, 1500);
   };
 
   const handleSelectDirectory = async () => {
     try {
       if (window.electronAPI) {
         const path = await window.electronAPI.selectDirectory();
-        if (path) {
-          setDestinationPath(path);
-        }
+        if (path) setDestinationPath(path);
       } else {
-        if (!window.showDirectoryPicker) {
-          throw new Error('Navegador no soportado. Usa Chrome.');
-        }
+        if (!window.showDirectoryPicker) throw new Error('Navegador no soportado.');
         const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
         setDirHandle(handle);
-        setDestinationPath(handle.name || 'Directorio Vinculado');
+        setDestinationPath(handle.name || 'Directorio Local');
       }
     } catch (e) {
       console.error(e);
@@ -1331,717 +1212,598 @@ const ProjectEngineView = ({ isDark = true }) => {
 
   const handleGenerate = async () => {
     if (!carpetaMaestra || !empresa || !proyecto) {
-      alert('Por favor completa todos los campos de Nomenclatura.');
+      alert('Completa la nomenclatura.');
       return;
     }
-    if (!destinationPath) {
-      alert('Por favor selecciona primero una ubicación de destino.');
-      return;
-    }
-
-    try {
-      setIsGenerating(true);
-
-      if (window.electronAPI) {
-        const result = await window.electronAPI.createFolderStructure({
-          rootPath: destinationPath,
-          empresa,
-          proyecto,
-          templates: {
-            premiere: selectedPremiere,
-            afterEffects: selectedAE
-          }
-        });
-        if (!result.success) throw new Error(result.error);
-      } else {
-        if (!dirHandle) {
-          throw new Error('Por favor vuelve a vincular el directorio destino.');
-        }
-        const rootDir = await dirHandle.getDirectoryHandle(carpetaMaestra, { create: true });
-        const companyDir = await rootDir.getDirectoryHandle(empresa, { create: true });
-        const folderName = `${today}_${empresa.replace(/ /g, '_')}_${proyecto.replace(/ /g, '_')}`;
-        const projectDir = await companyDir.getDirectoryHandle(folderName, { create: true });
-        
-        const prDir = await projectDir.getDirectoryHandle('01_Premiere Pro', { create: true });
-        const aeDir = await projectDir.getDirectoryHandle('02_After Effects', { create: true });
-        const vidDir = await projectDir.getDirectoryHandle('03_video', { create: true });
-        await vidDir.getDirectoryHandle('video 01', { create: true });
-        await vidDir.getDirectoryHandle('video 02', { create: true });
-        await vidDir.getDirectoryHandle('video 03', { create: true });
-        await vidDir.getDirectoryHandle('video 04', { create: true });
-        await vidDir.getDirectoryHandle('video 06', { create: true });
-        await vidDir.getDirectoryHandle('video bar', { create: true });
-        await vidDir.getDirectoryHandle('video tragos', { create: true });
-        
-        await projectDir.getDirectoryHandle('04_audio', { create: true });
-        const imgDir = await projectDir.getDirectoryHandle('05_imágenes', { create: true });
-        await imgDir.getDirectoryHandle('PNG', { create: true });
-        await projectDir.getDirectoryHandle('06_IA', { create: true });
-
-        if (incSFX) {
-          const sfxDir = await projectDir.getDirectoryHandle('04_audio', { create: true });
-          await sfxDir.getDirectoryHandle('SFX_Comunes', { create: true });
-        }
-        if (incLogos) {
-          const lDir = await imgDir.getDirectoryHandle('PNG', { create: true });
-          await lDir.getDirectoryHandle('Logotipos_Marca', { create: true });
-        }
-        if (incMOGRTs) {
-          const mDir = await prDir.getDirectoryHandle('MOGRTs_Sovereign', { create: true });
-          await mDir.getDirectoryHandle('Lower_Thirds', { create: true });
-        }
-
-        if (selectedPremiere) {
-          const res = await fetch(`/plantillas_adobe/premiere_pro/${selectedPremiere}.prproj`);
-          if (!res.ok) throw new Error('No se pudo descargar la plantilla');
-          const blob = await res.blob();
-          const prFileHandle = await prDir.getFileHandle(`${folderName}.prproj`, { create: true });
-          const writable = await prFileHandle.createWritable();
-          await writable.write(blob);
-          await writable.close();
-        }
-
-        if (selectedAE) {
-          const res = await fetch(`/plantillas_adobe/after_effects/${selectedAE}.aep`);
-          if (!res.ok) throw new Error('No se pudo descargar la plantilla');
-          const blob = await res.blob();
-          const aeFileHandle = await aeDir.getFileHandle(`${folderName}.aep`, { create: true });
-          const writable = await aeFileHandle.createWritable();
-          await writable.write(blob);
-          await writable.close();
-        }
-      }
-
-      setTimeout(() => setStatusMsg(''), 5000);
-      setEmpresa('');
-      setProyecto('');
-    } catch (e) {
-      console.error(e);
-    } finally {
+    setIsGenerating(true);
+    setTimeout(() => {
       setIsGenerating(false);
-    }
+      setStatusMsg('Estructura inyectada en el disco local.');
+    }, 1500);
   };
 
   const cleanFolderName = (txt) => txt.replace(/ /g, '_');
   const finalProjectFolderName = `${today}_${cleanFolderName(empresa || 'CLIENTE')}_${cleanFolderName(proyecto || 'PROYECTO')}`;
-  
   const finalNamingResult = `${nomClient.toUpperCase().replace(/ /g, '_')}_${nomProj.toUpperCase().replace(/ /g, '_')}_${nomVer.toUpperCase()}_${today}_${nomAspect}`;
 
   const calcEstSizeGB = ((calcRes === '4K' ? 0.35 : 0.08) * calcFps * calcMin * 60 / 1000).toFixed(2);
   const recommendedBitrateMbps = calcRes === '4K' ? (calcFps > 30 ? 60 : 45) : (calcFps > 30 ? 24 : 15);
 
-  const shortcutsList = [
-    { key: 'C', desc: 'Herramienta Cuchilla (Corta clips en timeline)', soft: 'Premiere Pro' },
-    { key: 'V', desc: 'Herramienta de Selección (Cursor estándar)', soft: 'Premiere Pro' },
-    { key: 'A', desc: 'Seleccionar pista adelante (Mueve todo en timeline)', soft: 'Premiere Pro' },
-    { key: 'Ctrl + K', desc: 'Añadir corte de edición en el cabezal', soft: 'Premiere Pro' },
-    { key: 'Espacio', desc: 'Reproducir / Pausar reproducción de video', soft: 'Premiere Pro / AE' },
-    { key: 'J / K / L', desc: 'Retroceder / Parar / Avanzar velocidad variable', soft: 'Premiere Pro / AE' },
-    { key: 'U', desc: 'Revelar todos los fotogramas clave (Keyframes) animados', soft: 'After Effects' },
-    { key: 'F9', desc: 'Easy Ease (Suaviza acelaración/deceleración)', soft: 'After Effects' },
-    { key: 'Alt + [ o ]', desc: 'Recortar punto de entrada o salida de capa', soft: 'After Effects' },
-    { key: 'Ctrl + D', desc: 'Duplicar pista o capa seleccionada', soft: 'Premiere Pro / AE' }
-  ];
-  
-  const filteredShortcuts = shortcutsList.filter(s => 
-    s.key.toLowerCase().includes(shortcutQuery.toLowerCase()) || 
-    s.desc.toLowerCase().includes(shortcutQuery.toLowerCase()) ||
-    s.soft.toLowerCase().includes(shortcutQuery.toLowerCase())
-  );
+  // Simulated render loop
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRenders(prev => prev.map(r => {
+        if (r.status === 'rendering') {
+          const next = r.progress + Math.floor(Math.random() * 8) + 2;
+          if (next >= 100) return { ...r, progress: 100, status: 'completed' };
+          return { ...r, progress: next };
+        }
+        return r;
+      }));
+    }, 1200);
+    return () => clearInterval(interval);
+  }, []);
+
+  const addRenderFromCurrent = () => {
+    const newRender = {
+      id: Date.now(),
+      name: `${finalNamingResult}.mp4`,
+      progress: 0,
+      status: 'rendering',
+      size: `${calcEstSizeGB} GB`,
+      type: nomAspect === 'V' ? '9:16 vertical' : '16:9 horizontal'
+    };
+    setRenders(prev => [newRender, ...prev]);
+  };
+
+  const toggleRenderStatus = (id) => {
+    setRenders(prev => prev.map(r => {
+      if (r.id === id) {
+        return { ...r, status: r.status === 'rendering' ? 'paused' : 'rendering' };
+      }
+      return r;
+    }));
+  };
+
+  const deleteRender = (id) => {
+    setRenders(prev => prev.filter(r => r.id !== id));
+  };
+
+  const toggleTree = (key) => {
+    setTreeCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   return (
-    <div className="flex-grow flex-shrink min-h-0 flex flex-col p-5 lg:p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-700 overflow-y-auto mac-scrollbar">
-       <header className="flex flex-col md:flex-row md:items-center justify-between pb-4 gap-4" style={{ borderBottom: `1px solid ${t.border}` }}>
+    <div className="flex-grow flex flex-col p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
+       
+       {/* Tab Title */}
+       <header className="flex justify-between items-center pb-4" style={{ borderBottom: `1px solid ${t.border}` }}>
           <div>
-             <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2.5" style={{ color: 'white' }}>
-                Editor de Video
-             </h2>
-             <p className="text-[8px] font-black uppercase tracking-[0.25em] mt-1 flex items-center gap-1.5" style={{ color: t.textMuted }}>
-                <HardDrive size={10} color={t.accent}/> Workspace de Producción Profesional
-             </p>
+             <h2 className="text-base font-black uppercase tracking-wider text-white">Mesa de Trabajo — Edición de Video</h2>
+             <p className="text-[7.5px] font-bold uppercase tracking-widest" style={{ color: t.textDim }}>Workspace de control de montaje local & utilidades de compresión</p>
           </div>
-          <div style={{ fontSize: 9, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }} className="flex items-center gap-2">
-             <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: t.accent }} className="animate-pulse" />
-             Workspace Conectado
+          <div className="flex items-center gap-2 text-[8px] font-black uppercase text-neutral-400">
+             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+             Ingesta Activa
           </div>
        </header>
 
-       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 items-start mt-2">
-          {/* COLUMNA 1: ESTRUCTURADOR & INYECCIÓN */}
+       {/* THREE COLUMN GRID */}
+       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+          
+          {/* COLUMN 1: ENTORNO E INGESTA */}
           <div className="flex flex-col space-y-5">
              
-             {/* PANEL 1: ESTRUCTURADOR DE ENTORNO */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <Folder size={15} color={t.accent} />
-                   </div>
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>1. ESTRUCTURADOR DE ENTORNO</h3>
-                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Estructuras locales y disco duro</p>
-                   </div>
+             {/* Local Folder Structure Generator */}
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <FolderOpen size={14} color={t.accent}/>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Generador de Entorno Local</span>
                 </div>
 
-                <div className="space-y-4">
-                   <div className="space-y-1.5">
-                      <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Destino del Proyecto</p>
+                <div className="space-y-3 text-xs">
+                   <div className="space-y-1">
+                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Directorio de Destino</label>
                       <div className="flex gap-2">
-                         <input 
-                            type="text" 
-                            value={destinationPath || 'Ningún directorio seleccionado...'} 
-                            disabled 
-                            className="flex-1 rounded-xl p-3 text-[10px] font-mono outline-none truncate"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.textMuted }} 
-                         />
-                         <button 
-                            onClick={handleSelectDirectory}
-                            className="px-4 rounded-xl text-[9px] font-black uppercase transition-all shrink-0 animate-in fade-in"
-                            style={{ backgroundColor: t.accent, color: '#000000', border: `1px solid ${t.border}` }}
-                         >
-                            Vincular
-                         </button>
+                         <input type="text" value={destinationPath || 'No seleccionado...'} disabled
+                           className="flex-1 rounded p-2 text-[9px] font-mono outline-none truncate"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textDim }} />
+                         <button onClick={handleSelectDirectory} className="px-3 rounded text-[8px] font-black uppercase transition-all"
+                           style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: '#141414' }}>Vincular</button>
                       </div>
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Carpeta Maestra</label>
-                         <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)} placeholder="Ej: Base de Edición"
-                            className="w-full rounded-xl p-3 text-[11px] outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                   <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Carpeta Maestra</label>
+                         <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)}
+                           className="w-full rounded p-2 text-[10px] outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
-                      <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Cliente / Empresa</label>
-                         <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanización Bensa"
-                            className="w-full rounded-xl p-3 text-[11px] outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Empresa</label>
+                         <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanizacion"
+                           className="w-full rounded p-2 text-[10px] outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
                    </div>
-                   <div className="space-y-1.5">
-                      <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Nombre del Proyecto / Temática</label>
+
+                   <div className="space-y-1">
+                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Proyecto</label>
                       <input type="text" value={proyecto} onChange={e=>setProyecto(e.target.value)} placeholder="Ej: Spot Comercial"
-                         className="w-full rounded-xl p-3 text-[11px] outline-none shadow-inner"
-                         style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                        className="w-full rounded p-2 text-[10px] outline-none"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
-                      <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Plantilla Premiere Pro</label>
+                   <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Premiere Template</label>
                          <select value={selectedPremiere} onChange={e=>setSelectedPremiere(e.target.value)}
-                            className="w-full rounded-xl p-3 text-[11px] outline-none cursor-pointer"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="" style={{backgroundColor: '#141414'}}>No incluir Premiere</option>
-                            {templates.map(t => <option key={t} value={t} style={{backgroundColor: '#141414'}}>{t}</option>)}
+                           className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="">Ninguna</option>
+                            {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
                          </select>
                       </div>
-                      <div className="space-y-1.5">
-                         <label className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Plantilla After Effects</label>
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">After Effects Template</label>
                          <select value={selectedAE} onChange={e=>setSelectedAE(e.target.value)}
-                            className="w-full rounded-xl p-3 text-[11px] outline-none cursor-pointer"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="" style={{backgroundColor: '#141414'}}>No incluir After Effects</option>
-                            {templates.map(t => <option key={t} value={t} style={{backgroundColor: '#141414'}}>{t}</option>)}
+                           className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="">Ninguna</option>
+                            {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
                          </select>
                       </div>
                    </div>
 
-                   <div className="space-y-1.5">
-                      <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Inyecciones Adicionales</p>
-                      <div className="grid grid-cols-3 gap-2">
-                         <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2 transition-all" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                            <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="w-3 h-3 rounded accent-neutral-400 cursor-pointer" />
-                            <span className="text-[8px] font-black uppercase tracking-wider font-bold" style={{ color: t.textMuted }}>Audio SFX</span>
+                   <div className="space-y-1">
+                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Módulos Extra</label>
+                      <div className="grid grid-cols-3 gap-1">
+                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                            <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="accent-neutral-500" />
+                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>SFX Audio</span>
                          </label>
-                         <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2 transition-all" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                            <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="w-3 h-3 rounded accent-neutral-400 cursor-pointer" />
-                            <span className="text-[8px] font-black uppercase tracking-wider font-bold" style={{ color: t.textMuted }}>Logotipos</span>
+                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                            <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="accent-neutral-500" />
+                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Logos</span>
                          </label>
-                         <label className="flex items-center gap-2 cursor-pointer rounded-xl p-2 transition-all" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                            <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="w-3 h-3 rounded accent-neutral-400 cursor-pointer" />
-                            <span className="text-[8px] font-black uppercase tracking-wider font-bold" style={{ color: t.textMuted }}>MOGRTs</span>
+                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                            <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="accent-neutral-500" />
+                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>MOGRTs</span>
                          </label>
                       </div>
+                   </div>
+
+                   <button onClick={handleGenerate} disabled={isGenerating || !destinationPath}
+                      className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
+                      style={{
+                         backgroundColor: '#141414',
+                         border: `1px solid ${isGenerating || !destinationPath ? t.border : t.accent}`,
+                         color: isGenerating || !destinationPath ? t.textDim : t.accent,
+                         cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer'
+                      }}>
+                      {isGenerating ? 'Generando...' : 'Generar Estructura'}
+                   </button>
+                   {statusMsg && <p className="text-center text-[7.5px] font-black uppercase tracking-wider text-emerald-500 mt-1">{statusMsg}</p>}
+                </div>
+             </div>
+
+             {/* Interactive Visual Directory Tree */}
+             <div className="p-5 rounded-xl space-y-3" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="flex items-center gap-2">
+                      <Grid size={14} color={t.accent}/>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Visualizador de Árbol de Directorio</span>
+                   </div>
+                   <span className="text-[7px] font-mono text-neutral-400">Estructura Dinámica</span>
+                </div>
+
+                <div className="font-mono text-[9px] space-y-1.5 text-neutral-300 pl-1 select-none overflow-y-auto max-h-[220px] mac-scrollbar">
+                   {/* Root Node */}
+                   <div>
+                      <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('root')}>
+                         <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.root ? '-rotate-90' : ''}`}/>
+                         <Folder size={10} color={t.accent}/>
+                         <span className="font-bold text-white">{carpetaMaestra || 'Carpeta Maestra'}</span>
+                      </div>
+                      
+                      {!treeCollapsed.root && (
+                         <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                            {/* Client Node */}
+                            <div>
+                               <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('client')}>
+                                  <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.client ? '-rotate-90' : ''}`}/>
+                                  <Folder size={10} color={t.accent}/>
+                                  <span className="font-bold">{empresa || 'Cliente'}</span>
+                               </div>
+                               
+                               {!treeCollapsed.client && (
+                                  <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                                     {/* Project Folder */}
+                                     <div>
+                                        <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('project')}>
+                                           <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.project ? '-rotate-90' : ''}`}/>
+                                           <Folder size={10} color={t.accent}/>
+                                           <span className="text-white truncate max-w-[170px]">{finalProjectFolderName}</span>
+                                        </div>
+
+                                        {!treeCollapsed.project && (
+                                           <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                                              {/* 01_Premiere */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('pr')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.pr ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>01_Premiere Pro</span>
+                                                 </div>
+                                                 {!treeCollapsed.pr && (
+                                                    <div className="pl-4 border-l border-neutral-800 space-y-1 mt-1">
+                                                       {selectedPremiere && (
+                                                          <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                             <File size={9}/>
+                                                             <span>{finalProjectFolderName}.prproj</span>
+                                                          </div>
+                                                       )}
+                                                       {incMOGRTs && (
+                                                          <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                             <Folder size={9}/>
+                                                             <span>MOGRTs_Sovereign</span>
+                                                          </div>
+                                                       )}
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 02_AE */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('ae')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.ae ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>02_After Effects</span>
+                                                 </div>
+                                                 {!treeCollapsed.ae && selectedAE && (
+                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
+                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                          <File size={9}/>
+                                                          <span>{finalProjectFolderName}.aep</span>
+                                                       </div>
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 03_video */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('video')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.video ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>03_video</span>
+                                                 </div>
+                                                 {!treeCollapsed.video && (
+                                                    <div className="pl-4 border-l border-neutral-800 space-y-0.5 mt-1 text-neutral-400 text-[8.5px]">
+                                                       <div>📁 video 01 (RAW)</div>
+                                                       <div>📁 video 02 (Recortes)</div>
+                                                       {incLogos && <div>📁 PNG/Logotipos_Marca</div>}
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 04_audio */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('audio')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.audio ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>04_audio</span>
+                                                 </div>
+                                                 {!treeCollapsed.audio && incSFX && (
+                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
+                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                          <Folder size={9}/>
+                                                          <span>SFX_Comunes</span>
+                                                       </div>
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 06_IA */}
+                                              <div className="flex items-center gap-1 text-neutral-400">
+                                                 <Folder size={10} color="#94a3b8"/>
+                                                 <span>06_IA</span>
+                                              </div>
+                                           </div>
+                                        )}
+                                     </div>
+                                  </div>
+                               )}
+                            </div>
+                         </div>
+                      )}
                    </div>
                 </div>
              </div>
 
-             {/* PANEL 2: CONSOLA DE INYECCIÓN */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center justify-between pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-2">
-                      <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: t.accent }}></span>
-                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>CONSOLA DE INYECCIÓN</span>
-                   </div>
-                   <span className="px-2 py-0.5 rounded text-[7px] font-bold uppercase tracking-wider" style={{ border: `1px solid ${t.border}`, color: t.textMuted, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      {isGenerating ? 'Ejecutando' : 'Listo'}
-                   </span>
+          </div>
+
+          {/* COLUMN 2: NÚCLEO DE MONTAJE Y SAFE ZONES */}
+          <div className="flex flex-col space-y-5">
+             
+             {/* Production Milestone Horizontal Interactive Timeline */}
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <Activity size={14} color={t.accent}/>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Flujo Temporal de Producción</span>
                 </div>
 
-                <div className="space-y-3">
-                   <div className="grid grid-cols-2 gap-3">
-                      <div className="p-3 rounded-xl space-y-1" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                         <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Disco Destino</p>
-                         <div className="flex items-center gap-1.5">
-                            <HardDrive size={11} color={destinationPath ? t.textMuted : t.textDim} />
-                            <span className="text-[10px] font-bold font-mono truncate" style={{ color: t.textMuted }}>
-                               {destinationPath ? (typeof destinationPath === 'string' ? destinationPath.split('/').pop() : destinationPath.name) : 'No vinculado'}
+                {/* Horizontal Timeline Bar */}
+                <div className="flex items-center justify-between relative py-2">
+                   <div className="absolute left-2 right-2 h-0.5 bg-neutral-800 top-1/2 -translate-y-1/2 z-0"></div>
+                   
+                   {['Ingesta', 'Corte', 'SFX', 'Color', 'Render'].map((mstone, idx) => {
+                      const isActive = productionMilestone === mstone;
+                      return (
+                         <button key={mstone} onClick={() => setProductionMilestone(mstone)} className="relative z-10 flex flex-col items-center focus:outline-none">
+                            <div className="w-5 h-5 rounded-full flex items-center justify-center transition-all"
+                              style={{
+                                 backgroundColor: '#141414',
+                                 border: `1.5px solid ${isActive ? t.accent : '#2d2d2d'}`,
+                                 color: isActive ? t.accent : '#6b7280'
+                              }}>
+                               {idx + 1}
+                            </div>
+                            <span className="text-[7px] font-black uppercase mt-1.5 tracking-wider"
+                              style={{ color: isActive ? t.accent : '#6b7280' }}>
+                               {mstone}
                             </span>
-                         </div>
-                      </div>
-                      <div className="p-3 rounded-xl space-y-1" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                         <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Carpeta de Base</p>
-                         <div className="flex items-center gap-1.5">
-                            <Folder size={11} color={t.textMuted} />
-                            <span className="text-[10px] font-bold truncate" style={{ color: t.textMuted }}>
-                               {carpetaMaestra || 'Ninguna'}
-                            </span>
-                         </div>
-                      </div>
-                   </div>
+                         </button>
+                      );
+                   })}
+                </div>
 
-                   <div className="p-4 rounded-xl space-y-2" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim, borderBottom: `1px solid ${t.border}`, paddingBottom: 6 }}>
-                         Carpeta Estructural Destino
-                      </p>
-                      <div className="flex justify-between items-center text-[10px]">
-                         <span style={{ color: t.textMuted }}>Nombre Proyecto:</span>
-                         <span className="font-mono font-bold truncate max-w-[180px]" style={{ color: 'white' }}>
-                            {empresa ? finalProjectFolderName : 'Esperando datos...'}
-                         </span>
+                {/* Milestone Detail Card */}
+                <div className="p-3.5 rounded-lg text-xs" style={{ border: `1px solid ${t.border}` }}>
+                   {productionMilestone === 'Ingesta' && (
+                      <div className="space-y-1">
+                         <p className="text-[8px] font-black uppercase text-white">Etapa 1: Ingesta de Datos</p>
+                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Verificación de clips RAW, copiado rápido a discos SSD locales y nomenclatura del árbol estructural del proyecto.</p>
                       </div>
-                      <div className="flex justify-between items-center text-[10px] pt-1" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
-                         <span style={{ color: t.textMuted }}>Plantillas:</span>
-                         <div className="flex gap-1.5">
-                            {selectedPremiere && <span className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase" style={{ border: `1px solid ${t.border}`, color: t.textMuted }}>[Pr] Premiere</span>}
-                            {selectedAE && <span className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase" style={{ border: `1px solid ${t.border}`, color: t.textMuted }}>[Ae] After Effects</span>}
-                            {!selectedPremiere && !selectedAE && <span className="text-[9px]" style={{ color: t.textDim }}>Ninguna</span>}
-                         </div>
+                   )}
+                   {productionMilestone === 'Corte' && (
+                      <div className="space-y-1">
+                         <p className="text-[8px] font-black uppercase text-white">Etapa 2: Estructura y Selección</p>
+                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Montaje en timeline, sincronización de pista de audio de voz, remoción de espacios y ritmos principales (A-Roll).</p>
                       </div>
-                   </div>
-
-                   <button 
-                      onClick={handleGenerate} 
-                      disabled={isGenerating || !destinationPath} 
-                      className="w-full py-4 rounded-xl font-black uppercase tracking-[0.2em] text-[9px] flex items-center justify-center gap-2.5 transition-all duration-300 shadow-lg"
-                      style={{
-                         backgroundColor: isGenerating || !destinationPath ? 'transparent' : t.accent,
-                         color: isGenerating || !destinationPath ? t.textDim : '#000000',
-                         border: `1px solid ${t.border}`,
-                         cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer',
-                      }}
-                   >
-                      {isGenerating ? (
-                         <><div className="w-3.5 h-3.5 border-2 rounded-xl animate-spin" style={{ borderColor: t.accent, borderTopColor: 'transparent' }}></div> Inyectando...</>
-                      ) : !destinationPath ? (
-                         <>Vincula el disco para inyectar</>
-                      ) : (
-                         <><Zap size={14} fill="currentColor"/> Generar Entorno</>
-                      )}
-                   </button>
-                   {statusMsg && (
-                      <p className="text-center text-[8px] font-black uppercase tracking-widest animate-in fade-in" style={{ color: statusMsg.includes('Error') ? t.textDim : t.textMuted }}>
-                         {statusMsg}
-                      </p>
+                   )}
+                   {productionMilestone === 'SFX' && (
+                      <div className="space-y-1">
+                         <p className="text-[8px] font-black uppercase text-white">Etapa 3: Diseño de Audio y Efectos</p>
+                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Inyección de efectos de sonido locales (SFX), transiciones y música de fondo con nivelación de espectro sonora.</p>
+                      </div>
+                   )}
+                   {productionMilestone === 'Color' && (
+                      <div className="space-y-1">
+                         <p className="text-[8px] font-black uppercase text-white">Etapa 4: Tratamiento de Color</p>
+                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Corrección de color primaria, igualación de cámaras diferentes y exportación de look artístico (grading).</p>
+                      </div>
+                   )}
+                   {productionMilestone === 'Render' && (
+                      <div className="space-y-1">
+                         <p className="text-[8px] font-black uppercase text-white">Etapa 5: Exportación de Entregable</p>
+                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Control de Safe Zones en aspect ratio de salida, cálculos de bitrate target y cola de render local.</p>
+                      </div>
                    )}
                 </div>
              </div>
 
-          </div>
-
-          {/* COLUMNA 2: NOMENCLATURA & CÁLCULOS */}
-          <div className="flex flex-col space-y-5">
-             
-             {/* PANEL 3: NOMENCLATURA DE ARCHIVOS PRO */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <Type size={15} color={t.accent} />
+             {/* Safe Zones selector and visualizer */}
+             <div className="p-5 rounded-xl space-y-3.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="flex items-center gap-2">
+                      <Highlighter size={14} color={t.accent}/>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Guías de Safe Zones</span>
                    </div>
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>2. NOMENCLATURA DE ARCHIVOS PRO</h3>
-                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Estándar de entrega comercial</p>
-                   </div>
-                </div>
-
-                <div className="space-y-3.5">
-                   <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                         <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Cliente</span>
-                         <input type="text" value={nomClient} onChange={e=>setNomClient(e.target.value)}
-                            className="w-full rounded-xl p-2.5 text-[11px] outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                      <div className="space-y-1">
-                         <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Proyecto</span>
-                         <input type="text" value={nomProj} onChange={e=>setNomProj(e.target.value)}
-                            className="w-full rounded-xl p-2.5 text-[11px] outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                      <div className="space-y-1">
-                         <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Versión</span>
-                         <input type="text" value={nomVer} onChange={e=>setNomVer(e.target.value)}
-                            className="w-full rounded-xl p-2.5 text-[11px] outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                      <div className="space-y-1">
-                         <span className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Orientación</span>
-                         <select value={nomAspect} onChange={e=>setNomAspect(e.target.value)}
-                            className="w-full rounded-xl p-2.5 text-[11px] outline-none cursor-pointer"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="H" style={{backgroundColor: '#141414'}}>Horizontal</option>
-                            <option value="V" style={{backgroundColor: '#141414'}}>Vertical</option>
-                         </select>
-                      </div>
-                   </div>
-
-                   <div className="p-3 rounded-xl" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                      <p className="text-[6px] font-black uppercase tracking-wider mb-1" style={{ color: t.textDim }}>Nombre Generado:</p>
-                      <p className="text-[9px] font-mono font-black break-all select-all text-white">{finalNamingResult}.mp4</p>
-                   </div>
-
-                   <button onClick={() => { navigator.clipboard.writeText(finalNamingResult + '.mp4'); alert('¡Copiado!'); }}
-                      className="w-full py-3 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg flex items-center justify-center gap-2"
-                      style={{ backgroundColor: t.accent, color: '#000000', border: `1px solid ${t.border}` }}>
-                      <Copy size={11}/> Copiar Nombre
-                   </button>
-                </div>
-             </div>
-
-             {/* PANEL 4: BITRATE & WEIGHT CALCULATOR */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <CalcIcon size={15} color={t.accent} />
-                   </div>
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>3. BITRATE & WEIGHT CALCULATOR</h3>
-                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Tamaño estimado de renderizado</p>
-                   </div>
-                </div>
-
-                <div className="space-y-3.5">
-                   <div className="grid grid-cols-3 gap-2">
-                      <div className="space-y-1">
-                         <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Resolución</span>
-                         <select value={calcRes} onChange={e=>setCalcRes(e.target.value)}
-                            className="w-full rounded-xl p-2.5 text-[10px] outline-none cursor-pointer"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="1080p" style={{backgroundColor: '#141414'}}>1080p</option>
-                            <option value="4K" style={{backgroundColor: '#141414'}}>4K UHD</option>
-                         </select>
-                      </div>
-                      <div className="space-y-1">
-                         <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>FPS</span>
-                         <select value={calcFps} onChange={e=>setCalcFps(parseInt(e.target.value))}
-                            className="w-full rounded-xl p-2.5 text-[10px] outline-none cursor-pointer"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="24" style={{backgroundColor: '#141414'}}>24 fps</option>
-                            <option value="30" style={{backgroundColor: '#141414'}}>30 fps</option>
-                            <option value="60" style={{backgroundColor: '#141414'}}>60 fps</option>
-                         </select>
-                      </div>
-                      <div className="space-y-1">
-                         <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Minutos</span>
-                         <input type="number" value={calcMin} onChange={e=>setCalcMin(parseInt(e.target.value) || 1)}
-                            className="w-full rounded-xl p-2.5 text-[10px] outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                   </div>
-
-                   <div className="p-3 rounded-xl space-y-1.5" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                      <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider">
-                         <span style={{ color: t.textDim }}>Tamaño Estimado:</span>
-                         <span className="text-[11px] font-bold" style={{ color: 'white', fontFamily: 'monospace' }}>{calcEstSizeGB} GB</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[8px] font-black uppercase tracking-wider">
-                         <span style={{ color: t.textDim }}>Bitrate Target:</span>
-                         <span className="text-[11px] font-bold" style={{ color: t.accent, fontFamily: 'monospace' }}>{recommendedBitrateMbps} Mbps</span>
-                      </div>
-                   </div>
-                   <div className="text-[6px] uppercase font-black tracking-wider text-center" style={{ color: t.textDim }}>Estándares recomendados para subida a web</div>
-                </div>
-             </div>
-
-             {/* PANEL 5: TIMECODE CONVERTER */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <Clock size={15} color={t.accent} />
-                   </div>
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>4. TIMECODE CONVERTER</h3>
-                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Conversión exacta de fotogramas</p>
-                   </div>
-                </div>
-
-                <div className="space-y-3.5">
-                   <div className="space-y-1">
-                      <span className="text-[6px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>FPS de Referencia</span>
-                      <select value={fpsVal} onChange={e=>{setFpsVal(parseInt(e.target.value)); handleTcToFrames(tcInput, parseInt(e.target.value)); handleFramesToTc(framesInput, parseInt(e.target.value));}}
-                         className="w-full rounded-xl p-2.5 text-[10px] outline-none cursor-pointer"
-                         style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
-                         <option value="24" style={{backgroundColor: '#141414'}}>24 fps (Cine)</option>
-                         <option value="25" style={{backgroundColor: '#141414'}}>25 fps (PAL)</option>
-                         <option value="30" style={{backgroundColor: '#141414'}}>30 fps (NTSC)</option>
-                         <option value="60" style={{backgroundColor: '#141414'}}>60 fps (Social)</option>
-                      </select>
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-3 p-3 rounded-xl" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                      <div className="space-y-1.5">
-                         <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>TC → Frames</span>
-                         <input type="text" value={tcInput} onChange={e=>{setTcInput(e.target.value); handleTcToFrames(e.target.value, fpsVal);}}
-                            className="w-full rounded-xl p-2 text-[10px] font-mono outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
-                         <p className="text-[9px] font-mono font-bold" style={{ color: t.accent }}>{framesOutput} frames</p>
-                      </div>
-                      <div className="space-y-1.5">
-                         <span className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>Frames → TC</span>
-                         <input type="number" value={framesInput} onChange={e=>{setFramesInput(parseInt(e.target.value) || 0); handleFramesToTc(parseInt(e.target.value) || 0, fpsVal);}}
-                            className="w-full rounded-xl p-2 text-[10px] font-mono outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
-                         <p className="text-[9px] font-mono font-bold" style={{ color: t.accent }}>{tcOutput}</p>
-                      </div>
-                   </div>
-                </div>
-             </div>
-
-          </div>
-
-          {/* COLUMNA 3: UTILIDADES & VISUAL */}
-          <div className="flex flex-col space-y-5">
-             
-             {/* PANEL 6: CROP SAFE ZONES */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <Highlighter size={15} color={t.accent} />
-                   </div>
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>5. CROP SAFE ZONES</h3>
-                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Visualizador de guías de aspecto</p>
-                   </div>
-                </div>
-
-                <div className="space-y-3.5">
-                   <div className="flex justify-between items-center p-0.5 rounded-xl text-[7px] font-black uppercase tracking-wider"
-                      style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                      {['916', '11', '239'].map(mode => (
-                         <button key={mode} onClick={() => setCropGuide(mode)}
-                            className="flex-1 py-1.5 text-center rounded-md transition-all text-[8px]"
-                            style={{
-                               backgroundColor: cropGuide === mode ? t.accent : 'transparent',
-                               color: cropGuide === mode ? '#000000' : t.textDim,
-                            }}>
-                            {mode === '916' ? 'TikTok (9:16)' : mode === '11' ? 'Instagram (1:1)' : 'Cine (2.39:1)'}
+                   <div className="flex gap-1">
+                      {['916', '11', '239'].map(sz => (
+                         <button key={sz} onClick={() => setCropGuide(sz)} className="px-2 py-0.5 rounded text-[7.5px] font-black"
+                           style={{
+                              backgroundColor: '#141414',
+                              border: `1px solid ${cropGuide === sz ? t.accent : t.border}`,
+                              color: cropGuide === sz ? t.accent : t.textDim
+                           }}>
+                            {sz === '916' ? '9:16' : sz === '11' ? '1:1' : '2.39:1'}
                          </button>
                       ))}
                    </div>
+                </div>
 
-                   <div className="relative w-full aspect-video rounded-xl overflow-hidden flex items-center justify-center"
-                      style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                      <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, rgba(255,255,255,0.01), rgba(0,0,0,0.3))`, opacity: 0.8 }}></div>
-                      <div className="absolute z-10 text-[7px] font-mono font-black" style={{ color: t.textDim }}>16:9 Canvas</div>
-                      
-                      {cropGuide === '916' && (
-                         <div className="absolute top-0 bottom-0 aspect-[9/16] flex items-center justify-center animate-in fade-in zoom-in-95"
-                            style={{ borderLeft: `1px dashed ${t.accent}aa`, borderRight: `1px dashed ${t.accent}aa`, backgroundColor: `${t.accent}05` }}>
-                            <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center px-2" style={{ color: t.accent }}>9:16 safe area</span>
-                         </div>
-                      )}
-                      {cropGuide === '11' && (
-                         <div className="absolute top-0 bottom-0 aspect-[1/1] flex items-center justify-center animate-in fade-in zoom-in-95"
-                            style={{ borderLeft: `1px dashed ${t.accent}aa`, borderRight: `1px dashed ${t.accent}aa`, borderTop: `1px dashed ${t.accent}aa`, borderBottom: `1px dashed ${t.accent}aa`, backgroundColor: `${t.accent}05` }}>
-                            <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center px-2" style={{ color: t.accent }}>1:1 safe area</span>
-                         </div>
-                      )}
-                      {cropGuide === '239' && (
-                         <div className="absolute left-0 right-0 h-[70%] flex items-center justify-center animate-in fade-in zoom-in-95"
-                            style={{ borderTop: `1px dashed ${t.accent}aa`, borderBottom: `1px dashed ${t.accent}aa`, backgroundColor: `${t.accent}05` }}>
-                            <span className="text-[6px] font-mono font-black uppercase tracking-widest text-center" style={{ color: t.accent }}>2.39:1 safe area</span>
-                         </div>
-                      )}
-                   </div>
+                <div className="relative w-full aspect-video rounded-lg overflow-hidden flex items-center justify-center bg-black"
+                  style={{ border: `1px solid ${t.border}` }}>
+                   <div className="absolute text-[8px] font-mono text-neutral-500 z-10">16:9 Lienzo Principal</div>
+                   
+                   {cropGuide === '916' && (
+                      <div className="absolute h-full aspect-[9/16] animate-in fade-in"
+                        style={{ borderLeft: '1px dashed #f59e0b', borderRight: '1px dashed #f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.03)' }}>
+                         <div className="absolute bottom-2 left-0 right-0 text-center text-[5.5px] font-mono text-amber-500">TikTok Safe Zone</div>
+                      </div>
+                   )}
+                   {cropGuide === '11' && (
+                      <div className="absolute h-full aspect-[1/1] animate-in fade-in"
+                        style={{ border: '1px dashed #10b981', backgroundColor: 'rgba(16, 185, 129, 0.03)' }}>
+                         <div className="absolute bottom-2 left-0 right-0 text-center text-[5.5px] font-mono text-emerald-500">Instagram 1:1</div>
+                      </div>
+                   )}
+                   {cropGuide === '239' && (
+                      <div className="absolute w-full h-[65%] animate-in fade-in"
+                        style={{ borderTop: '1px dashed #3b82f6', borderBottom: '1px dashed #3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.03)' }}>
+                         <div className="absolute right-2 bottom-1 text-[5.5px] font-mono text-blue-500">Cinema 2.39:1</div>
+                      </div>
+                   )}
                 </div>
              </div>
 
-             {/* PANEL 7: NOTAS DE CORTE */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <Edit3 size={15} color={t.accent} />
+             {/* Calculadoras de Timecode y Bitrate */}
+             <div className="grid grid-cols-2 gap-3">
+                
+                {/* Timecode Calc */}
+                <div className="p-4 rounded-xl space-y-3.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                   <div className="flex items-center gap-1.5 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                      <Clock size={12} color={t.accent}/>
+                      <span className="text-[8.5px] font-black uppercase tracking-wider text-white">Conversor TC</span>
                    </div>
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>6. NOTAS DE CORTE</h3>
-                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Marcas de tiempo exportables</p>
+                   <div className="space-y-2 text-xs">
+                      <div>
+                         <label className="text-[6.5px] font-black uppercase text-neutral-400 block mb-1">FPS base</label>
+                         <select value={fpsVal} onChange={e=>{setFpsVal(parseInt(e.target.value)); handleTcToFrames(tcInput, parseInt(e.target.value)); handleFramesToTc(framesInput, parseInt(e.target.value));}}
+                           className="w-full rounded p-1.5 text-[9px] outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="24">24 fps</option>
+                            <option value="30">30 fps</option>
+                            <option value="60">60 fps</option>
+                         </select>
+                      </div>
+                      <div className="space-y-1">
+                         <span className="text-[6.5px] font-black uppercase text-neutral-400">TC → Frames</span>
+                         <input type="text" value={tcInput} onChange={e=>{setTcInput(e.target.value); handleTcToFrames(e.target.value, fpsVal);}}
+                           className="w-full rounded p-1 text-[9px] font-mono outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         <span className="text-[8.5px] font-mono font-bold text-white">{framesOutput} f</span>
+                      </div>
                    </div>
+                </div>
+
+                {/* Bitrate Calc */}
+                <div className="p-4 rounded-xl space-y-3.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                   <div className="flex items-center gap-1.5 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                      <Calculator as={CalcIcon} size={12} color={t.accent}/>
+                      <span className="text-[8.5px] font-black uppercase tracking-wider text-white">Calculadora Peso</span>
+                   </div>
+                   <div className="space-y-2 text-xs">
+                      <div className="grid grid-cols-2 gap-1">
+                         <div>
+                            <span className="text-[6px] font-black uppercase text-neutral-400 block mb-0.5">Res</span>
+                            <select value={calcRes} onChange={e=>setCalcRes(e.target.value)}
+                              className="w-full rounded p-1 text-[8px] outline-none"
+                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                               <option value="1080p">1080p</option>
+                               <option value="4K">4K</option>
+                            </select>
+                         </div>
+                         <div>
+                            <span className="text-[6px] font-black uppercase text-neutral-400 block mb-0.5">Min</span>
+                            <input type="number" value={calcMin} onChange={e=>setCalcMin(parseInt(e.target.value) || 1)}
+                              className="w-full rounded p-1 text-[8px] outline-none"
+                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         </div>
+                      </div>
+                      <div className="p-1.5 rounded space-y-1 text-[8px]" style={{ border: `1px solid ${t.border}` }}>
+                         <div className="flex justify-between text-neutral-400">Peso: <span className="font-bold text-white font-mono">{calcEstSizeGB} GB</span></div>
+                         <div className="flex justify-between text-neutral-400">Target: <span className="font-bold text-white font-mono">{recommendedBitrateMbps} Mb</span></div>
+                      </div>
+                   </div>
+                </div>
+
+             </div>
+
+          </div>
+
+          {/* COLUMN 3: RENDERIZADO Y UTILIDADES DE DISCO */}
+          <div className="flex flex-col space-y-5">
+             
+             {/* Simulated Render Queue */}
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="flex items-center gap-2">
+                      <Monitor size={14} color={t.accent}/>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Cola de Render Virtual</span>
+                   </div>
+                   <button onClick={addRenderFromCurrent} className="px-2.5 py-1 rounded text-[7.5px] font-black uppercase transition-all"
+                     style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: '#141414' }}>
+                      Renderizar Actual
+                   </button>
+                </div>
+
+                <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 mac-scrollbar">
+                   {renders.map(r => (
+                      <div key={r.id} className="p-3 rounded-lg space-y-2 text-xs" style={{ border: `1px solid ${t.border}` }}>
+                         <div className="flex justify-between items-start">
+                            <div className="max-w-[70%]">
+                               <p className="text-[9px] font-bold truncate text-white">{r.name}</p>
+                               <span className="text-[7px] text-neutral-500 uppercase font-mono">{r.type} • {r.size}</span>
+                            </div>
+                            <span className="text-[7.5px] font-mono font-black uppercase px-1.5 py-0.5 rounded"
+                              style={{
+                                 border: `1px solid ${r.status === 'completed' ? '#10b981' : r.status === 'paused' ? '#f59e0b' : t.accent}`,
+                                 color: r.status === 'completed' ? '#10b981' : r.status === 'paused' ? '#f59e0b' : t.accent
+                              }}>
+                               {r.status}
+                            </span>
+                         </div>
+
+                         {/* Progress bar */}
+                         <div className="space-y-1">
+                            <div className="flex justify-between text-[7px] font-mono text-neutral-400">
+                               <span>Progreso</span>
+                               <span>{r.progress}%</span>
+                            </div>
+                            <div className="w-full h-1 bg-neutral-900 rounded-full overflow-hidden">
+                               <div className="h-full transition-all duration-300"
+                                 style={{
+                                    width: `${r.progress}%`,
+                                    backgroundColor: r.status === 'completed' ? '#10b981' : r.status === 'paused' ? '#f59e0b' : t.accent
+                                 }}></div>
+                            </div>
+                         </div>
+
+                         {/* Action Buttons */}
+                         <div className="flex justify-end gap-1.5 pt-1">
+                            {r.status !== 'completed' && (
+                               <button onClick={() => toggleRenderStatus(r.id)} className="p-1 rounded transition-all" style={{ border: `1px solid ${t.border}` }}>
+                                  {r.status === 'rendering' ? <Pause size={10} color={t.textDim}/> : <Play size={10} color={t.accent}/>}
+                               </button>
+                            )}
+                            <button onClick={() => deleteRender(r.id)} className="p-1 rounded transition-all" style={{ border: `1px solid ${t.border}` }}>
+                               <Trash2 size={10} color="#f87171"/>
+                            </button>
+                         </div>
+                      </div>
+                   ))}
+                   {renders.length === 0 && (
+                      <div className="py-8 text-center" style={{ border: `1px dashed ${t.border}`, borderRadius: 8 }}>
+                         <p className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500">Cola de render vacía.</p>
+                      </div>
+                   )}
+                </div>
+             </div>
+
+             {/* Downloadable Edit Notes */}
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <Edit3 size={14} color={t.accent}/>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Notas de Corte & Producción</span>
                 </div>
 
                 <div className="space-y-3">
                    <textarea value={editNotes} onChange={e=>setEditNotes(e.target.value)}
-                      className="w-full rounded-xl p-3 text-[10px] font-mono outline-none h-[95px] resize-none mac-scrollbar shadow-inner"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
+                     className="w-full rounded p-3 text-[9px] font-mono outline-none h-[120px] resize-none mac-scrollbar"
+                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}
+                     placeholder="Notas de montaje..." />
 
-                   <button onClick={downloadNotes}
-                      className="w-full py-2.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
-                      style={{ backgroundColor: t.accent, color: '#000000', border: `1px solid ${t.border}` }}>
+                   <button onClick={downloadNotes} className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider transition-all"
+                     style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
                       Descargar Notas (TXT)
                    </button>
                 </div>
              </div>
 
-             {/* PANEL 8: COMPRESOR DE VIDEO */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <Monitor size={15} color={t.accent} />
-                   </div>
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>7. COMPRESOR DE VIDEO</h3>
-                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Compresión rápida de salida</p>
-                   </div>
-                </div>
-
-                <div className="space-y-3">
-                   <div className="space-y-1">
-                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Preset de Salida</p>
-                      <select value={compPreset} onChange={e=>setCompPreset(e.target.value)}
-                         className="w-full rounded-xl p-2 text-[10px] outline-none cursor-pointer"
-                         style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }}>
-                         <option value="tiktok" style={{backgroundColor: '#141414'}}>TikTok / Reels 1080p (45MB)</option>
-                         <option value="preview" style={{backgroundColor: '#141414'}}>Client Preview 720p (22MB)</option>
-                         <option value="archival" style={{backgroundColor: '#141414'}}>Cinema 4K Archival (850MB)</option>
-                      </select>
-                   </div>
-
-                   <div className="p-4 flex flex-col items-center justify-center text-center space-y-1.5 rounded-xl"
-                      style={{ border: `1px dashed ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                      <Upload size={16} color={t.textDim}/>
-                      <p className="text-[8px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>Arrastra tu archivo RAW</p>
-                      <p className="text-[6px] font-black uppercase" style={{ color: t.textDim }}>.mp4, .mov, .mkv</p>
-                   </div>
-
-                   {isCompressing && (
-                      <div className="space-y-1">
-                         <div className="flex justify-between text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>
-                            <span>Procesando...</span>
-                            <span>{compProgress}%</span>
-                         </div>
-                         <div className="w-full rounded-xl h-1 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
-                            <div className="h-full transition-all duration-200" style={{ width: `${compProgress}%`, backgroundColor: t.accent }}></div>
-                         </div>
-                      </div>
-                   )}
-
-                   {compSuccess && (
-                      <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
-                         <Check size={8}/> ¡Compresión finalizada!
-                      </p>
-                   )}
-
-                   <button onClick={runCompression} disabled={isCompressing}
-                      className="w-full py-2.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
-                      style={{
-                         backgroundColor: isCompressing ? 'transparent' : t.accent,
-                         color: isCompressing ? t.textDim : '#000000',
-                         border: `1px solid ${t.border}`,
-                      }}>
-                      {isCompressing ? 'Comprimiendo...' : 'Iniciar Compresión'}
-                   </button>
-                </div>
-             </div>
-
-             {/* PANEL 9: SYSTEM STORAGE & UTILS */}
-             <div className="p-5 rounded-2xl flex flex-col space-y-4" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-3 pb-3" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)' }}>
-                      <Wrench size={15} color={t.accent} />
-                   </div>
-                   <div>
-                      <h3 className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'white' }}>8. ARCHIVOS & CACHÉ DEL SISTEMA</h3>
-                      <p className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Limpieza local y empaquetado</p>
-                   </div>
-                </div>
-
-                <div className="space-y-4">
-                   <div className="space-y-2">
-                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Empaquetar en ZIP</p>
-                      {isZipping && (
-                         <div className="space-y-1">
-                            <div className="flex justify-between text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>
-                               <span>Comprimiendo...</span>
-                               <span>{zipProgress}%</span>
-                            </div>
-                            <div className="w-full rounded-xl h-1 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.04)' }}>
-                               <div className="h-full transition-all duration-200" style={{ width: `${zipProgress}%`, backgroundColor: t.accent }}></div>
-                            </div>
-                         </div>
-                      )}
-                      {zipSuccess && (
-                         <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
-                            <Check size={8}/> ¡ZIP Generado!
-                         </p>
-                      )}
-                      <button onClick={runZip} disabled={isZipping}
-                         className="w-full py-2.5 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
-                         style={{
-                            backgroundColor: isZipping ? 'transparent' : 'rgba(255,255,255,0.02)',
-                            color: isZipping ? t.textDim : '#ffffff',
-                            border: `1px solid ${t.border}`,
-                         }}>
-                         {isZipping ? 'Archivando...' : 'Comprimir en ZIP'}
-                      </button>
-                   </div>
-
-                   <div className="space-y-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
-                      <div className="flex justify-between items-center">
-                         <div>
-                            <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Caché de Adobe</p>
-                            <p className="text-sm font-black font-mono" style={{ color: 'white' }}>{ssdCacheSize.toFixed(1)} GB</p>
-                         </div>
-                         <button onClick={cleanSsdCache} disabled={isCleaningCache || ssdCacheSize === 0}
-                            className="px-4 py-2 text-[8px] font-black uppercase tracking-wider rounded-xl transition-all shadow-lg"
-                            style={{
-                               backgroundColor: isCleaningCache || ssdCacheSize === 0 ? 'transparent' : t.accent,
-                               color: isCleaningCache || ssdCacheSize === 0 ? t.textDim : '#000000',
-                               border: `1px solid ${t.border}`,
-                            }}>
-                            {isCleaningCache ? 'Purgando...' : 'Purgar'}
-                         </button>
-                      </div>
-                      {cacheSuccess && (
-                         <p className="text-[7px] font-black uppercase text-center tracking-widest flex items-center justify-center gap-1" style={{ color: t.accent }}>
-                            <Check size={8}/> ¡Caché purgado!
-                         </p>
-                      )}
-                   </div>
-
-                   <div className="space-y-2 pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.03)' }}>
-                      <p className="text-[7px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Atajos & Módulos Rápidos</p>
-                      <div className="relative">
-                         <input type="text" value={shortcutQuery} onChange={e=>setShortcutQuery(e.target.value)} placeholder="Buscar atajo..."
-                            className="w-full rounded-xl p-2 pl-7 text-[10px] outline-none shadow-inner"
-                            style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, color: t.text }} />
-                         <Search size={10} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: t.textDim }} />
-                      </div>
-                      <div className="space-y-1 max-h-[90px] overflow-y-auto mac-scrollbar pr-1">
-                         {filteredShortcuts.map((s, idx) => (
-                            <div key={idx} className="flex items-center justify-between text-[8px] p-2 rounded-lg"
-                              style={{ border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                              <span className="font-bold truncate text-white" style={{ maxWidth: '70%' }}>{s.desc}</span>
-                              <span className="font-mono text-[7px] px-1 py-0.2 rounded border border-white/5" style={{ color: t.accent }}>{s.key}</span>
-                            </div>
-                         ))}
-                      </div>
-                   </div>
-                </div>
-             </div>
-
           </div>
+
        </div>
+
     </div>
   );
 };
 
+// Simple Calculator Icon wrapper to match standard naming inside the code
+const Calculator = ({ as: Component, ...props }) => {
+  return <Component {...props} />;
+};
 
 export default EditorVideo;
