@@ -62,11 +62,25 @@
     },
     "mac": {
       "category": "public.app-category.productivity",
-      "icon": "build/icon.png",
+      "icon": "build/icon.icns",
       "target": [
         { "target": "dmg", "arch": ["arm64"] }
       ],
       "identity": null
+    },
+    "dmg": {
+      "icon": "build/icon.icns",
+      "iconSize": 128,
+      "iconTextSize": 14,
+      "title": "Inefable",
+      "window": {
+        "width": 600,
+        "height": 400
+      },
+      "contents": [
+        { "x": 150, "y": 200, "type": "file", "path": "release/mac-arm64/Inefable.app" },
+        { "x": 450, "y": 200, "type": "link", "path": "/Applications" }
+      ]
     },
     "files": [
       "dist/**/*",
