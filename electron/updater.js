@@ -1,6 +1,6 @@
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
-import { ipcMain } from 'electron';
+import { ipcMain, dialog, BrowserWindow } from 'electron';
 
 export function setupAutoUpdater(mainWindow) {
   autoUpdater.autoDownload = false;
@@ -11,6 +11,13 @@ export function setupAutoUpdater(mainWindow) {
       version: info.version,
       releaseDate: info.releaseDate,
       releaseNotes: info.releaseNotes
+    });
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Actualización disponible',
+      message: `✨ Nueva versión: ${info.version}`,
+      detail: `Hay una nueva versión disponible. Ve a Ajustes para descargarla.`,
+      buttons: ['Aceptar']
     });
   });
 
@@ -29,6 +36,15 @@ export function setupAutoUpdater(mainWindow) {
 
   autoUpdater.on('update-downloaded', () => {
     mainWindow.webContents.send('update-downloaded');
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Lista para instalar',
+      message: 'Actualización descargada',
+      detail: 'La actualización se instalará al reiniciar la app.',
+      buttons: ['Instalar y reiniciar', 'Más tarde']
+    }).then(({ response }) => {
+      if (response === 0) autoUpdater.quitAndInstall(false, true);
+    });
   });
 
   autoUpdater.on('error', (err) => {

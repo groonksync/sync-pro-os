@@ -122,13 +122,13 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
         <div className="transition-all duration-500 ease-in-out" style={{ width: isCollapsed ? '40px' : '210px', height: isCollapsed ? '40px' : '80px' }}>
           {isCollapsed ? (
             <img 
-              src={isDark ? "/isologo_blanco.png" : "/isologo_negro.png"} 
+              src={isDark ? "./isologo_blanco.png" : "./isologo_negro.png"} 
               alt="Logo" 
               className="object-contain w-full h-full transition-all duration-500 ease-in-out"
             />
           ) : (
             <img 
-              src={isDark ? "/logo_blanco.png" : "/logo_negro.png"} 
+              src={isDark ? "./logo_blanco.png" : "./logo_negro.png"} 
               alt="Logo" 
               className="object-contain w-full h-full transition-all duration-500 ease-in-out"
             />
