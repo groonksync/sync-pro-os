@@ -1,4 +1,4 @@
-// Sync Pro - System Updated: 2026-05-01
+// Inefable - System Updated: 2026-05-01
 import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import CommandCenter from './views/CommandCenter';
@@ -96,7 +96,7 @@ const App = () => {
       isMobileMode: false,
       interfaceDensity: 'normal',
       currencyRates: { USD: 10.50, EUR: 11.20, BRL: 2.10 },
-      studioName: 'Sync Pro Studio',
+      studioName: 'Inefable Studio',
       aiProvider: 'gemini',
       geminiKey: '',
       deepseekKey: ''

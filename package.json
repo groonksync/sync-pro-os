@@ -1,8 +1,8 @@
 {
-  "name": "sync-pro-os",
+  "name": "inefable",
   "private": true,
-  "version": "0.0.0",
-  "description": "Sync Pro - Estación de Trabajo Profesional",
+  "version": "1.0.0",
+  "description": "Inefable — Estación de Trabajo Personal",
   "author": "Groonk",
   "type": "module",
   "main": "electron/main.js",
@@ -12,7 +12,7 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && electron .\"",
-    "electron:build": "vite build && xattr -cr dist && electron-builder && rm -rf \"./Sync Pro.app\" && cp -R \"release/mac-arm64/Sync Pro.app\" \"./\" && cp \"release/Sync Pro-0.0.0-arm64.dmg\" \"./Sync Pro.dmg\""
+    "electron:build": "vite build && xattr -cr dist && electron-builder && rm -rf \"./Inefable.app\" && cp -R \"release/mac-arm64/Inefable.app\" \"./\" && cp \"release/Inefable-1.0.0-arm64.dmg\" \"./Inefable (Instalador).dmg\""
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.3",
@@ -25,6 +25,7 @@
     "antd": "^6.3.7",
     "axios": "^1.15.2",
     "crypto-js": "^4.2.0",
+    "electron-updater": "^6.8.3",
     "gapi-script": "^1.2.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",
@@ -48,16 +49,22 @@
     "wait-on": "^9.0.10"
   },
   "build": {
-    "appId": "com.syncpro.os",
-    "productName": "Sync Pro",
+    "appId": "com.groonk.inefable",
+    "productName": "Inefable",
+    "publish": {
+      "provider": "github",
+      "owner": "groonksync",
+      "repo": "sync-pro-os",
+      "releaseType": "release"
+    },
     "directories": {
       "output": "release"
     },
     "mac": {
       "category": "public.app-category.productivity",
-      "icon": "build/icon.icns",
+      "icon": "public/isologo.png",
       "target": [
-        "dmg"
+        { "target": "dmg", "arch": ["arm64"] }
       ],
       "identity": null
     },

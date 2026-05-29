@@ -323,7 +323,7 @@ const Recibos = ({ data, setData, isDark = true }) => {
 
             {/* Pie del recibo */}
             <div style={{ borderTop: '1px solid #e5e5e5', paddingTop: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <p style={{ fontSize: 10, color: '#a3a3a3' }}>Generado con Sync Pro OS</p>
+              <p style={{ fontSize: 10, color: '#a3a3a3' }}>Generado con Inefable</p>
               <p style={{ fontSize: 10, color: '#a3a3a3', fontFamily: 'monospace' }}>{new Date().toLocaleDateString('es')}</p>
             </div>
           </div>

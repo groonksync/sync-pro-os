@@ -1015,7 +1015,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
       doc.setTextColor(80, 80, 90);
       const fechaGen = new Date().toLocaleString('es-ES', { dateStyle: 'full', timeStyle: 'short' });
       doc.text(`Generado el ${fechaGen}`, 20, pageH - 12);
-      doc.text('Control de Inventario — Sync Pro OS', pageW - 20, pageH - 12, { align: 'right' });
+      doc.text('Control de Inventario — Inefable', pageW - 20, pageH - 12, { align: 'right' });
 
       // ── RESUMEN POR CATEGORÍA ─────────────────────────────────────────────
       doc.addPage();
@@ -1110,7 +1110,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(7);
           doc.setTextColor(80, 80, 90);
-          doc.text('Control de Inventario — Sync Pro OS', pageW - 14, pageH - 8, { align: 'right' });
+          doc.text('Control de Inventario — Inefable', pageW - 14, pageH - 8, { align: 'right' });
         },
       });
 

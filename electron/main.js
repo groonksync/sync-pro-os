@@ -1,18 +1,105 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { setupAutoUpdater } from './updater.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 let mainWindow;
 
+// ── Window State Persistence ────────────────────────────────────────────────
+const STATE_FILE = path.join(app.getPath('userData'), 'window-state.json');
+
+function loadWindowState() {
+  try {
+    if (existsSync(STATE_FILE)) {
+      return JSON.parse(readFileSync(STATE_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return { width: 1280, height: 800, x: undefined, y: undefined };
+}
+
+function saveWindowState(win) {
+  try {
+    const bounds = win.getBounds();
+    writeFileSync(STATE_FILE, JSON.stringify(bounds));
+  } catch (e) {}
+}
+
+// ── Native macOS Menu ───────────────────────────────────────────────────────
+function createMenu() {
+  const template = [
+    {
+      label: 'Inefable',
+      submenu: [
+        { label: 'Acerca de Inefable', role: 'about' },
+        { type: 'separator' },
+        { label: 'Buscar actualizaciones...', click: () => {
+          mainWindow.webContents.send('check-for-updates');
+        }},
+        { type: 'separator' },
+        { label: 'Ocultar Inefable', role: 'hide' },
+        { label: 'Ocultar otras', role: 'hideOthers' },
+        { label: 'Mostrar todo', role: 'unhide' },
+        { type: 'separator' },
+        { label: 'Salir de Inefable', role: 'quit', accelerator: 'Cmd+Q' }
+      ]
+    },
+    {
+      label: 'Edición',
+      submenu: [
+        { label: 'Deshacer', role: 'undo', accelerator: 'Cmd+Z' },
+        { label: 'Rehacer', role: 'redo', accelerator: 'Shift+Cmd+Z' },
+        { type: 'separator' },
+        { label: 'Cortar', role: 'cut', accelerator: 'Cmd+X' },
+        { label: 'Copiar', role: 'copy', accelerator: 'Cmd+C' },
+        { label: 'Pegar', role: 'paste', accelerator: 'Cmd+V' },
+        { label: 'Seleccionar todo', role: 'selectAll', accelerator: 'Cmd+A' }
+      ]
+    },
+    {
+      label: 'Vista',
+      submenu: [
+        { label: 'Recargar', role: 'reload', accelerator: 'Cmd+R' },
+        { label: 'Forzar recarga', role: 'forceReload', accelerator: 'Shift+Cmd+R' },
+        { type: 'separator' },
+        { label: 'Pantalla completa', role: 'togglefullscreen', accelerator: 'Cmd+Ctrl+F' },
+        { label: 'Zoom +', role: 'zoomIn', accelerator: 'Cmd+=' },
+        { label: 'Zoom -', role: 'zoomOut', accelerator: 'Cmd+-' },
+        { label: 'Tamaño real', role: 'resetZoom', accelerator: 'Cmd+0' }
+      ]
+    },
+    {
+      label: 'Ventana',
+      submenu: [
+        { label: 'Minimizar', role: 'minimize', accelerator: 'Cmd+M' },
+        { label: 'Zoom', role: 'zoom' },
+        { type: 'separator' },
+        { label: 'Traer todo al frente', role: 'front' }
+      ]
+    }
+  ];
+  
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
+// ── Main Window ─────────────────────────────────────────────────────────────
 function createWindow() {
-    mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+  const state = loadWindowState();
+
+  mainWindow = new BrowserWindow({
+    width: state.width || 1280,
+    height: state.height || 800,
+    x: state.x,
+    y: state.y,
+    minWidth: 900,
+    minHeight: 600,
     titleBarStyle: 'hiddenInset',
+    trafficLightPosition: { x: 16, y: 18 },
     icon: path.join(__dirname, '../public/isologo.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -21,6 +108,26 @@ function createWindow() {
     },
   });
 
+  // Guardar estado al cerrar
+  mainWindow.on('close', () => saveWindowState(mainWindow));
+
+  // Google OAuth: abrir en navegador externo (evita error file://)
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://accounts.google.com') || 
+        url.startsWith('https://oauth2.googleapis.com')) {
+      shell.openExternal(url);
+      return { action: 'deny' };
+    }
+    return { action: 'allow' };
+  });
+
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.startsWith('https://accounts.google.com') || 
+        url.startsWith('https://oauth2.googleapis.com')) {
+      event.preventDefault();
+      shell.openExternal(url);
+    }
+  });
 
   mainWindow.webContents.on('console-message', async (event, level, message, line, sourceId) => {
     try {
@@ -35,8 +142,14 @@ function createWindow() {
   }
 }
 
+// ── App Lifecycle ───────────────────────────────────────────────────────────
 app.whenReady().then(() => {
   createWindow();
+  createMenu();
+
+  if (!process.env.VITE_DEV_SERVER_URL) {
+    setupAutoUpdater(mainWindow);
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -51,8 +164,7 @@ app.on('window-all-closed', () => {
   }
 });
 
-// --- IPC HANDLERS FOR FILE SYSTEM ---
-
+// ── IPC HANDLERS ────────────────────────────────────────────────────────────
 ipcMain.handle('select-directory', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory', 'createDirectory'],

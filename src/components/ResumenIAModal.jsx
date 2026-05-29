@@ -351,7 +351,7 @@ const ResumenIAModal = ({ isOpen, onClose, contenido, cargando, isDark, titulo, 
                   <Clock size={10} /> Generado el {fechaActual}
                 </span>
                 <span style={{ fontSize: '9px', color: t.textMuted }}>
-                  Sync Pro OS · Resumen Ejecutivo
+                  Inefable · Resumen Ejecutivo
                 </span>
               </div>
             </div>

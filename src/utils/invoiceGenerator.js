@@ -9,7 +9,7 @@ import 'jspdf-autotable';
  * @param {Object} item - Hito de pago específico
  * @param {string} studioName - Nombre del estudio
  */
-export const generateSovereignInvoice = (client, meeting, item, studioName = 'Sync Pro Studio') => {
+export const generateInefableInvoice = (client, meeting, item, studioName = 'Inefable Studio') => {
   const doc = new jsPDF();
   const accentColor = [245, 158, 11]; // Amber 500
 
@@ -92,7 +92,7 @@ export const generateSovereignInvoice = (client, meeting, item, studioName = 'Sy
   // --- FOOTER ---
   doc.setFontSize(8);
   doc.setTextColor(180, 180, 180);
-  doc.text('Gracias por confiar en Sync Pro.', 105, 285, { align: 'center' });
+  doc.text('Gracias por confiar en Inefable.', 105, 285, { align: 'center' });
 
   // Descargar el PDF
   const filename = `Recibo_${client.nombre.replace(/\s+/g, '_')}_${dateStr.replace(/\//g, '-')}.pdf`;

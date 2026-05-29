@@ -409,3 +409,19 @@ button {
   min-height: 500px !important;
 }
 
+/* ===== ELECTRON TITLEBAR DRAG REGION ===== */
+.titlebar-drag-region {
+  -webkit-app-region: drag;
+  height: 44px;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+button, input, a, select, [role="button"] {
+  -webkit-app-region: no-drag;
+}
+

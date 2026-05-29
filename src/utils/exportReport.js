@@ -95,7 +95,7 @@ export async function exportPDF(estado) {
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(180, 180, 180);
     doc.text(`Reporte Ejecutivo - ${fechaStr}`, 20, 32);
-    doc.text(`Sync Pro`, 180, 32, { align: 'right' });
+    doc.text(`Inefable`, 180, 32, { align: 'right' });
     
     // --- KPIs ---
     const { totalCapital, totalInteresMensual, valorInventario, totalPendiente, stockBajoCount, mesActual } = estado;
@@ -172,7 +172,7 @@ export async function exportPDF(estado) {
     const footerY = doc.lastAutoTable?.finalY + 15 || 180;
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
-    doc.text(`Generado automáticamente por Sync Pro - ${fechaStr}`, 105, footerY, { align: 'center' });
+    doc.text(`Generado automáticamente por Inefable - ${fechaStr}`, 105, footerY, { align: 'center' });
     doc.text(`${cobros.length} cobros pendientes • ${estado.stockBajoCount || 0} productos con stock bajo`, 105, footerY + 6, { align: 'center' });
     
     const filename = `Reporte_CC_${fechaStr.replace(/\//g, '-')}.pdf`;

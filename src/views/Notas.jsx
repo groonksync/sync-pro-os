@@ -219,7 +219,7 @@ const Notas = ({ settings, isDark }) => {
       const defaultNotas = [
         {
           id: 'note-1',
-          titulo: 'Bienvenida a Sync Pro Notes',
+          titulo: 'Bienvenida a Inefable Notes',
           contenido: '# Bienvenido a tu Workspace Premium\nEsta es tu herramienta avanzada.\n## Estilos de encabezado\nEscribe directamente usando el editor de bloques Notion-style.',
           folderId: 'folder-personal',
           tipo: 'normal',
