@@ -12,7 +12,7 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && electron .\"",
-    "electron:build": "vite build && xattr -cr dist && electron-builder && rm -rf \"./Inefable.app\" && cp -R \"release/mac-arm64/Inefable.app\" \"./\" && cp \"release/Inefable-1.0.1-arm64.dmg\" \"./Inefable (Instalador).dmg\""
+    "electron:build": "vite build && xattr -cr dist || true && electron-builder && rm -rf \"./Inefable.app\" && cp -R \"release/mac-arm64/Inefable.app\" \"./\" 2>/dev/null; cp \"release/Inefable-1.0.1-arm64.dmg\" \"./Inefable (Instalador).dmg\" 2>/dev/null || true"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.3",
