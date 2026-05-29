@@ -119,7 +119,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
 
       {/* Logo - fixed height to keep nav items aligned in both states */}
       <div className="flex justify-center items-center" style={{ height: '135px' }}>
-        <div className="transition-all duration-500 ease-in-out" style={{ width: isCollapsed ? '40px' : '210px', height: isCollapsed ? '40px' : '80px' }}>
+        <div className="transition-all duration-500 ease-in-out" style={{ width: isCollapsed ? '40px' : '160px', height: isCollapsed ? '40px' : '52px' }}>
           {isCollapsed ? (
             <img 
               src={isDark ? "./isologo_blanco.png" : "./isologo_negro.png"} 
