@@ -3,6 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
+import updaterPkg from 'electron-updater';
+const { autoUpdater } = updaterPkg;
 import { setupAutoUpdater } from './updater.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -37,8 +39,15 @@ function createMenu() {
       submenu: [
         { label: 'Acerca de Inefable', role: 'about' },
         { type: 'separator' },
-        { label: 'Buscar actualizaciones...', click: () => {
-          mainWindow.webContents.send('check-for-updates');
+        { label: 'Buscar actualizaciones...', click: async () => {
+          if (mainWindow) {
+            mainWindow.webContents.send('update-check-started');
+            try {
+              await autoUpdater.checkForUpdates();
+            } catch (err) {
+              mainWindow.webContents.send('update-error', err.message || 'Error al buscar actualizaciones');
+            }
+          }
         }},
         { type: 'separator' },
         { label: 'Ocultar Inefable', role: 'hide' },

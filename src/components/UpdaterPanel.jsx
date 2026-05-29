@@ -12,13 +12,16 @@ export default function UpdaterPanel({ t }) {
   useEffect(() => {
     if (!isElectron) return;
 
+    window.electronAPI.onUpdateCheckStarted(() => {
+      setStatus('checking');
+    });
     window.electronAPI.onUpdateAvailable((info) => {
       setStatus('available');
       setUpdateInfo(info);
     });
     window.electronAPI.onUpdateNotAvailable(() => {
       setStatus('not-available');
-      setTimeout(() => setStatus('idle'), 3000);
+      setTimeout(() => setStatus('idle'), 5000);
     });
     window.electronAPI.onDownloadProgress((prog) => {
       setStatus('downloading');
