@@ -131,7 +131,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
               style={{ opacity: isCollapsed ? 0 : 1 }}
             />
             <img 
-              src="/isologo.png" 
+              src={isDark ? "/isologo_blanco.png" : "/isologo_negro.png"} 
               alt="Logo" 
               className="absolute w-9 h-9 object-contain transition-all duration-500 ease-in-out"
               style={{ opacity: isCollapsed ? 1 : 0 }}
