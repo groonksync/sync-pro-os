@@ -118,19 +118,22 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
       </button>
 
       {/* Logo - fixed height to keep nav items aligned in both states */}
-      <div className="flex justify-center items-center relative" style={{ height: '135px' }}>
-        <img 
-          src={isDark ? "/logo_blanco.png" : "/logo_negro.png"} 
-          alt="Logo" 
-          className="object-contain absolute transition-all duration-500 ease-in-out"
-          style={{ width: '210px', height: 'auto', maxHeight: '80px', opacity: isCollapsed ? 0 : 1 }}
-        />
-        <img 
-          src={isDark ? "/isologo_blanco.png" : "/isologo_negro.png"} 
-          alt="Logo" 
-          className="object-contain absolute transition-all duration-500 ease-in-out"
-          style={{ width: '38px', height: '38px', opacity: isCollapsed ? 1 : 0 }}
-        />
+      <div className="flex justify-center items-center" style={{ height: '135px' }}>
+        <div className="transition-all duration-500 ease-in-out" style={{ width: isCollapsed ? '40px' : '210px', height: isCollapsed ? '40px' : '80px' }}>
+          {isCollapsed ? (
+            <img 
+              src={isDark ? "/isologo_blanco.png" : "/isologo_negro.png"} 
+              alt="Logo" 
+              className="object-contain w-full h-full transition-all duration-500 ease-in-out"
+            />
+          ) : (
+            <img 
+              src={isDark ? "/logo_blanco.png" : "/logo_negro.png"} 
+              alt="Logo" 
+              className="object-contain w-full h-full transition-all duration-500 ease-in-out"
+            />
+          )}
+        </div>
       </div>
 
 

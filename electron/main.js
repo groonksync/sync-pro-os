@@ -120,13 +120,8 @@ function createWindow() {
   // Guardar estado al cerrar
   mainWindow.on('close', () => saveWindowState(mainWindow));
 
-  // Google OAuth: abrir en navegador externo (evita error file://)
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://accounts.google.com') || 
-        url.startsWith('https://oauth2.googleapis.com')) {
-      shell.openExternal(url);
-      return { action: 'deny' };
-    }
+  // Google OAuth: allow popups to open within Electron (react-oauth/google uses postMessage)
+  mainWindow.webContents.setWindowOpenHandler(() => {
     return { action: 'allow' };
   });
 
