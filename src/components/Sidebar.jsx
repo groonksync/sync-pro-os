@@ -27,7 +27,8 @@ import {
   Zap,
   BrainCircuit,
   StickyNote,
-  ShieldCheck
+  ShieldCheck,
+  Building2
 } from 'lucide-react';
 import { getTheme } from '../lib/theme';
 
