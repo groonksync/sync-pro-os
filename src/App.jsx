@@ -262,7 +262,7 @@ const App = () => {
             onClearSelection={() => setSelectedPrestamoId(null)}
           />
         );
-        case 'notificaciones': return <Notifications data={data} isDark={isDarkMode} />;
+        case 'notificaciones': return <Notifications data={data} servicios={servicios} onNavigate={setActiveTab} isDark={isDarkMode} />;
         case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} initialFilterText={egresosSearch} />;
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} initialSearch={inventarioSearch} />;
         case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} />;
