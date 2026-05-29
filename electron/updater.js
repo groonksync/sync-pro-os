@@ -12,13 +12,19 @@ export function setupAutoUpdater(mainWindow) {
       releaseDate: info.releaseDate,
       releaseNotes: info.releaseNotes
     });
-    dialog.showMessageBox(mainWindow, {
+    const v = info.version || '';
+    const { response } = await dialog.showMessageBox(mainWindow, {
       type: 'info',
       title: 'Actualización disponible',
-      message: `✨ Nueva versión: ${info.version}`,
-      detail: `Hay una nueva versión disponible. Ve a Ajustes para descargarla.`,
-      buttons: ['Aceptar']
+      message: `📦 Inefable ${v}`,
+      detail: `Hay una nueva versión disponible. ¿Deseas descargarla ahora?`,
+      buttons: ['Descargar ahora', 'Más tarde'],
+      defaultId: 0,
+      cancelId: 1
     });
+    if (response === 0) {
+      autoUpdater.downloadUpdate();
+    }
   });
 
   autoUpdater.on('update-not-available', () => {

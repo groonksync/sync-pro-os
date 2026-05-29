@@ -12,7 +12,7 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && electron .\"",
-    "electron:build": "vite build && xattr -cr dist && electron-builder && rm -rf \"./Inefable.app\" && cp -R \"release/mac-arm64/Inefable.app\" \"./\" && cp \"release/Inefable-1.0.1-arm64.dmg\" \"./Inefable (Instalador).dmg\""
+    "publish": "gh release create v$(node -p 'require(\"./package.json\").version') release/*.dmg release/*.zip release/*.blockmap release/latest-mac.yml --title \"Inefable v$(node -p 'require(\"./package.json\").version')\" --notes \"Nueva version disponible\"",
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.3",
@@ -64,7 +64,8 @@
       "category": "public.app-category.productivity",
       "icon": "build/icon.icns",
       "target": [
-        { "target": "dmg", "arch": ["arm64"] }
+        { "target": "dmg", "arch": ["arm64"] },
+        { "target": "zip", "arch": ["arm64"] }
       ],
       "identity": null
     },
