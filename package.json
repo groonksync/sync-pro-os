@@ -13,8 +13,8 @@
     "preview": "vite preview",
     "electron:dev": "concurrently -k \"npm run dev\" \"wait-on tcp:5173 && electron .\"",
     "electron:build": "vite build && xattr -cr dist || true && electron-builder && rm -rf \"./Inefable.app\" && cp -R \"release/mac-arm64/Inefable.app\" \"./\" 2>/dev/null; cp \"release/Inefable-$(node -p 'require(\"./package.json\").version')-arm64.dmg\" \"./Inefable (Instalador).dmg\" 2>/dev/null || true",
-    "publish": "echo 'Para publicar, ejecuta: npm run electron:build && gh release create v$(node -p 'require(\"./package.json\").version') release/*.dmg release/*.blockmap release/latest-mac.yml --title \"Inefable v$(node -p 'require(\"./package.json\").version')\"'",
-    "release": "npm run electron:build && echo 'Build completado. Ejecuta: npm run publish'"
+    "publish": "gh release create v$(node -p 'require(\"./package.json\").version') release/*.dmg release/*.blockmap release/latest-mac.yml --title \"Inefable v$(node -p 'require(\"./package.json\").version')\" --notes \"Actualizacion automatica\"",
+    "release": "npm run electron:build && npm run publish && git add . && git commit -m \"v$(node -p 'require(\"./package.json\").version')\" && git tag v$(node -p 'require(\"./package.json\").version') && git push && git push --tags"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.3",
