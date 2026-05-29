@@ -1,28 +1,40 @@
 import pkg from 'electron-updater';
 const { autoUpdater } = pkg;
-import { ipcMain, dialog, BrowserWindow } from 'electron';
+import { ipcMain, dialog } from 'electron';
 
 export function setupAutoUpdater(mainWindow) {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
-  autoUpdater.on('update-available', (info) => {
+  autoUpdater.on('update-available', async (info) => {
     mainWindow.webContents.send('update-available', {
       version: info.version,
       releaseDate: info.releaseDate,
       releaseNotes: info.releaseNotes
     });
-    dialog.showMessageBox(mainWindow, {
+    const { response } = await dialog.showMessageBox(mainWindow, {
       type: 'info',
       title: 'Actualización disponible',
-      message: `✨ Nueva versión: ${info.version}`,
-      detail: `Hay una nueva versión disponible. Ve a Ajustes para descargarla.`,
-      buttons: ['Aceptar']
+      message: `✨ Inefable ${info.version} disponible`,
+      detail: `Se descargará una actualización parcial (solo los cambios, no los ${Math.round(info.files?.[0]?.size / 1024 / 1024 || 200)} MB completos).`,
+      buttons: ['Descargar ahora', 'Más tarde'],
+      defaultId: 0,
+      cancelId: 1
     });
+    if (response === 0) {
+      autoUpdater.downloadUpdate();
+    }
   });
 
   autoUpdater.on('update-not-available', () => {
     mainWindow.webContents.send('update-not-available');
+    dialog.showMessageBox(mainWindow, {
+      type: 'info',
+      title: 'Sin actualizaciones',
+      message: '✓ Tu aplicación está al día',
+      detail: 'No hay actualizaciones disponibles.',
+      buttons: ['Aceptar']
+    });
   });
 
   autoUpdater.on('download-progress', (progress) => {
@@ -39,9 +51,11 @@ export function setupAutoUpdater(mainWindow) {
     dialog.showMessageBox(mainWindow, {
       type: 'info',
       title: 'Lista para instalar',
-      message: 'Actualización descargada',
-      detail: 'La actualización se instalará al reiniciar la app.',
-      buttons: ['Instalar y reiniciar', 'Más tarde']
+      message: 'Actualización descargada correctamente',
+      detail: 'La app se reiniciará para instalar la nueva versión.',
+      buttons: ['Instalar y reiniciar', 'Más tarde'],
+      defaultId: 0,
+      cancelId: 1
     }).then(({ response }) => {
       if (response === 0) autoUpdater.quitAndInstall(false, true);
     });
@@ -49,6 +63,13 @@ export function setupAutoUpdater(mainWindow) {
 
   autoUpdater.on('error', (err) => {
     mainWindow.webContents.send('update-error', err.message);
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      title: 'Error de actualización',
+      message: 'No se pudo completar la actualización',
+      detail: err.message,
+      buttons: ['Aceptar']
+    });
   });
 
   ipcMain.handle('check-for-updates', async () => {

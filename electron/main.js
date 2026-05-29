@@ -41,32 +41,14 @@ function createMenu() {
         { type: 'separator' },
         { label: 'Buscar actualizaciones...', click: async () => {
           if (!mainWindow) return;
-          const { version } = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
-          dialog.showMessageBox(mainWindow, {
-            type: 'info',
-            title: 'Buscando actualizaciones',
-            message: 'Verificando actualizaciones...',
-            detail: `Versión actual: ${version}`,
-            buttons: [],
-            noLink: true
-          });
           try {
-            const result = await autoUpdater.checkForUpdates();
-            if (!result || !result.updateInfo) {
-              dialog.showMessageBox(mainWindow, {
-                type: 'info',
-                title: 'Inefable está actualizado',
-                message: '✓ Tu aplicación está al día',
-                detail: `Versión actual: ${version}\nNo hay actualizaciones disponibles en este momento.`,
-                buttons: ['Aceptar']
-              });
-            }
+            await autoUpdater.checkForUpdates();
           } catch (err) {
             dialog.showMessageBox(mainWindow, {
               type: 'info',
               title: 'Inefable está actualizado',
               message: '✓ Tu aplicación está al día',
-              detail: `Versión actual: ${version}\nNo se encontraron actualizaciones disponibles.`,
+              detail: `No se encontraron actualizaciones disponibles.`,
               buttons: ['Aceptar']
             });
           }
