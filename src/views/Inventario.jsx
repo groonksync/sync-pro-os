@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
+import { safeDelete } from '../lib/trashService';
 
 const Toast = ({ message, show, onClose, isDark, t }) => {
   useEffect(() => {
@@ -613,7 +614,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
   const [showAllLowStock, setShowAllLowStock] = useState(false);
 
   // Custom dialog state
-  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, id: null });
+  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, id: null, item: null });
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
 
@@ -799,10 +800,9 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
     if (!confirmDelete.id) return;
     try {
       setLoading(true);
-      const { error } = await supabase.from('productos').delete().eq('id', confirmDelete.id);
-      if (error) throw error;
-      setToast({ show: true, message: 'Producto Eliminado' });
-      setConfirmDelete({ isOpen: false, id: null });
+      await safeDelete('producto', confirmDelete.id, confirmDelete.item);
+      setToast({ show: true, message: 'Producto movido a la papelera' });
+      setConfirmDelete({ isOpen: false, id: null, item: null });
       await fetchData();
     } catch (e) {
       alert("Error al eliminar: " + e.message);
@@ -1623,7 +1623,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
                           <button onClick={() => handleEditProduct(p)} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <Edit3 size={12} />
                           </button>
-                          <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id })} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id, item: p })} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <Trash2 size={12} />
                           </button>
                         </div>

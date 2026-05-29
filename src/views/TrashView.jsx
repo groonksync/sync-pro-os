@@ -97,16 +97,20 @@ const TrashView = ({ settings, isDark = true }) => {
       setDbError(true);
     }
 
-    // 2. Cargar items locales de localStorage
+    // 2. Cargar items locales de localStorage (nuevo y legacy)
     try {
-      const localTrash = localStorage.getItem('sovereign_local_trash');
-      if (localTrash) {
-        localItems = JSON.parse(localTrash);
-        
-        // Limpieza de expirados locales
-        const now = new Date();
-        localItems = localItems.filter(item => new Date(item.expira_el) > now);
-        localStorage.setItem('sovereign_local_trash', JSON.stringify(localItems));
+      const localKeys = ['inefable_local_trash', 'sovereign_local_trash'];
+      for (const key of localKeys) {
+        const localTrash = localStorage.getItem(key);
+        if (localTrash) {
+          const parsed = JSON.parse(localTrash);
+          const now = new Date();
+          const valid = parsed.filter(item => new Date(item.expira_el) > now);
+          if (valid.length !== parsed.length) {
+            localStorage.setItem(key, JSON.stringify(valid));
+          }
+          localItems = [...localItems, ...valid];
+        }
       }
     } catch (e) {
       console.error("Error al cargar papelera local:", e);
@@ -137,10 +141,13 @@ const TrashView = ({ settings, isDark = true }) => {
           localStorage.setItem(storageKey, JSON.stringify([item.datos_originales, ...localData]));
         }
 
-        // Eliminar de papelera local
-        const localTrash = JSON.parse(localStorage.getItem('sovereign_local_trash') || '[]');
-        const updatedTrash = localTrash.filter(i => i.id !== item.id);
-        localStorage.setItem('sovereign_local_trash', JSON.stringify(updatedTrash));
+        // Eliminar de papelera local (ambas keys)
+        const localTrashKeys = ['inefable_local_trash', 'sovereign_local_trash'];
+        for (const key of localTrashKeys) {
+          const localTrash = JSON.parse(localStorage.getItem(key) || '[]');
+          const updatedTrash = localTrash.filter(i => i.id !== item.id);
+          localStorage.setItem(key, JSON.stringify(updatedTrash));
+        }
         
         setItems(prev => prev.filter(i => i.id !== item.id));
         showToast('Item restaurado localmente', 'ok');
@@ -181,9 +188,11 @@ const TrashView = ({ settings, isDark = true }) => {
     setLoading(true);
     try {
       if (item.id.toString().startsWith('trash-') || dbError) {
-        const localTrash = JSON.parse(localStorage.getItem('sovereign_local_trash') || '[]');
-        const updatedTrash = localTrash.filter(i => i.id !== item.id);
-        localStorage.setItem('sovereign_local_trash', JSON.stringify(updatedTrash));
+        const localKeys = ['inefable_local_trash', 'sovereign_local_trash'];
+        for (const key of localKeys) {
+          const localTrash = JSON.parse(localStorage.getItem(key) || '[]');
+          localStorage.setItem(key, JSON.stringify(localTrash.filter(i => i.id !== item.id)));
+        }
       } else {
         await supabase.from('papelera').delete().eq('id', item.id);
       }
@@ -200,6 +209,7 @@ const TrashView = ({ settings, isDark = true }) => {
     
     setLoading(true);
     try {
+      localStorage.removeItem('inefable_local_trash');
       localStorage.removeItem('sovereign_local_trash');
       if (!dbError) {
         await supabase.from('papelera').delete().neq('id', '00000000-0000-0000-0000-000000000000');

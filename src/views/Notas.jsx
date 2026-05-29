@@ -279,8 +279,23 @@ const Notas = ({ settings, isDark }) => {
 
   const handleDeleteNote = () => {
     if (!activeNoteId) return;
+    const targetNote = notas.find(n => n.id === activeNoteId);
     const updated = notas.filter(n => n.id !== activeNoteId);
     setNotas(updated);
+    if (targetNote) {
+      try {
+        const localTrash = JSON.parse(localStorage.getItem('inefable_local_trash') || '[]');
+        localTrash.push({
+          id: `trash-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          tipo_dato: 'nota',
+          nombre_item: targetNote.titulo || targetNote.title || 'Nota',
+          datos_originales: targetNote,
+          borrado_el: new Date().toISOString(),
+          expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        });
+        localStorage.setItem('inefable_local_trash', JSON.stringify(localTrash));
+      } catch (e) {}
+    }
     if (updated.length > 0) {
       setActiveNoteId(updated[0].id);
     } else {

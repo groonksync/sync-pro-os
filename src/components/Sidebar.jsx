@@ -46,7 +46,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
   const menuItems = [
     { id: 'resumen', label: 'Centro de Control', icon: Activity },
     { id: 'prestamos', label: 'Cartera Préstamos', icon: Landmark, count: counts?.prestamos },
-    { id: 'inventario', label: 'Empresa', icon: Package },
+    { id: 'inventario', label: 'Empresa', icon: Building2 },
     { id: 'pagos', label: 'Mis Egresos', icon: Wallet },
     { id: 'editor', label: 'Editor de Video', icon: Video, count: counts?.meetings },
     { id: 'drive-sovereign', label: 'Almacenamiento', icon: Cloud },
