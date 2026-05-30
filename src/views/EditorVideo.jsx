@@ -1143,6 +1143,42 @@ const ProjectEngineView = ({ isDark = true }) => {
   const [formRate, setFormRate] = useState('');
   const [formNotes, setFormNotes] = useState('');
 
+  // Folder structure generator states
+  const [carpetaMaestra, setCarpetaMaestra] = useState('Base de Edición Principal');
+  const [empresa, setEmpresa] = useState('');
+  const [proyecto, setProyecto] = useState('');
+  const [selectedPremiere, setSelectedPremiere] = useState('');
+  const [selectedAE, setSelectedAE] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
+  const [destinationPath, setDestinationPath] = useState('');
+  const [dirHandle, setDirHandle] = useState(null);
+
+  const [incSFX, setIncSFX] = useState(true);
+  const [incLogos, setIncLogos] = useState(false);
+  const [incMOGRTs, setIncMOGRTs] = useState(false);
+
+  const [treeCollapsed, setTreeCollapsed] = useState({
+    root: false,
+    client: false,
+    project: false,
+    pr: false,
+    ae: false,
+    video: false,
+    audio: false,
+    img: false,
+  });
+
+  const templates = [
+    '1080x1920_25fps', '1080x1920_30fps', '1080x1920_60fps',
+    '1920x1080_25fps', '1920x1080_30fps', '1920x1080_60fps',
+    '4K_Horizontal_25fps', '4K_Horizontal_30fps', '4K_Horizontal_60fps'
+  ];
+
+  const cleanFolderName = (txt) => txt.replace(/ /g, '_');
+  const today = new Date().toISOString().split('T')[0];
+  const finalProjectFolderName = `${today}_${cleanFolderName(empresa || 'CLIENTE')}_${cleanFolderName(proyecto || 'PROYECTO')}`;
+
   const saveProjectsToStorage = (updatedList) => {
     localStorage.setItem('inefable_proyectos_edicion', JSON.stringify(updatedList));
     setProjects(updatedList);
@@ -1248,6 +1284,67 @@ const ProjectEngineView = ({ isDark = true }) => {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+  };
+
+  const handleSelectDirectory = async () => {
+    try {
+      if (window.electronAPI) {
+        const path = await window.electronAPI.selectDirectory();
+        if (path) setDestinationPath(path);
+      } else {
+        if (!window.showDirectoryPicker) throw new Error('Navegador no soportado.');
+        const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+        setDirHandle(handle);
+        setDestinationPath(handle.name || 'Directorio Local');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (!carpetaMaestra || !empresa || !proyecto) {
+      alert('Completa la nomenclatura.');
+      return;
+    }
+    setIsGenerating(true);
+    setStatusMsg('');
+    try {
+      if (window.electronAPI) {
+        const result = await window.electronAPI.createFolderStructure({
+          rootPath: destinationPath,
+          empresa,
+          proyecto,
+          templates: {
+            premiere: selectedPremiere,
+            afterEffects: selectedAE
+          }
+        });
+        if (result && result.success) {
+          setStatusMsg('Estructura inyectada en el disco local.');
+        } else {
+          setStatusMsg(`Error: ${result ? result.error : 'Desconocido'}`);
+        }
+      } else {
+        // Simulado en web
+        setTimeout(() => {
+          setIsGenerating(false);
+          setStatusMsg('Estructura inyectada en el disco local (Simulado en Web).');
+        }, 1500);
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMsg(`Error al generar: ${err.message}`);
+      setIsGenerating(false);
+    } finally {
+      if (window.electronAPI) {
+        setIsGenerating(false);
+      }
+    }
+  };
+
+  const toggleTree = (key) => {
+    setTreeCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   // Filtrado de proyectos
@@ -1365,7 +1462,259 @@ const ProjectEngineView = ({ isDark = true }) => {
              </div>
           </div>
 
-          {/* COLUMN 2: DETALLE DEL PROYECTO */}
+          {/* COLUMN 2: ENTORNO E INGESTA */}
+          <div className="flex flex-col space-y-5">
+             {/* Local Folder Structure Generator */}
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <FolderOpen size={14} color={t.accent}/>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Generador de Entorno Local</span>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                   <div className="space-y-1">
+                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Directorio de Destino</label>
+                      <div className="flex gap-2">
+                         <input type="text" value={destinationPath || 'No seleccionado...'} disabled
+                           className="flex-1 rounded p-2 text-[9px] font-mono outline-none truncate"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textDim }} />
+                         <button onClick={handleSelectDirectory} className="px-3 rounded text-[8px] font-black uppercase transition-all"
+                           style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: '#141414' }}>Vincular</button>
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Carpeta Maestra</label>
+                         <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)}
+                           className="w-full rounded p-2 text-[10px] outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Empresa</label>
+                         <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanizacion"
+                           className="w-full rounded p-2 text-[10px] outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
+                   </div>
+
+                   <div className="space-y-1">
+                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Proyecto</label>
+                      <input type="text" value={proyecto} onChange={e=>setProyecto(e.target.value)} placeholder="Ej: Spot Comercial"
+                         className="w-full rounded p-2 text-[10px] outline-none"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Premiere Template</label>
+                         <select value={selectedPremiere} onChange={e=>setSelectedPremiere(e.target.value)}
+                           className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="">Ninguna</option>
+                            {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
+                         </select>
+                      </div>
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">After Effects Template</label>
+                         <select value={selectedAE} onChange={e=>setSelectedAE(e.target.value)}
+                           className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                            <option value="">Ninguna</option>
+                            {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
+                         </select>
+                      </div>
+                   </div>
+
+                   <div className="space-y-1">
+                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Módulos Extra</label>
+                      <div className="grid grid-cols-3 gap-1">
+                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                            <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="accent-neutral-500" />
+                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>SFX Audio</span>
+                         </label>
+                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                            <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="accent-neutral-500" />
+                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Logos</span>
+                         </label>
+                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                            <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="accent-neutral-500" />
+                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>MOGRTs</span>
+                         </label>
+                      </div>
+                   </div>
+
+                   <button onClick={handleGenerate} disabled={isGenerating || !destinationPath}
+                      className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
+                      style={{
+                         backgroundColor: '#141414',
+                         border: `1px solid ${isGenerating || !destinationPath ? t.border : t.accent}`,
+                         color: isGenerating || !destinationPath ? t.textDim : t.accent,
+                         cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer'
+                      }}>
+                      {isGenerating ? 'Generando...' : 'Generar Estructura'}
+                   </button>
+                   {statusMsg && <p className="text-center text-[7.5px] font-black uppercase tracking-wider text-emerald-500 mt-1">{statusMsg}</p>}
+                </div>
+             </div>
+
+             {/* Interactive Visual Directory Tree */}
+             <div className="p-5 rounded-xl space-y-3" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <div className="flex items-center gap-2">
+                      <Grid size={14} color={t.accent}/>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Visualizador de Árbol de Directorio</span>
+                   </div>
+                   <span className="text-[7px] font-mono text-neutral-400">Estructura Dinámica</span>
+                </div>
+
+                <div className="font-mono text-[9px] space-y-1.5 text-neutral-300 pl-1 select-none overflow-y-auto max-h-[220px] mac-scrollbar">
+                   {/* Root Node */}
+                   <div>
+                      <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('root')}>
+                         <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.root ? '-rotate-90' : ''}`}/>
+                         <Folder size={10} color={t.accent}/>
+                         <span className="font-bold text-white">{carpetaMaestra || 'Carpeta Maestra'}</span>
+                      </div>
+                      
+                      {!treeCollapsed.root && (
+                         <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                            {/* Client Node */}
+                            <div>
+                               <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('client')}>
+                                  <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.client ? '-rotate-90' : ''}`}/>
+                                  <Folder size={10} color={t.accent}/>
+                                  <span className="font-bold">{empresa || 'Cliente'}</span>
+                               </div>
+                               
+                               {!treeCollapsed.client && (
+                                  <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                                     {/* Project Folder */}
+                                     <div>
+                                        <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('project')}>
+                                           <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.project ? '-rotate-90' : ''}`}/>
+                                           <Folder size={10} color={t.accent}/>
+                                           <span className="text-white truncate max-w-[170px]">{finalProjectFolderName}</span>
+                                        </div>
+
+                                        {!treeCollapsed.project && (
+                                           <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                                              {/* 01_Premiere */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('pr')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.pr ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>01_Premiere Pro</span>
+                                                 </div>
+                                                 {!treeCollapsed.pr && (
+                                                    <div className="pl-4 border-l border-neutral-800 space-y-1 mt-1">
+                                                       {selectedPremiere && (
+                                                          <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                             <File size={9}/>
+                                                             <span>{finalProjectFolderName}.prproj</span>
+                                                          </div>
+                                                       )}
+                                                       {incMOGRTs && (
+                                                          <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                             <Folder size={9}/>
+                                                             <span>MOGRTs_Sovereign</span>
+                                                          </div>
+                                                       )}
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 02_AE */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('ae')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.ae ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>02_After Effects</span>
+                                                 </div>
+                                                 {!treeCollapsed.ae && selectedAE && (
+                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
+                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                          <File size={9}/>
+                                                          <span>{finalProjectFolderName}.aep</span>
+                                                       </div>
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 03_video */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('video')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.video ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>03_video</span>
+                                                 </div>
+                                                 {!treeCollapsed.video && (
+                                                    <div className="pl-4 border-l border-neutral-800 space-y-0.5 mt-1 text-neutral-400 text-[8.5px]">
+                                                       <div>📁 video 01</div>
+                                                       <div>📁 video 02</div>
+                                                       <div>📁 video 03</div>
+                                                       <div>📁 video 04</div>
+                                                       <div>📁 video 06</div>
+                                                       <div>📁 video bar</div>
+                                                       <div>📁 video tragos</div>
+                                                       {incLogos && <div>📁 PNG/Logotipos_Marca</div>}
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 04_audio */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('audio')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.audio ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>04_audio</span>
+                                                 </div>
+                                                 {!treeCollapsed.audio && incSFX && (
+                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
+                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                          <Folder size={9}/>
+                                                          <span>SFX_Comunes</span>
+                                                       </div>
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 05_imágenes */}
+                                              <div>
+                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('img')}>
+                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.img ? '-rotate-90' : ''}`}/>
+                                                    <Folder size={10} color="#94a3b8"/>
+                                                    <span>05_imágenes</span>
+                                                 </div>
+                                                 {!treeCollapsed.img && (
+                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
+                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                                          <Folder size={9}/>
+                                                          <span>PNG</span>
+                                                       </div>
+                                                    </div>
+                                                 )}
+                                              </div>
+
+                                              {/* 06_IA */}
+                                              <div className="flex items-center gap-1 text-neutral-400">
+                                                 <Folder size={10} color="#94a3b8"/>
+                                                 <span>06_IA</span>
+                                              </div>
+                                           </div>
+                                        )}
+                                     </div>
+                                  </div>
+                               )}
+                            </div>
+                         </div>
+                      )}
+                   </div>
+                </div>
+             </div>
+          </div>
+
+          {/* COLUMN 3: DETALLE DEL PROYECTO */}
           <div className="flex flex-col space-y-5">
              <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
                 <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
@@ -1435,10 +1784,8 @@ const ProjectEngineView = ({ isDark = true }) => {
                    </div>
                 )}
              </div>
-          </div>
 
-          {/* COLUMN 3: NOTAS DEL PROYECTO */}
-          <div className="flex flex-col space-y-5">
+             {/* Notas de Corte & Edición */}
              <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
                 <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
                    <FileText size={14} color={t.accent}/>
