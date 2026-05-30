@@ -198,6 +198,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const [prestamoView, setPrestamoView] = useState('list'); 
   const [activePrestamo, setActivePrestamo] = useState(null);
+  const [selectedPrestamistaName, setSelectedPrestamistaName] = useState(null);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -231,7 +232,14 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
 
   const closePrestamo = async () => {
     try { if (activePrestamo) await handleSave(); }
-    finally { setPrestamoView('list'); setActivePrestamo(null); }
+    finally {
+      if (selectedPrestamistaName) {
+        setPrestamoView('contratos');
+      } else {
+        setPrestamoView('list');
+      }
+      setActivePrestamo(null);
+    }
   };
 
   const handleNewPrestamo = () => {
@@ -287,7 +295,14 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
       const updated = (data?.prestamos || []).filter(p => p.id !== target.id);
       setData({ ...data, prestamos: updated });
       setDeleteTarget(null);
-      setPrestamoView('list');
+      
+      const remainingContracts = updated.filter(p => p.nombre?.trim().toLowerCase() === target.nombre?.trim().toLowerCase());
+      if (remainingContracts.length > 0) {
+        setPrestamoView('contratos');
+      } else {
+        setPrestamoView('list');
+        setSelectedPrestamistaName(null);
+      }
       setActivePrestamo(null);
       showToast('🗑️ Préstamo eliminado correctamente');
     } catch (e) {
@@ -345,6 +360,50 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   };
 
   const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
+
+  const prestamistasGrouped = useMemo(() => {
+    const groups = {};
+    prestamosList.forEach(p => {
+      const key = p.nombre ? p.nombre.trim().toLowerCase() : 'sin nombre';
+      if (!groups[key]) {
+        groups[key] = {
+          key,
+          nombre: p.nombre || 'Sin Nombre',
+          ci: p.ci || '',
+          telefono: p.telefono || '',
+          foto: p.foto || '',
+          contratos: [],
+          totalAdeudado: 0,
+          totalCapital: 0,
+          estado: 'Finalizado'
+        };
+      }
+      groups[key].contratos.push(p);
+      
+      if (!groups[key].ci && p.ci) groups[key].ci = p.ci;
+      if (!groups[key].telefono && p.telefono) groups[key].telefono = p.telefono;
+      if (!groups[key].foto && p.foto) groups[key].foto = p.foto;
+      
+      const cap = parseFloat(p.capital) || 0;
+      groups[key].totalCapital += cap;
+      if (p.estado !== 'Finalizado') {
+        groups[key].totalAdeudado += cap;
+      }
+    });
+
+    Object.values(groups).forEach(g => {
+      const estados = g.contratos.map(c => c.estado || 'Activo');
+      if (estados.includes('En Mora')) {
+        g.estado = 'En Mora';
+      } else if (estados.includes('Activo')) {
+        g.estado = 'Activo';
+      } else {
+        g.estado = 'Finalizado';
+      }
+    });
+
+    return Object.values(groups);
+  }, [prestamosList]);
 
   // ─── HOOKS DEL DASHBOARD ─────────────────────────────────
   const { stats } = useAmortizacionGlobal(prestamosList);
@@ -602,7 +661,239 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Acreditado</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Prestamista</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Contratos</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Total Adeudado</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {prestamistasGrouped.map(g => (
+                      <tr key={g.key} onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
+                        style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                        className="group"
+                      >
+                        <td style={{ padding: '16px 24px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
+                              {g.foto ? (
+                                <img src={g.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <User size={16} />
+                              )}
+                            </div>
+                            <div>
+                              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{g.nombre}</p>
+                              <p style={{ fontSize: '10px', color: t.textDim, marginTop: '2px', margin: 0 }}>
+                                {g.ci ? `CI: ${g.ci}` : ''} {g.telefono ? `· WhatsApp: ${g.telefono}` : ''}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>
+                            {g.contratos.length} {g.contratos.length === 1 ? 'contrato' : 'contratos'}
+                          </span>
+                          <div style={{ fontSize: '9px', color: t.textDim, marginTop: '2px' }}>
+                            ({g.contratos.filter(c => c.estado !== 'Finalizado').length} activos)
+                          </div>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+                            {g.totalAdeudado.toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>BOB</span>
+                          </p>
+                          <p style={{ fontSize: '9px', color: t.textDim, marginTop: '2px', margin: 0 }}>
+                            Total acumulado: {g.totalCapital.toLocaleString()} BOB
+                          </p>
+                        </td>
+                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+                            <button 
+                              onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
+                              style={{
+                                padding: '8px 14px', borderRadius: '10px', border: `1px solid ${t.border}`,
+                                backgroundColor: t.input, color: t.text, cursor: 'pointer',
+                                fontSize: '10px', fontWeight: 600, transition: 'all 0.15s',
+                                display: 'flex', alignItems: 'center', gap: '4px'
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.color = t.accent; }}
+                              onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
+                            >
+                              Ver contratos <ChevronRight size={12} />
+                            </button>
+                            <button 
+                              onClick={() => {
+                                setEditPrestamo({
+                                  nombre: g.nombre,
+                                  ci: g.ci,
+                                  telefono: g.telefono,
+                                  foto: g.foto,
+                                  capital: '',
+                                  interes: 5,
+                                  moneda: 'BOB',
+                                  inicio: new Date().toISOString().split('T')[0],
+                                  fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                  estado: 'Activo',
+                                  tipoGarantia: '',
+                                  garantia: '',
+                                  drive_contrato: '',
+                                  drive_fotos: '',
+                                  notes: '',
+                                  pagos: []
+                                });
+                                setShowForm(true);
+                              }}
+                              style={{
+                                padding: '8px 12px', borderRadius: '10px', border: 'none',
+                                backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                                fontSize: '10px', fontWeight: 600, transition: 'all 0.15s',
+                                display: 'flex', alignItems: 'center', gap: '4px'
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accent; e.currentTarget.style.color = 'white'; }}
+                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accentSoft; e.currentTarget.style.color = t.accent; }}
+                            >
+                              <Plus size={12} /> Nuevo contrato
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div>
+                  {prestamistasGrouped.map(g => (
+                    <div key={g.key} onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
+                      style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
+                            {g.foto ? (
+                              <img src={g.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <User size={20} />
+                            )}
+                          </div>
+                          <div>
+                            <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{g.nombre}</p>
+                            <p style={{ fontSize: '10px', color: t.textDim, marginTop: '2px', margin: 0 }}>
+                              {g.contratos.length} {g.contratos.length === 1 ? 'contrato' : 'contratos'}
+                            </p>
+                          </div>
+                        </div>
+                        <ChevronRight size={18} color={t.textDim} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: `1px dashed ${t.border}` }}>
+                        <div>
+                          <p style={{ fontSize: '8px', color: t.textMuted, margin: 0, textTransform: 'uppercase' }}>Deuda Activa</p>
+                          <p style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0 }}>{g.totalAdeudado.toLocaleString()} BOB</p>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => {
+                              setEditPrestamo({
+                                nombre: g.nombre,
+                                ci: g.ci,
+                                telefono: g.telefono,
+                                foto: g.foto,
+                                capital: '',
+                                interes: 5,
+                                moneda: 'BOB',
+                                inicio: new Date().toISOString().split('T')[0],
+                                fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                estado: 'Activo',
+                                tipoGarantia: '',
+                                garantia: '',
+                                drive_contrato: '',
+                                drive_fotos: '',
+                                notes: '',
+                                pagos: []
+                              });
+                              setShowForm(true);
+                            }}
+                            style={{
+                              padding: '6px 10px', borderRadius: '8px', border: 'none',
+                              backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                              fontSize: '9px', fontWeight: 600,
+                            }}
+                          >
+                            + Contrato
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : prestamoView === 'contratos' ? (
+          <div className="animate-in slide-in-from-right-8 duration-500">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px', cursor: 'pointer' }}
+              onClick={() => { setPrestamoView('list'); setSelectedPrestamistaName(null); }}>
+              <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ArrowLeft size={14} /> Volver a Prestamistas
+              </span>
+            </div>
+            
+            <header style={{
+              display: 'flex', flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center',
+              gap: '24px', marginBottom: '40px',
+            }}>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+                  Contratos de {selectedPrestamistaName}
+                </h2>
+                <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
+                  Lista de préstamos y refinanciamientos otorgados
+                </p>
+              </div>
+              <button 
+                onClick={() => {
+                  const prestamista = prestamistasGrouped.find(g => g.nombre.toLowerCase().trim() === selectedPrestamistaName.toLowerCase().trim());
+                  setEditPrestamo({
+                    nombre: prestamista?.nombre || selectedPrestamistaName,
+                    ci: prestamista?.ci || '',
+                    telefono: prestamista?.telefono || '',
+                    foto: prestamista?.foto || '',
+                    capital: '',
+                    interes: 5,
+                    moneda: 'BOB',
+                    inicio: new Date().toISOString().split('T')[0],
+                    fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    estado: 'Activo',
+                    tipoGarantia: '',
+                    garantia: '',
+                    drive_contrato: '',
+                    drive_fotos: '',
+                    notes: '',
+                    pagos: []
+                  });
+                  setShowForm(true);
+                }} 
+                style={{
+                  backgroundColor: t.accent, color: 'white', border: 'none',
+                  borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
+                  fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
+                }}
+                onMouseEnter={e => e.target.style.backgroundColor = t.accentHover}
+                onMouseLeave={e => e.target.style.backgroundColor = t.accent}
+              >
+                <Plus size={16} strokeWidth={3} /> Nuevo Contrato
+              </button>
+            </header>
+
+            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+              {!isMobile ? (
+                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Contrato</th>
                       <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Periodo</th>
                       <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Capital</th>
                       <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Interés</th>
@@ -610,25 +901,20 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                     </tr>
                   </thead>
                   <tbody>
-                    {prestamosList.map(p => {
+                    {(prestamosList.filter(p => p.nombre?.trim().toLowerCase() === selectedPrestamistaName?.trim().toLowerCase())).map((p, idx) => {
                       const moraAmount = moraMap[p.id];
                       return (
-                      <tr key={p.id} onClick={() => openPrestamo(p)}
-                        style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        <td style={{ padding: '16px 24px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
-                              {p.foto ? (
-                                <img src={p.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <User size={16} />
-                              )}
-                            </div>
+                        <tr key={p.id} onClick={() => openPrestamo(p)}
+                          style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          className="group"
+                        >
+                          <td style={{ padding: '16px 24px' }}>
                             <div>
-                              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre || 'Sin Nombre'}</p>
+                              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+                                Contrato #${idx + 1}
+                              </p>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                                 <span style={{
                                   fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em',
@@ -644,114 +930,103 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                                     padding: '2px 8px', borderRadius: '12px',
                                     backgroundColor: 'rgba(239, 68, 68, 0.10)',
                                   }}>
-                                    +{moraAmount.toLocaleString()} mora
+                                    +${moraAmount.toLocaleString()} mora
                                   </span>
                                 )}
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                          <span style={{ fontSize: '10px', fontWeight: 500, color: t.textMuted }}>
-                            {p.inicio ? new Date(p.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
-                          </span>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                            {parseFloat(p.capital).toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>{p.moneda}</span>
-                          </p>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
-                            {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span style={{ fontSize: '9px', color: t.accent }}>{p.moneda}</span>
-                          </p>
-                        </td>
-                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
-                              style={{
-                                padding: '8px', borderRadius: '12px', border: 'none',
-                                backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                                opacity: 0, transition: 'all 0.2s',
-                              }}
-                              className="group-hover:opacity-100"
-                              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
-                              title="Editar"
-                            >
-                              <Edit3 size={14} />
-                            </button>
-                            <button 
-                              onClick={(e) => handleDeleteRequest(p, e)}
-                              style={{
-                                padding: '8px', borderRadius: '12px', border: 'none',
-                                backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
-                                opacity: 0, transition: 'all 0.2s',
-                              }}
-                              className="group-hover:opacity-100"
-                              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
-                              title="Eliminar"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
+                          </td>
+                          <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 500, color: t.textMuted }}>
+                              {p.inicio ? new Date(p.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
+                              {' → '}
+                              {p.fin ? new Date(p.fin).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+                              {parseFloat(p.capital).toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>{p.moneda}</span>
+                            </p>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
+                              {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span style={{ fontSize: '9px', color: t.accent }}>{p.moneda}</span>
+                              <span style={{ fontSize: '10px', color: t.textDim }}> ({p.interes}%)</span>
+                            </p>
+                          </td>
+                          <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
+                                style={{
+                                  padding: '8px', borderRadius: '12px', border: 'none',
+                                  backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                }}
+                                title="Editar"
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button 
+                                onClick={(e) => handleDeleteRequest(p, e)}
+                                style={{
+                                  padding: '8px', borderRadius: '12px', border: 'none',
+                                  backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
+                                  transition: 'all 0.2s',
+                                }}
+                                title="Eliminar"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
                     })}
                   </tbody>
                 </table>
               ) : (
                 <div>
-                  {prestamosList.map(p => {
+                  {(prestamosList.filter(p => p.nombre?.trim().toLowerCase() === selectedPrestamistaName?.trim().toLowerCase())).map((p, idx) => {
                     const moraAmount = moraMap[p.id];
                     return (
-                    <div key={p.id} onClick={() => openPrestamo(p)}
-                      style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
-                          {p.foto ? (
-                            <img src={p.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <User size={20} />
-                          )}
-                        </div>
+                      <div key={p.id} onClick={() => openPrestamo(p)}
+                        style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
                         <div>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{p.nombre}</p>
+                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>Contrato #${idx + 1}</p>
                           <p style={{ fontSize: '10px', fontWeight: 600, color: t.accent, marginTop: '2px' }}>
-                            {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} {p.moneda}
+                            {parseFloat(p.capital).toLocaleString()} {p.moneda} ({p.interes}%)
                           </p>
                           {moraAmount > 0 && (
                             <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444', marginTop: '2px', display: 'inline-block' }}>
-                              +{moraAmount.toLocaleString()} mora
+                              +${moraAmount.toLocaleString()} mora
                             </span>
                           )}
                         </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
+                            style={{
+                              padding: '8px', borderRadius: '10px', border: 'none',
+                              backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                              fontSize: '10px', fontWeight: 600,
+                              display: 'flex', alignItems: 'center', gap: '4px',
+                            }}
+                          >
+                            <Edit3 size={12} /> Editar
+                          </button>
+                          <button
+                            onClick={(e) => handleDeleteRequest(p, e)}
+                            style={{
+                              padding: '8px', borderRadius: '10px', border: 'none',
+                              backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <ChevronRight size={18} color={t.textDim} />
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
-                          style={{
-                            padding: '8px', borderRadius: '10px', border: 'none',
-                            backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                            fontSize: '10px', fontWeight: 600,
-                            display: 'flex', alignItems: 'center', gap: '4px',
-                          }}
-                        >
-                          <Edit3 size={12} /> Editar
-                        </button>
-                        <button
-                          onClick={(e) => handleDeleteRequest(p, e)}
-                          style={{
-                            padding: '8px', borderRadius: '10px', border: 'none',
-                            backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                        <ChevronRight size={18} color={t.textDim} />
-                      </div>
-                    </div>
                     );
                   })}
                 </div>

@@ -3,6 +3,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('electronAPI', {
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
   createFolderStructure: (data) => ipcRenderer.invoke('create-folder-structure', data),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   downloadUpdate: () => ipcRenderer.invoke('download-update-now'),

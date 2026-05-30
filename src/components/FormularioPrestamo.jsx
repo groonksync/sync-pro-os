@@ -162,23 +162,32 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
 
   const irAPaso = (i) => {
     if (i < paso) { setPaso(i); return; }
-    // Si queremos avanzar, validamos los pasos intermedios
-    let canGo = true;
+    // Validar todos los pasos intermedios sin mutar estado
+    let allErrors = {};
     for (let p = paso; p < i; p++) {
-      setPaso(p);
       const errs = validate(p);
-      if (Object.keys(errs).length > 0) { setErrors(errs); canGo = false; break; }
+      if (Object.keys(errs).length > 0) { allErrors = { ...allErrors, ...errs }; break; }
     }
-    if (canGo) setPaso(i);
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+    } else {
+      setPaso(i);
+    }
   };
 
   // ─── SUBMIT ──────────────────────────────────────────────
   const handleSubmit = async () => {
-    const errs = validate(2); // validate garantia step too
-    const errsResumen = {};
-    if (!form.nombre?.trim()) errsResumen.nombre = 'Requerido';
-    if (Object.keys(errs).length > 0 || Object.keys(errsResumen).length > 0) {
-      setErrors({ ...errs, ...errsResumen });
+    // Validar todos los pasos completos antes de enviar
+    const errsPaso0 = validate(0);
+    const errsPaso1 = validate(1);
+    const errsPaso2 = validate(2);
+    const allErrors = { ...errsPaso0, ...errsPaso1, ...errsPaso2 };
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+      // Llevar al primer paso con error
+      if (Object.keys(errsPaso0).length > 0) setPaso(0);
+      else if (Object.keys(errsPaso1).length > 0) setPaso(1);
+      else if (Object.keys(errsPaso2).length > 0) setPaso(2);
       return;
     }
 

@@ -9,6 +9,7 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 import { Google, DeepSeek } from '@lobehub/icons';
+import UpdaterPanel from '../components/UpdaterPanel';
 
 const GoogleLogo = ({ size = 18 }) => <Google.Color size={size} />;
 const DeepSeekLogo = ({ size = 18 }) => <DeepSeek.Color size={size} />;
@@ -385,6 +386,9 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
             <Trash2 size={18} style={{ color: t.danger }}/>
           </button>
         </section>
+
+        {/* Actualizador */}
+        <UpdaterPanel t={t} />
       </div>
     </div>
   );

@@ -57,6 +57,16 @@ const Recibos = ({ data, setData, isDark = true }) => {
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar este recibo?')) return;
     try {
+      const item = recibos.find(r => r.id === id);
+      if (item) {
+        await supabase.from('papelera').insert([{
+          tipo_dato: 'recibo',
+          nombre_item: `Recibo #${item.numero} - ${item.cliente}`,
+          datos_originales: item,
+          borrado_el: new Date().toISOString(),
+          expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        }]);
+      }
       await supabase.from('recibos').delete().eq('id', id);
       setData(prev => ({ ...prev, recibos: prev.recibos.filter(r => r.id !== id) }));
     } catch (err) { alert('Error: ' + err.message); }

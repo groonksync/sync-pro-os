@@ -110,7 +110,7 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
 
     try {
       const history = messages.map(m => ({ role: m.role, content: m.content }));
-      const responseText = await aiService.askAgent(input, history, { settings, activeView: currentView });
+      const responseText = await aiService.askAgent(textToSend, history, { settings, activeView: currentView });
       
       // Parsear Acciones
       let cleanText = responseText;

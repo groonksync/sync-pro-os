@@ -38,31 +38,31 @@ const App = () => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Función para renovar token automáticamente
+  // NOTA: El refresh de token Google OAuth requiere un backend con refresh_token.
+  // Sin un endpoint /api/refresh-token, el token expira en ~1 hora.
+  // Al expirar, las llamadas a Google API fallarán con 401.
+  // Considera agregar un backend proxy o usar el flujo de Google Identity Services
+  // que maneja refresh automático vía gapi.client.
   const refreshGoogleToken = async () => {
     try {
-      const response = await fetch('/api/refresh-token');
-      const data = await response.json();
-      if (data.access_token) {
-        setGoogleToken(data.access_token);
-        // Si no tenemos usuario, intentar cargarlo
-        if (!googleUser) {
-          const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-            headers: { Authorization: `Bearer ${data.access_token}` }
-          });
-          const userData = await userRes.json();
-          setGoogleUser(userData);
-        }
+      // Verificar si el token actual sigue siendo válido
+      if (!googleToken) return;
+      const checkRes = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + googleToken);
+      if (!checkRes.ok) {
+        console.warn("Token de Google expirado. El usuario deberá reconectar.");
+        // No limpiar el token aquí para evitar pérdida de datos;
+        // las APIs mostrarán error 401 que el usuario puede manejar reconectando desde Ajustes.
       }
     } catch (error) {
-      console.error("Error auto-refreshing token:", error);
+      // Sin conexión o error de red - no crítico
+      console.warn("No se pudo verificar el token de Google (posiblemente sin conexión):", error.message);
     }
   };
 
   // Cargar/Renovar al iniciar
   useEffect(() => {
     refreshGoogleToken();
-    // Renovar cada 50 minutos
+    // Verificar estado del token cada 50 minutos
     const interval = setInterval(refreshGoogleToken, 50 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);

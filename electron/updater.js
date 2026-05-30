@@ -6,6 +6,10 @@ export function setupAutoUpdater(mainWindow) {
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  autoUpdater.on('checking-for-update', () => {
+    mainWindow.webContents.send('update-check-started');
+  });
+
   autoUpdater.on('update-available', (info) => {
     mainWindow.webContents.send('update-available', {
       version: info.version,

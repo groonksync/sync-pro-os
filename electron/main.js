@@ -155,9 +155,10 @@ function createWindow() {
     }
   });
 
+  const logPath = path.join(app.getPath('userData'), 'renderer_errors.log');
   mainWindow.webContents.on('console-message', async (event, level, message, line, sourceId) => {
     try {
-      await fs.appendFile('/Users/groonkm2pro/.gemini/antigravity/renderer_errors.log', `[Console Level ${level}] ${message} (${sourceId}:${line})\n`);
+      await fs.appendFile(logPath, `[Console Level ${level}] ${message} (${sourceId}:${line})\n`);
     } catch (e) {}
   });
 
@@ -191,6 +192,15 @@ app.on('window-all-closed', () => {
 });
 
 // ── IPC HANDLERS ────────────────────────────────────────────────────────────
+ipcMain.handle('get-app-version', async () => {
+  try {
+    const pkg = JSON.parse(readFileSync(path.join(__dirname, '../package.json'), 'utf8'));
+    return pkg.version || '1.0.0';
+  } catch {
+    return '1.0.0';
+  }
+});
+
 ipcMain.handle('select-directory', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory', 'createDirectory'],

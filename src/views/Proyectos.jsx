@@ -99,6 +99,16 @@ const Proyectos = ({ proyectos, setProyectos, isDark = true }) => {
     e.stopPropagation();
     if (!confirm('¿Eliminar este proyecto?')) return;
     try {
+      const item = proyectos.find(p => p.id === id);
+      if (item) {
+        await supabase.from('papelera').insert([{
+          tipo_dato: 'proyecto',
+          nombre_item: item.nombre,
+          datos_originales: item,
+          borrado_el: new Date().toISOString(),
+          expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        }]);
+      }
       const { error } = await supabase.from('proyectos').delete().eq('id', id);
       if (error) throw error;
       setProyectos(prev => prev.filter(p => p.id !== id));

@@ -21,7 +21,7 @@ import { getTheme } from '../lib/theme';
 
 const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark = true, token }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
-  const [viewState, setViewState] = useState('client-list'); 
+  const [viewState, setViewState] = useState('dashboard'); 
   const [activeClient, setActiveClient] = useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null);
   const [sessionTab, setSessionTab] = useState('editor'); 
@@ -103,6 +103,42 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
       if (error) throw error;
       setAgencyClients(data || []);
     } catch (e) { console.error(e); }
+  };
+
+  // ── Universal Trash Integration (Clientes y Sesiones) ─────────────────────
+  const handleDeleteClient = async (client, e) => {
+    e.stopPropagation();
+    if (!confirm(`¿Eliminar al cliente ${client.nombre} y enviar a la papelera?`)) return;
+    try {
+      await supabase.from('papelera').insert([{
+        tipo_dato: 'cliente',
+        nombre_item: client.nombre,
+        datos_originales: client,
+        borrado_el: new Date().toISOString(),
+        expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      }]);
+      const { error } = await supabase.from('clientes_editor').delete().eq('id', client.id);
+      if (error) throw error;
+      await fetchClients();
+      setViewState('client-list');
+    } catch (err) { alert('Error al eliminar cliente: ' + err.message); }
+  };
+
+  const handleDeleteMeeting = async (meeting, e) => {
+    e.stopPropagation();
+    if (!confirm(`¿Eliminar la sesión "${meeting.session_title}" y enviar a la papelera?`)) return;
+    try {
+      await supabase.from('papelera').insert([{
+        tipo_dato: 'sesion',
+        nombre_item: meeting.session_title,
+        datos_originales: meeting,
+        borrado_el: new Date().toISOString(),
+        expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      }]);
+      const { error } = await supabase.from('reuniones').delete().eq('id', meeting.id);
+      if (error) throw error;
+      setMeetingsList(prev => prev.filter(m => m.id !== meeting.id));
+    } catch (err) { alert('Error al eliminar sesión: ' + err.message); }
   };
 
   const normalizeText = (text) => (text || '').toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -312,9 +348,6 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     } catch (e) { alert('Error al registrar: ' + e.message); }
   };
 
-  // Modern minimalism theme variables aligned with #141414
-  const backgroundStyle = { backgroundColor: '#141414', minHeight: '100vh' };
-
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden font-sans"
       style={{ backgroundColor: '#141414', color: t.text }}>
@@ -324,10 +357,16 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
         style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
          <div className="flex items-center gap-8">
             <div>
-               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Editor de Video</h2>
+               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Mesa de Trabajo</h2>
                <p style={{ fontSize: '0.7rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>Control de Producción & Hub de Negocios</p>
             </div>
             <div className="flex rounded-xl p-0.5" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
+                <button onClick={() => setViewState('dashboard')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                  style={{
+                    backgroundColor: viewState === 'dashboard' ? '#141414' : 'transparent',
+                    border: viewState === 'dashboard' ? `1px solid ${t.accent}` : '1px solid transparent',
+                    color: viewState === 'dashboard' ? t.accent : t.textDim,
+                  }}>Dashboard</button>
                 <button onClick={() => setViewState('client-list')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
                     backgroundColor: viewState.includes('client') || viewState === 'session' ? '#141414' : 'transparent',
@@ -345,7 +384,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                     backgroundColor: viewState === 'project-engine' ? '#141414' : 'transparent',
                     border: viewState === 'project-engine' ? `1px solid ${t.accent}` : '1px solid transparent',
                     color: viewState === 'project-engine' ? t.accent : t.textDim,
-                  }}>Edición de Video</button>
+                  }}>Proyectos de Edición</button>
             </div>
          </div>
          <div className="flex items-center gap-6">
@@ -359,75 +398,141 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
          </div>
        </nav>
 
+       {/* WORK DESK DASHBOARD */}
+       {viewState === 'dashboard' && (
+          <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
+             <div className="grid grid-cols-4 gap-4">
+                {[
+                  { label: 'Clientes Nexus', val: clients.length, subtitle: 'Activos en directorio', icon: Users, tab: 'client-list' },
+                  { label: 'Marcas Agencia', val: agencyClients.length, subtitle: 'Empresas Pro', icon: Building2, tab: 'agency-hub' },
+                  { label: 'Proyectos de Edición', val: JSON.parse(localStorage.getItem('inefable_proyectos_edicion') || '[]').length, subtitle: 'Mesa de producción', icon: Briefcase, tab: 'project-engine' },
+                  { label: 'Sesiones Totales', val: meetingsList.length, subtitle: 'Reuniones de trabajo', icon: Video, tab: 'client-list' }
+                ].map((s, i) => (
+                  <div key={i} onClick={() => setViewState(s.tab)} className="flex items-center justify-between p-5 cursor-pointer transition-all hover:scale-[1.02]"
+                    style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 14 }}>
+                     <div>
+                        <p className="text-[8px] font-black uppercase tracking-widest mb-1" style={{ color: t.textDim }}>{s.label}</p>
+                        <p className="text-2xl font-light text-white tracking-tight">{s.val}</p>
+                        <p className="text-[8px] text-neutral-500 font-semibold uppercase tracking-wider mt-1">{s.subtitle}</p>
+                     </div>
+                     <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/2" style={{ border: `1px solid ${t.border}`, color: t.accent }}>
+                       <s.icon size={18} />
+                     </div>
+                  </div>
+                ))}
+             </div>
+
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                <div className="lg:col-span-2 p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: '#141414', borderColor: t.border }}>
+                   <div>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Actividad Reciente</h3>
+                      <p className="text-[10px] text-neutral-400 font-medium">Últimas interacciones y sesiones en el sistema</p>
+                   </div>
+                   <div className="flex flex-col gap-3 min-h-[220px]">
+                      {meetingsList.slice(0, 5).map(m => (
+                         <div key={m.id} onClick={() => openMeeting(m)} className="p-3.5 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs cursor-pointer hover:bg-white/5 transition-all">
+                            <div className="flex items-center gap-3">
+                               <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/2" style={{ border: `1px solid ${t.border}` }}>
+                                  <Video size={14} color={t.accent} />
+                               </div>
+                               <div>
+                                  <p className="font-bold text-white uppercase">{m.session_title}</p>
+                                  <p className="text-[8px] text-neutral-500 mt-0.5">Cliente: {m.cliente} • {m.fecha}</p>
+                               </div>
+                            </div>
+                            <span className="font-mono text-[9px] font-bold text-neutral-400">{formatTime(m.total_time)}</span>
+                         </div>
+                      ))}
+                      {meetingsList.length === 0 && (
+                         <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
+                            <p className="text-[10px] uppercase font-black tracking-wider text-neutral-400">Sin actividad reciente</p>
+                         </div>
+                      )}
+                   </div>
+                </div>
+
+                <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: '#141414', borderColor: t.border }}>
+                   <div>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Últimos Clientes Registrados</h3>
+                      <p className="text-[10px] text-neutral-400 font-medium">Agregados recientemente al directorio</p>
+                   </div>
+                   <div className="flex flex-col gap-3">
+                      {clients.slice(0, 4).map(cl => (
+                         <div key={cl.id} onClick={() => openClientProfile(cl)} className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-white/5 transition-all">
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-white/2" style={{ border: `1px solid ${t.border}` }}>
+                               {cl.foto_url ? (
+                                  <img src={cl.foto_url} alt="" className="w-full h-full object-cover" />
+                               ) : (
+                                  <span className="text-[10px] font-bold" style={{ color: t.textDim }}>{cl.nombre.charAt(0)}</span>
+                                )}
+                            </div>
+                            <div>
+                               <p className="text-[11px] font-bold text-white uppercase">{cl.nombre}</p>
+                               <p className="text-[7.5px] text-neutral-500 uppercase">{cl.empresa || 'Independiente'}</p>
+                            </div>
+                         </div>
+                      ))}
+                      {clients.length === 0 && (
+                         <p className="text-[9px] text-neutral-500 italic text-center py-6">No hay clientes registrados.</p>
+                      )}
+                   </div>
+                </div>
+             </div>
+          </div>
+       )}
+
        {/* CLIENTS LIST */}
        {viewState === 'client-list' && (
         <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
-            {/* Minimal KPI Board */}
-            <div className="grid grid-cols-4 gap-3">
-               {[
-                 { label: 'Capacidad Operativa', val: '98.4%', icon: Activity },
-                 { label: 'Proyectos en Render', val: uniqueClients.length, icon: Video },
-                 { label: 'Latencia de Sistema', val: '0.4ms', icon: Cpu },
-                 { label: 'Base de Clientes', val: uniqueClients.length, icon: Users }
-               ].map((s, i) => (
-                 <div key={i} className="flex items-center justify-between p-4"
-                   style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
-                    <div>
-                       <p className="text-[8px] font-black uppercase tracking-widest mb-1" style={{ color: t.textDim }}>{s.label}</p>
-                       <p className="text-xl font-bold" style={{ color: 'white' }}>{s.val}</p>
-                    </div>
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}`, color: t.accent }}>
-                      <s.icon size={16} />
-                    </div>
-                 </div>
-               ))}
-            </div>
+             <header className="flex justify-between items-end pt-4">
+                <div>
+                   <h2 className="text-base font-black uppercase tracking-wider text-white">Directorio de Nexus Clientes</h2>
+                </div>
+                <div className="flex gap-3">
+                   <div className="relative">
+                      <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="FILTRAR..."
+                        className="rounded-lg py-2.5 pl-4 pr-5 text-[9px] font-black uppercase tracking-widest outline-none w-56 transition-all"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                   </div>
+                   <button onClick={() => setIsClientModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
+                     style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                      <Plus size={14} strokeWidth={2}/> Añadir Registro
+                   </button>
+                </div>
+             </header>
 
-            <header className="flex justify-between items-end pt-4">
-               <div>
-                  <h2 className="text-base font-black uppercase tracking-wider text-white">Directorio de Nexus Clientes</h2>
-               </div>
-               <div className="flex gap-3">
-                  <div className="relative">
-                     <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="FILTRAR..."
-                       className="rounded-lg py-2.5 pl-4 pr-5 text-[9px] font-black uppercase tracking-widest outline-none w-56 transition-all"
-                       style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-2">
+                {uniqueClients.map(cl => (
+                  <div key={cl.id} className="p-5 flex flex-col items-center justify-center group relative overflow-hidden aspect-square cursor-pointer transition-all hover:bg-white/2"
+                    style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
+                     
+                     <div onClick={() => openClientProfile(cl)} className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden mb-4" style={{ border: `1px solid ${t.border}` }}>
+                        {cl.foto_url ? (
+                          <img src={cl.foto_url} alt={cl.nombre} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xl font-bold" style={{ color: t.textDim }}>{cl.nombre.charAt(0)}</span>
+                        )}
+                     </div>
+
+                     <p onClick={() => openClientProfile(cl)} className="text-xs font-black uppercase tracking-wider truncate w-full text-center mb-1 text-white">{cl.nombre}</p>
+                     <p onClick={() => openClientProfile(cl)} className="text-[7px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textDim }}>{cl.empresa || 'Independiente'}</p>
+                     
+                     <div onClick={() => openClientProfile(cl)} className="flex flex-col items-center gap-0.5 mb-2">
+                        <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>{cl.nacionalidad || 'Global'}</span>
+                        <span className="text-[7px] font-mono" style={{ color: t.textDim }}>{cl.telefono || 'Sin Teléfono'}</span>
+                     </div>
+
+                     <div onClick={() => openClientProfile(cl)} className="mt-2 w-full pt-3 flex items-center justify-between opacity-50 group-hover:opacity-100 transition-all" style={{ borderTop: `1px solid ${t.border}` }}>
+                        <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>Enlace</span>
+                        <ChevronRight size={10} color={t.accent}/>
+                     </div>
+
+                     <button onClick={(e) => handleDeleteClient(cl, e)} className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500/10 text-neutral-500 hover:text-rose-400" title="Eliminar Cliente">
+                        <Trash2 size={12}/>
+                     </button>
                   </div>
-                  <button onClick={() => setIsClientModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
-                    style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
-                     <Plus size={14} strokeWidth={2}/> Añadir Registro
-                  </button>
-               </div>
-            </header>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-2">
-               {uniqueClients.map(cl => (
-                 <div key={cl.id} onClick={() => openClientProfile(cl)} className="p-5 flex flex-col items-center justify-center group relative overflow-hidden aspect-square cursor-pointer transition-all"
-                   style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
-                    
-                    <div className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden mb-4" style={{ border: `1px solid ${t.border}` }}>
-                       {cl.foto_url ? (
-                         <img src={cl.foto_url} alt={cl.nombre} className="w-full h-full object-cover" />
-                       ) : (
-                         <span className="text-xl font-bold" style={{ color: t.textDim }}>{cl.nombre.charAt(0)}</span>
-                       )}
-                    </div>
-
-                    <p className="text-xs font-black uppercase tracking-wider truncate w-full text-center mb-1 text-white">{cl.nombre}</p>
-                    <p className="text-[7px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textDim }}>{cl.empresa || 'Independiente'}</p>
-                    
-                    <div className="flex flex-col items-center gap-0.5 mb-2">
-                       <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>{cl.nacionalidad || 'Global'}</span>
-                       <span className="text-[7px] font-mono" style={{ color: t.textDim }}>{cl.telefono || 'Sin Teléfono'}</span>
-                    </div>
-
-                    <div className="mt-2 w-full pt-3 flex items-center justify-between opacity-50 group-hover:opacity-100 transition-all" style={{ borderTop: `1px solid ${t.border}` }}>
-                       <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>Enlace</span>
-                       <ChevronRight size={10} color={t.accent}/>
-                    </div>
-                 </div>
-               ))}
-            </div>
+                ))}
+             </div>
         </div>
        )}
 
@@ -453,9 +558,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
 
            <div className="space-y-3 pt-2">
              {filteredMeetings.map(m => (
-               <div key={m.id} onClick={() => openMeeting(m)} className="flex items-center justify-between p-4 cursor-pointer transition-all"
+               <div key={m.id} className="flex items-center justify-between p-4 cursor-pointer transition-all hover:bg-white/2"
                  style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
-                 <div className="flex items-center gap-4">
+                 <div onClick={() => openMeeting(m)} className="flex-1 flex items-center gap-4">
                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
                      <FileVideo size={18} color={t.accent}/>
                    </div>
@@ -464,9 +569,14 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                      <p className="text-[8px] font-mono text-neutral-400">{m.fecha}</p>
                    </div>
                  </div>
-                 <div className="text-right">
-                   <p className="text-[7px] font-bold uppercase mb-0.5" style={{ color: t.textDim }}>Tiempo Registrado</p>
-                   <p className="text-sm font-bold font-mono text-white">{formatTime(m.total_time)}</p>
+                 <div className="flex items-center gap-4">
+                   <div className="text-right">
+                     <p className="text-[7px] font-bold uppercase mb-0.5" style={{ color: t.textDim }}>Tiempo Registrado</p>
+                     <p className="text-sm font-bold font-mono text-white">{formatTime(m.total_time)}</p>
+                   </div>
+                   <button onClick={(e) => handleDeleteMeeting(m, e)} className="p-2 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all" title="Eliminar Sesión">
+                     <Trash2 size={13}/>
+                   </button>
                  </div>
                </div>
              ))}
@@ -482,119 +592,98 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {/* AGENCY HUB */}
        {viewState === 'agency-hub' && (
         <div className="flex flex-col flex-1 min-h-0 p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
-            {/* Agency KPIs */}
-            <div className="grid grid-cols-4 gap-3">
-               {[
-                 { label: 'Campañas Activas', val: agencyClients.length, icon: Target },
-                 { label: 'Conversión Mensual', val: '24%', icon: TrendingUp },
-                 { label: 'Nivel NPS', val: '9.8', icon: Star },
-                 { label: 'Marcas Aliadas', val: agencyClients.length, icon: Building2 }
-               ].map((s, i) => (
-                 <div key={i} className="flex items-center justify-between p-4"
-                   style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
-                    <div>
-                       <p className="text-[8px] font-black uppercase tracking-widest mb-1" style={{ color: t.textDim }}>{s.label}</p>
-                       <p className="text-xl font-bold" style={{ color: 'white' }}>{s.val}</p>
-                    </div>
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}`, color: t.accent }}>
-                      <s.icon size={16} />
-                    </div>
-                 </div>
-               ))}
-            </div>
-
-            <header className="flex justify-between items-end pt-4">
-               <div>
-                  <h2 className="text-base font-black uppercase tracking-wider text-white">Agency Pro Planificador</h2>
-               </div>
-               <button onClick={() => setIsCompanyModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
-                 style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
-                 <Plus size={14} strokeWidth={2}/> Nueva Marca
-               </button>
-            </header>
-
-            {/* Filter buttons styled minimal */}
-            <div className="grid grid-cols-4 gap-2 p-1 rounded-xl" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-               {['Básico', 'Intermedio', 'Avanzado', 'Personalizado'].map(p => {
-                 const count = agencyClients.filter(cl => cl.plan === p).length;
-                 return (
-                   <button key={p} onClick={() => setActiveAgencyPlan(p)} className="p-3 rounded-lg transition-all flex flex-col items-center gap-1"
-                     style={{
-                       backgroundColor: activeAgencyPlan === p ? '#141414' : 'transparent',
-                       border: activeAgencyPlan === p ? `1px solid ${t.accent}` : '1px solid transparent',
-                       color: activeAgencyPlan === p ? t.accent : t.textDim,
-                     }}>
-                     <h4 className="text-[8px] font-black uppercase tracking-widest">{p}</h4>
-                     <p className="text-base font-bold">{count}</p>
-                   </button>
-                 );
-               })}
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between px-1">
-                <h3 className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 text-white">
-                  <div className="w-1 h-1 rounded-full" style={{ backgroundColor: t.accent }}></div>
-                  Tablero de Proyectos Estratégicos
-                </h3>
-              </div>
-
-              <div className="p-4 rounded-xl overflow-x-auto mac-scrollbar" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                <div className="min-w-[900px] space-y-3">
-                  {filteredAgencyClients.map((company, idx) => {
-                    const meta = company.metadata || {};
-                    const metrics = meta.metrics || { loyalty: 'Normal', payment: 'A tiempo', growth: 'Estable' };
-                    const isPremium = metrics.loyalty === 'VIP' || metrics.growth === 'Top Tier';
-                    
-                    return (
-                      <div key={company.id} onClick={() => { setSelectedCompany(company); fetchStrategies(company.id); setViewState('agency-session'); }} className="flex items-center gap-6 p-4 rounded-lg cursor-pointer relative overflow-hidden transition-all"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                        {isPremium && <div className="absolute top-1 right-1"><Crown size={10} color={t.accent}/></div>}
-                        
-                        <div className="w-24 shrink-0">
-                          <h4 className="text-xs font-black uppercase truncate text-white">{company.nombre_empresa}</h4>
-                          <p className="text-[7px] font-bold uppercase" style={{ color: t.textDim }}>{company.dueño}</p>
-                        </div>
-
-                        <div className="flex-1 flex items-center gap-3">
-                          <div className="flex-1 h-1.5 rounded-full overflow-hidden relative" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                            <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000" style={{ width: `${30 + (idx * 15) % 70}%`, backgroundColor: t.accent }}></div>
-                          </div>
-                          <span className="text-[8px] font-mono text-neutral-400">{30 + (idx * 15) % 70}%</span>
-                        </div>
-
-                        <div className="flex items-center gap-4 shrink-0">
-                           <div className="flex gap-1">
-                             {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
-                               <div key={red} className="w-6 h-6 rounded-md flex items-center justify-center"
-                                 style={{
-                                   border: meta.redes?.[red] ? `1px solid ${t.accent}aa` : `1px solid ${t.border}`,
-                                   backgroundColor: '#141414',
-                                   color: meta.redes?.[red] ? t.accent : t.textDim,
-                                 }}>
-                                 {red === 'instagram' && <Instagram size={10}/>}
-                                 {red === 'tiktok' && <TiktokIcon size={10}/>}
-                                 {red === 'facebook' && <Facebook size={10}/>}
-                                 {red === 'youtube' && <Youtube size={10}/>}
-                               </div>
-                             ))}
-                           </div>
-                           <div className="px-2.5 py-1 rounded-md" style={{ border: `1px solid ${t.border}` }}>
-                             <p className="text-[6px] font-bold uppercase mb-0.5" style={{ color: t.textDim }}>Pago</p>
-                             <p className="text-[7px] font-black uppercase" style={{ color: metrics.payment === 'A tiempo' ? t.accent : t.textDim }}>{metrics.payment}</p>
-                           </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {filteredAgencyClients.length === 0 && (
-                    <div className="py-10 text-center rounded-lg animate-fade-in" style={{ border: `1px dashed ${t.border}`, backgroundColor: '#141414' }}>
-                      <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>No se encontraron marcas en esta categoría</p>
-                    </div>
-                  )}
+             <header className="flex justify-between items-end pt-4">
+                <div>
+                   <h2 className="text-base font-black uppercase tracking-wider text-white">Agency Pro Planificador</h2>
                 </div>
-              </div>
-            </div>
+                <button onClick={() => setIsCompanyModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
+                  style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                  <Plus size={14} strokeWidth={2}/> Nueva Marca
+                </button>
+             </header>
+
+             {/* Filter buttons styled minimal */}
+             <div className="grid grid-cols-4 gap-2 p-1 rounded-xl" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                {['Básico', 'Intermedio', 'Avanzado', 'Personalizado'].map(p => {
+                  const count = agencyClients.filter(cl => cl.plan === p).length;
+                  return (
+                    <button key={p} onClick={() => setActiveAgencyPlan(p)} className="p-3 rounded-lg transition-all flex flex-col items-center gap-1"
+                      style={{
+                        backgroundColor: activeAgencyPlan === p ? '#141414' : 'transparent',
+                        border: activeAgencyPlan === p ? `1px solid ${t.accent}` : '1px solid transparent',
+                        color: activeAgencyPlan === p ? t.accent : t.textDim,
+                      }}>
+                      <h4 className="text-[8px] font-black uppercase tracking-widest">{p}</h4>
+                      <p className="text-base font-bold">{count}</p>
+                    </button>
+                  );
+                })}
+             </div>
+
+             <div className="space-y-4">
+               <div className="flex items-center justify-between px-1">
+                 <h3 className="text-[9px] font-black uppercase tracking-widest flex items-center gap-2 text-white">
+                   <div className="w-1 h-1 rounded-full" style={{ backgroundColor: t.accent }}></div>
+                   Tablero de Proyectos Estratégicos
+                 </h3>
+               </div>
+
+               <div className="p-4 rounded-xl overflow-x-auto mac-scrollbar" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                 <div className="min-w-[900px] space-y-3">
+                   {filteredAgencyClients.map((company, idx) => {
+                     const meta = company.metadata || {};
+                     const metrics = meta.metrics || { loyalty: 'Normal', payment: 'A tiempo', growth: 'Estable' };
+                     const isPremium = metrics.loyalty === 'VIP' || metrics.growth === 'Top Tier';
+                     
+                     return (
+                       <div key={company.id} onClick={() => { setSelectedCompany(company); fetchStrategies(company.id); setViewState('agency-session'); }} className="flex items-center gap-6 p-4 rounded-lg cursor-pointer relative overflow-hidden transition-all hover:bg-white/2"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                         {isPremium && <div className="absolute top-1 right-1"><Crown size={10} color={t.accent}/></div>}
+                         
+                         <div className="w-24 shrink-0">
+                           <h4 className="text-xs font-black uppercase truncate text-white">{company.nombre_empresa}</h4>
+                           <p className="text-[7px] font-bold uppercase" style={{ color: t.textDim }}>{company.dueño}</p>
+                         </div>
+
+                         <div className="flex-1 flex items-center gap-3">
+                           <div className="flex-1 h-1.5 rounded-full overflow-hidden relative" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                             <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000" style={{ width: `${30 + (idx * 15) % 70}%`, backgroundColor: t.accent }}></div>
+                           </div>
+                           <span className="text-[8px] font-mono text-neutral-400">{30 + (idx * 15) % 70}%</span>
+                         </div>
+
+                         <div className="flex items-center gap-4 shrink-0">
+                            <div className="flex gap-1">
+                              {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
+                                <div key={red} className="w-6 h-6 rounded-md flex items-center justify-center"
+                                  style={{
+                                    border: meta.redes?.[red] ? `1px solid ${t.accent}aa` : `1px solid ${t.border}`,
+                                    backgroundColor: '#141414',
+                                    color: meta.redes?.[red] ? t.accent : t.textDim,
+                                  }}>
+                                  {red === 'instagram' && <Instagram size={10}/>}
+                                  {red === 'tiktok' && <TiktokIcon size={10}/>}
+                                  {red === 'facebook' && <Facebook size={10}/>}
+                                  {red === 'youtube' && <Youtube size={10}/>}
+                                </div>
+                              ))}
+                            </div>
+                            <div className="px-2.5 py-1 rounded-md" style={{ border: `1px solid ${t.border}` }}>
+                              <p className="text-[6px] font-bold uppercase mb-0.5" style={{ color: t.textDim }}>Pago</p>
+                              <p className="text-[7px] font-black uppercase" style={{ color: metrics.payment === 'A tiempo' ? t.accent : t.textDim }}>{metrics.payment}</p>
+                            </div>
+                         </div>
+                       </div>
+                     );
+                   })}
+                   {filteredAgencyClients.length === 0 && (
+                     <div className="py-10 text-center rounded-lg" style={{ border: `1px dashed ${t.border}`, backgroundColor: '#141414' }}>
+                       <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>No se encontraron marcas en esta categoría</p>
+                     </div>
+                   )}
+                 </div>
+               </div>
+             </div>
         </div>
        )}
 
@@ -619,30 +708,30 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
            </header>
            <div className="space-y-3 pt-2">
              {strategies.map(s => (
-               <div key={s.id} onClick={() => {
-                  setActiveStrategy(s);
-                  setEditorContent(s.contenido);
-                  setTime(s.total_time || 0);
-                  const meta = s.metadata || {};
-                  setAgencySessionCurrency(meta.moneda || 'USD');
-                  setAgencySessionPrice(meta.precio_acordado || '');
-                  setAgencyMeetLink(meta.link_reunion || '');
-                  setAgencyNextDate(meta.fecha_siguiente || '');
-                  setAgencyDriveLink(meta.drive_folder || '');
-                  setAgencyPriceRegistered(meta.precio_registrado || false);
-                  setAgencySideTab('calc');
-                  setViewState('agency-editor');
-               }}
-                 className="flex items-center justify-between p-4 cursor-pointer transition-all"
-                 style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
-                 <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
-                     <Target size={18} color={t.accent}/>
-                   </div>
-                   <h4 className="text-sm font-black uppercase tracking-wider text-white">{s.titulo_estrategia}</h4>
-                 </div>
-                 <ChevronRight size={16} color={t.textDim}/>
-               </div>
+                <div key={s.id} onClick={() => {
+                   setActiveStrategy(s);
+                   setEditorContent(s.contenido);
+                   setTime(s.total_time || 0);
+                   const meta = s.metadata || {};
+                   setAgencySessionCurrency(meta.moneda || 'USD');
+                   setAgencySessionPrice(meta.precio_acordado || '');
+                   setAgencyMeetLink(meta.link_reunion || '');
+                   setAgencyNextDate(meta.fecha_siguiente || '');
+                   setAgencyDriveLink(meta.drive_folder || '');
+                   setAgencyPriceRegistered(meta.precio_registrado || false);
+                   setAgencySideTab('calc');
+                   setViewState('agency-editor');
+                }}
+                  className="flex items-center justify-between p-4 cursor-pointer transition-all hover:bg-white/2"
+                  style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
+                      <Target size={18} color={t.accent}/>
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-wider text-white">{s.titulo_estrategia}</h4>
+                  </div>
+                  <ChevronRight size={16} color={t.textDim}/>
+                </div>
              ))}
              {strategies.length === 0 && (
                <div className="text-center py-10 rounded-lg" style={{ backgroundColor: '#141414', border: `1px dashed ${t.border}` }}>
@@ -656,140 +745,140 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {/* AGENCY STRATEGY EDITOR */}
        {viewState === 'agency-editor' && activeStrategy && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-400">
-          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
-            <div className="flex items-center gap-3">
-              <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                <ArrowLeft size={16} color={t.textDim}/>
-              </button>
-              <div>
-                <h3 className="text-xs font-black uppercase text-white">{activeStrategy.titulo_estrategia}</h3>
-                <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{selectedCompany?.nombre_empresa}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
-                {formatTime(time)}
-                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
-                  {isTimerRunning ? <Pause size={10}/> : <Play size={10}/>}
-                </button>
-                <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-6 h-6 rounded flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
-                  <RotateCcw size={10} color={t.textDim}/>
-                </button>
-              </div>
-              <button onClick={saveStrategy} className="px-4 py-2 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 transition-all"
-                style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
-                <Save size={12}/> Guardar
-              </button>
-            </div>
-          </header>
-          <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-            <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: '#141414' }}>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H1</button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H2</button>
-                <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Bold size={12}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Italic size={12}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-1.5 py-0.5 text-xs font-black" style={{ color: t.textDim, textDecoration: 'underline' }}>U</button>
-                <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><List size={12}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Table2 size={12}/></button>
-              </div>
-              <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true}
-                className="flex-1 p-5 text-sm leading-relaxed outline-none mac-scrollbar overflow-y-auto"
-                style={{ color: t.text }}
-                dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} />
-            </div>
-            <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
-              <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Estrategia', icon: Target }].map(tab => (
-                  <button key={tab.id} onClick={() => setAgencySideTab(tab.id)}
-                    className="py-1.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
-                    style={{ backgroundColor: agencySideTab === tab.id ? '#141414' : 'transparent', border: agencySideTab === tab.id ? `1px solid ${t.accent}` : '1px solid transparent', color: agencySideTab === tab.id ? t.accent : t.textDim }}>
-                    <tab.icon size={10}/> {tab.label}
-                  </button>
-                ))}
-              </div>
-              {agencySideTab === 'calc' && (
-                <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                    {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
-                      <button key={cur} onClick={() => setAgencySessionCurrency(cur)}
-                        className="py-1 rounded text-[7px] font-black"
-                        style={{ backgroundColor: agencySessionCurrency === cur ? '#141414' : 'transparent', border: agencySessionCurrency === cur ? `1px solid ${t.accent}` : '1px solid transparent', color: agencySessionCurrency === cur ? t.accent : t.textDim }}>
-                        {cur}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="p-3 rounded-lg text-right" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
-                    <p className="text-[7px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>{agencySessionCurrency}</p>
-                    <p className="text-base font-mono font-bold">{calcDisplay}</p>
-                  </div>
-                  <div className="grid grid-cols-4 gap-1">
-                    {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                      <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
-                        {btn}
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={() => { setAgencySessionPrice(calcDisplay !== '0' ? calcDisplay : agencySessionPrice); setAgencySideTab('info'); }}
-                    className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                    style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textMuted }}>
-                    <DollarSign size={10}/> Fijar Presupuesto
-                  </button>
-                </div>
-              )}
-              {agencySideTab === 'info' && (
-                <div className="flex flex-col gap-3">
-                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Reunión Planificada</p>
-                    <div>
-                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Siguiente Sesión</p>
-                      <input type="date" value={agencyNextDate} onChange={e => setAgencyNextDate(e.target.value)}
-                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                    </div>
-                  </div>
-                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces Nexus</p>
-                    <div>
-                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Link de Llamada</p>
-                      <input type="url" value={agencyMeetLink} onChange={e => setAgencyMeetLink(e.target.value)} placeholder="meet.google.com/..."
-                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                    </div>
-                    <div>
-                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Carpeta de Contenidos</p>
-                      <input type="url" value={agencyDriveLink} onChange={e => setAgencyDriveLink(e.target.value)} placeholder="drive.google.com/..."
-                        className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                    </div>
-                  </div>
-                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Ingreso Estimado</p>
-                    <div className="flex gap-2 items-center">
-                      <span className="text-[9px] font-bold text-neutral-400">{agencySessionCurrency}</span>
-                      <input type="number" value={agencySessionPrice} onChange={e => setAgencySessionPrice(e.target.value)}
-                        placeholder="0.00" className="flex-1 px-2.5 py-1.5 rounded text-[10px] font-mono outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                    </div>
-                    <button onClick={() => registerSessionIncome(selectedCompany?.nombre_empresa || 'Empresa', activeStrategy.titulo_estrategia, agencySessionPrice, agencySessionCurrency, true)}
-                      disabled={!agencySessionPrice || parseFloat(agencySessionPrice) <= 0 || agencyPriceRegistered}
-                      className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                      style={{ 
-                        backgroundColor: '#141414',
-                        border: `1px solid ${agencyPriceRegistered ? t.border : t.accent}`,
-                        color: agencyPriceRegistered ? t.textDim : t.accent,
-                        cursor: agencyPriceRegistered ? 'not-allowed' : 'pointer'
-                      }}>
-                      {agencyPriceRegistered ? 'Registrado en Ganancias' : 'Registrar Pago'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+           <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
+             <div className="flex items-center gap-3">
+               <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                 <ArrowLeft size={16} color={t.textDim}/>
+               </button>
+               <div>
+                 <h3 className="text-xs font-black uppercase text-white">{activeStrategy.titulo_estrategia}</h3>
+                 <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{selectedCompany?.nombre_empresa}</p>
+               </div>
+             </div>
+             <div className="flex items-center gap-3">
+               <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
+                 {formatTime(time)}
+                 <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                   {isTimerRunning ? <Pause size={10}/> : <Play size={10}/>}
+                 </button>
+                 <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-6 h-6 rounded flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
+                   <RotateCcw size={10} color={t.textDim}/>
+                 </button>
+               </div>
+               <button onClick={saveStrategy} className="px-4 py-2 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                 style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                 <Save size={12}/> Guardar
+               </button>
+             </div>
+           </header>
+           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
+             <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+               <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: '#141414' }}>
+                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H1</button>
+                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H2</button>
+                 <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
+                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Bold size={12}/></button>
+                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Italic size={12}/></button>
+                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-1.5 py-0.5 text-xs font-black" style={{ color: t.textDim, textDecoration: 'underline' }}>U</button>
+                 <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
+                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><List size={12}/></button>
+                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Table2 size={12}/></button>
+               </div>
+               <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true}
+                 className="flex-1 p-5 text-sm leading-relaxed outline-none mac-scrollbar overflow-y-auto"
+                 style={{ color: t.text }}
+                 dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} />
+             </div>
+             <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
+               <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                 {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Estrategia', icon: Target }].map(tab => (
+                   <button key={tab.id} onClick={() => setAgencySideTab(tab.id)}
+                     className="py-1.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
+                     style={{ backgroundColor: agencySideTab === tab.id ? '#141414' : 'transparent', border: agencySideTab === tab.id ? `1px solid ${t.accent}` : '1px solid transparent', color: agencySideTab === tab.id ? t.accent : t.textDim }}>
+                     <tab.icon size={10}/> {tab.label}
+                   </button>
+                 ))}
+               </div>
+               {agencySideTab === 'calc' && (
+                 <div className="flex flex-col gap-3">
+                   <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                     {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
+                       <button key={cur} onClick={() => setAgencySessionCurrency(cur)}
+                         className="py-1 rounded text-[7px] font-black"
+                         style={{ backgroundColor: agencySessionCurrency === cur ? '#141414' : 'transparent', border: agencySessionCurrency === cur ? `1px solid ${t.accent}` : '1px solid transparent', color: agencySessionCurrency === cur ? t.accent : t.textDim }}>
+                         {cur}
+                       </button>
+                     ))}
+                   </div>
+                   <div className="p-3 rounded-lg text-right" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
+                     <p className="text-[7px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>{agencySessionCurrency}</p>
+                     <p className="text-base font-mono font-bold">{calcDisplay}</p>
+                   </div>
+                   <div className="grid grid-cols-4 gap-1">
+                     {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
+                       <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
+                         {btn}
+                       </button>
+                     ))}
+                   </div>
+                   <button onClick={() => { setAgencySessionPrice(calcDisplay !== '0' ? calcDisplay : agencySessionPrice); setAgencySideTab('info'); }}
+                     className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textMuted }}>
+                     <DollarSign size={10}/> Fijar Presupuesto
+                   </button>
+                 </div>
+               )}
+               {agencySideTab === 'info' && (
+                 <div className="flex flex-col gap-3">
+                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Reunión Planificada</p>
+                     <div>
+                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Siguiente Sesión</p>
+                       <input type="date" value={agencyNextDate} onChange={e => setAgencyNextDate(e.target.value)}
+                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                     </div>
+                   </div>
+                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces Nexus</p>
+                     <div>
+                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Link de Llamada</p>
+                       <input type="url" value={agencyMeetLink} onChange={e => setAgencyMeetLink(e.target.value)} placeholder="meet.google.com/..."
+                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                     </div>
+                     <div>
+                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Carpeta de Contenidos</p>
+                       <input type="url" value={agencyDriveLink} onChange={e => setAgencyDriveLink(e.target.value)} placeholder="drive.google.com/..."
+                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                     </div>
+                   </div>
+                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Ingreso Estimado</p>
+                     <div className="flex gap-2 items-center">
+                       <span className="text-[9px] font-bold text-neutral-400">{agencySessionCurrency}</span>
+                       <input type="number" value={agencySessionPrice} onChange={e => setAgencySessionPrice(e.target.value)}
+                         placeholder="0.00" className="flex-1 px-2.5 py-1.5 rounded text-[10px] font-mono outline-none"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                     </div>
+                     <button onClick={() => registerSessionIncome(selectedCompany?.nombre_empresa || 'Empresa', activeStrategy.titulo_estrategia, agencySessionPrice, agencySessionCurrency, true)}
+                       disabled={!agencySessionPrice || parseFloat(agencySessionPrice) <= 0 || agencyPriceRegistered}
+                       className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                       style={{ 
+                         backgroundColor: '#141414',
+                         border: `1px solid ${agencyPriceRegistered ? t.border : t.accent}`,
+                         color: agencyPriceRegistered ? t.textDim : t.accent,
+                         cursor: agencyPriceRegistered ? 'not-allowed' : 'pointer'
+                       }}>
+                       {agencyPriceRegistered ? 'Registrado en Ganancias' : 'Registrar Pago'}
+                     </button>
+                   </div>
+                 </div>
+               )}
+             </div>
+           </div>
         </div>
        )}
 
@@ -842,7 +931,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
             </div>
             <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
               <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Sesión', icon: Calendar }].map(tab => (
+                {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Información', icon: Target }].map(tab => (
                   <button key={tab.id} onClick={() => setSessionSideTab(tab.id)}
                     className="py-1.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
                     style={{ backgroundColor: sessionSideTab === tab.id ? '#141414' : 'transparent', border: sessionSideTab === tab.id ? `1px solid ${t.accent}` : '1px solid transparent', color: sessionSideTab === tab.id ? t.accent : t.textDim }}>
@@ -867,54 +956,54 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                   </div>
                   <div className="grid grid-cols-4 gap-1">
                     {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                      <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
-                        {btn}
-                      </button>
+                       <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
+                         {btn}
+                       </button>
                     ))}
                   </div>
                   <button onClick={() => { setSessionPrice(calcDisplay !== '0' ? calcDisplay : sessionPrice); setSessionSideTab('info'); }}
                     className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textMuted }}>
-                    <DollarSign size={10}/> Fijar Cobro
+                    <DollarSign size={10}/> Fijar Presupuesto
                   </button>
                 </div>
               )}
               {sessionSideTab === 'info' && (
                 <div className="flex flex-col gap-3">
                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Control Temporal</p>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Reunión Planificada</p>
                     <div>
-                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Fecha Próxima</p>
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Siguiente Sesión</p>
                       <input type="date" value={sessionNextDate} onChange={e => setSessionNextDate(e.target.value)}
                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                   </div>
                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces</p>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces Nexus</p>
                     <div>
-                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Sala de Video</p>
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Link de Llamada</p>
                       <input type="url" value={sessionMeetLink} onChange={e => setSessionMeetLink(e.target.value)} placeholder="meet.google.com/..."
                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                     <div>
-                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Enlace del Proyecto</p>
+                      <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Carpeta de Contenidos</p>
                       <input type="url" value={sessionDriveLink} onChange={e => setSessionDriveLink(e.target.value)} placeholder="drive.google.com/..."
                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                   </div>
                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Tarifación</p>
+                    <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Ingreso Estimado</p>
                     <div className="flex gap-2 items-center">
                       <span className="text-[9px] font-bold text-neutral-400">{sessionCurrency}</span>
                       <input type="number" value={sessionPrice} onChange={e => setSessionPrice(e.target.value)}
                         placeholder="0.00" className="flex-1 px-2.5 py-1.5 rounded text-[10px] font-mono outline-none"
                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
-                    <button onClick={() => registerSessionIncome(activeClient?.nombre || 'Cliente', activeMeeting.session_title, sessionPrice, sessionCurrency, false)}
+                    <button onClick={() => registerSessionIncome(activeClient?.nombre || 'Cliente', activeMeeting.session_title, sessionPrice, sessionCurrency)}
                       disabled={!sessionPrice || parseFloat(sessionPrice) <= 0 || priceRegistered}
                       className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
                       style={{ 
@@ -922,8 +1011,8 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                         border: `1px solid ${priceRegistered ? t.border : t.accent}`,
                         color: priceRegistered ? t.textDim : t.accent,
                         cursor: priceRegistered ? 'not-allowed' : 'pointer'
-                      }}>
-                      {priceRegistered ? 'Venta Registrada' : 'Registrar Venta'}
+                       }}>
+                      {priceRegistered ? 'Registrado en Ganancias' : 'Registrar Pago'}
                     </button>
                   </div>
                 </div>
@@ -933,877 +1022,452 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
         </div>
        )}
 
-       {/* MODAL: NUEVO CLIENTE (Minimal #141414 styled) */}
-       {isClientModalOpen && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-6 animate-in zoom-in duration-300"
-          style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(12px)' }}>
-           <div className="w-full max-w-md p-6 space-y-5 rounded-xl"
-             style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                <div className="flex justify-between items-center">
-                   <h3 className="text-sm font-black uppercase tracking-wider text-white">Nuevo Nexus Registro</h3>
-                   <button onClick={() => setIsClientModalOpen(false)} className="w-6 h-6 rounded flex items-center justify-center transition-all" style={{ border: `1px solid ${t.border}` }}>
-                     <X size={14} color={t.textDim}/>
-                   </button>
-                </div>
-                
-                <div className="space-y-3">
-                   <div className="space-y-1">
-                      <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Identidad</p>
-                      <input type="text" value={newClient.nombre} onChange={e=>setNewClient({...newClient, nombre: e.target.value})} placeholder="Nombre completo..."
-                        className="w-full rounded-lg p-3 text-xs outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                      <input type="text" value={newClient.empresa} onChange={e=>setNewClient({...newClient, empresa: e.target.value})} placeholder="Organización / Empresa..."
-                        className="w-full rounded-lg p-3 text-xs outline-none mt-2"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                         <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Nacionalidad</p>
-                         <input type="text" value={newClient.nacionalidad} onChange={e=>setNewClient({...newClient, nacionalidad: e.target.value})} placeholder="Ej: Peruana"
-                           className="w-full rounded-lg p-3 text-xs outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                      <div className="space-y-1">
-                         <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Canal de Contacto</p>
-                         <input type="text" value={newClient.telefono} onChange={e=>setNewClient({...newClient, telefono: e.target.value})} placeholder="+00 000..."
-                           className="w-full rounded-lg p-3 text-xs outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                   </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                   <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-3 text-[8px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Cerrar</button>
-                   <button onClick={handleCreateClient} className="flex-[2] py-3 rounded-lg font-black uppercase text-[8px] tracking-wider transition-all"
-                     style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>Vincular Nexus</button>
-                </div>
-            </div>
-         </div>
-       )}
-
-       {/* MODAL: NUEVA MARCA / EMPRESA (Minimal #141414 styled) */}
-       {isCompanyModalOpen && (
-        <div className="fixed inset-0 z-[800] flex items-center justify-center p-6 animate-in zoom-in duration-300"
-          style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(12px)' }}>
-           <div className="w-full max-w-xl overflow-hidden rounded-xl"
-             style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-              <header className="px-6 py-4 flex justify-between items-center" style={{ borderBottom: `1px solid ${t.border}` }}>
-                 <div>
-                   <h3 className="text-sm font-black uppercase tracking-wider text-white">Nuevo Enlace Nexus Agency</h3>
-                 </div>
-                 <button onClick={() => setIsCompanyModalOpen(false)} className="w-6 h-6 rounded flex items-center justify-center transition-all" style={{ border: `1px solid ${t.border}` }}>
-                   <X size={14} color={t.textDim}/>
-                 </button>
-              </header>
-
-              <div className="flex bg-[#141414]" style={{ borderBottom: `1px solid ${t.border}` }}>
-                 {['general', 'redes', 'cm'].map(tab => (
-                    <button key={tab} onClick={() => setAgencyTab(tab)} className="flex-1 py-3 text-[8px] font-black uppercase tracking-widest transition-all"
-                      style={{
-                        color: agencyTab === tab ? t.accent : t.textDim,
-                        borderBottom: agencyTab === tab ? `2px solid ${t.accent}` : '2px solid transparent',
-                      }}>
-                       {tab === 'general' ? 'Información' : tab === 'redes' ? 'Social Media' : 'CM Access'}
-                    </button>
-                 ))}
-              </div>
-
-              <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto mac-scrollbar">
-                 {agencyTab === 'general' && (
-                    <div className="space-y-3">
-                       <div className="space-y-1">
-                         <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Marca / Empresa</p>
-                         <input type="text" value={newCompany.nombre_empresa} onChange={e=>setNewCompany({...newCompany, nombre_empresa: e.target.value})} placeholder="Nombre de la marca..."
-                           className="w-full rounded-lg p-3 text-xs outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                       </div>
-                       <div className="space-y-1">
-                         <p className="text-[7px] font-black uppercase ml-0.5 tracking-wider text-neutral-400">Propietario / Representante</p>
-                         <input type="text" value={newCompany.dueño} onChange={e=>setNewCompany({...newCompany, dueño: e.target.value})} placeholder="Nombre del responsable..."
-                           className="w-full rounded-lg p-3 text-xs outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                       </div>
-                       <div className="grid grid-cols-2 gap-2">
-                          <input type="email" value={newCompany.email} onChange={e=>setNewCompany({...newCompany, email: e.target.value})} placeholder="email@empresa.com"
-                            className="w-full rounded-lg p-3 text-xs outline-none"
-                            style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                          <input type="text" value={newCompany.telefono} onChange={e=>setNewCompany({...newCompany, telefono: e.target.value})} placeholder="+00 000..."
-                            className="w-full rounded-lg p-3 text-xs outline-none"
-                            style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                       </div>
-                    </div>
-                 )}
-
-                 {agencyTab === 'redes' && (
-                    <div className="space-y-2">
-                       {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
-                          <div key={red} className="flex items-center gap-3 p-1 rounded-lg" style={{ border: `1px solid ${t.border}` }}>
-                             <div className="w-8 h-8 rounded flex items-center justify-center" style={{ color: t.accent }}>
-                                {red === 'instagram' && <Instagram size={14}/>}
-                                {red === 'tiktok' && <TiktokIcon size={14}/>}
-                                {red === 'facebook' && <Facebook size={14}/>}
-                                {red === 'youtube' && <Youtube size={14}/>}
-                             </div>
-                             <input type="text" value={newCompany.redes[red]} onChange={e=>setNewCompany({...newCompany, redes: {...newCompany.redes, [red]: e.target.value}})} placeholder={`URL de ${red}...`}
-                               className="flex-1 bg-transparent p-2 text-xs outline-none" style={{ color: t.text }} />
-                          </div>
-                       ))}
-                    </div>
-                 )}
-
-                 {agencyTab === 'cm' && (
-                    <div className="space-y-3">
-                       {['instagram', 'tiktok', 'facebook', 'youtube'].map(red => (
-                          <div key={red} className="space-y-1.5 p-3 rounded-lg" style={{ border: `1px solid ${t.border}` }}>
-                             <h4 className="text-[7px] font-black uppercase tracking-wider flex items-center gap-1.5 text-white">
-                                Access {red}
-                             </h4>
-                             <div className="grid grid-cols-2 gap-2">
-                                <input type="text" value={newCompany.credentials[red].user} onChange={e=>setNewCompany({...newCompany, credentials: {...newCompany.credentials, [red]: {...newCompany.credentials[red], user: e.target.value}}})} placeholder="Usuario"
-                                  className="w-full rounded-lg p-2.5 text-[10px] outline-none"
-                                  style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                                <input type="password" value={newCompany.credentials[red].pass} onChange={e=>setNewCompany({...newCompany, credentials: {...newCompany.credentials, [red]: {...newCompany.credentials[red], pass: e.target.value}}})} placeholder="Contraseña"
-                                  className="w-full rounded-lg p-2.5 text-[10px] outline-none"
-                                  style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                             </div>
-                          </div>
-                       ))}
-                    </div>
-                 )}
-              </div>
-
-              <footer className="px-6 py-4 flex gap-2" style={{ borderTop: `1px solid ${t.border}` }}>
-                 <button onClick={() => setIsCompanyModalOpen(false)} className="flex-1 py-3 text-[8px] font-black uppercase tracking-wider" style={{ color: t.textDim }}>Descartar</button>
-                 <button onClick={handleCreateAgencyClient} className="flex-[2] py-3 rounded-lg font-black uppercase text-[8px] tracking-wider transition-all"
-                   style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>Sincronizar Nexus</button>
-              </footer>
-           </div>
-         </div>
-       )}
-
-       {/* PROJECT ENGINE VIEW (VIDEO EDITING TAB) */}
+       {/* PROJECT ENGINE VIEW (VIDEO EDITING PROJECTS) */}
        {viewState === 'project-engine' && (
-         <ProjectEngineView isDark={isDark} />
+          <ProjectEngineView isDark={isDark} />
        )}
+
+       {/* Modal de Nueva Compañía (Agencia Pro) */}
+       {isCompanyModalOpen && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: '#141414' }}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-sm font-black uppercase tracking-wider text-white">Nueva Marca de Agencia</h3>
+                <button onClick={() => setIsCompanyModalOpen(false)} className="text-neutral-400 hover:text-white transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1 mac-scrollbar">
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block mb-2">Nombre de la Empresa *</label>
+                  <input type="text" value={newCompany.nombre_empresa} onChange={e => setNewCompany({ ...newCompany, nombre_empresa: e.target.value })}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all" placeholder="Ej: Nexus Agency" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block mb-2">Dueño *</label>
+                    <input type="text" value={newCompany.dueño} onChange={e => setNewCompany({ ...newCompany, dueño: e.target.value })}
+                      className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all" placeholder="Nombre..." />
+                  </div>
+                  <div>
+                    <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block mb-2">Teléfono</label>
+                    <input type="text" value={newCompany.telefono} onChange={e => setNewCompany({ ...newCompany, telefono: e.target.value })}
+                      className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all" placeholder="Ej: +591..." />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block mb-2">Plan Suscrito</label>
+                  <select value={newCompany.plan} onChange={e => setNewCompany({ ...newCompany, plan: e.target.value })}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20 transition-all">
+                    <option value="Básico">Básico</option>
+                    <option value="Intermedio">Intermedio</option>
+                    <option value="Avanzado">Avanzado</option>
+                    <option value="Personalizado">Personalizado</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-6 border-t border-white/5 mt-6">
+                <button onClick={() => setIsCompanyModalOpen(false)} className="flex-1 py-3 bg-zinc-950/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white transition-colors">Cancelar</button>
+                <button onClick={handleCreateAgencyClient} className="flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-black" style={{ backgroundColor: t.accent }}>Crear Marca</button>
+              </div>
+            </div>
+          </div>
+       )}
+
+       {/* Modal de Nuevo Cliente */}
+       {isClientModalOpen && (
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: '#141414' }}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-sm font-black uppercase tracking-wider text-white">Registrar Nuevo Cliente</h3>
+                <button onClick={() => setIsClientModalOpen(false)} className="text-neutral-400 hover:text-white transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block mb-2">Nombre Completo *</label>
+                  <input type="text" value={newClient.nombre} onChange={e => setNewClient({ ...newClient, nombre: e.target.value })}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all" placeholder="Ej: John Doe" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block mb-2">Empresa / Proyecto</label>
+                    <input type="text" value={newClient.empresa} onChange={e => setNewClient({ ...newClient, empresa: e.target.value })}
+                      className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all" placeholder="Opcional..." />
+                  </div>
+                  <div>
+                    <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block mb-2">Nacionalidad</label>
+                    <input type="text" value={newClient.nacionalidad} onChange={e => setNewClient({ ...newClient, nacionalidad: e.target.value })}
+                      className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all" placeholder="Ej: Bolivia" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block mb-2">Teléfono de Contacto</label>
+                  <input type="text" value={newClient.telefono} onChange={e => setNewClient({ ...newClient, telefono: e.target.value })}
+                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all" placeholder="Ej: +5917..." />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-6 border-t border-white/5 mt-6">
+                <button onClick={() => setIsClientModalOpen(false)} className="flex-1 py-3 bg-zinc-950/40 border border-white/5 rounded-xl text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white transition-colors">Cancelar</button>
+                <button onClick={handleCreateClient} className="flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest text-black" style={{ backgroundColor: t.accent }}>Guardar Cliente</button>
+              </div>
+            </div>
+          </div>
+       )}
+
     </div>
   );
 };
 
-// ── REDESIGNED PROJECT ENGINE VIEW (3 COLUMNS, VISUAL INTERACTIVE ELEMENTS) ──
+// ── REORGANIZED 3-COLUMN PROJECT ENGINE VIEW ──
 const ProjectEngineView = ({ isDark = true }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
-
-  const [carpetaMaestra, setCarpetaMaestra] = useState('Base de Edición Principal');
-  const [empresa, setEmpresa] = useState('');
-  const [proyecto, setProyecto] = useState('');
-  const [selectedPremiere, setSelectedPremiere] = useState('');
-  const [selectedAE, setSelectedAE] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [statusMsg, setStatusMsg] = useState('');
-  const [destinationPath, setDestinationPath] = useState('');
-  const [dirHandle, setDirHandle] = useState(null);
-
-  // Timecode & Bitrate calculator states
-  const [calcRes, setCalcRes] = useState('1080p');
-  const [calcFps, setCalcFps] = useState(30);
-  const [calcMin, setCalcMin] = useState(5);
-
-  const [fpsVal, setFpsVal] = useState(30);
-  const [tcInput, setTcInput] = useState('00:01:24:12');
-  const [framesOutput, setFramesOutput] = useState(2532);
-  const [framesInput, setFramesInput] = useState(3000);
-  const [tcOutput, setTcOutput] = useState('00:01:40:00');
-
-  // Edit notes
-  const [editNotes, setEditNotes] = useState('00:15 - Cortar silencio inicial\n01:30 - Aplicar zoom en el gancho\n02:45 - Inserción de CTA final');
-
-  // Nomenclatura states
-  const [nomClient, setNomClient] = useState('CLIENTE');
-  const [nomProj, setNomProj] = useState('PROYECTO');
-  const [nomVer, setNomVer] = useState('V1');
-  const [nomAspect, setNomAspect] = useState('H');
-
-  // Safe Zones
-  const [cropGuide, setCropGuide] = useState('916');
-
-  // Injections
-  const [incSFX, setIncSFX] = useState(true);
-  const [incLogos, setIncLogos] = useState(false);
-  const [incMOGRTs, setIncMOGRTs] = useState(false);
-
-  // Interactive local tree navigation
-  const [treeCollapsed, setTreeCollapsed] = useState({
-    root: false,
-    client: false,
-    project: false,
-    pr: false,
-    ae: false,
-    video: false,
-    audio: false,
-    img: false,
+  const [projects, setProjects] = useState(() => {
+    return JSON.parse(localStorage.getItem('inefable_proyectos_edicion') || '[]');
   });
+  const [activeProject, setActiveProject] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('Todos');
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Form states
+  const [formName, setFormName] = useState('');
+  const [formClient, setFormClient] = useState('');
+  const [formStatus, setFormStatus] = useState('En Curso');
+  const [formStartDate, setFormStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const [formEndDate, setFormEndDate] = useState('');
+  const [formRate, setFormRate] = useState('');
+  const [formNotes, setFormNotes] = useState('');
 
-  // Timeline production stage milestones
-  const [productionMilestone, setProductionMilestone] = useState('Ingesta');
-
-  // Simulated render queue
-  const [renders, setRenders] = useState([
-    { id: 1, name: 'SPOT_SOVEREIGN_V1_916.mp4', progress: 42, status: 'rendering', size: '215 MB', type: '9:16 vertical' },
-    { id: 2, name: 'PRESENTACION_MARCA_V2_H.mp4', progress: 100, status: 'completed', size: '820 MB', type: '16:9 horizontal' }
-  ]);
-
-  const today = new Date().toISOString().split('T')[0];
-
-  const templates = [
-    '1080x1920_25fps', '1080x1920_30fps', '1080x1920_60fps',
-    '1920x1080_25fps', '1920x1080_30fps', '1920x1080_60fps',
-    '4K_Horizontal_25fps', '4K_Horizontal_30fps', '4K_Horizontal_60fps'
-  ];
-
-  // Helper converters
-  const handleTcToFrames = (tc, fps) => {
-    const parts = tc.split(':');
-    if (parts.length !== 4) return;
-    const h = parseInt(parts[0]) || 0;
-    const m = parseInt(parts[1]) || 0;
-    const s = parseInt(parts[2]) || 0;
-    const f = parseInt(parts[3]) || 0;
-    const total = ((h * 3600 + m * 60 + s) * fps) + f;
-    setFramesOutput(total);
+  const saveProjectsToStorage = (updatedList) => {
+    localStorage.setItem('inefable_proyectos_edicion', JSON.stringify(updatedList));
+    setProjects(updatedList);
   };
 
-  const handleFramesToTc = (fr, fps) => {
-    const f = fr % fps;
-    const totalSecs = Math.floor(fr / fps);
-    const s = totalSecs % 60;
-    const totalMins = Math.floor(totalSecs / 60);
-    const m = totalMins % 60;
-    const h = Math.floor(totalMins / 60);
-    const pad = (n) => String(n).padStart(2, '0');
-    setTcOutput(`${pad(h)}:${pad(m)}:${pad(s)}:${pad(f)}`);
+  const handleCreateProject = () => {
+    const name = prompt('Nombre del Proyecto de Edición:');
+    if (!name || !name.trim()) return;
+    const client = prompt('Cliente / Marca:');
+    
+    const newProj = {
+      id: crypto.randomUUID(),
+      nombre: name.trim(),
+      cliente: client ? client.trim() : 'Independiente',
+      estado: 'En Curso',
+      fecha_inicio: new Date().toISOString().split('T')[0],
+      fecha_entrega: '',
+      tarifa: 0,
+      notas: 'Notas de edición...'
+    };
+    
+    const updated = [newProj, ...projects];
+    saveProjectsToStorage(updated);
+    setActiveProject(newProj);
+    
+    // Sync state for detail fields
+    setFormName(newProj.nombre);
+    setFormClient(newProj.cliente);
+    setFormStatus(newProj.estado);
+    setFormStartDate(newProj.fecha_inicio);
+    setFormEndDate(newProj.fecha_entrega);
+    setFormRate(newProj.tarifa);
+    setFormNotes(newProj.notas);
+  };
+
+  const handleSelectProject = (p) => {
+    setActiveProject(p);
+    setFormName(p.nombre);
+    setFormClient(p.cliente);
+    setFormStatus(p.estado);
+    setFormStartDate(p.fecha_inicio);
+    setFormEndDate(p.fecha_entrega);
+    setFormRate(p.tarifa);
+    setFormNotes(p.notas);
+  };
+
+  const handleUpdateProject = () => {
+    if (!activeProject) return;
+    const updated = projects.map(p => {
+      if (p.id === activeProject.id) {
+        const item = {
+          ...p,
+          nombre: formName,
+          cliente: formClient,
+          estado: formStatus,
+          fecha_inicio: formStartDate,
+          fecha_entrega: formEndDate,
+          tarifa: parseFloat(formRate) || 0,
+          notas: formNotes
+        };
+        setActiveProject(item);
+        return item;
+      }
+      return p;
+    });
+    saveProjectsToStorage(updated);
+    alert('✅ Cambios del proyecto guardados');
+  };
+
+  const handleDeleteProject = (projId, e) => {
+    e.stopPropagation();
+    const proj = projects.find(p => p.id === projId);
+    if (!proj) return;
+    if (!confirm(`¿Eliminar el proyecto "${proj.nombre}" y enviarlo a la papelera?`)) return;
+    
+    // Move to local trash
+    try {
+      const localTrash = JSON.parse(localStorage.getItem('inefable_local_trash') || '[]');
+      localTrash.push({
+        id: `trash-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        tipo_dato: 'proyecto',
+        nombre_item: proj.nombre,
+        datos_originales: proj,
+        borrado_el: new Date().toISOString(),
+        expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      });
+      localStorage.setItem('inefable_local_trash', JSON.stringify(localTrash));
+    } catch (err) { console.error(err); }
+
+    const updated = projects.filter(p => p.id !== projId);
+    saveProjectsToStorage(updated);
+    if (activeProject?.id === projId) {
+      setActiveProject(null);
+    }
   };
 
   const downloadNotes = () => {
+    if (!activeProject) return;
     const element = document.createElement("a");
-    const file = new Blob([editNotes], {type: 'text/plain'});
+    const file = new Blob([formNotes], {type: 'text/plain'});
     element.href = URL.createObjectURL(file);
-    element.download = `notas_edicion_${today}.txt`;
+    element.download = `notas_proyecto_${activeProject.nombre.replace(/ /g, '_')}.txt`;
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
   };
 
-  const handleSelectDirectory = async () => {
-    try {
-      if (window.electronAPI) {
-        const path = await window.electronAPI.selectDirectory();
-        if (path) setDestinationPath(path);
-      } else {
-        if (!window.showDirectoryPicker) throw new Error('Navegador no soportado.');
-        const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
-        setDirHandle(handle);
-        setDestinationPath(handle.name || 'Directorio Local');
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  // Filtrado de proyectos
+  const filteredProjects = projects.filter(p => {
+    const matchSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        p.cliente.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchStatus = filterStatus === 'Todos' || p.estado === filterStatus;
+    return matchSearch && matchStatus;
+  });
 
-  const handleGenerate = async () => {
-    if (!carpetaMaestra || !empresa || !proyecto) {
-      alert('Completa la nomenclatura.');
-      return;
-    }
-    setIsGenerating(true);
-    setTimeout(() => {
-      setIsGenerating(false);
-      setStatusMsg('Estructura inyectada en el disco local.');
-    }, 1500);
-  };
-
-  const cleanFolderName = (txt) => txt.replace(/ /g, '_');
-  const finalProjectFolderName = `${today}_${cleanFolderName(empresa || 'CLIENTE')}_${cleanFolderName(proyecto || 'PROYECTO')}`;
-  const finalNamingResult = `${nomClient.toUpperCase().replace(/ /g, '_')}_${nomProj.toUpperCase().replace(/ /g, '_')}_${nomVer.toUpperCase()}_${today}_${nomAspect}`;
-
-  const calcEstSizeGB = ((calcRes === '4K' ? 0.35 : 0.08) * calcFps * calcMin * 60 / 1000).toFixed(2);
-  const recommendedBitrateMbps = calcRes === '4K' ? (calcFps > 30 ? 60 : 45) : (calcFps > 30 ? 24 : 15);
-
-  // Simulated render loop
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setRenders(prev => prev.map(r => {
-        if (r.status === 'rendering') {
-          const next = r.progress + Math.floor(Math.random() * 8) + 2;
-          if (next >= 100) return { ...r, progress: 100, status: 'completed' };
-          return { ...r, progress: next };
-        }
-        return r;
-      }));
-    }, 1200);
-    return () => clearInterval(interval);
-  }, []);
-
-  const addRenderFromCurrent = () => {
-    const newRender = {
-      id: Date.now(),
-      name: `${finalNamingResult}.mp4`,
-      progress: 0,
-      status: 'rendering',
-      size: `${calcEstSizeGB} GB`,
-      type: nomAspect === 'V' ? '9:16 vertical' : '16:9 horizontal'
-    };
-    setRenders(prev => [newRender, ...prev]);
-  };
-
-  const toggleRenderStatus = (id) => {
-    setRenders(prev => prev.map(r => {
-      if (r.id === id) {
-        return { ...r, status: r.status === 'rendering' ? 'paused' : 'rendering' };
-      }
-      return r;
-    }));
-  };
-
-  const deleteRender = (id) => {
-    setRenders(prev => prev.filter(r => r.id !== id));
-  };
-
-  const toggleTree = (key) => {
-    setTreeCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
-  };
+  // Estadísticas
+  const total = projects.length;
+  const enCurso = projects.filter(p => p.estado === 'En Curso').length;
+  const completados = projects.filter(p => p.estado === 'Completado').length;
+  const pausados = projects.filter(p => p.estado === 'Pausado').length;
 
   return (
     <div className="flex-grow flex flex-col p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
-       
        {/* Tab Title */}
        <header className="flex justify-between items-center pb-4" style={{ borderBottom: `1px solid ${t.border}` }}>
           <div>
-             <h2 className="text-base font-black uppercase tracking-wider text-white">Mesa de Trabajo — Edición de Video</h2>
-             <p className="text-[7.5px] font-bold uppercase tracking-widest" style={{ color: t.textDim }}>Workspace de control de montaje local & utilidades de compresión</p>
+             <h2 className="text-base font-black uppercase tracking-wider text-white">Mesa de Trabajo — Proyectos de Edición</h2>
+             <p className="text-[7.5px] font-bold uppercase tracking-widest" style={{ color: t.textDim }}>Workspace de control de montaje, tarifas y notas de corte</p>
           </div>
           <div className="flex items-center gap-2 text-[8px] font-black uppercase text-neutral-400">
              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-             Ingesta Activa
+             Nexus Activo
           </div>
        </header>
 
        {/* THREE COLUMN GRID */}
        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
           
-          {/* COLUMN 1: ENTORNO E INGESTA */}
+          {/* COLUMN 1: LISTA DE PROYECTOS */}
           <div className="flex flex-col space-y-5">
-             
-             {/* Local Folder Structure Generator */}
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <FolderOpen size={14} color={t.accent}/>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Generador de Entorno Local</span>
+             {/* Stats & Badge */}
+             <div className="p-4 rounded-xl space-y-3.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex justify-between items-center">
+                   <span className="text-[9px] font-black uppercase tracking-widest text-white">Estadísticas de Edición</span>
+                   <span className="text-[9px] bg-white/5 border border-white/5 px-2 py-0.5 rounded font-bold text-white font-mono">{total} Proyectos</span>
                 </div>
-
-                <div className="space-y-3 text-xs">
-                   <div className="space-y-1">
-                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Directorio de Destino</label>
-                      <div className="flex gap-2">
-                         <input type="text" value={destinationPath || 'No seleccionado...'} disabled
-                           className="flex-1 rounded p-2 text-[9px] font-mono outline-none truncate"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textDim }} />
-                         <button onClick={handleSelectDirectory} className="px-3 rounded text-[8px] font-black uppercase transition-all"
-                           style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: '#141414' }}>Vincular</button>
-                      </div>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                   <div className="p-2 rounded bg-zinc-950/40 border border-white/2">
+                      <p className="text-[6.5px] font-bold text-neutral-400 uppercase tracking-wider">En Curso</p>
+                      <p className="text-base font-bold text-sky-400">{enCurso}</p>
                    </div>
-
-                   <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Carpeta Maestra</label>
-                         <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)}
-                           className="w-full rounded p-2 text-[10px] outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Empresa</label>
-                         <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanizacion"
-                           className="w-full rounded p-2 text-[10px] outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
+                   <div className="p-2 rounded bg-zinc-950/40 border border-white/2">
+                      <p className="text-[6.5px] font-bold text-neutral-400 uppercase tracking-wider">Completados</p>
+                      <p className="text-base font-bold text-emerald-400">{completados}</p>
                    </div>
-
-                   <div className="space-y-1">
-                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Proyecto</label>
-                      <input type="text" value={proyecto} onChange={e=>setProyecto(e.target.value)} placeholder="Ej: Spot Comercial"
-                        className="w-full rounded p-2 text-[10px] outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Premiere Template</label>
-                         <select value={selectedPremiere} onChange={e=>setSelectedPremiere(e.target.value)}
-                           className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="">Ninguna</option>
-                            {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
-                         </select>
-                      </div>
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">After Effects Template</label>
-                         <select value={selectedAE} onChange={e=>setSelectedAE(e.target.value)}
-                           className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="">Ninguna</option>
-                            {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
-                         </select>
-                      </div>
-                   </div>
-
-                   <div className="space-y-1">
-                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Módulos Extra</label>
-                      <div className="grid grid-cols-3 gap-1">
-                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
-                            <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="accent-neutral-500" />
-                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>SFX Audio</span>
-                         </label>
-                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
-                            <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="accent-neutral-500" />
-                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Logos</span>
-                         </label>
-                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
-                            <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="accent-neutral-500" />
-                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>MOGRTs</span>
-                         </label>
-                      </div>
-                   </div>
-
-                   <button onClick={handleGenerate} disabled={isGenerating || !destinationPath}
-                      className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
-                      style={{
-                         backgroundColor: '#141414',
-                         border: `1px solid ${isGenerating || !destinationPath ? t.border : t.accent}`,
-                         color: isGenerating || !destinationPath ? t.textDim : t.accent,
-                         cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer'
-                      }}>
-                      {isGenerating ? 'Generando...' : 'Generar Estructura'}
-                   </button>
-                   {statusMsg && <p className="text-center text-[7.5px] font-black uppercase tracking-wider text-emerald-500 mt-1">{statusMsg}</p>}
-                </div>
-             </div>
-
-             {/* Interactive Visual Directory Tree */}
-             <div className="p-5 rounded-xl space-y-3" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-2">
-                      <Grid size={14} color={t.accent}/>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Visualizador de Árbol de Directorio</span>
-                   </div>
-                   <span className="text-[7px] font-mono text-neutral-400">Estructura Dinámica</span>
-                </div>
-
-                <div className="font-mono text-[9px] space-y-1.5 text-neutral-300 pl-1 select-none overflow-y-auto max-h-[220px] mac-scrollbar">
-                   {/* Root Node */}
-                   <div>
-                      <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('root')}>
-                         <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.root ? '-rotate-90' : ''}`}/>
-                         <Folder size={10} color={t.accent}/>
-                         <span className="font-bold text-white">{carpetaMaestra || 'Carpeta Maestra'}</span>
-                      </div>
-                      
-                      {!treeCollapsed.root && (
-                         <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
-                            {/* Client Node */}
-                            <div>
-                               <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('client')}>
-                                  <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.client ? '-rotate-90' : ''}`}/>
-                                  <Folder size={10} color={t.accent}/>
-                                  <span className="font-bold">{empresa || 'Cliente'}</span>
-                               </div>
-                               
-                               {!treeCollapsed.client && (
-                                  <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
-                                     {/* Project Folder */}
-                                     <div>
-                                        <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('project')}>
-                                           <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.project ? '-rotate-90' : ''}`}/>
-                                           <Folder size={10} color={t.accent}/>
-                                           <span className="text-white truncate max-w-[170px]">{finalProjectFolderName}</span>
-                                        </div>
-
-                                        {!treeCollapsed.project && (
-                                           <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
-                                              {/* 01_Premiere */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('pr')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.pr ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>01_Premiere Pro</span>
-                                                 </div>
-                                                 {!treeCollapsed.pr && (
-                                                    <div className="pl-4 border-l border-neutral-800 space-y-1 mt-1">
-                                                       {selectedPremiere && (
-                                                          <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                             <File size={9}/>
-                                                             <span>{finalProjectFolderName}.prproj</span>
-                                                          </div>
-                                                       )}
-                                                       {incMOGRTs && (
-                                                          <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                             <Folder size={9}/>
-                                                             <span>MOGRTs_Sovereign</span>
-                                                          </div>
-                                                       )}
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 02_AE */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('ae')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.ae ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>02_After Effects</span>
-                                                 </div>
-                                                 {!treeCollapsed.ae && selectedAE && (
-                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
-                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                          <File size={9}/>
-                                                          <span>{finalProjectFolderName}.aep</span>
-                                                       </div>
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 03_video */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('video')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.video ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>03_video</span>
-                                                 </div>
-                                                 {!treeCollapsed.video && (
-                                                    <div className="pl-4 border-l border-neutral-800 space-y-0.5 mt-1 text-neutral-400 text-[8.5px]">
-                                                       <div>📁 video 01 (RAW)</div>
-                                                       <div>📁 video 02 (Recortes)</div>
-                                                       {incLogos && <div>📁 PNG/Logotipos_Marca</div>}
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 04_audio */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('audio')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.audio ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>04_audio</span>
-                                                 </div>
-                                                 {!treeCollapsed.audio && incSFX && (
-                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
-                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                          <Folder size={9}/>
-                                                          <span>SFX_Comunes</span>
-                                                       </div>
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 06_IA */}
-                                              <div className="flex items-center gap-1 text-neutral-400">
-                                                 <Folder size={10} color="#94a3b8"/>
-                                                 <span>06_IA</span>
-                                              </div>
-                                           </div>
-                                        )}
-                                     </div>
-                                  </div>
-                               )}
-                            </div>
-                         </div>
-                      )}
+                   <div className="p-2 rounded bg-zinc-950/40 border border-white/2">
+                      <p className="text-[6.5px] font-bold text-neutral-400 uppercase tracking-wider">Pausados</p>
+                      <p className="text-base font-bold text-amber-400">{pausados}</p>
                    </div>
                 </div>
              </div>
 
-          </div>
-
-          {/* COLUMN 2: NÚCLEO DE MONTAJE Y SAFE ZONES */}
-          <div className="flex flex-col space-y-5">
-             
-             {/* Production Milestone Horizontal Interactive Timeline */}
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <Activity size={14} color={t.accent}/>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Flujo Temporal de Producción</span>
-                </div>
-
-                {/* Horizontal Timeline Bar */}
-                <div className="flex items-center justify-between relative py-2">
-                   <div className="absolute left-2 right-2 h-0.5 bg-neutral-800 top-1/2 -translate-y-1/2 z-0"></div>
-                   
-                   {['Ingesta', 'Corte', 'SFX', 'Color', 'Render'].map((mstone, idx) => {
-                      const isActive = productionMilestone === mstone;
-                      return (
-                         <button key={mstone} onClick={() => setProductionMilestone(mstone)} className="relative z-10 flex flex-col items-center focus:outline-none">
-                            <div className="w-5 h-5 rounded-full flex items-center justify-center transition-all"
-                              style={{
-                                 backgroundColor: '#141414',
-                                 border: `1.5px solid ${isActive ? t.accent : '#2d2d2d'}`,
-                                 color: isActive ? t.accent : '#6b7280'
-                              }}>
-                               {idx + 1}
-                            </div>
-                            <span className="text-[7px] font-black uppercase mt-1.5 tracking-wider"
-                              style={{ color: isActive ? t.accent : '#6b7280' }}>
-                               {mstone}
-                            </span>
-                         </button>
-                      );
-                   })}
-                </div>
-
-                {/* Milestone Detail Card */}
-                <div className="p-3.5 rounded-lg text-xs" style={{ border: `1px solid ${t.border}` }}>
-                   {productionMilestone === 'Ingesta' && (
-                      <div className="space-y-1">
-                         <p className="text-[8px] font-black uppercase text-white">Etapa 1: Ingesta de Datos</p>
-                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Verificación de clips RAW, copiado rápido a discos SSD locales y nomenclatura del árbol estructural del proyecto.</p>
-                      </div>
-                   )}
-                   {productionMilestone === 'Corte' && (
-                      <div className="space-y-1">
-                         <p className="text-[8px] font-black uppercase text-white">Etapa 2: Estructura y Selección</p>
-                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Montaje en timeline, sincronización de pista de audio de voz, remoción de espacios y ritmos principales (A-Roll).</p>
-                      </div>
-                   )}
-                   {productionMilestone === 'SFX' && (
-                      <div className="space-y-1">
-                         <p className="text-[8px] font-black uppercase text-white">Etapa 3: Diseño de Audio y Efectos</p>
-                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Inyección de efectos de sonido locales (SFX), transiciones y música de fondo con nivelación de espectro sonora.</p>
-                      </div>
-                   )}
-                   {productionMilestone === 'Color' && (
-                      <div className="space-y-1">
-                         <p className="text-[8px] font-black uppercase text-white">Etapa 4: Tratamiento de Color</p>
-                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Corrección de color primaria, igualación de cámaras diferentes y exportación de look artístico (grading).</p>
-                      </div>
-                   )}
-                   {productionMilestone === 'Render' && (
-                      <div className="space-y-1">
-                         <p className="text-[8px] font-black uppercase text-white">Etapa 5: Exportación de Entregable</p>
-                         <p className="text-[9.5px] leading-relaxed text-neutral-400">Control de Safe Zones en aspect ratio de salida, cálculos de bitrate target y cola de render local.</p>
-                      </div>
-                   )}
-                </div>
-             </div>
-
-             {/* Safe Zones selector and visualizer */}
-             <div className="p-5 rounded-xl space-y-3.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-2">
-                      <Highlighter size={14} color={t.accent}/>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Guías de Safe Zones</span>
-                   </div>
-                   <div className="flex gap-1">
-                      {['916', '11', '239'].map(sz => (
-                         <button key={sz} onClick={() => setCropGuide(sz)} className="px-2 py-0.5 rounded text-[7.5px] font-black"
-                           style={{
-                              backgroundColor: '#141414',
-                              border: `1px solid ${cropGuide === sz ? t.accent : t.border}`,
-                              color: cropGuide === sz ? t.accent : t.textDim
-                           }}>
-                            {sz === '916' ? '9:16' : sz === '11' ? '1:1' : '2.39:1'}
-                         </button>
-                      ))}
-                   </div>
-                </div>
-
-                <div className="relative w-full aspect-video rounded-lg overflow-hidden flex items-center justify-center bg-black"
-                  style={{ border: `1px solid ${t.border}` }}>
-                   <div className="absolute text-[8px] font-mono text-neutral-500 z-10">16:9 Lienzo Principal</div>
-                   
-                   {cropGuide === '916' && (
-                      <div className="absolute h-full aspect-[9/16] animate-in fade-in"
-                        style={{ borderLeft: '1px dashed #f59e0b', borderRight: '1px dashed #f59e0b', backgroundColor: 'rgba(245, 158, 11, 0.03)' }}>
-                         <div className="absolute bottom-2 left-0 right-0 text-center text-[5.5px] font-mono text-amber-500">TikTok Safe Zone</div>
-                      </div>
-                   )}
-                   {cropGuide === '11' && (
-                      <div className="absolute h-full aspect-[1/1] animate-in fade-in"
-                        style={{ border: '1px dashed #10b981', backgroundColor: 'rgba(16, 185, 129, 0.03)' }}>
-                         <div className="absolute bottom-2 left-0 right-0 text-center text-[5.5px] font-mono text-emerald-500">Instagram 1:1</div>
-                      </div>
-                   )}
-                   {cropGuide === '239' && (
-                      <div className="absolute w-full h-[65%] animate-in fade-in"
-                        style={{ borderTop: '1px dashed #3b82f6', borderBottom: '1px dashed #3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.03)' }}>
-                         <div className="absolute right-2 bottom-1 text-[5.5px] font-mono text-blue-500">Cinema 2.39:1</div>
-                      </div>
-                   )}
-                </div>
-             </div>
-
-             {/* Calculadoras de Timecode y Bitrate */}
-             <div className="grid grid-cols-2 gap-3">
-                
-                {/* Timecode Calc */}
-                <div className="p-4 rounded-xl space-y-3.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-1.5 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <Clock size={12} color={t.accent}/>
-                      <span className="text-[8.5px] font-black uppercase tracking-wider text-white">Conversor TC</span>
-                   </div>
-                   <div className="space-y-2 text-xs">
-                      <div>
-                         <label className="text-[6.5px] font-black uppercase text-neutral-400 block mb-1">FPS base</label>
-                         <select value={fpsVal} onChange={e=>{setFpsVal(parseInt(e.target.value)); handleTcToFrames(tcInput, parseInt(e.target.value)); handleFramesToTc(framesInput, parseInt(e.target.value));}}
-                           className="w-full rounded p-1.5 text-[9px] outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="24">24 fps</option>
-                            <option value="30">30 fps</option>
-                            <option value="60">60 fps</option>
-                         </select>
-                      </div>
-                      <div className="space-y-1">
-                         <span className="text-[6.5px] font-black uppercase text-neutral-400">TC → Frames</span>
-                         <input type="text" value={tcInput} onChange={e=>{setTcInput(e.target.value); handleTcToFrames(e.target.value, fpsVal);}}
-                           className="w-full rounded p-1 text-[9px] font-mono outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                         <span className="text-[8.5px] font-mono font-bold text-white">{framesOutput} f</span>
-                      </div>
-                   </div>
-                </div>
-
-                {/* Bitrate Calc */}
-                <div className="p-4 rounded-xl space-y-3.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-1.5 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <Calculator as={CalcIcon} size={12} color={t.accent}/>
-                      <span className="text-[8.5px] font-black uppercase tracking-wider text-white">Calculadora Peso</span>
-                   </div>
-                   <div className="space-y-2 text-xs">
-                      <div className="grid grid-cols-2 gap-1">
-                         <div>
-                            <span className="text-[6px] font-black uppercase text-neutral-400 block mb-0.5">Res</span>
-                            <select value={calcRes} onChange={e=>setCalcRes(e.target.value)}
-                              className="w-full rounded p-1 text-[8px] outline-none"
-                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
-                               <option value="1080p">1080p</option>
-                               <option value="4K">4K</option>
-                            </select>
-                         </div>
-                         <div>
-                            <span className="text-[6px] font-black uppercase text-neutral-400 block mb-0.5">Min</span>
-                            <input type="number" value={calcMin} onChange={e=>setCalcMin(parseInt(e.target.value) || 1)}
-                              className="w-full rounded p-1 text-[8px] outline-none"
-                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
-                         </div>
-                      </div>
-                      <div className="p-1.5 rounded space-y-1 text-[8px]" style={{ border: `1px solid ${t.border}` }}>
-                         <div className="flex justify-between text-neutral-400">Peso: <span className="font-bold text-white font-mono">{calcEstSizeGB} GB</span></div>
-                         <div className="flex justify-between text-neutral-400">Target: <span className="font-bold text-white font-mono">{recommendedBitrateMbps} Mb</span></div>
-                      </div>
-                   </div>
-                </div>
-
-             </div>
-
-          </div>
-
-          {/* COLUMN 3: RENDERIZADO Y UTILIDADES DE DISCO */}
-          <div className="flex flex-col space-y-5">
-             
-             {/* Simulated Render Queue */}
+             {/* Proyectos CRUD list */}
              <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
                 <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
                    <div className="flex items-center gap-2">
-                      <Monitor size={14} color={t.accent}/>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Cola de Render Virtual</span>
+                      <Briefcase size={14} color={t.accent}/>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Lista de Proyectos</span>
                    </div>
-                   <button onClick={addRenderFromCurrent} className="px-2.5 py-1 rounded text-[7.5px] font-black uppercase transition-all"
+                   <button onClick={handleCreateProject} className="px-2.5 py-1 rounded text-[7.5px] font-black uppercase transition-all"
                      style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: '#141414' }}>
-                      Renderizar Actual
+                      + Nuevo Proyecto
                    </button>
                 </div>
 
-                <div className="space-y-2.5 max-h-[220px] overflow-y-auto pr-1 mac-scrollbar">
-                   {renders.map(r => (
-                      <div key={r.id} className="p-3 rounded-lg space-y-2 text-xs" style={{ border: `1px solid ${t.border}` }}>
-                         <div className="flex justify-between items-start">
-                            <div className="max-w-[70%]">
-                               <p className="text-[9px] font-bold truncate text-white">{r.name}</p>
-                               <span className="text-[7px] text-neutral-500 uppercase font-mono">{r.type} • {r.size}</span>
-                            </div>
-                            <span className="text-[7.5px] font-mono font-black uppercase px-1.5 py-0.5 rounded"
+                {/* Filters */}
+                <div className="flex gap-2">
+                   <input type="text" placeholder="Filtrar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}
+                     className="flex-1 rounded p-2 text-[9px] outline-none"
+                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                   
+                   <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}
+                     className="rounded p-1 text-[8.5px] font-bold uppercase tracking-wider outline-none cursor-pointer"
+                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                      <option value="Todos">Todos</option>
+                      <option value="En Curso">En Curso</option>
+                      <option value="Completado">Completado</option>
+                      <option value="Pausado">Pausado</option>
+                   </select>
+                </div>
+
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 mac-scrollbar">
+                   {filteredProjects.map(p => (
+                      <div key={p.id} onClick={() => handleSelectProject(p)} className="p-3 rounded-lg flex items-center justify-between cursor-pointer transition-all hover:bg-white/2"
+                        style={{ border: `1px solid ${activeProject?.id === p.id ? t.accent : t.border}` }}>
+                         <div className="min-w-0">
+                            <h4 className="text-xs font-bold text-white truncate max-w-[150px] uppercase">{p.nombre}</h4>
+                            <p className="text-[7.5px] text-neutral-500 mt-0.5 uppercase">Cliente: {p.cliente}</p>
+                         </div>
+                         <div className="flex items-center gap-2">
+                            <span className="text-[6.5px] font-mono font-black uppercase px-1.5 py-0.5 rounded"
                               style={{
-                                 border: `1px solid ${r.status === 'completed' ? '#10b981' : r.status === 'paused' ? '#f59e0b' : t.accent}`,
-                                 color: r.status === 'completed' ? '#10b981' : r.status === 'paused' ? '#f59e0b' : t.accent
+                                 border: `1px solid ${p.estado === 'Completado' ? '#10b981' : p.estado === 'Pausado' ? '#fbbf24' : '#60a5fa'}`,
+                                 color: p.estado === 'Completado' ? '#10b981' : p.estado === 'Pausado' ? '#fbbf24' : '#60a5fa'
                               }}>
-                               {r.status}
+                               {p.estado}
                             </span>
-                         </div>
-
-                         {/* Progress bar */}
-                         <div className="space-y-1">
-                            <div className="flex justify-between text-[7px] font-mono text-neutral-400">
-                               <span>Progreso</span>
-                               <span>{r.progress}%</span>
-                            </div>
-                            <div className="w-full h-1 bg-neutral-900 rounded-full overflow-hidden">
-                               <div className="h-full transition-all duration-300"
-                                 style={{
-                                    width: `${r.progress}%`,
-                                    backgroundColor: r.status === 'completed' ? '#10b981' : r.status === 'paused' ? '#f59e0b' : t.accent
-                                 }}></div>
-                            </div>
-                         </div>
-
-                         {/* Action Buttons */}
-                         <div className="flex justify-end gap-1.5 pt-1">
-                            {r.status !== 'completed' && (
-                               <button onClick={() => toggleRenderStatus(r.id)} className="p-1 rounded transition-all" style={{ border: `1px solid ${t.border}` }}>
-                                  {r.status === 'rendering' ? <Pause size={10} color={t.textDim}/> : <Play size={10} color={t.accent}/>}
-                               </button>
-                            )}
-                            <button onClick={() => deleteRender(r.id)} className="p-1 rounded transition-all" style={{ border: `1px solid ${t.border}` }}>
-                               <Trash2 size={10} color="#f87171"/>
+                            <button onClick={(e) => handleDeleteProject(p.id, e)} className="p-1 rounded transition-all hover:bg-rose-500/10 text-neutral-500 hover:text-rose-400">
+                               <Trash2 size={11}/>
                             </button>
                          </div>
                       </div>
                    ))}
-                   {renders.length === 0 && (
+                   {filteredProjects.length === 0 && (
                       <div className="py-8 text-center" style={{ border: `1px dashed ${t.border}`, borderRadius: 8 }}>
-                         <p className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500">Cola de render vacía.</p>
+                         <p className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500">Sin proyectos registrados.</p>
                       </div>
                    )}
                 </div>
              </div>
+          </div>
 
-             {/* Downloadable Edit Notes */}
+          {/* COLUMN 2: DETALLE DEL PROYECTO */}
+          <div className="flex flex-col space-y-5">
              <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
                 <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
                    <Edit3 size={14} color={t.accent}/>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Notas de Corte & Producción</span>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Detalles del Proyecto</span>
                 </div>
 
-                <div className="space-y-3">
-                   <textarea value={editNotes} onChange={e=>setEditNotes(e.target.value)}
-                     className="w-full rounded p-3 text-[9px] font-mono outline-none h-[120px] resize-none mac-scrollbar"
-                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}
-                     placeholder="Notas de montaje..." />
+                {activeProject ? (
+                   <div className="space-y-3 text-xs">
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Nombre del Proyecto</label>
+                         <input type="text" value={formName} onChange={e=>setFormName(e.target.value)}
+                           className="w-full rounded p-2 text-[10px] outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
 
-                   <button onClick={downloadNotes} className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider transition-all"
-                     style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
-                      Descargar Notas (TXT)
-                   </button>
-                </div>
+                      <div className="grid grid-cols-2 gap-2">
+                         <div className="space-y-1">
+                            <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Marca</label>
+                            <input type="text" value={formClient} onChange={e=>setFormClient(e.target.value)}
+                              className="w-full rounded p-2 text-[10px] outline-none"
+                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         </div>
+                         <div className="space-y-1">
+                            <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Estado</label>
+                            <select value={formStatus} onChange={e=>setFormStatus(e.target.value)}
+                              className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
+                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                               <option value="En Curso">En Curso</option>
+                               <option value="Completado">Completado</option>
+                               <option value="Pausado">Pausado</option>
+                            </select>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                         <div className="space-y-1">
+                            <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Fecha de Inicio</label>
+                            <input type="date" value={formStartDate} onChange={e=>setFormStartDate(e.target.value)}
+                              className="w-full rounded p-2 text-[10px] outline-none"
+                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         </div>
+                         <div className="space-y-1">
+                            <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Fecha de Entrega</label>
+                            <input type="date" value={formEndDate} onChange={e=>setFormEndDate(e.target.value)}
+                              className="w-full rounded p-2 text-[10px] outline-none"
+                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         </div>
+                      </div>
+
+                      <div className="space-y-1">
+                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Tarifa / Presupuesto ($)</label>
+                         <input type="number" value={formRate} onChange={e=>setFormRate(e.target.value)}
+                           className="w-full rounded p-2 text-[10px] font-mono outline-none"
+                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                      </div>
+
+                      <button onClick={handleUpdateProject}
+                         className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider transition-all mt-2"
+                         style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                         Guardar Cambios
+                      </button>
+                   </div>
+                ) : (
+                   <div className="py-12 text-center text-neutral-500 italic">
+                      Selecciona un proyecto de la lista para editar sus detalles.
+                   </div>
+                )}
              </div>
+          </div>
 
+          {/* COLUMN 3: NOTAS DEL PROYECTO */}
+          <div className="flex flex-col space-y-5">
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+                   <FileText size={14} color={t.accent}/>
+                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Notas de Corte & Edición</span>
+                </div>
+
+                {activeProject ? (
+                   <div className="space-y-3">
+                      <textarea value={formNotes} onChange={e=>setFormNotes(e.target.value)}
+                        className="w-full rounded p-3 text-[9px] font-mono outline-none h-[180px] resize-none mac-scrollbar"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}
+                        placeholder="Notas de montaje..." />
+
+                      <button onClick={downloadNotes} className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider transition-all"
+                        style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                         Descargar Notas (TXT)
+                      </button>
+                   </div>
+                ) : (
+                   <div className="py-12 text-center text-neutral-500 italic">
+                      Selecciona un proyecto para ver y editar sus notas.
+                   </div>
+                )}
+             </div>
           </div>
 
        </div>
-
     </div>
   );
-};
-
-// Simple Calculator Icon wrapper to match standard naming inside the code
-const Calculator = ({ as: Component, ...props }) => {
-  return <Component {...props} />;
 };
 
 export default EditorVideo;

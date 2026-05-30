@@ -16,7 +16,10 @@ import {
   Video,
   Package,
   CreditCard,
-  Users
+  Users,
+  Wallet,
+  Briefcase,
+  TrendingUp
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
@@ -34,6 +37,10 @@ const getIconForType = (tipo, isDark = true) => {
     case 'reunion': return <Video {...props}/>;
     case 'producto': return <Package {...props}/>;
     case 'servicio': return <CreditCard {...props}/>;
+    case 'egreso': return <Wallet {...props}/>;
+    case 'recibo': return <CreditCard {...props}/>;
+    case 'proyecto': return <Briefcase {...props}/>;
+    case 'venta': return <TrendingUp {...props}/>;
     default: return <HardDrive {...props}/>;
   }
 };
@@ -48,7 +55,11 @@ const getLabelForType = (tipo) => {
     'sesion': 'Sesión',
     'reunion': 'Reunión',
     'producto': 'Producto',
-    'servicio': 'Servicio'
+    'servicio': 'Servicio',
+    'egreso': 'Egreso',
+    'recibo': 'Recibo',
+    'proyecto': 'Proyecto',
+    'venta': 'Venta Digital'
   };
   return map[tipo] || tipo || 'Item';
 };
@@ -135,6 +146,10 @@ const TrashView = ({ settings, isDark = true }) => {
         else if (item.tipo_dato === 'recordatorio') storageKey = 'sovereign_recordatorios';
         else if (item.tipo_dato === 'prestamo') storageKey = 'sovereign_prestamos';
         else if (item.tipo_dato === 'producto') storageKey = 'sovereign_productos';
+        else if (item.tipo_dato === 'egreso') storageKey = 'sovereign_egresos';
+        else if (item.tipo_dato === 'recibo') storageKey = 'sovereign_recibos';
+        else if (item.tipo_dato === 'proyecto') storageKey = 'sovereign_proyectos';
+        else if (item.tipo_dato === 'venta') storageKey = 'sovereign_ventas';
 
         if (storageKey) {
           const localData = JSON.parse(localStorage.getItem(storageKey) || '[]');
@@ -162,7 +177,11 @@ const TrashView = ({ settings, isDark = true }) => {
           'prestamo': 'prestamos',
           'recordatorio': 'recordatorios',
           'producto': 'productos',
-          'servicio': 'servicios'
+          'servicio': 'servicios',
+          'egreso': 'egresos',
+          'recibo': 'recibos',
+          'proyecto': 'proyectos',
+          'venta': 'ventas'
         };
         
         const tableName = tableMap[item.tipo_dato];

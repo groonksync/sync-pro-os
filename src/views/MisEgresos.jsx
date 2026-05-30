@@ -422,6 +422,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   const handleDeleteExpense = async (id) => {
     if (!confirm('¿Seguro que deseas eliminar este registro de gasto?')) return;
     try {
+      const item = egresos.find(e => e.id === id);
+      if (item) {
+        await supabase.from('papelera').insert([{
+          tipo_dato: 'egreso',
+          nombre_item: item.descripcion,
+          datos_originales: item,
+          borrado_el: new Date().toISOString(),
+          expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        }]);
+      }
       const { error } = await supabase.from('egresos').delete().eq('id', id);
       if (error) throw error;
       setData(prev => ({ ...prev, egresos: prev.egresos.filter(e => e.id !== id) }));
@@ -522,6 +532,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   const handleDeleteService = async (id) => {
     if (!confirm('¿Deseas dar de baja o eliminar esta suscripción recurrente?')) return;
     try {
+      const item = servicios.find(s => s.id === id);
+      if (item) {
+        await supabase.from('papelera').insert([{
+          tipo_dato: 'servicio',
+          nombre_item: item.nombre,
+          datos_originales: item,
+          borrado_el: new Date().toISOString(),
+          expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        }]);
+      }
       const { error } = await supabase.from('servicios').delete().eq('id', id);
       if (error) throw error;
       if (onRefresh) onRefresh();

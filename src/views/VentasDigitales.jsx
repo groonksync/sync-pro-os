@@ -62,6 +62,16 @@ const VentasDigitales = ({ data, setData, isDark = true }) => {
   const handleDelete = async (id) => {
     if (!confirm('¿Eliminar esta venta?')) return;
     try {
+      const item = ventas.find(v => v.id === id);
+      if (item) {
+        await supabase.from('papelera').insert([{
+          tipo_dato: 'venta',
+          nombre_item: item.producto,
+          datos_originales: item,
+          borrado_el: new Date().toISOString(),
+          expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        }]);
+      }
       await supabase.from('ventas').delete().eq('id', id);
       setData(prev => ({ ...prev, ventas: prev.ventas.filter(v => v.id !== id) }));
     } catch (err) { alert('Error: ' + err.message); }

@@ -8,9 +8,12 @@ export default function UpdaterPanel({ t }) {
   const [updateInfo, setUpdateInfo] = useState(null);
   const [progress, setProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+  const [appVersion, setAppVersion] = useState('...');
 
   useEffect(() => {
     if (!isElectron) return;
+    
+    window.electronAPI.getAppVersion().then(v => setAppVersion(v || '1.0.0')).catch(() => setAppVersion('1.0.0'));
 
     window.electronAPI.onUpdateCheckStarted(() => {
       setStatus('checking');
@@ -75,7 +78,7 @@ export default function UpdaterPanel({ t }) {
       {status === 'idle' && (
         <div>
           <p style={{ color: t.textMuted, fontSize: '12px', marginBottom: '16px' }}>
-            Versión actual: 1.0.0
+            Versión actual: {appVersion}
           </p>
           <button
             onClick={handleCheck}

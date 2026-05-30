@@ -108,6 +108,16 @@ const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
 
   const deleteRecordatorio = async (id) => {
     try {
+      const item = recordatorios.find(r => r.id === id);
+      if (item) {
+        await supabase.from('papelera').insert([{
+          tipo_dato: 'recordatorio',
+          nombre_item: item.titulo,
+          datos_originales: item,
+          borrado_el: new Date().toISOString(),
+          expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        }]);
+      }
       await supabase.from('recordatorios').delete().eq('id', id);
       fetchRecordatorios();
     } catch (e) { console.error(e); }
