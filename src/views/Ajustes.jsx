@@ -13,6 +13,7 @@ import UpdaterPanel from '../components/UpdaterPanel';
 
 const GoogleLogo = ({ size = 18 }) => <Google.Color size={size} />;
 const DeepSeekLogo = ({ size = 18 }) => <DeepSeek.Color size={size} />;
+const OpenRouterLogo = ({ size = 18 }) => <Cpu size={size} />;
 
 const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, isDark = true }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
@@ -23,7 +24,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
   // EFECTO DE TELEMETRÍA: Carga el balance real al entrar o cambiar llaves
   React.useEffect(() => {
     const loadBalance = async () => {
-      if (settings.geminiKey || settings.deepseekKey) {
+      if (settings.geminiKey || settings.deepseekKey || settings.openrouterKey) {
         import('../services/aiService').then(async ({ aiService }) => {
           const res = await aiService.fetchBalance(settings);
           setBalance(res);
@@ -31,7 +32,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
       }
     };
     loadBalance();
-  }, [settings.aiProvider, settings.geminiKey, settings.deepseekKey]);
+  }, [settings.aiProvider, settings.geminiKey, settings.deepseekKey, settings.openrouterKey]);
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -225,15 +226,16 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
                <Cpu size={20} style={{ color: t.success }}/> Bóveda de Inteligencia
              </h3>
              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', backgroundColor: t.accentSoft, borderRadius: 12, border: `1px solid ${t.borderLight}` }}>
-                <div style={{ width: 8, height: 8, borderRadius: 6, backgroundColor: settings.geminiKey || settings.deepseekKey ? t.success : t.danger, animation: settings.geminiKey || settings.deepseekKey ? 'pulse 2s infinite' : 'none' }}></div>
-                <span style={{ fontSize: 9, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.geminiKey || settings.deepseekKey ? 'Vault Protegido' : 'Bóveda Vacía'}</span>
+                <div style={{ width: 8, height: 8, borderRadius: 6, backgroundColor: settings.geminiKey || settings.deepseekKey || settings.openrouterKey ? t.success : t.danger, animation: settings.geminiKey || settings.deepseekKey || settings.openrouterKey ? 'pulse 2s infinite' : 'none' }}></div>
+                <span style={{ fontSize: 9, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{settings.geminiKey || settings.deepseekKey || settings.openrouterKey ? 'Vault Protegido' : 'Bóveda Vacía'}</span>
              </div>
           </div>
-
-          <div style={{ display: 'flex', backgroundColor: t.inputBg, borderRadius: 12, padding: 6, border: `1px solid ${t.borderLight}`, maxWidth: 320 }}>
+ 
+          <div style={{ display: 'flex', backgroundColor: t.inputBg, borderRadius: 12, padding: 6, border: `1px solid ${t.borderLight}`, maxWidth: 420 }}>
             {[
               { id: 'gemini', label: 'Google', Icon: GoogleLogo },
-              { id: 'deepseek', label: 'DeepSeek', Icon: DeepSeekLogo }
+              { id: 'deepseek', label: 'DeepSeek', Icon: DeepSeekLogo },
+              { id: 'openrouter', label: 'OpenRouter', Icon: OpenRouterLogo }
             ].map(p => (
               <button 
                 key={p.id} 
@@ -261,13 +263,13 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
               </button>
             ))}
           </div>
-
+ 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
             {/* GESTIÓN DE LLAVES */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
                <div style={{ padding: 32, backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                     <p style={{ fontSize: 10, color: t.text, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>Llave Maestra {settings.aiProvider === 'gemini' ? 'Google' : 'DeepSeek'}</p>
+                     <p style={{ fontSize: 10, color: t.text, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', margin: 0 }}>Llave Maestra {settings.aiProvider === 'gemini' ? 'Google' : settings.aiProvider === 'deepseek' ? 'DeepSeek' : 'OpenRouter'}</p>
                      <Zap size={14} style={{ color: settings.aiProvider === 'gemini' ? t.success : '#60a5fa' }}/>
                   </div>
                   
@@ -275,17 +277,36 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
                     <input 
                       type="password" 
                       id="ai-key-input"
-                      defaultValue={settings.aiProvider === 'gemini' ? settings.geminiKey : settings.deepseekKey}
+                      key={settings.aiProvider}
+                      defaultValue={settings.aiProvider === 'gemini' ? settings.geminiKey : settings.aiProvider === 'deepseek' ? settings.deepseekKey : settings.openrouterKey}
                       placeholder={`Pegar llave de ${settings.aiProvider}...`} 
                       style={{ width: '100%', backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16, fontSize: 10, color: t.text, fontFamily: 'monospace', outline: 'none', transition: 'border-color 0.2s', paddingRight: 48 }}
                     />
                   </div>
 
+                  {settings.aiProvider === 'openrouter' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <p style={{ fontSize: 8, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Modelo de Inteligencia (OpenRouter)</p>
+                      <select 
+                        value={settings.openrouterModel || 'google/gemini-2.5-flash'} 
+                        onChange={e => updateSetting('openrouterModel', e.target.value)}
+                        style={{ width: '100%', backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 12, fontSize: 10, color: t.text, outline: 'none' }}
+                      >
+                        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="google/gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <option value="deepseek/deepseek-chat">DeepSeek Chat (V3)</option>
+                        <option value="meta-llama/llama-3-8b-instruct:free">Llama 3 8B Instruct (Free)</option>
+                        <option value="anthropic/claude-3-haiku">Claude 3 Haiku</option>
+                      </select>
+                    </div>
+                  )}
+ 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                      <button 
                        onClick={() => {
                          const val = document.getElementById('ai-key-input').value;
-                         updateSetting(settings.aiProvider === 'gemini' ? 'geminiKey' : 'deepseekKey', val);
+                         const keyField = settings.aiProvider === 'gemini' ? 'geminiKey' : settings.aiProvider === 'deepseek' ? 'deepseekKey' : 'openrouterKey';
+                         updateSetting(keyField, val);
                          alert("✅ Bóveda Actualizada. Llave vinculada correctamente.");
                        }}
                        style={{ padding: '14px 0', backgroundColor: t.success, color: '#000', borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', border: 'none', cursor: 'pointer', transition: 'transform 0.2s' }}
@@ -294,7 +315,8 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
                      </button>
                      <button 
                        onClick={() => {
-                         updateSetting(settings.aiProvider === 'gemini' ? 'geminiKey' : 'deepseekKey', '');
+                         const keyField = settings.aiProvider === 'gemini' ? 'geminiKey' : settings.aiProvider === 'deepseek' ? 'deepseekKey' : 'openrouterKey';
+                         updateSetting(keyField, '');
                          document.getElementById('ai-key-input').value = '';
                          alert("⚠️ Purga Completada. La llave ha sido eliminada del sistema.");
                        }}
@@ -305,7 +327,7 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
                   </div>
                </div>
             </div>
-
+ 
             {/* ESTADO Y CRÉDITOS */}
             <div style={{ padding: 32, backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 24, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 32 }}>
                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -325,31 +347,37 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
                      <p style={{ fontSize: 8, color: t.textMuted, fontWeight: 700, textTransform: 'uppercase', marginTop: 8 }}>Sincronizado en tiempo real</p>
                   </div>
                </div>
-
+ 
                <button 
                  onClick={async () => {
                    setBalance('...');
                    const { aiService } = await import('../services/aiService');
                    
-                   const key = settings.aiProvider === 'gemini' ? settings.geminiKey : settings.deepseekKey;
+                   const key = settings.aiProvider === 'gemini' ? settings.geminiKey : settings.aiProvider === 'deepseek' ? settings.deepseekKey : settings.openrouterKey;
                    if (!key) {
                       alert("❌ Error: No hay llave para sincronizar.");
                       setBalance('Sin Llave');
                       return;
                    }
-
+ 
                    const res = await aiService.fetchBalance(settings);
                    setBalance(res);
-
+ 
                    try {
-                     const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
-                     const mRes = await fetch(url);
-                     const mData = await mRes.json();
-                     if (mData.models) {
-                        const modelList = mData.models.map(m => m.name.replace('models/', '')).join(', ');
-                        alert(`📡 Sincronización Neural Exitosa.\n\nModelos detectados: ${modelList}\n\nTu llave está lista para operar.`);
+                     if (settings.aiProvider === 'gemini') {
+                       const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+                       const mRes = await fetch(url);
+                       const mData = await mRes.json();
+                       if (mData.models) {
+                          const modelList = mData.models.map(m => m.name.replace('models/', '')).join(', ');
+                          alert(`📡 Sincronización Neural Exitosa.\n\nModelos detectados: ${modelList}\n\nTu llave está lista para operar.`);
+                       } else {
+                          alert("⚠️ Sincronización Parcial: La llave conecta pero no ve modelos de IA. Asegúrate de habilitar la 'Generative Language API'.");
+                       }
+                     } else if (settings.aiProvider === 'openrouter') {
+                       alert("📡 Sincronización Exitosa: Balance de OpenRouter actualizado en tiempo real.");
                      } else {
-                        alert("⚠️ Sincronización Parcial: La llave conecta pero no ve modelos de IA. Asegúrate de habilitar la 'Generative Language API'.");
+                       alert("📡 Sincronización Exitosa: Balance de DeepSeek actualizado.");
                      }
                    } catch (e) {
                      alert("📡 Sincronización Exitosa: Balance actualizado.");

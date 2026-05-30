@@ -27,6 +27,29 @@ export const aiService = {
         return "Error"; 
       }
     }
+
+    if (provider === 'openrouter' && settings.openrouterKey) {
+      try {
+        const res = await fetch("https://openrouter.ai/api/v1/auth/key", {
+          headers: { 
+            "Authorization": `Bearer ${settings.openrouterKey}`
+          }
+        });
+        const data = await res.json();
+        if (data.data) {
+          const { limit, usage } = data.data;
+          if (limit === null || parseFloat(limit) === 0) {
+            return `PPU ($${parseFloat(usage).toFixed(4)})`;
+          }
+          const rem = parseFloat(limit) - parseFloat(usage);
+          return `$${rem.toFixed(4)}`;
+        }
+        return "0.00";
+      } catch (e) {
+        console.error("Error fetching OpenRouter balance:", e);
+        return "Error";
+      }
+    }
     
     return "Ilimitado"; // Gemini Free/Pay-as-you-go en AI Studio
   },
@@ -39,6 +62,7 @@ export const aiService = {
     const provider = s.aiProvider || 'gemini';
     const geminiKey = s.geminiKey || import.meta.env.VITE_GEMINI_API_KEY;
     const deepseekKey = s.deepseekKey;
+    const openrouterKey = s.openrouterKey;
 
     const activeView = context.activeView || 'General';
     const systemPrompt = `
@@ -57,7 +81,7 @@ export const aiService = {
       2. Usa la categoría "Nota" para apuntes personales o reflexiones.
       3. NUNCA muestres el código JSON al usuario.
       4. TODO JSON debe ir envuelto estrictamente entre estos marcadores: [[[ACTION{tu_json_aqui}]]].
-      5. Responde de forma amigable, directa y muy clara, sin usar tecnicismos innecesarios, como si le hablaras a un buen amigo.
+      5. Responde de forma amigable, directa y muy clara, sin usar tecnicismos undeniables, como si le hablaras a un buen amigo.
 
       SISTEMA: ${JSON.stringify(context)}
     `;
@@ -84,6 +108,36 @@ export const aiService = {
         return data.choices[0].message.content;
       } catch (e) {
         return `❌ Error DeepSeek: ${e.message}`;
+      }
+    }
+
+    // LÓGICA DE OPENROUTER
+    if (provider === 'openrouter') {
+      if (!openrouterKey) return "⚠️ Error: Falta la API Key de OpenRouter en Ajustes.";
+      const activeModel = s.openrouterModel || 'google/gemini-2.5-flash';
+      try {
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${openrouterKey}`,
+            "HTTP-Referer": "https://sync-pro-os.vercel.app",
+            "X-Title": "Inefable"
+          },
+          body: JSON.stringify({
+            model: activeModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              ...history.map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.content })),
+              { role: "user", content: message }
+            ]
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.choices[0].message.content;
+      } catch (e) {
+        return `❌ Error OpenRouter: ${e.message}`;
       }
     }
 

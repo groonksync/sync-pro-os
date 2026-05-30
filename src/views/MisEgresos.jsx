@@ -157,15 +157,37 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   // ── Formulario de Ganancia Manual (Crear) ──────────────────────────────────
   const [showIncomeForm, setShowIncomeForm] = useState(false);
   const [incomeLoading, setIncomeLoading] = useState(false);
+  const [availableProducts, setAvailableProducts] = useState([]);
+  const [cart, setCart] = useState([]);
+  const [comprador, setComprador] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [metodoPago, setMetodoPago] = useState('Efectivo');
+  const [monedaVenta, setMonedaVenta] = useState('BOB');
+  
   const [incomeForm, setIncomeForm] = useState({
     fecha: new Date().toISOString().split('T')[0],
     producto: '',
-    categoria: 'Edición de Video',
-    plataforma: 'Directo',
-    monto: '',
+    categoria: 'Venta de Productos',
+    plataforma: 'WhatsApp',
+    monto: '0',
     costo: '0',
     notas: ''
   });
+
+  // Cargar productos del catálogo de Supabase
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        const { data, error } = await supabase.from('productos').select('*').order('nombre');
+        if (data) setAvailableProducts(data);
+      } catch (e) {
+        console.error("Error loading products for checkout:", e);
+      }
+    };
+    if (showIncomeForm) {
+      fetchCatalog();
+    }
+  }, [showIncomeForm]);
 
   // Cargar/actualizar datos al montar
   useEffect(() => {
@@ -369,39 +391,78 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   };
 
   const handleSaveIncome = async () => {
-    if (!incomeForm.producto.trim() || !incomeForm.monto) return;
     setIncomeLoading(true);
-    const newVenta = {
-      id: crypto.randomUUID(),
-      fecha: incomeForm.fecha,
-      producto: incomeForm.producto.trim(),
-      categoria: incomeForm.categoria,
-      plataforma: incomeForm.plataforma,
-      monto: parseFloat(incomeForm.monto),
-      estado: 'Aprobado',
-      notas: incomeForm.notas.trim() || null,
-      metadata: {
-        precio_costo: parseFloat(incomeForm.costo) || 0
-      }
-    };
     try {
+      let finalProducto = incomeForm.producto;
+      let finalMonto = parseFloat(incomeForm.monto) || 0;
+      let finalCosto = parseFloat(incomeForm.costo) || 0;
+
+      // Si es una venta de productos del catálogo y hay ítems en el carrito, calculamos automáticamente
+      if (incomeForm.categoria === 'Venta de Productos' && cart.length > 0) {
+        finalProducto = cart.map(c => `${c.nombre} (x${c.quantity})`).join(', ');
+        finalMonto = cart.reduce((sum, c) => sum + (c.quantity * (parseFloat(c.precio_venta) || 0)), 0);
+        finalCosto = cart.reduce((sum, c) => sum + (c.quantity * (parseFloat(c.precio_costo) || 0)), 0);
+
+        // Descontar stock en Supabase
+        for (const item of cart) {
+          const { data: pData } = await supabase.from('productos').select('stock_actual').eq('id', item.id).single();
+          if (pData) {
+            const currentStock = parseInt(pData.stock_actual) || 0;
+            await supabase.from('productos').update({ stock_actual: Math.max(0, currentStock - item.quantity) }).eq('id', item.id);
+          }
+        }
+      }
+
+      if (!finalProducto.trim() || finalMonto <= 0) {
+        alert("Por favor, ingresa un concepto/producto y un monto de venta válido.");
+        setIncomeLoading(false);
+        return;
+      }
+
+      const newVenta = {
+        id: crypto.randomUUID(),
+        fecha: incomeForm.fecha,
+        producto: finalProducto.trim(),
+        categoria: incomeForm.categoria,
+        plataforma: incomeForm.plataforma,
+        monto: finalMonto,
+        estado: 'Aprobado',
+        moneda: monedaVenta,
+        notas: `Comprador: ${comprador} | Teléfono: ${telefono} | Notas: ${incomeForm.notas}`.trim(),
+        metadata: {
+          precio_costo: finalCosto,
+          comprador,
+          telefono,
+          metodo_pago: metodoPago,
+          moneda: monedaVenta,
+          cart: cart
+        }
+      };
+
       const { error } = await supabase.from('ventas').insert(newVenta);
       if (error) throw error;
+      
       if (onRefresh) await onRefresh();
       setShowIncomeForm(false);
+      
+      // Reset states
+      setCart([]);
+      setComprador('');
+      setTelefono('');
+      setMetodoPago('Efectivo');
+      setMonedaVenta('BOB');
       setIncomeForm({
         fecha: new Date().toISOString().split('T')[0],
         producto: '',
-        categoria: 'Edición de Video',
-        plataforma: 'Directo',
-        monto: '',
+        categoria: 'Venta de Productos',
+        plataforma: 'WhatsApp',
+        monto: '0',
         costo: '0',
-        notes: '',
         notas: ''
       });
-      alert('✅ Ganancia registrada correctamente');
+      alert('✅ Venta registrada y stock actualizado correctamente');
     } catch (err) {
-      alert('Error al registrar ganancia: ' + err.message);
+      alert('Error al registrar venta: ' + err.message);
     } finally {
       setIncomeLoading(false);
     }
@@ -1687,76 +1748,216 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Categoría</label>
                   <select
                     value={incomeForm.categoria}
-                    onChange={e => setIncomeForm({...incomeForm, categoria: e.target.value})}
+                    onChange={e => {
+                      const newCat = e.target.value;
+                      setIncomeForm({...incomeForm, categoria: newCat});
+                    }}
                     className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all cursor-pointer"
                   >
+                    <option value="Venta de Productos">Venta de Productos</option>
                     <option value="Edición de Video">Edición de Video</option>
                     <option value="Freelance">Freelance</option>
-                    <option value="Venta de Productos">Venta de Productos</option>
                     <option value="Préstamos">Préstamos</option>
                     <option value="Otro">Otro</option>
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Concepto / Producto / Cliente</label>
-                <input
-                  type="text"
-                  value={incomeForm.producto}
-                  onChange={e => setIncomeForm({...incomeForm, producto: e.target.value})}
-                  className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
-                  placeholder="Ej: Cliente Juan - Edición Clip 5, Venta Teclado..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Monto de Venta ({currency})</label>
-                  <input
-                    type="number"
-                    value={incomeForm.monto}
-                    onChange={e => setIncomeForm({...incomeForm, monto: e.target.value})}
-                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all font-mono"
-                    placeholder="Monto total ingresado"
-                  />
-                </div>
-                <div>
-                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Costo del Producto ({currency})</label>
-                  <input
-                    type="number"
-                    value={incomeForm.costo}
-                    onChange={e => setIncomeForm({...incomeForm, costo: e.target.value})}
-                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all font-mono"
-                    placeholder="Opcional. Para utilidad"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Plataforma</label>
-                  <input
-                    type="text"
-                    value={incomeForm.plataforma}
-                    onChange={e => setIncomeForm({...incomeForm, plataforma: e.target.value})}
-                    className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
-                    placeholder="Ej: Directo, Gumroad, WhatsApp..."
-                  />
-                </div>
-                <div className="flex flex-col justify-end">
-                  <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mb-2">Utilidad Estimada</p>
-                  <div className="w-full bg-zinc-950/60 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-emerald-400 font-bold font-mono">
-                    {formatCurrency((parseFloat(incomeForm.monto) || 0) - (parseFloat(incomeForm.costo) || 0))}
+              {incomeForm.categoria === 'Venta de Productos' ? (
+                <>
+                  {/* CLIENT & SALE DETAILS FOR CART */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Nombre Comprador</label>
+                      <input
+                        type="text"
+                        value={comprador}
+                        onChange={e => setComprador(e.target.value)}
+                        placeholder="Ej: Carlos Joel"
+                        className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Teléfono Comprador</label>
+                      <input
+                        type="text"
+                        value={telefono}
+                        onChange={e => setTelefono(e.target.value)}
+                        placeholder="Ej: +59178912345"
+                        className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Método de Pago</label>
+                      <select
+                        value={metodoPago}
+                        onChange={e => setMetodoPago(e.target.value)}
+                        className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all cursor-pointer"
+                      >
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia">Transferencia Bancaria</option>
+                        <option value="Tigo Money">Tigo Money</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Divisa Transacción</label>
+                      <select
+                        value={monedaVenta}
+                        onChange={e => setMonedaVenta(e.target.value)}
+                        className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all cursor-pointer"
+                      >
+                        <option value="BOB">BOB (Bolivianos)</option>
+                        <option value="USD">USD (Dólares)</option>
+                        <option value="EUR">EUR (Euros)</option>
+                        <option value="BRL">BRL (Reales)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* SELECT PRODUCT & ADD */}
+                  <div className="border-t border-white/5 pt-4">
+                    <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Catálogo de Productos</label>
+                    <select
+                      value=""
+                      onChange={e => {
+                        const prod = availableProducts.find(p => p.id === e.target.value);
+                        if (prod) {
+                          const exist = cart.find(c => c.id === prod.id);
+                          if (exist) {
+                            setCart(cart.map(c => c.id === prod.id ? { ...c, quantity: c.quantity + 1 } : c));
+                          } else {
+                            setCart([...cart, {
+                              id: prod.id,
+                              nombre: prod.nombre,
+                              precio_venta: prod.precio_venta,
+                              precio_costo: prod.precio_costo,
+                              quantity: 1
+                            }]);
+                          }
+                        }
+                      }}
+                      className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all cursor-pointer"
+                    >
+                      <option value="" disabled>-- Selecciona un producto para añadir --</option>
+                      {availableProducts.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre.toUpperCase()} - Stock: {p.stock_actual} uds ({p.precio_venta} BOB)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* SHOPPING CART LIST */}
+                  {cart.length > 0 && (
+                    <div className="bg-zinc-950/20 border border-white/5 rounded-2xl p-4 space-y-3">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-neutral-400 block pb-2 border-b border-white/5">Lista de Compra ({cart.reduce((sum, c) => sum + c.quantity, 0)} uds)</span>
+                      <div className="space-y-2 max-h-[180px] overflow-y-auto mac-scrollbar">
+                        {cart.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between gap-3 text-xs bg-zinc-950/30 p-2.5 rounded-xl border border-white/5">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-bold text-white truncate text-[11px] uppercase">{item.nombre}</p>
+                              <span className="text-[9px] text-neutral-500 font-mono">Costo Unit: {item.precio_costo} {monedaVenta}</span>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <input 
+                                type="number" 
+                                value={item.precio_venta} 
+                                onChange={e => {
+                                  const val = parseFloat(e.target.value) || 0;
+                                  setCart(cart.map((c, i) => i === idx ? { ...c, precio_venta: val } : c));
+                                }}
+                                className="w-16 bg-zinc-900 border border-white/5 rounded px-2 py-1 text-center font-mono text-[10px] text-white outline-none"
+                              />
+                              <div className="flex items-center border border-white/5 rounded-lg bg-zinc-900 overflow-hidden">
+                                <button onClick={() => {
+                                  if (item.quantity > 1) {
+                                    setCart(cart.map((c, i) => i === idx ? { ...c, quantity: c.quantity - 1 } : c));
+                                  } else {
+                                    setCart(cart.filter((_, i) => i !== idx));
+                                  }
+                                }} className="px-2 py-1 text-[10px] text-neutral-400 hover:text-white">-</button>
+                                <span className="px-2 text-[10px] text-white font-bold">{item.quantity}</span>
+                                <button onClick={() => setCart(cart.map((c, i) => i === idx ? { ...c, quantity: c.quantity + 1 } : c))} className="px-2 py-1 text-[10px] text-neutral-400 hover:text-white">+</button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex justify-between items-center pt-2 border-t border-white/5 text-xs">
+                        <span className="font-black text-neutral-400 uppercase tracking-widest text-[9px]">Total de la Venta:</span>
+                        <span className="font-mono font-black text-emerald-400 text-sm">
+                          {cart.reduce((sum, c) => sum + (c.quantity * c.precio_venta), 0).toLocaleString()} {monedaVenta}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* STANDARD MANUAL INCOME INPUTS */}
+                  <div>
+                    <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Concepto / Producto / Cliente</label>
+                    <input
+                      type="text"
+                      value={incomeForm.producto}
+                      onChange={e => setIncomeForm({...incomeForm, producto: e.target.value})}
+                      className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                      placeholder="Ej: Cliente Juan - Edición Clip 5, Venta Teclado..."
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Monto de Venta ({currency})</label>
+                      <input
+                        type="number"
+                        value={incomeForm.monto}
+                        onChange={e => setIncomeForm({...incomeForm, monto: e.target.value})}
+                        className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all font-mono"
+                        placeholder="Monto total ingresado"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Costo del Producto ({currency})</label>
+                      <input
+                        type="number"
+                        value={incomeForm.costo}
+                        onChange={e => setIncomeForm({...incomeForm, costo: e.target.value})}
+                        className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all font-mono"
+                        placeholder="Opcional. Para utilidad"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Plataforma</label>
+                      <input
+                        type="text"
+                        value={incomeForm.plataforma}
+                        onChange={e => setIncomeForm({...incomeForm, plataforma: e.target.value})}
+                        className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all"
+                        placeholder="Ej: Directo, Gumroad, WhatsApp..."
+                      />
+                    </div>
+                    <div className="flex flex-col justify-end">
+                      <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mb-2">Utilidad Estimada</p>
+                      <div className="w-full bg-zinc-950/60 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-emerald-400 font-bold font-mono">
+                        {formatCurrency((parseFloat(incomeForm.monto) || 0) - (parseFloat(incomeForm.costo) || 0))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}              <div>
                 <label className="text-[8px] font-black uppercase tracking-widest text-neutral-400 display: block mb-2">Notas Adicionales</label>
                 <textarea
-                  value={incomeForm.notas}
-                  onChange={e => setIncomeForm({...incomeForm, notas: e.target.value})}
+                  value={incomeForm.notes}
+                  onChange={e => setIncomeForm({...incomeForm, notes: e.target.value, notas: e.target.value})}
                   className="w-full bg-zinc-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs outline-none text-white focus:border-white/20 transition-all resize-none h-16"
                   placeholder="Detalles sobre el cobro o la entrega..."
                 />
@@ -1776,9 +1977,13 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 onClick={handleSaveIncome}
                 className="flex-1 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                 style={{ backgroundColor: t.accent, color: '#000' }}
-                disabled={incomeLoading || !incomeForm.producto || !incomeForm.monto}
+                disabled={
+                  incomeLoading || 
+                  (incomeForm.categoria === 'Venta de Productos' && cart.length === 0) ||
+                  (incomeForm.categoria !== 'Venta de Productos' && (!incomeForm.producto || !incomeForm.monto))
+                }
               >
-                {incomeLoading ? 'Registrando...' : 'Registrar Ganancia'}
+                {incomeLoading ? 'Registrando...' : 'Registrar Venta'}
               </button>
             </div>
           </div>

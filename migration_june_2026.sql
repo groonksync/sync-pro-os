@@ -1,0 +1,11 @@
+-- Migración Supabase Junio 2026
+-- Agrega soporte para multi-divisas y enlace de compra del producto para WhatsApp Business
+
+ALTER TABLE proyectos ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'BOB';
+ALTER TABLE ventas ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'BOB';
+ALTER TABLE egresos ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'BOB';
+ALTER TABLE recibos ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'BOB';
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'BOB';
+ALTER TABLE servicios ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'BOB';
+ALTER TABLE reuniones ADD COLUMN IF NOT EXISTS moneda TEXT DEFAULT 'BOB';
+ALTER TABLE productos ADD COLUMN IF NOT EXISTS enlace_compra TEXT;

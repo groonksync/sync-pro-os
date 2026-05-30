@@ -707,6 +707,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
         precio_oferta: parseFloat(editingProduct.precio_oferta) || 0,
         es_combo: !!editingProduct.es_combo,
         productos_regalo: editingProduct.productos_regalo || '',
+        enlace_compra: editingProduct.enlace_compra || '',
         updated_at: new Date().toISOString(),
         metadata: {
           ...(editingProduct.metadata || {}),
@@ -716,7 +717,8 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
           es_oferta: !!editingProduct.es_oferta,
           precio_oferta: parseFloat(editingProduct.precio_oferta) || 0,
           es_combo: !!editingProduct.es_combo,
-          productos_regalo: editingProduct.productos_regalo || ''
+          productos_regalo: editingProduct.productos_regalo || '',
+          link_compra: editingProduct.enlace_compra || ''
         }
       };
       
@@ -758,6 +760,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
       garantia: p.garantia || '180 Días',
       tipo_envio: p.tipo_envio || 'Envío Gratuito',
       video_url: p.video_url || p.metadata?.video_url || '',
+      enlace_compra: p.enlace_compra || p.metadata?.link_compra || '',
       es_oferta: p.es_oferta !== undefined ? p.es_oferta : (p.metadata?.es_oferta || false),
       precio_oferta: p.precio_oferta !== undefined ? p.precio_oferta : (p.metadata?.precio_oferta || 0),
       es_combo: p.es_combo !== undefined ? p.es_combo : (p.metadata?.es_combo || false),
@@ -787,6 +790,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
       garantia: '180 Días',
       tipo_envio: 'Envío Gratuito',
       video_url: '',
+      enlace_compra: '',
       es_oferta: false,
       precio_oferta: 0,
       es_combo: false,
@@ -1254,7 +1258,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
               >
-                <Plus size={14} /> Nuevo Activo Maestro
+                <Plus size={14} /> Nuevo Producto
               </button>
             </>
           ) : (
@@ -1797,7 +1801,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px', borderBottom: `1px solid ${t.border}` }}>
               <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#fff', letterSpacing: '0.1em', margin: 0 }}>
-                {editingProduct.nombre ? 'Ficha de Activo Maestro / Modificar Ficha' : 'Nuevo Activo Maestro / Registrar Activo'}
+                {editingProduct.nombre ? 'Ficha de Producto / Modificar Ficha' : 'Nuevo Producto / Registrar Producto'}
               </h3>
               <button onClick={() => setIsModalOpen(false)} style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim, cursor: 'pointer' }}>
                 <X size={14} />
@@ -2020,16 +2024,28 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
                   </div>
                 </div>
 
-                {/* Video Promocional */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>URL del Video Promocional</label>
-                  <input 
-                    type="text" 
-                    value={editingProduct.video_url} 
-                    onChange={e => setEditingProduct({ ...editingProduct, video_url: e.target.value })}
-                    placeholder="Ej: https://www.youtube.com/watch?v=VIDEO_ID"
-                    style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
-                  />
+                {/* Video Promocional & Enlace Compra */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>URL del Video Promocional</label>
+                    <input 
+                      type="text" 
+                      value={editingProduct.video_url || ''} 
+                      onChange={e => setEditingProduct({ ...editingProduct, video_url: e.target.value })}
+                      placeholder="Ej: https://www.youtube.com/watch?v=VIDEO_ID"
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Enlace de Compra (WhatsApp Business)</label>
+                    <input 
+                      type="text" 
+                      value={editingProduct.enlace_compra || ''} 
+                      onChange={e => setEditingProduct({ ...editingProduct, enlace_compra: e.target.value })}
+                      placeholder="Ej: https://mi-sitio.com/pagar-producto"
+                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    />
+                  </div>
                 </div>
 
                 {/* Ofertas y Combos */}
@@ -2112,7 +2128,7 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
                 onClick={handleSaveProduct}
                 style={{ padding: '10px 26px', borderRadius: 12, border: 'none', backgroundColor: '#10b981', color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)' }}
               >
-                Guardar Activo Maestro
+                Guardar Producto
               </button>
             </div>
 

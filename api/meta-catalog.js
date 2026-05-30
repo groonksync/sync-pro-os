@@ -48,6 +48,12 @@ function getAvailability(producto) {
  * Se usa el SKU o el código para identificar el producto en la URL
  */
 function getProductUrl(producto) {
+  if (producto.enlace_compra && producto.enlace_compra.startsWith('http')) {
+    return producto.enlace_compra;
+  }
+  if (producto.metadata?.link_compra && producto.metadata.link_compra.startsWith('http')) {
+    return producto.metadata.link_compra;
+  }
   const id = producto.id || producto.sku || producto.codigo || '';
   return `${CATALOG_BASE_URL}/catalogo?producto=${encodeURIComponent(id)}`;
 }
@@ -252,7 +258,7 @@ export default async function handler(req, res) {
     // Filtramos solo los que tienen stock > 0 o que no están marcados como Agotados
     const { data: productos, error } = await supabase
       .from('productos')
-      .select('id, nombre, categoria, precio_venta, precio_antes, precio_costo, stock_actual, estado, imagen, imagenes, sku, codigo, marca, color, condicion, ficha_tecnica, garantia, tipo_envio, metadata, updated_at')
+      .select('id, nombre, categoria, precio_venta, precio_antes, precio_costo, stock_actual, estado, imagen, imagenes, sku, codigo, marca, color, condicion, ficha_tecnica, garantia, tipo_envio, metadata, updated_at, enlace_compra')
       .order('created_at', { ascending: false });
 
     if (error) {

@@ -1131,10 +1131,8 @@ const CommandCenter = ({
             )}
           </div>
 
-          {/* Refresh */}
           <button
             onClick={fetchAiBalance}
-            className={isRefreshing ? 'animate-spin' : ''}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               padding: '10px 18px', borderRadius: '12px',
@@ -1145,7 +1143,7 @@ const CommandCenter = ({
             onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; }}
           >
-            <RefreshCw size={14} /> Refrescar
+            <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} /> Refrescar
           </button>
         </div>
       </section>
