@@ -5,10 +5,11 @@ import {
   Briefcase, ShoppingBag, DollarSign, Hash, MapPin, ShieldCheck, FileText, Info, Zap, ShoppingCart,
   Layers, Ruler, Weight, Globe, Star, AlertTriangle, List, ArrowUpRight, ArrowLeft, ArrowRight,
   Barcode, Shield, ZapOff, Activity, Palette, ClipboardList, RotateCcw, Search, TrendingUp, AlertOctagon, Video, Download,
-  Music, Smartphone
+  Music, Smartphone, Sparkles
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
+import { aiService } from '../services/aiService';
 import { safeDelete } from '../lib/trashService';
 
 const Toast = ({ message, show, onClose, isDark, t }) => {
@@ -596,6 +597,43 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const optimizeDescriptionWithAI = async () => {
+    if (!editingProduct?.descripcion || !editingProduct?.nombre) return;
+    setAiLoading(true);
+    try {
+      const { nombre, descripcion, garantia, tipo_envio } = editingProduct;
+      const prompt = `Actúa como un Copywriter profesional experto en E-commerce y WhatsApp Business.
+Reescribe y optimiza la descripción básica del siguiente producto para que sea muy atractiva, estructurada y profesional en una tienda de WhatsApp.
+
+DATOS DEL PRODUCTO:
+- Nombre: ${nombre}
+- Detalles básicos: ${descripcion}
+- Garantía: ${garantia || 'Sin garantía registrada'}
+- Tipo de envío: ${tipo_envio || 'No especificado'}
+
+REGLAS DE FORMATO Y ESTILO:
+1. Divide el texto en 3 secciones claras usando emojis temáticos al inicio de cada inciso:
+   - Una introducción persuasiva de 1 o 2 frases cortas basada ÚNICAMENTE en la información del producto. No inventes slogans genéricos o promesas falsas.
+   - 🌟 *Especificaciones Destacadas:* Una lista detallada con viñetas redondas (usa asterisco '*' al inicio de cada línea para que WhatsApp lo convierta en viñeta) utilizando negritas de WhatsApp (ej: '*Peso de 180 gramos:* Ultra liviano y cómodo') para destacar especificaciones clave.
+   - 📦 *Detalles de Entrega y Garantía:* Describe el tipo de envío y la garantía real del producto. Si el envío es 'Envío Gratuito', descríbelo como 'Envío completamente gratis'; si es 'Costo Adicional', descríbelo como 'Envío por pagar / con recargo adicional'. Si la garantía está registrada, menciónala claramente.
+2. Todo el texto debe ser apto para móviles, con párrafos muy cortos.
+3. Devuelve únicamente el texto optimizado final, sin introducciones ni comentarios explicativos.`;
+
+      const response = await aiService.askAgent(prompt, [], { settings });
+      if (response && !response.startsWith('❌') && !response.startsWith('⚠️')) {
+        setEditingProduct(prev => ({ ...prev, descripcion: response.trim() }));
+        setToast({ show: true, message: 'Descripción Optimizada' });
+      } else {
+        alert("Error de IA: " + response);
+      }
+    } catch (e) {
+      alert("Error al optimizar con IA: " + e.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const [activeSection, setActiveSection] = useState('productos'); // 'productos' | 'pedidos'
   const [pedidosPendientes, setPedidosPendientes] = useState([]);
@@ -2104,12 +2142,55 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
                 {/* Description extended */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Descripción / Ficha Técnica Corporativa</label>
-                  <textarea 
-                    value={editingProduct.descripcion} 
-                    onChange={e => setEditingProduct({ ...editingProduct, descripcion: e.target.value })}
-                    placeholder="Detalla las especificaciones comerciales del artículo..."
-                    style={{ width: '100%', height: 130, backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff', resize: 'vertical' }} 
-                  />
+                  <div style={{ position: 'relative', width: '100%' }}>
+                    <textarea 
+                      value={editingProduct.descripcion} 
+                      onChange={e => setEditingProduct({ ...editingProduct, descripcion: e.target.value })}
+                      placeholder="Detalla las especificaciones comerciales del artículo..."
+                      style={{ 
+                        width: '100%', 
+                        height: 130, 
+                        backgroundColor: 'rgba(255,255,255,0.02)', 
+                        border: '1px solid rgba(255,255,255,0.05)', 
+                        borderRadius: 14, 
+                        padding: '12px 16px', 
+                        paddingBottom: '36px',
+                        fontSize: 12, 
+                        outline: 'none', 
+                        color: '#fff', 
+                        resize: 'vertical' 
+                      }} 
+                    />
+                    <button
+                      onClick={optimizeDescriptionWithAI}
+                      disabled={aiLoading || !editingProduct?.descripcion || !editingProduct?.nombre}
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        padding: '4px 8px',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        border: '1px solid rgba(16, 185, 129, 0.2)',
+                        borderRadius: 8,
+                        color: '#10b981',
+                        fontSize: 8,
+                        fontWeight: 900,
+                        textTransform: 'uppercase',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        transition: 'all 0.2s',
+                        height: '20px',
+                        zIndex: 10
+                      }}
+                      onMouseEnter={e => { if (!aiLoading && editingProduct?.descripcion) e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.2)'; }}
+                      onMouseLeave={e => { if (!aiLoading && editingProduct?.descripcion) e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.1)'; }}
+                    >
+                      <Sparkles size={9} />
+                      {aiLoading ? '...' : 'Optimizar con IA'}
+                    </button>
+                  </div>
                 </div>
 
               </div>
