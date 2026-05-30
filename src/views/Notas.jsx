@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { getTheme } from '../lib/theme';
+import { aiService } from '../services/aiService';
 
 // === ICONOS SVG INLINE AUTO-CONTENIDOS ===
 const Icons = {
@@ -157,7 +158,7 @@ const Notas = ({ settings, isDark }) => {
   const [activeFolderId, setActiveFolderId] = useState('all');
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [editMode, setEditMode] = useState('write'); // write, preview
+  const [editMode, setEditMode] = useState('preview'); // write, preview (default preview!)
   const [sidebarVisible, setSidebarVisible] = useState(true);
   
   // --- Modales y Formularios Inline ---
@@ -173,6 +174,14 @@ const Notas = ({ settings, isDark }) => {
   const [showTableModal, setShowTableModal] = useState(false);
   const [gridHover, setGridHover] = useState({ r: 2, c: 2 });
   const textareaRef = useRef(null);
+
+  // --- Estados Extra-Premium (Documento y Copilot) ---
+  const [docTheme, setDocTheme] = useState('modern'); // modern, elegant, technical
+  const [showCopilot, setShowCopilot] = useState(false);
+  const [copilotModel, setCopilotModel] = useState('gemini'); // gemini, deepseek, openrouter
+  const [copilotLoading, setCopilotLoading] = useState(false);
+  const [copilotQuery, setCopilotQuery] = useState('');
+  const [copilotHistory, setCopilotHistory] = useState([]);
 
   // --- Helpers de Fecha ---
   const formatFullDate = (isoString) => {
@@ -195,6 +204,30 @@ const Notas = ({ settings, isDark }) => {
   const activeNote = useMemo(() => {
     return notas.find(n => n.id === activeNoteId) || null;
   }, [notas, activeNoteId]);
+
+  // --- Módulos de Cálculo de Documento (Tipo Word) ---
+  const wordCount = useMemo(() => {
+    if (!activeNote?.contenido) return 0;
+    return activeNote.contenido.trim().split(/\s+/).filter(Boolean).length;
+  }, [activeNote?.contenido]);
+
+  const charCount = useMemo(() => {
+    if (!activeNote?.contenido) return 0;
+    return activeNote.contenido.length;
+  }, [activeNote?.contenido]);
+
+  const readingTime = useMemo(() => {
+    const words = wordCount;
+    const min = Math.ceil(words / 200); // 200 palabras por minuto promedio
+    return min || 1;
+  }, [wordCount]);
+
+  // --- Plantillas de Documentos Estándar ---
+  const TEMPLATES = {
+    minuta: `# Minuta de Reunión\n\n**Fecha:** ${new Date().toLocaleDateString()}\n**Asistentes:** \n- \n\n## Objetivos\n1. \n\n## Notas Generales\n- \n\n## Acuerdos y Tareas\n- [ ] Asignar responsable para... \n- [ ] Programar llamada de seguimiento`,
+    lean_canvas: `# Lean Canvas Modelo de Negocio\n\n### 1. Problema (Dolor del Cliente)\n- \n\n### 2. Segmentos de Clientes\n- \n\n### 3. Propuesta de Valor Única\n- \n\n### 4. Solución\n- \n\n### 5. Canales\n- \n\n### 6. Flujos de Ingresos\n- \n\n### 7. Estructura de Costos\n- \n\n### 8. Métricas Clave\n- \n\n### 9. Ventaja Especial\n- `,
+    ficha: `# Ficha Técnica Corporativa\n\n**Producto:** [Nombre del Producto]\n**Categoría:** [Categoría]\n\n## Especificaciones Técnicas\n- **Dimensiones:** \n- **Peso:** \n- **Materiales:** \n\n## Detalles de Entrega y Garantía\n- **Envío:** \n- **Garantía:** `
+  };
 
   // --- Carga Inicial desde LocalStorage ---
   useEffect(() => {
@@ -623,6 +656,54 @@ const Notas = ({ settings, isDark }) => {
     setShowTableModal(false);
   };
 
+  const executeCopilotAction = async (instruction, isCustom = false) => {
+    if (!activeNote) return;
+    setCopilotLoading(true);
+    
+    // Build standard prompt with note content
+    const systemPrompt = `Actúa como un asistente editorial inteligente de élite y experto en estructurar documentos corporativos.
+Tu único objetivo es responder a las peticiones de edición o análisis de notas del usuario.
+Devuelve únicamente el texto final optimizado, estructurado o corregido sin comentarios aclaratorios adicionales.`;
+
+    const userPrompt = `
+DOCUMENTO ORIGINAL:
+"""
+${activeNote.contenido}
+"""
+
+INSTRUCCIÓN: ${instruction}
+`;
+
+    // Query active AI provider
+    try {
+      const response = await aiService.askRaw(systemPrompt, userPrompt, {
+        aiProvider: copilotModel,
+        geminiKey: settings.geminiKey,
+        deepseekKey: settings.deepseekKey,
+        openrouterKey: settings.openrouterKey,
+        deepseekModel: settings.deepseekModel,
+        openrouterModel: settings.openrouterModel
+      });
+
+      if (response && !response.startsWith('❌') && !response.startsWith('⚠️')) {
+        const cleanedResponse = response.trim();
+        // Insert into copilot history
+        setCopilotHistory(prev => [
+          ...prev,
+          { role: 'user', content: isCustom ? instruction : `Acción: ${instruction}` },
+          { role: 'assistant', content: cleanedResponse }
+        ]);
+        if (isCustom) setCopilotQuery('');
+      } else {
+        alert("Error de IA: " + response);
+      }
+    } catch (e) {
+      alert("Error al procesar con la IA: " + e.message);
+    } finally {
+      setCopilotLoading(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex h-full w-full select-none overflow-hidden transition-all duration-300"
       style={{ backgroundColor: t.bg, color: t.text }}>
@@ -773,7 +854,7 @@ const Notas = ({ settings, isDark }) => {
               return (
                 <div
                   key={note.id}
-                  onClick={() => setActiveNoteId(note.id)}
+                  onClick={() => { setActiveNoteId(note.id); setEditMode('preview'); }}
                   className={`p-3 rounded-lg border text-left cursor-pointer transition-all ${isActive ? 'bg-white/[0.04] border-white/[0.08]' : 'border-transparent hover:bg-white/[0.02]'}`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
@@ -904,14 +985,69 @@ const Notas = ({ settings, isDark }) => {
 
               <div className="flex items-center gap-3">
                 {activeNote.tipo === 'normal' && (
-                  <button
-                    onClick={() => setEditMode(editMode === 'write' ? 'preview' : 'write')}
-                    className="p-1 rounded transition-all hover:bg-white/5"
-                    style={{ color: t.textDim }}
-                    title={editMode === 'write' ? 'Vista Previa' : 'Editar'}
-                  >
-                    {editMode === 'write' ? <Icons.Eye /> : <Icons.Edit />}
-                  </button>
+                  <>
+                    {/* Document Theme Switcher */}
+                    <select
+                      value={docTheme}
+                      onChange={e => setDocTheme(e.target.value)}
+                      className="bg-transparent border-0 outline-none text-[9px] font-bold text-zinc-400 cursor-pointer hover:text-white"
+                      style={{ border: 'none', background: 'transparent' }}
+                    >
+                      <option value="modern" style={{ backgroundColor: t.panel, color: '#fff' }}>Tema: Moderno</option>
+                      <option value="elegant" style={{ backgroundColor: t.panel, color: '#fff' }}>Tema: Elegante</option>
+                      <option value="technical" style={{ backgroundColor: t.panel, color: '#fff' }}>Tema: Técnico</option>
+                    </select>
+
+                    {/* Template Quick Insert */}
+                    {editMode === 'write' && (
+                      <select
+                        value=""
+                        onChange={e => {
+                          if (!e.target.value) return;
+                          const confirmInsert = window.confirm("¿Seguro que deseas insertar esta plantilla? Esto agregará la estructura al final del documento.");
+                          if (confirmInsert) {
+                            handleUpdateNoteField(activeNote.id, 'contenido', (activeNote.contenido || '') + '\n' + TEMPLATES[e.target.value]);
+                          }
+                          e.target.value = "";
+                        }}
+                        className="bg-transparent border-0 outline-none text-[9px] font-bold text-zinc-400 cursor-pointer hover:text-white"
+                        style={{ border: 'none', background: 'transparent' }}
+                      >
+                        <option value="" disabled style={{ backgroundColor: t.panel, color: '#fff' }}>+ Plantilla</option>
+                        <option value="minuta" style={{ backgroundColor: t.panel, color: '#fff' }}>Minuta de Reunión</option>
+                        <option value="lean_canvas" style={{ backgroundColor: t.panel, color: '#fff' }}>Lean Canvas</option>
+                        <option value="ficha" style={{ backgroundColor: t.panel, color: '#fff' }}>Ficha Técnica</option>
+                      </select>
+                    )}
+
+                    {/* Asistente IA Toggle */}
+                    <button
+                      onClick={() => setShowCopilot(!showCopilot)}
+                      className="px-2 py-1 rounded border transition-all text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                      style={{ 
+                        borderColor: showCopilot ? '#a855f7' : t.border, 
+                        color: showCopilot ? '#a855f7' : t.textDim,
+                        backgroundColor: 'transparent'
+                      }}
+                    >
+                      <Icons.Sparkles />
+                      <span>Copilot IA</span>
+                    </button>
+
+                    {/* Editar/Listo Button */}
+                    <button
+                      onClick={() => setEditMode(editMode === 'write' ? 'preview' : 'write')}
+                      className="px-3 py-1 rounded border transition-all text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+                      style={{ 
+                        borderColor: editMode === 'write' ? '#10b981' : t.border, 
+                        color: editMode === 'write' ? '#10b981' : t.text,
+                        backgroundColor: editMode === 'write' ? 'rgba(16, 185, 129, 0.05)' : 'transparent'
+                      }}
+                    >
+                      {editMode === 'write' ? <Icons.Check /> : <Icons.Edit />}
+                      <span>{editMode === 'write' ? 'Listo' : 'Editar'}</span>
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={handleDeleteNote}
@@ -1013,59 +1149,252 @@ const Notas = ({ settings, isDark }) => {
 
               {/* Working space editor views */}
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" style={{ backgroundColor: t.bg }}>
-                <div className="w-full px-8 py-6 flex-1 flex flex-col">
-                  
-                  {/* Clean title on canvas */}
-                  <input
-                    type="text"
-                    value={activeNote.titulo}
-                    onChange={e => handleUpdateNote({ titulo: e.target.value })}
-                    placeholder="Título de la nota..."
-                    className="w-full bg-transparent border-0 text-xl font-bold outline-none px-0 py-0 mb-6 note-title-input"
-                    style={{
-                      color: t.text,
-                      letterSpacing: '-0.02em',
-                      fontWeight: 700,
-                    }}
-                  />
+                
+                {activeNote.tipo === 'normal' ? (
+                  <div className="w-full px-8 py-8 flex-1 flex justify-center">
+                    
+                    {/* The Page Sheet Container */}
+                    <div 
+                      className="w-full max-w-[850px] min-h-[85vh] p-12 rounded-2xl border flex flex-col shadow-xl transition-all duration-300"
+                      style={{ 
+                        backgroundColor: t.surface || '#1c1c1c', 
+                        borderColor: t.border,
+                        fontFamily: docTheme === 'elegant' ? 'Georgia, Cambria, "Times New Roman", Times, serif' : docTheme === 'technical' ? '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace' : 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }}
+                    >
+                      {/* Clean title on canvas inside the page sheet */}
+                      <input
+                        type="text"
+                        value={activeNote.titulo}
+                        onChange={e => handleUpdateNote({ titulo: e.target.value })}
+                        placeholder="Título de la nota..."
+                        disabled={editMode !== 'write'}
+                        className="w-full bg-transparent border-0 text-3xl font-extrabold outline-none px-0 py-0 mb-6 note-title-input"
+                        style={{
+                          color: t.text,
+                          letterSpacing: '-0.03em',
+                          fontWeight: 800,
+                          borderBottom: `1px solid ${t.borderLight || 'rgba(255,255,255,0.05)'}`,
+                          paddingBottom: '12px'
+                        }}
+                      />
 
-                  <div className="flex-1 flex flex-col min-h-0 note-editor-canvas">
-                    {activeNote.tipo === 'guion' ? (
-                      <TeleprompterWorkspace note={activeNote} onUpdate={handleUpdateNote} isDark={isDark} />
-                    ) : activeNote.tipo === 'prompt' ? (
-                      <PromptPlayground note={activeNote} onUpdate={handleUpdateNote} isDark={isDark} />
-                    ) : (
-                      /* STANDARD UNIFIED MARKDOWN EDITOR */
-                      editMode === 'write' ? (
-                        <div className="flex-1 flex flex-col min-h-0 relative">
-                          <textarea
-                            ref={textareaRef}
-                            value={activeNote.contenido}
-                            onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
-                            placeholder="Escribe tu nota aquí usando Markdown... Puedes usar la barra lateral de herramientas para formatear encabezados, tablas y listas."
-                            className="w-full flex-1 bg-transparent border-0 outline-none resize-none font-sans text-xs leading-relaxed p-0 overflow-y-auto"
-                            style={{ 
-                              color: t.textDim, 
-                              height: '100%',
-                              minHeight: '400px',
-                              lineHeight: '1.7',
-                              caretColor: t.accent
-                            }}
-                          />
+                      <div className="flex-1 flex flex-col min-h-0 note-editor-canvas">
+                        {editMode === 'write' ? (
+                          <div className="flex-1 flex flex-col min-h-0 relative">
+                            <textarea
+                              ref={textareaRef}
+                              value={activeNote.contenido}
+                              onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
+                              placeholder="Escribe tu nota aquí usando Markdown... Puedes usar la barra lateral de herramientas para formatear encabezados, tablas y listas."
+                              className="w-full flex-1 bg-transparent border-0 outline-none resize-none font-sans text-xs leading-relaxed p-0 overflow-y-auto"
+                              style={{ 
+                                color: t.textDim, 
+                                height: '100%',
+                                minHeight: '400px',
+                                lineHeight: '1.7',
+                                caretColor: t.accent,
+                                fontSize: '13px'
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="prose prose-sm max-w-none markdown-preview" style={{ color: t.text, lineHeight: '1.7', fontSize: '13px' }}>
+                            {activeNote.contenido ? (
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>{activeNote.contenido}</ReactMarkdown>
+                            ) : (
+                              <p style={{ color: t.textDim, fontSize: '11px', fontStyle: 'italic' }}>Sin contenido para mostrar. Pulsa "Editar" arriba para empezar a escribir.</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Word Count & Reading Time Footer inside the page sheet */}
+                      <div className="flex justify-between items-center mt-8 pt-4 border-t text-[10px] uppercase tracking-wider font-bold" 
+                        style={{ borderColor: t.border, color: t.textMuted }}>
+                        <div>
+                          {wordCount} palabras &bull; {charCount} caracteres
                         </div>
+                        <div>
+                          {readingTime} {readingTime === 1 ? 'minuto' : 'minutos'} de lectura
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                ) : (
+                  /* Other types like Teleprompter or Prompt Playground */
+                  <div className="w-full px-8 py-6 flex-1 flex flex-col">
+                    <input
+                      type="text"
+                      value={activeNote.titulo}
+                      onChange={e => handleUpdateNote({ titulo: e.target.value })}
+                      placeholder="Título de la nota..."
+                      className="w-full bg-transparent border-0 text-xl font-bold outline-none px-0 py-0 mb-6 note-title-input"
+                      style={{
+                        color: t.text,
+                        letterSpacing: '-0.02em',
+                        fontWeight: 700,
+                      }}
+                    />
+
+                    <div className="flex-1 flex flex-col min-h-0 note-editor-canvas">
+                      {activeNote.tipo === 'guion' ? (
+                        <TeleprompterWorkspace note={activeNote} onUpdate={handleUpdateNote} isDark={isDark} />
                       ) : (
-                        <div className="prose prose-sm max-w-none markdown-preview" style={{ color: t.text, lineHeight: '1.7', fontSize: '12.5px' }}>
-                          {activeNote.contenido ? (
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{activeNote.contenido}</ReactMarkdown>
-                          ) : (
-                            <p style={{ color: t.textDim, fontSize: '10px' }}>Sin contenido para previsualizar</p>
-                          )}
+                        <PromptPlayground note={activeNote} onUpdate={handleUpdateNote} isDark={isDark} />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Side: AI Copilot Drawer */}
+              {showCopilot && (
+                <div 
+                  className="w-80 shrink-0 border-l flex flex-col min-h-0 overflow-hidden animate-in slide-in-from-right duration-200"
+                  style={{ borderColor: t.border, backgroundColor: t.bg }}
+                >
+                  {/* Copilot Header */}
+                  <div className="h-[52px] px-4 border-b flex items-center justify-between shrink-0"
+                    style={{ borderColor: t.border }}>
+                    <div className="flex items-center gap-2">
+                      <Icons.Sparkles className="text-purple-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider" style={{ color: t.text }}>Copilot IA</span>
+                    </div>
+                    <button
+                      onClick={() => setShowCopilot(false)}
+                      className="p-1 rounded hover:bg-white/5 transition-all text-zinc-400 hover:text-white"
+                    >
+                      <Icons.X />
+                    </button>
+                  </div>
+
+                  {/* Copilot Config & Actions */}
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+                    {/* Model Select */}
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Proveedor de IA</label>
+                      <select
+                        value={copilotModel}
+                        onChange={e => setCopilotModel(e.target.value)}
+                        className="w-full bg-transparent border rounded p-2 text-xs"
+                        style={{ borderColor: t.border, color: t.text }}
+                      >
+                        <option value="gemini" style={{ backgroundColor: t.panel, color: '#fff' }}>Google Gemini (Directo)</option>
+                        {settings.deepseekKey && <option value="deepseek" style={{ backgroundColor: t.panel, color: '#fff' }}>DeepSeek (Directo)</option>}
+                        {settings.openrouterKey && <option value="openrouter" style={{ backgroundColor: t.panel, color: '#fff' }}>OpenRouter (Bóveda)</option>}
+                      </select>
+                    </div>
+
+                    <div className="w-full h-[1px]" style={{ backgroundColor: t.border }} />
+
+                    {/* Pre-defined Actions */}
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Acciones Rápidas</label>
+                      <div className="grid grid-cols-1 gap-2">
+                        {[
+                          { label: 'Corregir Ortografía', action: 'Corrige la ortografía y mejora la gramática del texto manteniendo la estructura original.' },
+                          { label: 'Mejorar Redacción', action: 'Reescribe el texto para que suene más fluido, profesional y persuasivo.' },
+                          { label: 'Resumir Nota', action: 'Genera un resumen ejecutivo breve con los puntos clave del documento.' },
+                          { label: 'Hacer Formato Premium', action: 'Optimiza la estructura Markdown del documento utilizando títulos H1, H2, listas y viñetas elegantes para una lectura rápida.' },
+                          { label: 'Generar Ideas Relacionadas', action: 'Propón 5 ideas adicionales o secciones recomendadas para añadir al documento.' }
+                        ].map((act, idx) => (
+                          <button
+                            key={idx}
+                            disabled={copilotLoading}
+                            onClick={() => executeCopilotAction(act.action)}
+                            className="w-full text-left px-3 py-2 rounded border text-[10px] font-medium transition-all hover:bg-white/5 active:scale-[0.98]"
+                            style={{ borderColor: t.border, color: t.text }}
+                          >
+                            {act.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="w-full h-[1px]" style={{ backgroundColor: t.border }} />
+
+                    {/* Chat History */}
+                    {copilotHistory.length > 0 && (
+                      <div className="space-y-3">
+                        <label className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Historial de Respuestas</label>
+                        <div className="space-y-3.5">
+                          {copilotHistory.map((chat, idx) => (
+                            <div key={idx} className="space-y-1">
+                              <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: chat.role === 'user' ? t.accent : '#a855f7' }}>
+                                {chat.role === 'user' ? 'Tú' : 'Copilot'}
+                              </span>
+                              <div 
+                                className="text-xs p-3 rounded-lg border leading-relaxed font-sans overflow-x-auto whitespace-pre-wrap selection:bg-purple-900/30"
+                                style={{ 
+                                  backgroundColor: chat.role === 'user' ? 'transparent' : 'rgba(168, 85, 247, 0.03)',
+                                  borderColor: chat.role === 'user' ? t.border : 'rgba(168, 85, 247, 0.15)',
+                                  color: chat.role === 'user' ? t.textDim : t.text
+                                }}
+                              >
+                                {chat.content}
+                                {chat.role === 'assistant' && (
+                                  <div className="flex gap-2 mt-3 pt-2 border-t" style={{ borderColor: 'rgba(168, 85, 247, 0.1)' }}>
+                                    <button
+                                      onClick={() => {
+                                        handleUpdateNoteField(activeNote.id, 'contenido', chat.content);
+                                        alert("El contenido de la nota ha sido reemplazado con la respuesta de la IA.");
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-purple-900/20 hover:bg-purple-900/40 text-purple-300 border border-purple-800/40"
+                                    >
+                                      Reemplazar Nota
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        handleUpdateNoteField(activeNote.id, 'contenido', (activeNote.contenido || '') + '\n\n' + chat.content);
+                                        alert("Respuesta insertada al final de la nota.");
+                                      }}
+                                      className="px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-zinc-700/50"
+                                    >
+                                      Insertar al Final
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      )
+                      </div>
                     )}
                   </div>
+
+                  {/* Custom Prompt Input */}
+                  <div className="p-3 border-t space-y-2 shrink-0 bg-black/10" style={{ borderColor: t.border }}>
+                    <textarea
+                      rows={2}
+                      value={copilotQuery}
+                      onChange={e => setCopilotQuery(e.target.value)}
+                      placeholder="Pídele algo a la IA sobre tu nota..."
+                      className="w-full bg-transparent border rounded p-2 text-xs outline-none focus:border-purple-500/50 resize-none"
+                      style={{ borderColor: t.border, color: t.text }}
+                    />
+                    <div className="flex justify-between items-center">
+                      <button
+                        onClick={() => setCopilotHistory([])}
+                        className="text-[9px] font-bold text-zinc-500 hover:text-zinc-300 uppercase tracking-wider"
+                      >
+                        Limpiar chat
+                      </button>
+                      <button
+                        disabled={copilotLoading || !copilotQuery.trim()}
+                        onClick={() => executeCopilotAction(copilotQuery, true)}
+                        className="px-3 py-1 rounded text-[9px] font-bold uppercase tracking-wider text-black bg-purple-400 hover:bg-purple-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{ backgroundColor: copilotLoading ? '#5c5c5c' : '#a855f7', color: copilotLoading ? '#ccc' : '#000' }}
+                      >
+                        {copilotLoading ? 'Pensando...' : 'Enviar'}
+                      </button>
+                    </div>
+                  </div>
+
                 </div>
-              </div>
+              )}
 
             </div>
 

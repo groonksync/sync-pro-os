@@ -187,5 +187,105 @@ export const aiService = {
 
       return `❌ Error de Sincronización SDK: ${errorMsg}. \n\nSugerencia: Si usas AI Studio, asegúrate de que la llave esté activa.`;
     }
+  },
+
+  /**
+   * Ejecutar consulta directa a la IA con proveedor, modelo y llaves activas en Ajustes
+   */
+  askRaw: async (systemPrompt, userPrompt, settings = {}) => {
+    const provider = settings.aiProvider || 'gemini';
+    const geminiKey = settings.geminiKey || import.meta.env.VITE_GEMINI_API_KEY;
+    const deepseekKey = settings.deepseekKey;
+    const openrouterKey = settings.openrouterKey;
+
+    // 1. DEEPSEEK DIRECTO
+    if (provider === 'deepseek') {
+      if (!deepseekKey) return "⚠️ Error: Falta la API Key de DeepSeek en Ajustes.";
+      const activeModel = settings.deepseekModel || 'deepseek-chat';
+      try {
+        const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${deepseekKey}` },
+          body: JSON.stringify({
+            model: activeModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt }
+            ]
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.choices[0].message.content;
+      } catch (e) {
+        return `❌ Error DeepSeek: ${e.message}`;
+      }
+    }
+
+    // 2. OPENROUTER
+    if (provider === 'openrouter') {
+      if (!openrouterKey) return "⚠️ Error: Falta la API Key de OpenRouter en Ajustes.";
+      const activeModel = settings.openrouterModel || 'google/gemini-2.5-flash';
+      try {
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${openrouterKey}`,
+            "HTTP-Referer": "https://sync-pro-os.vercel.app",
+            "X-Title": "Inefable"
+          },
+          body: JSON.stringify({
+            model: activeModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt }
+            ]
+          })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        return data.choices[0].message.content;
+      } catch (e) {
+        return `❌ Error OpenRouter: ${e.message}`;
+      }
+    }
+
+    // 3. GEMINI DIRECTO (SDK)
+    const cleanKey = (geminiKey || '').trim();
+    if (!cleanKey) return "⚠️ Error: Falta la API Key de Gemini en Ajustes.";
+    
+    try {
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(cleanKey);
+      
+      const modelsToTry = [
+        "gemini-1.5-flash", 
+        "gemini-1.5-pro", 
+        "gemini-1.5-flash-latest",
+        "gemini-1.0-pro"
+      ];
+      
+      let text = null;
+      let lastError = null;
+
+      for (const mName of modelsToTry) {
+        try {
+          const model = genAI.getGenerativeModel({ model: mName });
+          const result = await model.generateContent(`SISTEMA: ${systemPrompt}\n\nUSUARIO: ${userPrompt}`);
+          const response = await result.response;
+          text = response.text();
+          if (text) break;
+        } catch (e) {
+          lastError = e;
+        }
+      }
+      
+      if (text) return text;
+      throw lastError || new Error("Respuesta vacía o error en todos los modelos.");
+
+    } catch (e) {
+      return `❌ Error Gemini: ${e.message}`;
+    }
   }
 };
