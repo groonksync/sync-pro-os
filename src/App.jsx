@@ -18,6 +18,7 @@ import SovereignAgent from './views/SovereignAgent';
 import ClientPortal from './views/ClientPortal';
 import PublicCatalog from './views/PublicCatalog';
 import BovedaPass from './views/BovedaPass';
+import FlujoTrabajo from './views/FlujoTrabajo';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { supabase } from './lib/supabaseClient';
 import { getTheme } from './lib/theme';
@@ -267,6 +268,7 @@ const App = () => {
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} initialSearch={inventarioSearch} />;
         case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} />;
         case 'notas': return <Notas isDark={isDarkMode} />;
+        case 'flujo-trabajo': return <FlujoTrabajo settings={appSettings} isDark={isDarkMode} />;
         case 'boveda': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;
         case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} isDark={isDarkMode} />;
         case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} isDark={isDarkMode} />;
@@ -332,8 +334,8 @@ const App = () => {
           }} 
         />
         
-        <main className={`flex-1 h-full ${(activeTab === 'notas' || activeTab === 'catalogo') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out ${appSettings.isMobileMode ? 'pb-24' : ''}`}>
-          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'notas' || activeTab === 'catalogo') ? 'h-full' : 'min-h-full'} max-w-[2000px] mx-auto transition-all ${(activeTab === 'notas' || activeTab === 'catalogo') ? '' : (appSettings.isMobileMode ? 'px-4 py-4' : 'px-6 py-8 lg:px-16 lg:py-12')}`}>
+        <main className={`flex-1 h-full ${(activeTab === 'notas' || activeTab === 'catalogo' || activeTab === 'flujo-trabajo') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out ${appSettings.isMobileMode ? 'pb-24' : ''}`}>
+          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'notas' || activeTab === 'catalogo' || activeTab === 'flujo-trabajo') ? 'h-full' : 'min-h-full'} max-w-[2000px] mx-auto transition-all ${(activeTab === 'notas' || activeTab === 'catalogo' || activeTab === 'flujo-trabajo') ? '' : (appSettings.isMobileMode ? 'px-4 py-4' : 'px-6 py-8 lg:px-16 lg:py-12')}`}>
             {renderSafeContent()}
           </div>
         </main>

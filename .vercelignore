@@ -1,0 +1,10 @@
+node_modules
+dist
+.git
+release
+*.app
+*.dmg
+.env
+.env.*
+*.local
+release

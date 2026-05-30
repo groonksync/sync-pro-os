@@ -28,7 +28,8 @@ import {
   BrainCircuit,
   StickyNote,
   ShieldCheck,
-  Building2
+  Building2,
+  Workflow
 } from 'lucide-react';
 import { getTheme } from '../lib/theme';
 
@@ -54,6 +55,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
     { id: 'calendar', label: 'Calendario', icon: Calendar },
     { id: 'recordatorios', label: 'Recordatorios', icon: Bell, count: counts?.notificaciones },
     { id: 'notas', label: 'Notas', icon: StickyNote },
+    { id: 'flujo-trabajo', label: 'Flujo de Trabajo', icon: Workflow },
     { id: 'boveda', label: 'Contraseñas', icon: ShieldCheck },
     { id: 'papelera', label: 'Papelera', icon: Trash2 },
   ];
