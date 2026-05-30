@@ -169,6 +169,11 @@ const Notas = ({ settings, isDark }) => {
   const [syncStatus, setSyncStatus] = useState('Guardado');
   const saveTimeoutRef = useRef(null);
 
+  // --- Estados de la Tabla y Ref del Editor ---
+  const [showTableModal, setShowTableModal] = useState(false);
+  const [gridHover, setGridHover] = useState({ r: 2, c: 2 });
+  const textareaRef = useRef(null);
+
   // --- Helpers de Fecha ---
   const formatFullDate = (isoString) => {
     if (!isoString) return '';
@@ -525,6 +530,99 @@ const Notas = ({ settings, isDark }) => {
     }
   };
 
+  const insertMarkdown = (syntaxBefore, syntaxAfter = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+
+    const replacement = syntaxBefore + selectedText + syntaxAfter;
+    const newContent = before + replacement + after;
+
+    handleUpdateNoteField(activeNote.id, 'contenido', newContent);
+
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + syntaxBefore.length, start + syntaxBefore.length + selectedText.length);
+    }, 0);
+  };
+
+  const applyHeader = (headerPrefix) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    
+    const beforeCursor = text.substring(0, start);
+    const lastNewline = beforeCursor.lastIndexOf('\n');
+    const lineStartIdx = lastNewline === -1 ? 0 : lastNewline + 1;
+    
+    const afterCursor = text.substring(start);
+    const nextNewline = afterCursor.indexOf('\n');
+    const lineEndIdx = nextNewline === -1 ? text.length : start + nextNewline;
+    
+    const currentLine = text.substring(lineStartIdx, lineEndIdx);
+    
+    const cleanLine = currentLine.replace(/^(\s*#+\s+|\s*-\s+\[[ xX/]\]\s*|\s*-\s+|\s*\*\s+)/, '');
+    const newLine = headerPrefix + cleanLine;
+    
+    const beforeLine = text.substring(0, lineStartIdx);
+    const afterLine = text.substring(lineEndIdx);
+    
+    const newContent = beforeLine + newLine + afterLine;
+    handleUpdateNoteField(activeNote.id, 'contenido', newContent);
+    
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = lineStartIdx + newLine.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  const insertTable = (rows, cols) => {
+    const headers = [];
+    const separators = [];
+    for (let c = 1; c <= cols; c++) {
+      headers.push(`Columna ${c}`);
+      separators.push('---------');
+    }
+    const headerLine = '| ' + headers.join(' | ') + ' |';
+    const sepLine = '| ' + separators.join(' | ') + ' |';
+    
+    const dataLines = [];
+    for (let r = 1; r <= rows; r++) {
+      const rowCells = Array(cols).fill(' ');
+      dataLines.push('| ' + rowCells.join(' | ') + ' |');
+    }
+    
+    const tableMarkdown = '\n' + [headerLine, sepLine, ...dataLines].join('\n') + '\n';
+    
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = textarea.value;
+      const before = text.substring(0, start);
+      const after = text.substring(end, text.length);
+      const newContent = before + tableMarkdown + after;
+      handleUpdateNoteField(activeNote.id, 'contenido', newContent);
+      
+      setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + tableMarkdown.length, start + tableMarkdown.length);
+      }, 0);
+    } else {
+      handleUpdateNoteField(activeNote.id, 'contenido', (activeNote.contenido || '') + tableMarkdown);
+    }
+    setShowTableModal(false);
+  };
+
   return (
     <div className="flex-1 flex h-full w-full select-none overflow-hidden transition-all duration-300"
       style={{ backgroundColor: t.bg, color: t.text }}>
@@ -711,10 +809,7 @@ const Notas = ({ settings, isDark }) => {
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
             <style>{`
               /* Specificity overrides for global input styles inside the clean editor workspace */
-              .editor-workspace-clean input[type="text"].note-title-input,
-              .editor-workspace-clean input[type="text"],
-              .editor-workspace-clean textarea,
-              .editor-workspace-clean select {
+              .editor-workspace-clean input[type="text"].note-title-input {
                 background-color: transparent !important;
                 border: none !important;
                 border-radius: 0px !important;
@@ -722,35 +817,80 @@ const Notas = ({ settings, isDark }) => {
                 box-shadow: none !important;
                 outline: none !important;
               }
-              .editor-workspace-clean input[type="text"].note-title-input:focus,
-              .editor-workspace-clean input[type="text"]:focus,
-              .editor-workspace-clean textarea:focus,
-              .editor-workspace-clean select:focus {
+              .editor-workspace-clean input[type="text"].note-title-input:focus {
                 background-color: transparent !important;
                 border: none !important;
                 box-shadow: none !important;
                 outline: none !important;
               }
               
-              /* Remove borders and gray cards for blocks */
-              .editor-workspace-clean .block-img-card,
-              .editor-workspace-clean .border,
-              .editor-workspace-clean .rounded-xl {
-                border: none !important;
-                background-color: transparent !important;
-                box-shadow: none !important;
+              /* Premium markdown preview overrides */
+              .markdown-preview h1 {
+                font-size: 2.25rem !important; /* ~36px */
+                font-weight: 800 !important;
+                margin-top: 1.75rem !important;
+                margin-bottom: 0.85rem !important;
+                color: ${t.text} !important;
+                border-bottom: 1px solid ${t.border} !important;
+                padding-bottom: 0.4rem !important;
+              }
+              .markdown-preview h2 {
+                font-size: 1.5rem !important; /* ~24px */
+                font-weight: 700 !important;
+                margin-top: 1.5rem !important;
+                margin-bottom: 0.6rem !important;
+                color: ${t.text} !important;
+              }
+              .markdown-preview h3 {
+                font-size: 1.2rem !important; /* ~19px */
+                font-weight: 600 !important;
+                margin-top: 1.25rem !important;
+                margin-bottom: 0.5rem !important;
+                color: ${t.textDim} !important;
+              }
+              .markdown-preview p {
+                font-size: 0.875rem !important; /* 14px text base */
+                line-height: 1.7 !important;
+                margin-bottom: 1rem !important;
+                color: ${t.textDim} !important;
+              }
+              .markdown-preview ul, .markdown-preview ol {
+                margin: 1rem 0 !important;
+                padding-left: 1.5rem !important;
+                color: ${t.textDim} !important;
+              }
+              .markdown-preview li {
+                margin-bottom: 0.35rem !important;
+                font-size: 0.875rem !important;
+                line-height: 1.6 !important;
+              }
+              
+              /* Ensure checkboxes render nicely in preview */
+              .markdown-preview input[type="checkbox"] {
+                margin-right: 0.5rem !important;
+                accent-color: #4ec9b0 !important;
+                cursor: pointer !important;
               }
 
-              /* Ensure table cells have simple borders but no block containers */
-              .editor-workspace-clean table {
+              /* Elegant obsidian premium tables */
+              .markdown-preview table {
                 border-collapse: collapse !important;
                 width: 100% !important;
+                margin: 1.5rem 0 !important;
+                font-size: 0.85rem !important;
               }
-              .editor-workspace-clean table,
-              .editor-workspace-clean th,
-              .editor-workspace-clean td {
+              .markdown-preview th {
+                font-weight: 700 !important;
+                background-color: rgba(255,255,255,0.02) !important;
+                padding: 10px 14px !important;
                 border: 1px solid ${t.border} !important;
-                background-color: transparent !important;
+                color: ${t.text} !important;
+                text-align: left !important;
+              }
+              .markdown-preview td {
+                padding: 10px 14px !important;
+                border: 1px solid ${t.border} !important;
+                color: ${t.textDim} !important;
               }
             `}</style>
             
@@ -825,42 +965,42 @@ const Notas = ({ settings, isDark }) => {
                   <>
                     <div className="w-6 h-[1px]" style={{ backgroundColor: t.border }} />
                     <button
-                      onClick={() => handleAddBlock('h1')}
+                      onClick={() => applyHeader('# ')}
                       className="p-1.5 rounded-lg transition-all hover:bg-white/5"
                       title="Añadir H1"
                     >
                       <Icons.Header1 />
                     </button>
                     <button
-                      onClick={() => handleAddBlock('h2')}
+                      onClick={() => applyHeader('## ')}
                       className="p-1.5 rounded-lg transition-all hover:bg-white/5"
                       title="Añadir H2"
                     >
                       <Icons.Header2 />
                     </button>
                     <button
-                      onClick={() => handleAddBlock('texto')}
+                      onClick={() => applyHeader('')}
                       className="p-1.5 rounded-lg transition-all hover:bg-white/5"
-                      title="Añadir Texto"
+                      title="Texto Normal"
                     >
                       <Icons.Text />
                     </button>
                     <button
-                      onClick={() => handleAddBlock('tabla')}
+                      onClick={() => { setGridHover({ r: 2, c: 2 }); setShowTableModal(true); }}
                       className="p-1.5 rounded-lg transition-all hover:bg-white/5"
                       title="Añadir Tabla"
                     >
                       <Icons.Table />
                     </button>
                     <button
-                      onClick={() => handleAddBlock('checklist')}
+                      onClick={() => applyHeader('- [ ] ')}
                       className="p-1.5 rounded-lg transition-all hover:bg-white/5"
                       title="Añadir Checklist"
                     >
                       <Icons.ListTodo />
                     </button>
                     <button
-                      onClick={() => handleAddBlock('imagen')}
+                      onClick={() => insertMarkdown('![Descripción](', ')')}
                       className="p-1.5 rounded-lg transition-all hover:bg-white/5"
                       title="Añadir Imagen URL"
                     >
@@ -873,7 +1013,7 @@ const Notas = ({ settings, isDark }) => {
 
               {/* Working space editor views */}
               <div className="flex-1 flex flex-col min-h-0 overflow-y-auto" style={{ backgroundColor: t.bg }}>
-                <div className="max-w-[700px] w-full mx-auto px-8 py-6 flex-1 flex flex-col">
+                <div className="w-full px-8 py-6 flex-1 flex flex-col">
                   
                   {/* Clean title on canvas */}
                   <input
@@ -895,232 +1035,23 @@ const Notas = ({ settings, isDark }) => {
                     ) : activeNote.tipo === 'prompt' ? (
                       <PromptPlayground note={activeNote} onUpdate={handleUpdateNote} isDark={isDark} />
                     ) : (
-                      /* STANDARD NOTION-STYLE BLOCKS EDITOR */
+                      /* STANDARD UNIFIED MARKDOWN EDITOR */
                       editMode === 'write' ? (
-                        <div className="space-y-4">
-                          {parseMarkdownToBlocks(activeNote.contenido).map((block, idx) => {
-                            if (block.tipo === 'h1') {
-                              return (
-                                <input
-                                  key={idx}
-                                  type="text"
-                                  value={block.contenido}
-                                  onChange={e => handleUpdateBlock(idx, { contenido: e.target.value })}
-                                  placeholder="Título H1..."
-                                  className="w-full bg-transparent border-0 text-lg font-bold outline-none px-0 py-1"
-                                  style={{ color: t.text, letterSpacing: '-0.01em' }}
-                                />
-                              );
-                            }
-                            if (block.tipo === 'h2') {
-                              return (
-                                <input
-                                  key={idx}
-                                  type="text"
-                                  value={block.contenido}
-                                  onChange={e => handleUpdateBlock(idx, { contenido: e.target.value })}
-                                  placeholder="Subtítulo H2..."
-                                  className="w-full bg-transparent border-0 text-sm font-semibold outline-none px-0 py-1"
-                                  style={{ color: t.text }}
-                                />
-                              );
-                            }
-                            if (block.tipo === 'texto') {
-                              return (
-                                <textarea
-                                  key={idx}
-                                  value={block.contenido}
-                                  onChange={e => handleUpdateBlock(idx, { contenido: e.target.value })}
-                                  placeholder="Escribe texto libre..."
-                                  className="w-full bg-transparent border-0 text-xs leading-relaxed outline-none resize-none px-0 py-1"
-                                  style={{ color: t.textDim, minHeight: '60px' }}
-                                />
-                              );
-                            }
-                            if (block.tipo === 'imagen') {
-                              return (
-                                <div key={idx} className="py-2 space-y-2 block-img-card p-3" style={{ border: `1px solid ${t.border}`, borderRadius: '8px' }}>
-                                  <div className="flex gap-2">
-                                    <input
-                                      type="text"
-                                      value={block.url}
-                                      onChange={e => handleUpdateBlock(idx, { url: e.target.value })}
-                                      placeholder="Enlace de la imagen..."
-                                      className="flex-1 text-xs"
-                                      style={{ color: t.text }}
-                                    />
-                                    <button
-                                      onClick={() => {
-                                        const currentBlocks = parseMarkdownToBlocks(activeNote.contenido);
-                                        const updated = currentBlocks.filter(b => b.id !== block.id);
-                                        handleUpdateNoteField(activeNote.id, 'contenido', serializeBlocksToMarkdown(updated));
-                                      }}
-                                      className="p-1 rounded text-red-500 hover:bg-white/5 transition-all"
-                                    >
-                                      <Icons.Trash />
-                                    </button>
-                                  </div>
-                                  {block.url && (
-                                    <img
-                                      src={block.url}
-                                      alt={block.caption || 'Imagen'}
-                                      className="rounded-lg max-h-[300px] object-cover mt-2 w-full"
-                                    />
-                                  )}
-                                </div>
-                              );
-                            }
-                            if (block.tipo === 'checklist') {
-                              return (
-                                <div key={idx} className="space-y-1.5 py-2 pl-1 border-l-2 pl-4" style={{ borderColor: t.border }}>
-                                  {block.items.map((item, itemIdx) => (
-                                    <div key={item.id} className="flex items-center gap-2">
-                                      <input
-                                        type="checkbox"
-                                        checked={item.status === 'completado'}
-                                        onChange={e => {
-                                          const updatedItems = [...block.items];
-                                          updatedItems[itemIdx].status = e.target.checked ? 'completado' : 'pendiente';
-                                          handleUpdateBlock(idx, { items: updatedItems });
-                                        }}
-                                        className="w-4 h-4 accent-teal-500"
-                                      />
-                                      <input
-                                        type="text"
-                                        value={item.text}
-                                        onChange={e => {
-                                          const updatedItems = [...block.items];
-                                          updatedItems[itemIdx].text = e.target.value;
-                                          handleUpdateBlock(idx, { items: updatedItems });
-                                        }}
-                                        placeholder="Tarea..."
-                                        className="flex-1 bg-transparent border-0 outline-none text-xs"
-                                        style={{
-                                          color: item.status === 'completado' ? t.textMuted : t.text,
-                                          textDecoration: item.status === 'completado' ? 'line-through' : 'none'
-                                        }}
-                                      />
-                                      <button
-                                        onClick={() => {
-                                          const updatedItems = block.items.filter(it => it.id !== item.id);
-                                          handleUpdateBlock(idx, { items: updatedItems });
-                                        }}
-                                        className="p-1 rounded text-zinc-500 hover:text-red-400"
-                                      >
-                                        <Icons.Trash />
-                                      </button>
-                                    </div>
-                                  ))}
-                                  <button
-                                    onClick={() => {
-                                      const newItem = { id: 'item-' + Date.now(), text: '', status: 'pendiente' };
-                                      handleUpdateBlock(idx, { items: [...block.items, newItem] });
-                                    }}
-                                    className="text-[9px] font-semibold flex items-center gap-1 mt-1 pl-6 hover:underline"
-                                    style={{ color: t.accent }}
-                                  >
-                                    + Añadir Tarea
-                                  </button>
-                                </div>
-                              );
-                            }
-                            if (block.tipo === 'tabla') {
-                              return (
-                                <div key={idx} className="py-3 overflow-x-auto">
-                                  <table className="w-full border-collapse text-xs" style={{ borderColor: t.border }}>
-                                    <thead>
-                                      <tr>
-                                        {block.columnas.map((col, colIdx) => (
-                                          <th key={colIdx} className="p-2 border font-semibold text-left relative group" style={{ borderColor: t.border, backgroundColor: 'transparent', color: t.text }}>
-                                            <input
-                                              type="text"
-                                              value={col}
-                                              onChange={e => {
-                                                const updatedCols = [...block.columnas];
-                                                updatedCols[colIdx] = e.target.value;
-                                                handleUpdateBlock(idx, { columnas: updatedCols });
-                                              }}
-                                              className="bg-transparent border-0 outline-none text-xs font-bold w-full"
-                                            />
-                                            <button
-                                              onClick={() => {
-                                                const updatedCols = block.columnas.filter((_, ci) => ci !== colIdx);
-                                                const updatedFilas = block.filas.map(f => ({
-                                                  ...f,
-                                                  celdas: f.celdas.filter((_, ci) => ci !== colIdx)
-                                                }));
-                                                handleUpdateBlock(idx, { columnas: updatedCols, filas: updatedFilas });
-                                              }}
-                                              className="absolute right-1 top-1/2 -translate-y-1/2 p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-white/10 text-red-400"
-                                              title="Eliminar columna"
-                                            >
-                                              <Icons.Trash />
-                                            </button>
-                                          </th>
-                                        ))}
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {block.filas.map((row, rowIdx) => (
-                                        <tr key={row.id}>
-                                          {row.celdas.map((celda, colIdx) => (
-                                            <td key={colIdx} className="p-2 border" style={{ borderColor: t.border }}>
-                                              <input
-                                                type="text"
-                                                value={celda}
-                                                onChange={e => {
-                                                  const updatedFilas = [...block.filas];
-                                                  updatedFilas[rowIdx].celdas[colIdx] = e.target.value;
-                                                  handleUpdateBlock(idx, { filas: updatedFilas });
-                                                }}
-                                                className="bg-transparent border-0 outline-none text-xs w-full"
-                                                style={{ color: t.textDim }}
-                                              />
-                                            </td>
-                                          ))}
-                                          <td className="w-8 p-1 text-center border-0">
-                                            <button
-                                              onClick={() => {
-                                                const updatedFilas = block.filas.filter(f => f.id !== row.id);
-                                                handleUpdateBlock(idx, { filas: updatedFilas });
-                                              }}
-                                              className="p-1 rounded text-zinc-500 hover:text-red-400"
-                                            >
-                                              <Icons.Trash />
-                                            </button>
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                  <div className="flex gap-3 mt-2">
-                                    <button
-                                      onClick={() => {
-                                        const newRow = { id: 'row-' + Date.now(), celdas: Array(block.columnas.length).fill('') };
-                                        handleUpdateBlock(idx, { filas: [...block.filas, newRow] });
-                                      }}
-                                      className="text-[9.5px] font-semibold flex items-center gap-1 hover:underline"
-                                      style={{ color: t.accent }}
-                                    >
-                                      + Fila
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        const updatedCols = [...block.columnas, 'Nueva Columna'];
-                                        const updatedFilas = block.filas.map(f => ({ ...f, celdas: [...f.celdas, ''] }));
-                                        handleUpdateBlock(idx, { columnas: updatedCols, filas: updatedFilas });
-                                      }}
-                                      className="text-[9.5px] font-semibold flex items-center gap-1 hover:underline"
-                                      style={{ color: t.accent }}
-                                    >
-                                      + Columna
-                                    </button>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          })}
+                        <div className="flex-1 flex flex-col min-h-0 relative">
+                          <textarea
+                            ref={textareaRef}
+                            value={activeNote.contenido}
+                            onChange={e => handleUpdateNoteField(activeNote.id, 'contenido', e.target.value)}
+                            placeholder="Escribe tu nota aquí usando Markdown... Puedes usar la barra lateral de herramientas para formatear encabezados, tablas y listas."
+                            className="w-full flex-1 bg-transparent border-0 outline-none resize-none font-sans text-xs leading-relaxed p-0 overflow-y-auto"
+                            style={{ 
+                              color: t.textDim, 
+                              height: '100%',
+                              minHeight: '400px',
+                              lineHeight: '1.7',
+                              caretColor: t.accent
+                            }}
+                          />
                         </div>
                       ) : (
                         <div className="prose prose-sm max-w-none markdown-preview" style={{ color: t.text, lineHeight: '1.7', fontSize: '12.5px' }}>
@@ -1151,8 +1082,64 @@ const Notas = ({ settings, isDark }) => {
             </p>
           </div>
         )}
-
       </div>
+
+      {showTableModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 backdrop-blur-sm animate-fade-in">
+          <div 
+            className="p-6 rounded-xl border max-w-sm w-full space-y-4 shadow-2xl"
+            style={{ backgroundColor: t.panel, borderColor: t.border }}
+          >
+            <div className="flex justify-between items-center">
+              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: t.text }}>Insertar Tabla</span>
+              <button 
+                onClick={() => setShowTableModal(false)}
+                className="p-1 rounded hover:bg-white/5 transition-all text-zinc-400 hover:text-white"
+              >
+                <Icons.X />
+              </button>
+            </div>
+            
+            <p className="text-[10px]" style={{ color: t.textDim }}>Arrastra el cursor sobre la cuadrícula para definir el tamaño de la tabla:</p>
+            
+            {/* Grid selector */}
+            <div className="flex flex-col items-center py-2">
+              <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(8, minmax(0, 1fr))', width: '180px' }}>
+                {Array.from({ length: 8 }).map((_, rIdx) => (
+                  Array.from({ length: 8 }).map((_, cIdx) => {
+                    const isHovered = rIdx <= gridHover.r && cIdx <= gridHover.c;
+                    return (
+                      <div
+                        key={`${rIdx}-${cIdx}`}
+                        onMouseEnter={() => setGridHover({ r: rIdx, c: cIdx })}
+                        onClick={() => insertTable(rIdx + 1, cIdx + 1)}
+                        className="w-5 h-5 rounded cursor-pointer transition-all border"
+                        style={{
+                          backgroundColor: isHovered ? 'rgba(78, 201, 176, 0.3)' : 'transparent',
+                          borderColor: isHovered ? '#4ec9b0' : 'rgba(255,255,255,0.08)'
+                        }}
+                      />
+                    );
+                  })
+                ))}
+              </div>
+              <div className="mt-3 text-[10px] font-mono font-bold" style={{ color: t.accent }}>
+                {gridHover.r + 1} Filas x {gridHover.c + 1} Columnas
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => setShowTableModal(false)}
+                className="px-3 py-1.5 text-[10px] font-bold uppercase rounded border transition-all"
+                style={{ borderColor: t.border, color: t.textDim }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
@@ -1489,4 +1476,3 @@ const PromptPlayground = ({ note, onUpdate, isDark }) => {
 };
 
 export default Notas;
-
