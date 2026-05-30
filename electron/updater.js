@@ -10,7 +10,7 @@ export function setupAutoUpdater(mainWindow) {
     mainWindow.webContents.send('update-check-started');
   });
 
-  autoUpdater.on('update-available', (info) => {
+  autoUpdater.on('update-available', async (info) => {
     mainWindow.webContents.send('update-available', {
       version: info.version,
       releaseDate: info.releaseDate,
