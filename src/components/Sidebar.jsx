@@ -54,7 +54,6 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
     { id: 'drive-sovereign', label: 'Almacenamiento', icon: Cloud },
     { id: 'calendar', label: 'Calendario', icon: Calendar },
     { id: 'recordatorios', label: 'Recordatorios', icon: Bell, count: counts?.notificaciones },
-    { id: 'notas', label: 'Notas', icon: StickyNote },
     { id: 'flujo-trabajo', label: 'Flujo de Trabajo', icon: Workflow },
     { id: 'boveda', label: 'Contraseñas', icon: ShieldCheck },
     { id: 'papelera', label: 'Papelera', icon: Trash2 },

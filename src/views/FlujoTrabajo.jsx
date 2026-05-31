@@ -362,8 +362,12 @@ export default function FlujoTrabajo({ settings, isDark }) {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [showRuler, setShowRuler] = useState(true);
+  const [showRuler, setShowRuler] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [customAlert, setCustomAlert] = useState(null);
+  const showAlert = (message, title = 'Notificación') => {
+    setCustomAlert({ title, message });
+  };
   const [pageOverflows, setPageOverflows] = useState({});
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -489,7 +493,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
           if (prev <= 1) {
             clearInterval(focusInterval.current);
             setFocusActive(false);
-            alert("¡Sesión de enfoque completada!");
+            showAlert("¡Sesión de enfoque completada!");
             return 1500;
           }
           return prev - 1;
@@ -1015,7 +1019,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
     const content = getJoinedHTML();
     saveVersionLog(activeDoc.id, content, versionDescription.trim());
     setVersionDescription('');
-    alert('¡Versión manual guardada!');
+    showAlert('¡Versión manual guardada!');
   };
 
   const restoreVersion = async (versionObj) => {
@@ -1051,7 +1055,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
     setPageUpdateTrigger(prev => prev + 1);
     setViewingVersion(null);
     setRightSidebarMode(null);
-    alert('Documento restaurado.');
+    showAlert('Documento restaurado.');
   };
 
   // --- CONSOLA DEL CREADOR (ADMIN PANEL) ---
@@ -1167,7 +1171,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
           localStorage.setItem('ft_users', JSON.stringify(localUsers));
         }
 
-        alert('¡Cuenta creada con éxito! Ahora puedes iniciar sesión.');
+        showAlert('¡Cuenta creada con éxito! Ahora puedes iniciar sesión.');
         setAuthMode('login');
       } else {
         // LOGIN
@@ -1284,7 +1288,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
   };
 
   const insertChecklist = () => {
-    const checklistHtml = `<div class="ft-todo-item" style="display: flex; align-items: center; gap: 8px; margin: 4px 0;"><input type="checkbox" style="width: 16px; height: 16px;" /> <span>Nuevo checklist</span></div>`;
+    const checklistHtml = `<div class="ft-todo-item" style="display: flex; align-items: center; gap: 8px; margin: 4px 0;"><input type="checkbox" style="width: 16px; height: 16px; accent-color: ${t.accent}; cursor: pointer;" /> <span style="font-size: 11px; color: ${t.text};">Nuevo checklist</span></div>`;
     insertHtmlAtCursor(checklistHtml);
   };
 
@@ -1345,7 +1349,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
 
   const addRowToTable = () => {
     const table = getSelectedTable();
-    if (!table) return alert('Por favor sitúa el cursor dentro de una celda de la tabla.');
+    if (!table) return showAlert('Por favor sitúa el cursor dentro de una celda de la tabla.');
     const rows = table.rows;
     if (rows.length === 0) return;
     const newRow = table.insertRow(-1);
@@ -1360,7 +1364,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
 
   const addColToTable = () => {
     const table = getSelectedTable();
-    if (!table) return alert('Por favor sitúa el cursor dentro de una celda de la tabla.');
+    if (!table) return showAlert('Por favor sitúa el cursor dentro de una celda de la tabla.');
     const rows = table.rows;
     for (let i = 0; i < rows.length; i++) {
       const cell = i === 0 ? document.createElement('th') : rows[i].insertCell(-1);
@@ -1501,7 +1505,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
     if (!pagesContainerRef.current) return;
     const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
     if (pageDivs.length <= 1) {
-      alert("No puedes eliminar la única página del documento.");
+      showAlert("No puedes eliminar la única página del documento.");
       return;
     }
     if (!confirm(`¿Estás seguro de eliminar la página ${focusedPageIndex + 1}? El contenido de esta página se perderá.`)) return;
@@ -1588,8 +1592,9 @@ export default function FlujoTrabajo({ settings, isDark }) {
 
           const reader = new FileReader();
           reader.onloadend = () => {
-            const audioHtml = `<div class="audio-embed" style="margin: 10px 0; display: inline-block;">
+            const audioHtml = `<div class="audio-embed" style="margin: 10px 0; display: inline-flex; align-items: center; gap: 8px; padding: 6px; border: 0.5px solid ${t.border}; background-color: ${t.panel}; border-radius: 8px;" contenteditable="false">
               <audio controls src="${reader.result}"></audio>
+              <button onclick="this.parentElement.remove();" style="background-color: transparent; border: none; color: #ff5f5f; cursor: pointer; font-weight: bold; font-size: 14px; padding: 4px 8px; display: flex; align-items: center; justify-content: center;" title="Eliminar Nota de Voz">✕</button>
             </div><p></p>`;
             insertHtmlAtCursor(audioHtml);
             saveDocumentContent();
@@ -1600,7 +1605,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
         recorder.start();
         setIsRecording(true);
       } catch (err) {
-        alert("No se pudo acceder al micrófono: " + err.message);
+        showAlert("No se pudo acceder al micrófono: " + err.message);
       }
     }
   };
@@ -1623,9 +1628,9 @@ export default function FlujoTrabajo({ settings, isDark }) {
     if (count > 0) {
       calculateWordCount();
       saveDocumentContent();
-      alert(`Se reemplazaron ${count} coincidencias.`);
+      showAlert(`Se reemplazaron ${count} coincidencias.`);
     } else {
-      alert("No se encontraron coincidencias.");
+      showAlert("No se encontraron coincidencias.");
     }
     setShowFindReplaceModal(false);
   };
@@ -3106,6 +3111,24 @@ export default function FlujoTrabajo({ settings, isDark }) {
                 Reemplazar Todo
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      
+      {/* Modal de Alerta Personalizado */}
+      {customAlert && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm p-6 rounded-[24px] border shadow-2xl" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
+            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>{customAlert.title}</h3>
+            <p className="text-[11px] mb-6 leading-relaxed" style={{ color: t.textMuted }}>{customAlert.message}</p>
+            <button 
+              onClick={() => setCustomAlert(null)}
+              className="w-full h-9 rounded-lg text-white text-[10px] font-bold uppercase transition-all"
+              style={{ backgroundColor: t.accent, color: t.isDark ? '#1e1e1e' : '#ffffff' }}
+            >
+              Aceptar
+            </button>
           </div>
         </div>
       )}
