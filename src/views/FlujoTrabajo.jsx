@@ -2213,7 +2213,6 @@ export default function FlujoTrabajo({ settings, isDark }) {
                             key={p.id}
                             onClick={() => handleTemplateClick(p)}
                             className="p-4 rounded-[20px] border cursor-pointer group transition-all relative overflow-hidden" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}
-                            style={{ borderColor: '#3e4851' }}
                           >
                             <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: t.accentSoft }}></div>
                             <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center mb-3 group-hover:scale-105 transition-all">
