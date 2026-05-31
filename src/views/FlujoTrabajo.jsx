@@ -362,12 +362,48 @@ export default function FlujoTrabajo({ settings, isDark }) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [showRuler, setShowRuler] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [pageOverflows, setPageOverflows] = useState({});
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+
   const pagesContainerRef = useRef(null);
 
   const pages = useMemo(() => {
     if (!activeDoc?.contenido) return [''];
     return activeDoc.contenido.split('<!-- pagebreak -->');
   }, [activeDoc?.id, pageUpdateTrigger]);
+
+  const checkOverflows = () => {
+    if (!pagesContainerRef.current) return;
+    const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+    const overflows = {};
+    const limit = orientation === 'vertical' ? 1123 : 794;
+    const availableHeight = limit - (showRuler ? 16 : 0);
+    
+    pageDivs.forEach((div, idx) => {
+      // Usar altura disponible con tolerancia de 10px para evitar falsos positivos
+      if (div.scrollHeight > availableHeight + 10) {
+        overflows[idx] = true;
+      } else {
+        overflows[idx] = false;
+      }
+    });
+    
+    setPageOverflows(prev => {
+      const changed = Object.keys(overflows).some(k => prev[k] !== overflows[k]) || 
+                      Object.keys(prev).length !== Object.keys(overflows).length;
+      return changed ? overflows : prev;
+    });
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      checkOverflows();
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [pages, orientation, margins, fontSize, fontFamily, zoom, activeDoc?.id, pageUpdateTrigger, showRuler]);
 
   const getJoinedHTML = () => {
     if (!pagesContainerRef.current) return activeDoc?.contenido || '';
@@ -1479,6 +1515,96 @@ export default function FlujoTrabajo({ settings, isDark }) {
     setFocusedPageIndex(Math.max(0, focusedPageIndex - 1));
   };
 
+  const insertImage = () => {
+    const url = prompt("Introduce la URL de la imagen (o presiona Enter para subir una desde tu computadora):");
+    if (url === null) return;
+    if (url.trim()) {
+      const imgHtml = `<img src="${url.trim()}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" alt="Imagen" />`;
+      insertHtmlAtCursor(imgHtml);
+      saveDocumentContent();
+    } else {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const imgHtml = `<img src="${event.target.result}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" alt="Imagen" />`;
+            insertHtmlAtCursor(imgHtml);
+            saveDocumentContent();
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    }
+  };
+
+  const insertVideo = () => {
+    const url = prompt("Introduce la URL del video (YouTube o enlace directo mp4/webm):");
+    if (!url) return;
+    let videoHtml = '';
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      let videoId = '';
+      if (url.includes('youtube.com/watch?v=')) {
+        videoId = url.split('v=')[1].split('&')[0];
+      } else if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split('?')[0];
+      }
+      videoHtml = `<div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 10px 0; border-radius: 8px;">
+        <iframe src="https://www.youtube.com/embed/${videoId}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen></iframe>
+      </div><p></p>`;
+    } else {
+      videoHtml = `<video controls src="${url}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; display: block;"></video><p></p>`;
+    }
+    insertHtmlAtCursor(videoHtml);
+    saveDocumentContent();
+  };
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+      }
+      setIsRecording(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioChunksRef.current = [];
+        const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        mediaRecorderRef.current = recorder;
+        
+        recorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            audioChunksRef.current.push(e.data);
+          }
+        };
+
+        recorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+          stream.getTracks().forEach(track => track.stop());
+
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const audioHtml = `<div class="audio-embed" style="margin: 10px 0; display: inline-block;">
+              <audio controls src="${reader.result}"></audio>
+            </div><p></p>`;
+            insertHtmlAtCursor(audioHtml);
+            saveDocumentContent();
+          };
+          reader.readAsDataURL(audioBlob);
+        };
+
+        recorder.start();
+        setIsRecording(true);
+      } catch (err) {
+        alert("No se pudo acceder al micrófono: " + err.message);
+      }
+    }
+  };
+
   const handleReplaceAll = () => {
     if (!findQuery) return;
     if (!pagesContainerRef.current) return;
@@ -2386,6 +2512,28 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           ✕ Eliminar Página
                         </button>
                         <button
+                          onClick={insertImage}
+                          className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5 font-bold text-[9px]"
+                        >
+                          Imagen
+                        </button>
+                        <button
+                          onClick={insertVideo}
+                          className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5 font-bold text-[9px]"
+                        >
+                          Video
+                        </button>
+                        <button
+                          onClick={toggleRecording}
+                          className={`flex items-center gap-1.5 px-3 py-1 rounded border font-bold transition-all text-[9px] ${
+                            isRecording 
+                              ? 'bg-red-600 border-red-700 text-white animate-pulse' 
+                              : 'bg-[#201f1f] border-[#3e4851] text-white hover:bg-white/5'
+                          }`}
+                        >
+                          {isRecording ? 'Parar Voz' : 'Grabar Voz'}
+                        </button>
+                        <button
                           onClick={() => insertWysiwygTable(3, 3)}
                           className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5"
                         >
@@ -2493,6 +2641,18 @@ export default function FlujoTrabajo({ settings, isDark }) {
                             Papel Real (Claro)
                           </button>
                         </div>
+                        <div className="h-6 w-px bg-neutral-800 mx-2"></div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-neutral-500 mr-1.5">Herramientas:</span>
+                          <button
+                            onClick={() => setShowRuler(!showRuler)}
+                            className={`px-2 py-1 rounded text-[9px] font-bold ${
+                              showRuler ? 'bg-[#8ecdff]/20 text-[#8ecdff] border border-[#8ecdff]/30' : 'bg-transparent text-neutral-400 hover:text-white'
+                            }`}
+                          >
+                            {showRuler ? 'Ocultar Regla' : 'Mostrar Regla'}
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -2530,17 +2690,16 @@ export default function FlujoTrabajo({ settings, isDark }) {
                   {/* Page overflow warnings */}
                   <div className="w-full max-w-[800px] flex flex-col gap-1 mb-4 z-10">
                     {pages.map((_, idx) => {
-                      if (!pagesContainerRef.current) return null;
-                      const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
-                      const div = pageDivs[idx];
-                      const heightPx = orientation === 'vertical' ? 1123 : 794;
-                      if (div && div.scrollHeight > heightPx + 10) {
+                      if (pageOverflows[idx]) {
                         return (
                           <div key={idx} className="bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-[9px] flex items-center justify-between">
                             <span>⚠️ El contenido de la <strong>Página {idx + 1}</strong> excede el límite físico de la hoja.</span>
                             <button 
                               onClick={() => {
-                                if (div) div.focus();
+                                if (pagesContainerRef.current) {
+                                  const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+                                  if (pageDivs[idx]) pageDivs[idx].focus();
+                                }
                               }}
                               className="underline font-bold uppercase hover:text-red-300"
                             >
@@ -2580,7 +2739,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                         }}
                       >
                         {/* Page Ruler */}
-                        <PageRuler margins={margins} orientation={orientation} />
+                        {showRuler && <PageRuler margins={margins} orientation={orientation} />}
 
                         <div
                           contentEditable={!viewingVersion && (!activeDoc.isShared || activeDoc.sharedRole === 'editor')}
