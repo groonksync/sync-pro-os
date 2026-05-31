@@ -350,11 +350,11 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
 
   return (
     <div className="flex flex-col h-screen w-full overflow-hidden font-sans"
-      style={{ backgroundColor: '#141414', color: t.text }}>
+      style={{ backgroundColor: t.bg, color: t.text }}>
       
       {/* HEADER NAV */}
       <nav className="h-16 flex items-center justify-between px-6 relative z-50"
-        style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
+        style={{ backgroundColor: t.panel, borderBottom: `1px solid ${t.border}` }}>
          <div className="flex items-center gap-8">
             <div>
                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Mesa de Trabajo</h2>
@@ -392,7 +392,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                <div className="w-1.5 h-1.5 rounded-xl animate-pulse" style={{ backgroundColor: t.accent }}></div>
                <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.accent }}>System Online</span>
             </div>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
               <UserIcon size={16} color={t.textDim}/>
             </div>
          </div>
@@ -409,7 +409,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                   { label: 'Sesiones Totales', val: meetingsList.length, subtitle: 'Reuniones de trabajo', icon: Video, tab: 'client-list' }
                 ].map((s, i) => (
                   <div key={i} onClick={() => setViewState(s.tab)} className="flex items-center justify-between p-5 cursor-pointer transition-all hover:scale-[1.02]"
-                    style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 14 }}>
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14 }}>
                      <div>
                         <p className="text-[8px] font-black uppercase tracking-widest mb-1" style={{ color: t.textDim }}>{s.label}</p>
                         <p className="text-2xl font-light text-white tracking-tight">{s.val}</p>
@@ -423,7 +423,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
              </div>
 
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-                <div className="lg:col-span-2 p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: '#141414', borderColor: t.border }}>
+                <div className="lg:col-span-2 p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.panel, borderColor: t.border }}>
                    <div>
                       <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Actividad Reciente</h3>
                       <p className="text-[10px] text-neutral-400 font-medium">Últimas interacciones y sesiones en el sistema</p>
@@ -451,7 +451,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                    </div>
                 </div>
 
-                <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: '#141414', borderColor: t.border }}>
+                <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.panel, borderColor: t.border }}>
                    <div>
                       <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Últimos Clientes Registrados</h3>
                       <p className="text-[10px] text-neutral-400 font-medium">Agregados recientemente al directorio</p>
@@ -492,10 +492,10 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                    <div className="relative">
                       <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="FILTRAR..."
                         className="rounded-lg py-2.5 pl-4 pr-5 text-[9px] font-black uppercase tracking-widest outline-none w-56 transition-all"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                    </div>
                    <button onClick={() => setIsClientModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
-                     style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                     style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                       <Plus size={14} strokeWidth={2}/> Añadir Registro
                    </button>
                 </div>
@@ -504,7 +504,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-2">
                 {uniqueClients.map(cl => (
                   <div key={cl.id} className="p-5 flex flex-col items-center justify-center group relative overflow-hidden aspect-square cursor-pointer transition-all hover:bg-white/2"
-                    style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12 }}>
                      
                      <div onClick={() => openClientProfile(cl)} className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden mb-4" style={{ border: `1px solid ${t.border}` }}>
                         {cl.foto_url ? (
@@ -542,7 +542,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
            <header className="flex items-center justify-between">
              <div className="flex items-center gap-4">
                <button onClick={() => setViewState('client-list')} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                 style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                 style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                  <ArrowLeft size={16} color={t.textDim}/>
                </button>
                <div>
@@ -551,7 +551,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
              </div>
              <button onClick={createMeeting} className="px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all"
-               style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+               style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                <Video size={14}/> Iniciar Sesión
              </button>
            </header>
@@ -559,7 +559,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
            <div className="space-y-3 pt-2">
              {filteredMeetings.map(m => (
                <div key={m.id} className="flex items-center justify-between p-4 cursor-pointer transition-all hover:bg-white/2"
-                 style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
+                 style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12 }}>
                  <div onClick={() => openMeeting(m)} className="flex-1 flex items-center gap-4">
                    <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
                      <FileVideo size={18} color={t.accent}/>
@@ -581,7 +581,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
              ))}
              {filteredMeetings.length === 0 && (
-               <div className="text-center py-10 rounded-lg" style={{ backgroundColor: '#141414', border: `1px dashed ${t.border}` }}>
+               <div className="text-center py-10 rounded-lg" style={{ backgroundColor: t.panel, border: `1px dashed ${t.border}` }}>
                  <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin sesiones registradas. Comienza un nuevo flujo.</p>
                </div>
              )}
@@ -597,13 +597,13 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                    <h2 className="text-base font-black uppercase tracking-wider text-white">Agency Pro Planificador</h2>
                 </div>
                 <button onClick={() => setIsCompanyModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
-                  style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                  style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                   <Plus size={14} strokeWidth={2}/> Nueva Marca
                 </button>
              </header>
 
              {/* Filter buttons styled minimal */}
-             <div className="grid grid-cols-4 gap-2 p-1 rounded-xl" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+             <div className="grid grid-cols-4 gap-2 p-1 rounded-xl" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 {['Básico', 'Intermedio', 'Avanzado', 'Personalizado'].map(p => {
                   const count = agencyClients.filter(cl => cl.plan === p).length;
                   return (
@@ -628,7 +628,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                  </h3>
                </div>
 
-               <div className="p-4 rounded-xl overflow-x-auto mac-scrollbar" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+               <div className="p-4 rounded-xl overflow-x-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                  <div className="min-w-[900px] space-y-3">
                    {filteredAgencyClients.map((company, idx) => {
                      const meta = company.metadata || {};
@@ -637,7 +637,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                      
                      return (
                        <div key={company.id} onClick={() => { setSelectedCompany(company); fetchStrategies(company.id); setViewState('agency-session'); }} className="flex items-center gap-6 p-4 rounded-lg cursor-pointer relative overflow-hidden transition-all hover:bg-white/2"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                          {isPremium && <div className="absolute top-1 right-1"><Crown size={10} color={t.accent}/></div>}
                          
                          <div className="w-24 shrink-0">
@@ -646,7 +646,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                          </div>
 
                          <div className="flex-1 flex items-center gap-3">
-                           <div className="flex-1 h-1.5 rounded-full overflow-hidden relative" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                           <div className="flex-1 h-1.5 rounded-full overflow-hidden relative" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                              <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000" style={{ width: `${30 + (idx * 15) % 70}%`, backgroundColor: t.accent }}></div>
                            </div>
                            <span className="text-[8px] font-mono text-neutral-400">{30 + (idx * 15) % 70}%</span>
@@ -658,7 +658,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                                 <div key={red} className="w-6 h-6 rounded-md flex items-center justify-center"
                                   style={{
                                     border: meta.redes?.[red] ? `1px solid ${t.accent}aa` : `1px solid ${t.border}`,
-                                    backgroundColor: '#141414',
+                                    backgroundColor: t.panel,
                                     color: meta.redes?.[red] ? t.accent : t.textDim,
                                   }}>
                                   {red === 'instagram' && <Instagram size={10}/>}
@@ -677,7 +677,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                      );
                    })}
                    {filteredAgencyClients.length === 0 && (
-                     <div className="py-10 text-center rounded-lg" style={{ border: `1px dashed ${t.border}`, backgroundColor: '#141414' }}>
+                     <div className="py-10 text-center rounded-lg" style={{ border: `1px dashed ${t.border}`, backgroundColor: t.panel }}>
                        <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>No se encontraron marcas en esta categoría</p>
                      </div>
                    )}
@@ -693,7 +693,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
            <header className="flex items-center justify-between">
              <div className="flex items-center gap-4">
                <button onClick={() => setViewState('agency-hub')} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all"
-                 style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                 style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                  <ArrowLeft size={16} color={t.textDim}/>
                </button>
                <div>
@@ -702,7 +702,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
              </div>
              <button onClick={createStrategy} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
-               style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+               style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                <Sparkles size={14}/> Crear Estrategia
              </button>
            </header>
@@ -723,7 +723,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                    setViewState('agency-editor');
                 }}
                   className="flex items-center justify-between p-4 cursor-pointer transition-all hover:bg-white/2"
-                  style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12 }}>
+                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12 }}>
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
                       <Target size={18} color={t.accent}/>
@@ -734,7 +734,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 </div>
              ))}
              {strategies.length === 0 && (
-               <div className="text-center py-10 rounded-lg" style={{ backgroundColor: '#141414', border: `1px dashed ${t.border}` }}>
+               <div className="text-center py-10 rounded-lg" style={{ backgroundColor: t.panel, border: `1px dashed ${t.border}` }}>
                  <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin estrategias planeadas para esta marca.</p>
                </div>
              )}
@@ -745,9 +745,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {/* AGENCY STRATEGY EDITOR */}
        {viewState === 'agency-editor' && activeStrategy && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-400">
-           <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
+           <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.panel, borderBottom: `1px solid ${t.border}` }}>
              <div className="flex items-center gap-3">
-               <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+               <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                  <ArrowLeft size={16} color={t.textDim}/>
                </button>
                <div>
@@ -756,9 +756,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
              </div>
              <div className="flex items-center gap-3">
-               <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
+               <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
                  {formatTime(time)}
-                 <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                 <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                    {isTimerRunning ? <Pause size={10}/> : <Play size={10}/>}
                  </button>
                  <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-6 h-6 rounded flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
@@ -766,14 +766,14 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                  </button>
                </div>
                <button onClick={saveStrategy} className="px-4 py-2 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 transition-all"
-                 style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                 style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                  <Save size={12}/> Guardar
                </button>
              </div>
            </header>
            <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-             <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-               <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: '#141414' }}>
+             <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+               <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.panel }}>
                  <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H1</button>
                  <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H2</button>
                  <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
@@ -790,7 +790,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                  dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} />
              </div>
              <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
-               <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+               <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                  {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Estrategia', icon: Target }].map(tab => (
                    <button key={tab.id} onClick={() => setAgencySideTab(tab.id)}
                      className="py-1.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
@@ -801,7 +801,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
                {agencySideTab === 'calc' && (
                  <div className="flex flex-col gap-3">
-                   <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                   <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                      {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
                        <button key={cur} onClick={() => setAgencySessionCurrency(cur)}
                          className="py-1 rounded text-[7px] font-black"
@@ -810,64 +810,64 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                        </button>
                      ))}
                    </div>
-                   <div className="p-3 rounded-lg text-right" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
+                   <div className="p-3 rounded-lg text-right" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
                      <p className="text-[7px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>{agencySessionCurrency}</p>
                      <p className="text-base font-mono font-bold">{calcDisplay}</p>
                    </div>
                    <div className="grid grid-cols-4 gap-1">
                      {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
                        <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
+                         style={{ backgroundColor: t.panel, border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
                          {btn}
                        </button>
                      ))}
                    </div>
                    <button onClick={() => { setAgencySessionPrice(calcDisplay !== '0' ? calcDisplay : agencySessionPrice); setAgencySideTab('info'); }}
                      className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textMuted }}>
+                     style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textMuted }}>
                      <DollarSign size={10}/> Fijar Presupuesto
                    </button>
                  </div>
                )}
                {agencySideTab === 'info' && (
                  <div className="flex flex-col gap-3">
-                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                      <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Reunión Planificada</p>
                      <div>
                        <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Siguiente Sesión</p>
                        <input type="date" value={agencyNextDate} onChange={e => setAgencyNextDate(e.target.value)}
                          className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                      </div>
                    </div>
-                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                      <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces Nexus</p>
                      <div>
                        <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Link de Llamada</p>
                        <input type="url" value={agencyMeetLink} onChange={e => setAgencyMeetLink(e.target.value)} placeholder="meet.google.com/..."
                          className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                      </div>
                      <div>
                        <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Carpeta de Contenidos</p>
                        <input type="url" value={agencyDriveLink} onChange={e => setAgencyDriveLink(e.target.value)} placeholder="drive.google.com/..."
                          className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                      </div>
                    </div>
-                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                      <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Ingreso Estimado</p>
                      <div className="flex gap-2 items-center">
                        <span className="text-[9px] font-bold text-neutral-400">{agencySessionCurrency}</span>
                        <input type="number" value={agencySessionPrice} onChange={e => setAgencySessionPrice(e.target.value)}
                          placeholder="0.00" className="flex-1 px-2.5 py-1.5 rounded text-[10px] font-mono outline-none"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                      </div>
                      <button onClick={() => registerSessionIncome(selectedCompany?.nombre_empresa || 'Empresa', activeStrategy.titulo_estrategia, agencySessionPrice, agencySessionCurrency, true)}
                        disabled={!agencySessionPrice || parseFloat(agencySessionPrice) <= 0 || agencyPriceRegistered}
                        className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
                        style={{ 
-                         backgroundColor: '#141414',
+                         backgroundColor: t.panel,
                          border: `1px solid ${agencyPriceRegistered ? t.border : t.accent}`,
                          color: agencyPriceRegistered ? t.textDim : t.accent,
                          cursor: agencyPriceRegistered ? 'not-allowed' : 'pointer'
@@ -885,9 +885,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {/* SESSIONS / MEETING EDITOR */}
        {viewState === 'session' && activeMeeting && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-400">
-          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#141414', borderBottom: `1px solid ${t.border}` }}>
+          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.panel, borderBottom: `1px solid ${t.border}` }}>
             <div className="flex items-center gap-3">
-              <button onClick={saveMeeting} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+              <button onClick={saveMeeting} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 <ArrowLeft size={16} color={t.textDim}/>
               </button>
               <div>
@@ -896,9 +896,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
+              <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
                 {formatTime(time)}
-                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                   {isTimerRunning ? <Pause size={10}/> : <Play size={10}/>}
                 </button>
                 <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-6 h-6 rounded flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
@@ -906,14 +906,14 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 </button>
               </div>
               <button onClick={saveMeeting} className="px-4 py-2 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 transition-all"
-                style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                 <Save size={12}/> Guardar
               </button>
             </div>
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-            <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
-              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: '#141414' }}>
+            <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.panel }}>
                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H1</button>
                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H2</button>
                 <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
@@ -930,7 +930,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 dangerouslySetInnerHTML={{ __html: activeMeeting.contenido }} />
             </div>
             <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
-              <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+              <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Información', icon: Target }].map(tab => (
                   <button key={tab.id} onClick={() => setSessionSideTab(tab.id)}
                     className="py-1.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
@@ -941,7 +941,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
               </div>
               {sessionSideTab === 'calc' && (
                 <div className="flex flex-col gap-3">
-                  <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                  <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                     {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
                       <button key={cur} onClick={() => setSessionCurrency(cur)}
                         className="py-1 rounded text-[7px] font-black"
@@ -950,64 +950,64 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                       </button>
                     ))}
                   </div>
-                  <div className="p-3 rounded-lg text-right" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: 'white' }}>
+                  <div className="p-3 rounded-lg text-right" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
                     <p className="text-[7px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>{sessionCurrency}</p>
                     <p className="text-base font-mono font-bold">{calcDisplay}</p>
                   </div>
                   <div className="grid grid-cols-4 gap-1">
                     {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
                        <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
+                         style={{ backgroundColor: t.panel, border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
                          {btn}
                        </button>
                     ))}
                   </div>
                   <button onClick={() => { setSessionPrice(calcDisplay !== '0' ? calcDisplay : sessionPrice); setSessionSideTab('info'); }}
                     className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                    style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textMuted }}>
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textMuted }}>
                     <DollarSign size={10}/> Fijar Presupuesto
                   </button>
                 </div>
               )}
               {sessionSideTab === 'info' && (
                 <div className="flex flex-col gap-3">
-                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Reunión Planificada</p>
                     <div>
                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Siguiente Sesión</p>
                       <input type="date" value={sessionNextDate} onChange={e => setSessionNextDate(e.target.value)}
                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces Nexus</p>
                     <div>
                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Link de Llamada</p>
                       <input type="url" value={sessionMeetLink} onChange={e => setSessionMeetLink(e.target.value)} placeholder="meet.google.com/..."
                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                     <div>
                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Carpeta de Contenidos</p>
                       <input type="url" value={sessionDriveLink} onChange={e => setSessionDriveLink(e.target.value)} placeholder="drive.google.com/..."
                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                   </div>
-                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+                  <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Ingreso Estimado</p>
                     <div className="flex gap-2 items-center">
                       <span className="text-[9px] font-bold text-neutral-400">{sessionCurrency}</span>
                       <input type="number" value={sessionPrice} onChange={e => setSessionPrice(e.target.value)}
                         placeholder="0.00" className="flex-1 px-2.5 py-1.5 rounded text-[10px] font-mono outline-none"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                     </div>
                     <button onClick={() => registerSessionIncome(activeClient?.nombre || 'Cliente', activeMeeting.session_title, sessionPrice, sessionCurrency)}
                       disabled={!sessionPrice || parseFloat(sessionPrice) <= 0 || priceRegistered}
                       className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
                       style={{ 
-                        backgroundColor: '#141414',
+                        backgroundColor: t.panel,
                         border: `1px solid ${priceRegistered ? t.border : t.accent}`,
                         color: priceRegistered ? t.textDim : t.accent,
                         cursor: priceRegistered ? 'not-allowed' : 'pointer'
@@ -1030,7 +1030,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {/* Modal de Nueva Compañía (Agencia Pro) */}
        {isCompanyModalOpen && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: '#141414' }}>
+            <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: t.panel }}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-sm font-black uppercase tracking-wider text-white">Nueva Marca de Agencia</h3>
                 <button onClick={() => setIsCompanyModalOpen(false)} className="text-neutral-400 hover:text-white transition-colors">
@@ -1079,7 +1079,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {/* Modal de Nuevo Cliente */}
        {isClientModalOpen && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-            <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: '#141414' }}>
+            <div className="border border-white/10 rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" style={{ backgroundColor: t.panel }}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-sm font-black uppercase tracking-wider text-white">Registrar Nuevo Cliente</h3>
                 <button onClick={() => setIsClientModalOpen(false)} className="text-neutral-400 hover:text-white transition-colors">
@@ -1381,7 +1381,7 @@ const ProjectEngineView = ({ isDark = true }) => {
           {/* COLUMN 1: LISTA DE PROYECTOS */}
           <div className="flex flex-col space-y-5">
              {/* Stats & Badge */}
-             <div className="p-4 rounded-xl space-y-3.5" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+             <div className="p-4 rounded-xl space-y-3.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 <div className="flex justify-between items-center">
                    <span className="text-[9px] font-black uppercase tracking-widest text-white">Estadísticas de Edición</span>
                    <span className="text-[9px] bg-white/5 border border-white/5 px-2 py-0.5 rounded font-bold text-white font-mono">{total} Proyectos</span>
@@ -1403,14 +1403,14 @@ const ProjectEngineView = ({ isDark = true }) => {
              </div>
 
              {/* Proyectos CRUD list */}
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
                    <div className="flex items-center gap-2">
                       <Briefcase size={14} color={t.accent}/>
                       <span className="text-[10px] font-black uppercase tracking-widest text-white">Lista de Proyectos</span>
                    </div>
                    <button onClick={handleCreateProject} className="px-2.5 py-1 rounded text-[7.5px] font-black uppercase transition-all"
-                     style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: '#141414' }}>
+                     style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: t.panel }}>
                       + Nuevo Proyecto
                    </button>
                 </div>
@@ -1419,11 +1419,11 @@ const ProjectEngineView = ({ isDark = true }) => {
                 <div className="flex gap-2">
                    <input type="text" placeholder="Filtrar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}
                      className="flex-1 rounded p-2 text-[9px] outline-none"
-                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                     style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                    
                    <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}
                      className="rounded p-1 text-[8.5px] font-bold uppercase tracking-wider outline-none cursor-pointer"
-                     style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                     style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
                       <option value="Todos">Todos</option>
                       <option value="En Curso">En Curso</option>
                       <option value="Completado">Completado</option>
@@ -1465,7 +1465,7 @@ const ProjectEngineView = ({ isDark = true }) => {
           {/* COLUMN 2: ENTORNO E INGESTA */}
           <div className="flex flex-col space-y-5">
              {/* Local Folder Structure Generator */}
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
                    <FolderOpen size={14} color={t.accent}/>
                    <span className="text-[10px] font-black uppercase tracking-widest text-white">Generador de Entorno Local</span>
@@ -1477,9 +1477,9 @@ const ProjectEngineView = ({ isDark = true }) => {
                       <div className="flex gap-2">
                          <input type="text" value={destinationPath || 'No seleccionado...'} disabled
                            className="flex-1 rounded p-2 text-[9px] font-mono outline-none truncate"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.textDim }} />
+                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textDim }} />
                          <button onClick={handleSelectDirectory} className="px-3 rounded text-[8px] font-black uppercase transition-all"
-                           style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: '#141414' }}>Vincular</button>
+                           style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: t.panel }}>Vincular</button>
                       </div>
                    </div>
 
@@ -1488,13 +1488,13 @@ const ProjectEngineView = ({ isDark = true }) => {
                          <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Carpeta Maestra</label>
                          <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)}
                            className="w-full rounded p-2 text-[10px] outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
                       <div className="space-y-1">
                          <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Empresa</label>
                          <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanizacion"
                            className="w-full rounded p-2 text-[10px] outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
                    </div>
 
@@ -1502,7 +1502,7 @@ const ProjectEngineView = ({ isDark = true }) => {
                       <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Proyecto</label>
                       <input type="text" value={proyecto} onChange={e=>setProyecto(e.target.value)} placeholder="Ej: Spot Comercial"
                          className="w-full rounded p-2 text-[10px] outline-none"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                    </div>
 
                    <div className="grid grid-cols-2 gap-2">
@@ -1510,7 +1510,7 @@ const ProjectEngineView = ({ isDark = true }) => {
                          <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Premiere Template</label>
                          <select value={selectedPremiere} onChange={e=>setSelectedPremiere(e.target.value)}
                            className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
                             <option value="">Ninguna</option>
                             {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
                          </select>
@@ -1519,7 +1519,7 @@ const ProjectEngineView = ({ isDark = true }) => {
                          <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">After Effects Template</label>
                          <select value={selectedAE} onChange={e=>setSelectedAE(e.target.value)}
                            className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
                             <option value="">Ninguna</option>
                             {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
                          </select>
@@ -1547,7 +1547,7 @@ const ProjectEngineView = ({ isDark = true }) => {
                    <button onClick={handleGenerate} disabled={isGenerating || !destinationPath}
                       className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
                       style={{
-                         backgroundColor: '#141414',
+                         backgroundColor: t.panel,
                          border: `1px solid ${isGenerating || !destinationPath ? t.border : t.accent}`,
                          color: isGenerating || !destinationPath ? t.textDim : t.accent,
                          cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer'
@@ -1559,7 +1559,7 @@ const ProjectEngineView = ({ isDark = true }) => {
              </div>
 
              {/* Interactive Visual Directory Tree */}
-             <div className="p-5 rounded-xl space-y-3" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+             <div className="p-5 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
                    <div className="flex items-center gap-2">
                       <Grid size={14} color={t.accent}/>
@@ -1716,7 +1716,7 @@ const ProjectEngineView = ({ isDark = true }) => {
 
           {/* COLUMN 3: DETALLE DEL PROYECTO */}
           <div className="flex flex-col space-y-5">
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
                    <Edit3 size={14} color={t.accent}/>
                    <span className="text-[10px] font-black uppercase tracking-widest text-white">Detalles del Proyecto</span>
@@ -1728,7 +1728,7 @@ const ProjectEngineView = ({ isDark = true }) => {
                          <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Nombre del Proyecto</label>
                          <input type="text" value={formName} onChange={e=>setFormName(e.target.value)}
                            className="w-full rounded p-2 text-[10px] outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
 
                       <div className="grid grid-cols-2 gap-2">
@@ -1736,13 +1736,13 @@ const ProjectEngineView = ({ isDark = true }) => {
                             <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Marca</label>
                             <input type="text" value={formClient} onChange={e=>setFormClient(e.target.value)}
                               className="w-full rounded p-2 text-[10px] outline-none"
-                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                          </div>
                          <div className="space-y-1">
                             <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Estado</label>
                             <select value={formStatus} onChange={e=>setFormStatus(e.target.value)}
                               className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
-                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}>
+                              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
                                <option value="En Curso">En Curso</option>
                                <option value="Completado">Completado</option>
                                <option value="Pausado">Pausado</option>
@@ -1755,13 +1755,13 @@ const ProjectEngineView = ({ isDark = true }) => {
                             <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Fecha de Inicio</label>
                             <input type="date" value={formStartDate} onChange={e=>setFormStartDate(e.target.value)}
                               className="w-full rounded p-2 text-[10px] outline-none"
-                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                          </div>
                          <div className="space-y-1">
                             <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Fecha de Entrega</label>
                             <input type="date" value={formEndDate} onChange={e=>setFormEndDate(e.target.value)}
                               className="w-full rounded p-2 text-[10px] outline-none"
-                              style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                          </div>
                       </div>
 
@@ -1769,12 +1769,12 @@ const ProjectEngineView = ({ isDark = true }) => {
                          <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Tarifa / Presupuesto ($)</label>
                          <input type="number" value={formRate} onChange={e=>setFormRate(e.target.value)}
                            className="w-full rounded p-2 text-[10px] font-mono outline-none"
-                           style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }} />
+                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                       </div>
 
                       <button onClick={handleUpdateProject}
                          className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider transition-all mt-2"
-                         style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                         style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                          Guardar Cambios
                       </button>
                    </div>
@@ -1786,7 +1786,7 @@ const ProjectEngineView = ({ isDark = true }) => {
              </div>
 
              {/* Notas de Corte & Edición */}
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: '#141414', border: `1px solid ${t.border}` }}>
+             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
                 <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
                    <FileText size={14} color={t.accent}/>
                    <span className="text-[10px] font-black uppercase tracking-widest text-white">Notas de Corte & Edición</span>
@@ -1796,11 +1796,11 @@ const ProjectEngineView = ({ isDark = true }) => {
                    <div className="space-y-3">
                       <textarea value={formNotes} onChange={e=>setFormNotes(e.target.value)}
                         className="w-full rounded p-3 text-[9px] font-mono outline-none h-[180px] resize-none mac-scrollbar"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, color: t.text }}
+                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}
                         placeholder="Notas de montaje..." />
 
                       <button onClick={downloadNotes} className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider transition-all"
-                        style={{ backgroundColor: '#141414', border: `1px solid ${t.accent}`, color: t.accent }}>
+                        style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
                          Descargar Notas (TXT)
                       </button>
                    </div>

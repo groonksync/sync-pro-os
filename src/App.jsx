@@ -317,6 +317,11 @@ const App = () => {
       } else {
         theme.bg = '#141414';
       }
+      document.documentElement.classList.remove('light-mode');
+      document.documentElement.classList.add('dark-mode');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+      document.documentElement.classList.add('light-mode');
     }
     document.body.style.backgroundColor = theme.bg;
   }, [isDarkMode, appSettings.appBackground]);

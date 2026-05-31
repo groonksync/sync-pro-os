@@ -1292,7 +1292,7 @@ REGLAS DE FORMATO Y ESTILO:
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           <div>
-            <h2 style={{ fontSize: 28, fontWeight: 700, color: '#ffffff', letterSpacing: '-0.04em', margin: 0, fontFamily: "'Inter', system-ui, sans-serif" }}>
+            <h2 style={{ fontSize: 28, fontWeight: 700, color: t.text, letterSpacing: '-0.04em', margin: 0, fontFamily: "'Inter', system-ui, sans-serif" }}>
               Empresa
             </h2>
             <p style={{ fontSize: 11, color: '#6b7280', marginTop: 3, fontWeight: 400, letterSpacing: '0.01em' }}>
@@ -1501,10 +1501,10 @@ REGLAS DE FORMATO Y ESTILO:
 
       {/* ADMIN PROMOTIONS & COMBOS DASHBOARD (PRIVADO) */}
       {productos.some(p => !!(p.es_oferta || p.es_combo || p.metadata?.es_oferta || p.metadata?.es_combo)) && (
-        <div style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, marginBottom: 20 }}>
+        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 22, marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
             <Zap size={15} style={{ color: '#10b981' }} />
-            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Análisis de Ofertas y Combos Activos (Privado)</h4>
+            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: t.text, margin: 0 }}>Análisis de Ofertas y Combos Activos (Privado)</h4>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
             {productos.filter(p => !!(p.es_oferta || p.es_combo || p.metadata?.es_oferta || p.metadata?.es_combo)).map(p => {
