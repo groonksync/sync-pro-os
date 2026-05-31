@@ -391,6 +391,38 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
           </div>
         </section>
 
+        {/* Blindaje de Base de Datos */}
+        <section style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 32, display: 'flex', flexDirection: 'column', gap: 24, gridColumn: 'span 2' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <ShieldCheck size={20} style={{ color: t.success }}/> Blindaje de Base de Datos (Supabase RLS)
+          </h3>
+          <p style={{ fontSize: 11, color: t.textDim, lineHeight: 1.5, margin: 0 }}>
+            Configura la clave de autorización secreta que valida tus consultas en Supabase a nivel de fila (RLS). 
+            Por defecto en el script SQL es <code style={{ color: t.accent, backgroundColor: `${t.accent}15`, padding: '2px 6px', borderRadius: 4 }}>SovereignPass123_SecureAccess</code>. 
+            Si modificas esta clave en el SQL Editor de tu Supabase Dashboard, debes actualizarla aquí para poder leer/escribir tus datos.
+          </p>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <input 
+              type="password" 
+              id="db-passcode-input"
+              defaultValue={settings.dbPasscode || 'SovereignPass123_SecureAccess'}
+              placeholder="Contraseña de Base de Datos..."
+              style={{ flex: 1, backgroundColor: t.inputBg, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 16, fontSize: 12, color: t.text, fontFamily: 'monospace', outline: 'none' }}
+            />
+            <button 
+              onClick={() => {
+                const val = document.getElementById('db-passcode-input').value;
+                updateSetting('dbPasscode', val);
+                alert("✅ Clave de Base de Datos guardada. Reconectando...");
+                window.location.reload();
+              }}
+              style={{ padding: '16px 24px', backgroundColor: t.accent, color: '#000', borderRadius: 12, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', border: 'none', cursor: 'pointer', transition: 'all 0.2s' }}
+            >
+              Aplicar Clave
+            </button>
+          </div>
+        </section>
+
         {/* Identidad */}
         <section style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 32, display: 'flex', flexDirection: 'column', gap: 32 }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>

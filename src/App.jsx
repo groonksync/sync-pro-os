@@ -22,6 +22,7 @@ import FlujoTrabajo from './views/FlujoTrabajo';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { supabase } from './lib/supabaseClient';
 import { getTheme } from './lib/theme';
+import { decryptValue, encryptValue } from './lib/crypto';
 
 const App = () => {
   // Detectar si estamos en la vista de Portal del Cliente
@@ -100,13 +101,42 @@ const App = () => {
       studioName: 'Inefable Studio',
       aiProvider: 'gemini',
       geminiKey: '',
-      deepseekKey: ''
+      deepseekKey: '',
+      openrouterKey: '',
+      dbPasscode: 'SovereignPass123_SecureAccess'
     };
-    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+    
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.geminiKeyEncrypted) parsed.geminiKey = decryptValue(parsed.geminiKeyEncrypted);
+        if (parsed.deepseekKeyEncrypted) parsed.deepseekKey = decryptValue(parsed.deepseekKeyEncrypted);
+        if (parsed.openrouterKeyEncrypted) parsed.openrouterKey = decryptValue(parsed.openrouterKeyEncrypted);
+        if (parsed.dbPasscodeEncrypted) parsed.dbPasscode = decryptValue(parsed.dbPasscodeEncrypted);
+        
+        return { ...defaults, ...parsed };
+      } catch (e) {
+        console.error("Error cargando ajustes cifrados:", e);
+        return defaults;
+      }
+    }
+    return defaults;
   });
 
   useEffect(() => {
-    localStorage.setItem('sovereign_settings', JSON.stringify(appSettings));
+    const toSave = { ...appSettings };
+    
+    if (toSave.geminiKey) toSave.geminiKeyEncrypted = encryptValue(toSave.geminiKey);
+    if (toSave.deepseekKey) toSave.deepseekKeyEncrypted = encryptValue(toSave.deepseekKey);
+    if (toSave.openrouterKey) toSave.openrouterKeyEncrypted = encryptValue(toSave.openrouterKey);
+    if (toSave.dbPasscode) toSave.dbPasscodeEncrypted = encryptValue(toSave.dbPasscode);
+    
+    delete toSave.geminiKey;
+    delete toSave.deepseekKey;
+    delete toSave.openrouterKey;
+    delete toSave.dbPasscode;
+    
+    localStorage.setItem('sovereign_settings', JSON.stringify(toSave));
   }, [appSettings]);
 
   const fetchData = async () => {
