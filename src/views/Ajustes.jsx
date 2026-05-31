@@ -175,24 +175,117 @@ const Ajustes = ({ settings, setSettings, googleUser, onLoginSuccess, onLogout, 
           <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '-0.05em', margin: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
             <Palette size={20} style={{ color: t.textMuted }}/> Motor Estético
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
-            {accentColors.map(color => (
-              <button 
-                key={color.hex}
-                onClick={() => updateSetting('accentColor', color.hex)}
-                style={{
-                  height: 48,
-                  borderRadius: 12,
-                  transition: 'all 0.2s',
-                  border: settings.accentColor === color.hex ? `2px solid ${t.text}` : '2px solid transparent',
-                  opacity: settings.accentColor === color.hex ? 1 : 0.4,
-                  backgroundColor: color.hex,
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={e => { if (settings.accentColor !== color.hex) e.target.style.opacity = '1'; }}
-                onMouseLeave={e => { if (settings.accentColor !== color.hex) e.target.style.opacity = '0.4'; }}
-              />
-            ))}
+          
+          <div>
+            <p style={{ fontSize: 10, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12, marginTop: 0 }}>Color de Acento</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              {accentColors.map(color => (
+                <button 
+                  key={color.hex}
+                  onClick={() => updateSetting('accentColor', color.hex)}
+                  style={{
+                    height: 48,
+                    borderRadius: 12,
+                    transition: 'all 0.2s',
+                    border: settings.accentColor === color.hex ? `2px solid ${t.text}` : '2px solid transparent',
+                    opacity: settings.accentColor === color.hex ? 1 : 0.4,
+                    backgroundColor: color.hex,
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={e => { if (settings.accentColor !== color.hex) e.target.style.opacity = '1'; }}
+                  onMouseLeave={e => { if (settings.accentColor !== color.hex) e.target.style.opacity = '0.4'; }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, borderTop: `1px solid ${t.borderLight}`, paddingTop: 20 }}>
+            <div>
+              <p style={{ fontSize: 10, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, marginTop: 0 }}>Color de Fondo (Modo Noche)</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[
+                  { id: 'darkGray', label: 'Gris Oscuro', color: '#141414' },
+                  { id: 'black', label: 'Negro OLED', color: '#000000' },
+                  { id: 'lightGray', label: 'Gris Claro', color: '#222222' }
+                ].map(bgOpt => (
+                  <button
+                    key={bgOpt.id}
+                    onClick={() => updateSetting('appBackground', bgOpt.id)}
+                    style={{
+                      flex: 1,
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      fontSize: 9,
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      backgroundColor: settings.appBackground === bgOpt.id ? t.accent : bgOpt.color,
+                      color: settings.appBackground === bgOpt.id ? '#000000' : '#ffffff',
+                      border: `1px solid ${t.borderLight}`,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {bgOpt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p style={{ fontSize: 10, color: t.textDim, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, marginTop: 0 }}>Fondo de Pantalla Desenfoque (Wallpaper)</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <input
+                  type="file"
+                  accept="image/*"
+                  id="wallpaper-upload"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        updateSetting('backgroundImage', event.target.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => document.getElementById('wallpaper-upload').click()}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: t.accentSoft,
+                    color: t.text,
+                    border: `1px solid ${t.borderLight}`,
+                    borderRadius: 8,
+                    fontSize: 9,
+                    fontWeight: 900,
+                    textTransform: 'uppercase',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Subir Imagen
+                </button>
+                {settings.backgroundImage && (
+                  <button
+                    onClick={() => updateSetting('backgroundImage', null)}
+                    style={{
+                      padding: '8px 16px',
+                      backgroundColor: `${t.danger}15`,
+                      color: t.danger,
+                      border: `1px solid ${t.danger}30`,
+                      borderRadius: 8,
+                      fontSize: 9,
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Eliminar Fondo
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </section>
 

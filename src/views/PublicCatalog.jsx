@@ -8,6 +8,29 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 
+const parseWhatsAppMarkdown = (text) => {
+  if (!text) return '';
+  // Escapar HTML básico para prevenir XSS
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  
+  // Reemplazar *negrita* por <strong>negrita</strong>
+  html = html.replace(/\*([^\*]+)\*/g, '<strong>$1</strong>');
+  
+  // Reemplazar _cursiva_ por <em>cursiva</em>
+  html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
+  
+  // Reemplazar ~tachado~ por <del>tachado</del>
+  html = html.replace(/~([^~]+)~/g, '<del>$1</del>');
+  
+  // Reemplazar saltos de línea por <br />
+  html = html.replace(/\n/g, '<br />');
+  
+  return html;
+};
+
 const getCategoryIcon = (category) => {
   const catLower = category?.toLowerCase() || '';
   if (catLower.includes('computadoras') || catLower.includes('pc') || catLower.includes('laptop')) return BoxIcon;
@@ -949,9 +972,10 @@ const PublicCatalog = () => {
                 {(selectedProduct.descripcion || selectedProduct.ficha_tecnica) && (
                   <div>
                     <h4 style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', color: t.textMuted, letterSpacing: '0.1em', marginBottom: 8 }}>Descripción del Producto</h4>
-                    <p style={{ fontSize: 11, color: t.textDim, lineHeight: '1.6', margin: 0, whiteSpace: 'pre-line' }}>
-                      {(selectedProduct.descripcion || selectedProduct.ficha_tecnica || '').replace(/\*/g, '\n• ')}
-                    </p>
+                    <p 
+                      style={{ fontSize: 11, color: t.textDim, lineHeight: '1.6', margin: 0 }}
+                      dangerouslySetInnerHTML={{ __html: parseWhatsAppMarkdown(selectedProduct.descripcion || selectedProduct.ficha_tecnica || '') }}
+                    />
                   </div>
                 )}
 

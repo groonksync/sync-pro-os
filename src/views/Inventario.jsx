@@ -41,7 +41,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, t }) => {
   if (!isOpen) return null;
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}>
-      <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, padding: 28, borderRadius: 24, maxWidth: 420, width: '90%', boxShadow: 'none', animation: 'scaleIn 0.3s ease-out' }}>
+      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, padding: 28, borderRadius: 24, maxWidth: 420, width: '90%', boxShadow: 'none', animation: 'scaleIn 0.3s ease-out' }}>
         <h4 style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '0.05em', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={18} color="#ef4444" /> {title}</h4>
         <p style={{ fontSize: 12, color: t.textMuted, lineHeight: '1.6', margin: '0 0 28px 0' }}>{message}</p>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
@@ -603,23 +603,44 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
     if (!editingProduct?.descripcion || !editingProduct?.nombre) return;
     setAiLoading(true);
     try {
-      const { nombre, descripcion, garantia, tipo_envio } = editingProduct;
-      const prompt = `Actúa como un Copywriter profesional experto en E-commerce y WhatsApp Business.
-Reescribe y optimiza la descripción básica del siguiente producto para que sea muy atractiva, estructurada y profesional en una tienda de WhatsApp.
+      const { nombre, descripcion, garantia, tipo_envio, es_oferta, precio_oferta, es_combo, productos_regalo } = editingProduct;
+      
+      // Construir dinámicamente la lista de especificaciones del producto que SÍ han sido rellenadas
+      let productDetails = `- Nombre del Producto: ${nombre}\n- Detalles y Características: ${descripcion}`;
+      
+      const hasGarantia = garantia && garantia.trim() && garantia.trim() !== 'Sin garantía registrada';
+      const hasEnvio = tipo_envio && tipo_envio.trim();
+      const hasOferta = es_oferta && parseFloat(precio_oferta) > 0;
+      const hasCombo = es_combo && productos_regalo && productos_regalo.trim();
 
-DATOS DEL PRODUCTO:
-- Nombre: ${nombre}
-- Detalles básicos: ${descripcion}
-- Garantía: ${garantia || 'Sin garantía registrada'}
-- Tipo de envío: ${tipo_envio || 'No especificado'}
+      if (hasGarantia) {
+        productDetails += `\n- Garantía: ${garantia.trim()}`;
+      }
+      if (hasEnvio) {
+        productDetails += `\n- Método de Envío: ${tipo_envio.trim()}`;
+      }
+      if (hasOferta) {
+        productDetails += `\n- Oferta Especial: Sí, precio de oferta ${precio_oferta} BS`;
+      }
+      if (hasCombo) {
+        productDetails += `\n- Adicionales del combo: ${productos_regalo.trim()}`;
+      }
+
+      const prompt = `Actúa como un Copywriter profesional experto en E-commerce y WhatsApp Business.
+Reescribe y optimiza la descripción del siguiente producto para que sea muy atractiva, resumida, directa y profesional en una tienda de WhatsApp.
+
+DATOS DISPONIBLES DEL PRODUCTO:
+${productDetails}
 
 REGLAS DE FORMATO Y ESTILO:
-1. Divide el texto en 3 secciones claras usando emojis temáticos al inicio de cada inciso:
-   - Una introducción persuasiva de 1 o 2 frases cortas basada ÚNICAMENTE en la información del producto. No inventes slogans genéricos o promesas falsas.
-   - 🌟 *Especificaciones Destacadas:* Una lista detallada con viñetas redondas (usa asterisco '*' al inicio de cada línea para que WhatsApp lo convierta en viñeta) utilizando negritas de WhatsApp (ej: '*Peso de 180 gramos:* Ultra liviano y cómodo') para destacar especificaciones clave.
-   - 📦 *Detalles de Entrega y Garantía:* Describe el tipo de envío y la garantía real del producto. Si el envío es 'Envío Gratuito', descríbelo como 'Envío completamente gratis'; si es 'Costo Adicional', descríbelo como 'Envío por pagar / con recargo adicional'. Si la garantía está registrada, menciónala claramente.
-2. Todo el texto debe ser apto para móviles, con párrafos muy cortos.
-3. Devuelve únicamente el texto optimizado final, sin introducciones ni comentarios explicativos.`;
+1. La descripción debe ser CORTA y DIRECTA AL GRANO (resumida pero detallada al punto para que el usuario entienda de un vistazo). Evita explicaciones largas, rodeos o introducciones vacías.
+2. Si el usuario NO rellenó un campo específico en los DATOS DISPONIBLES anteriores (por ejemplo, si no hay garantía o no hay regalos de combo en la lista), NO inventes esa información y NO pongas ese campo ni hagas mención a él en absoluto.
+3. Divide el texto en estas secciones usando emojis temáticos:
+   - Una breve frase persuasiva de introducción (máximo 15 palabras) basada únicamente en los datos provistos.
+   - 🌟 *Especificaciones:* Una lista corta (2 o 3 viñetas máximo) usando asterisco '*' al inicio de cada línea para viñetas y negritas de WhatsApp (ej: '*Pantalla:* 6.7 pulgadas').
+   - 📦 *Entrega y Garantía:* (Solo si se proporcionaron datos de envío o garantía) Detalles breves de entrega y garantía. Si no se especificaron arriba, omite esta sección por completo.
+4. Todo el texto debe ser apto para móviles, con oraciones cortas.
+5. Devuelve únicamente el texto optimizado final, sin comentarios explicativos de ningún tipo.`;
 
       const response = await aiService.askAgent(prompt, [], { settings });
       if (response && !response.startsWith('❌') && !response.startsWith('⚠️')) {
@@ -645,6 +666,36 @@ REGLAS DE FORMATO Y ESTILO:
 
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('Todos');
   const [toast, setToast] = useState({ show: false, message: '' });
+
+  const inputStyle = useMemo(() => ({
+    width: '100%',
+    backgroundColor: !isDark ? '#ffffff' : 'rgba(255,255,255,0.02)',
+    border: !isDark ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.05)',
+    borderRadius: 14,
+    padding: '12px 16px',
+    fontSize: 12,
+    outline: 'none',
+    color: t.text,
+  }), [isDark, t]);
+
+  const selectStyle = useMemo(() => ({
+    width: '100%',
+    backgroundColor: !isDark ? '#ffffff' : 'rgba(255,255,255,0.03)',
+    border: !isDark ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    padding: '12px 16px',
+    fontSize: 12,
+    outline: 'none',
+    color: t.text,
+  }), [isDark, t]);
+
+  const labelStyle = useMemo(() => ({
+    fontSize: 8,
+    fontWeight: 900,
+    color: t.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em'
+  }), [t]);
   
   // Custom states for sorting and collapsible UI
   const [sortBy, setSortBy] = useState('nombre');
@@ -1179,22 +1230,22 @@ REGLAS DE FORMATO Y ESTILO:
       {/* PDF EXPORT CONFIRMATION MODAL */}
       {isPdfModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)' }}>
-          <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, padding: 32, borderRadius: 28, maxWidth: 480, width: '90%', boxShadow: 'none', animation: 'scaleIn 0.3s ease-out' }}>
-            <h4 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#fff', letterSpacing: '0.1em', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, padding: 32, borderRadius: 28, maxWidth: 480, width: '90%', boxShadow: 'none', animation: 'scaleIn 0.3s ease-out' }}>
+            <h4 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '0.1em', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: 10 }}>
               <FileText size={18} color="#10b981" /> Confirmar Exportación PDF
             </h4>
             <span style={{ fontSize: 9, fontWeight: 900, color: t.accent, letterSpacing: '0.2em', textTransform: 'uppercase', display: 'block', marginBottom: 20 }}>
               Resumen del Reporte Financiero
             </span>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, padding: 20, borderRadius: 16, marginBottom: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: `1px solid ${t.border}`, padding: 20, borderRadius: 16, marginBottom: 24 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Total Activos (Refs)</span>
-                <span style={{ fontSize: 11, color: '#fff', fontWeight: 900, fontFamily: 'monospace' }}>{productos.length} productos</span>
+                <span style={{ fontSize: 11, color: t.text, fontWeight: 900, fontFamily: 'monospace' }}>{productos.length} productos</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Capital Invertido (Costo)</span>
-                <span style={{ fontSize: 11, color: '#fff', fontWeight: 900, fontFamily: 'monospace' }}>{stats.totalInv.toLocaleString()} BS</span>
+                <span style={{ fontSize: 11, color: t.text, fontWeight: 900, fontFamily: 'monospace' }}>{stats.totalInv.toLocaleString()} BS</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 10, color: '#707070', fontWeight: 700, textTransform: 'uppercase' }}>Valor Estimado Venta</span>
@@ -1323,13 +1374,13 @@ REGLAS DE FORMATO Y ESTILO:
           { label: 'Ítems en Inventario', value: `${stats.totalCount} ref`, icon: Package, color: '#8b5cf6' },
           { label: 'Stock Crítico', value: stats.lowStock.length, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070' }
         ].map((m, i) => (
-          <div key={i} style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'none', position: 'relative', overflow: 'hidden' }}>
+          <div key={i} style={{ backgroundColor: t.panel, border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'none', position: 'relative', overflow: 'hidden' }}>
             <div>
-              <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
+              <span style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
               <p style={{ fontSize: 20, fontWeight: 900, color: m.color, fontFamily: 'monospace', margin: '4px 0 0 0', letterSpacing: '-0.02em' }}>{m.value}</p>
-              {m.sub && <span style={{ fontSize: 8, color: '#707070', fontWeight: 700, marginTop: 4, display: 'block' }}>{m.sub}</span>}
+              {m.sub && <span style={{ fontSize: 8, color: t.textDim, fontWeight: 700, marginTop: 4, display: 'block' }}>{m.sub}</span>}
             </div>
-            <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.color }}>
+            <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.color }}>
               <m.icon size={18} />
             </div>
           </div>
@@ -1340,11 +1391,11 @@ REGLAS DE FORMATO Y ESTILO:
       <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexShrink: 0 }}>
         
         {/* Categories Pill Card */}
-        <div style={{ flex: 1.3, backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ flex: 1.3, backgroundColor: t.panel, border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Layers size={15} style={{ color: '#10b981' }} />
-              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Categorías de Activos</h4>
+              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: t.text, margin: 0 }}>Categorías de Activos</h4>
             </div>
             <button 
               onClick={() => setShowAllCategories(!showAllCategories)}
@@ -1359,16 +1410,16 @@ REGLAS DE FORMATO Y ESTILO:
               onClick={() => setSelectedCategoryFilter('Todos')}
               style={{
                 padding: '8px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255,255,255,0.03)',
-                color: selectedCategoryFilter === 'Todos' ? '#10b981' : '#a0a0a0',
+                backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(16, 185, 129, 0.12)' : (t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'),
+                color: selectedCategoryFilter === 'Todos' ? '#10b981' : t.textMuted,
                 fontSize: 9, fontWeight: 800, transition: 'all 0.2s',
                 display: 'flex', alignItems: 'center', gap: 6
               }}
-              onMouseEnter={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'; }}
-              onMouseLeave={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; }}
+              onMouseEnter={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'; }}
+              onMouseLeave={e => { if (selectedCategoryFilter !== 'Todos') e.currentTarget.style.backgroundColor = t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'; }}
             >
               <span>Todos</span>
-              <span style={{ backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.06)', padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{productos.length}</span>
+              <span style={{ backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(0,0,0,0.2)' : (t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'), color: selectedCategoryFilter === 'Todos' ? '#10b981' : t.textDim, padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{productos.length}</span>
             </button>
 
             {Object.keys(stats.catMap).slice(0, showAllCategories ? undefined : 6).map(catName => {
@@ -1381,17 +1432,17 @@ REGLAS DE FORMATO Y ESTILO:
                   onClick={() => setSelectedCategoryFilter(catName)}
                   style={{
                     padding: '8px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                    backgroundColor: isActive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255,255,255,0.03)',
-                    color: isActive ? '#10b981' : '#d4d4d4',
+                    backgroundColor: isActive ? 'rgba(16, 185, 129, 0.12)' : (t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'),
+                    color: isActive ? '#10b981' : t.textMuted,
                     fontSize: 9, fontWeight: 800, transition: 'all 0.2s',
                     display: 'flex', alignItems: 'center', gap: 6
                   }}
-                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)'; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'; }}
                 >
-                  <CatIcon size={11} style={{ color: isActive ? '#10b981' : '#707070' }} />
+                  <CatIcon size={11} style={{ color: isActive ? '#10b981' : t.textDim }} />
                   <span>{catName}</span>
-                  <span style={{ backgroundColor: isActive ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.06)', color: isActive ? '#10b981' : '#707070', padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{item.count}</span>
+                  <span style={{ backgroundColor: isActive ? 'rgba(0,0,0,0.2)' : (t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'), color: isActive ? '#10b981' : t.textDim, padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{item.count}</span>
                 </button>
               );
             })}
@@ -1399,11 +1450,11 @@ REGLAS DE FORMATO Y ESTILO:
         </div>
 
         {/* Low Stock Alerts */}
-        <div style={{ flex: 1, backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ flex: 1, backgroundColor: t.panel, border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
-              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#fff', margin: 0 }}>Control Stock Crítico</h4>
+              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: t.text, margin: 0 }}>Control Stock Crítico</h4>
             </div>
             {stats.lowStock.length > 4 && (
               <button 
@@ -1425,19 +1476,19 @@ REGLAS DE FORMATO Y ESTILO:
                 <div
                   key={p.id}
                   onClick={() => { setSearchTerm(p.nombre); setSelectedCategoryFilter('Todos'); }}
-                  style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 14, padding: '8px 12px', display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s', minWidth: 0 }}
+                  style={{ backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: t.isDark ? '1px solid rgba(255,255,255,0.04)' : `1px solid ${t.border}`, borderRadius: 14, padding: '8px 12px', display: 'flex', gap: 8, alignItems: 'center', cursor: 'pointer', transition: 'all 0.2s', minWidth: 0 }}
                   onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.3)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = t.isDark ? 'rgba(255,255,255,0.04)' : t.border; e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
                   <div style={{ width: 28, height: 28, borderRadius: 6, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     {p.imagen ? (
                       <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                     ) : (
-                      <ImageIcon size={10} style={{ color: '#707070' }} />
+                      <ImageIcon size={10} style={{ color: t.textDim }} />
                     )}
                   </div>
                   <div style={{ minWidth: 0, flex: 1 }}>
-                    <span style={{ fontSize: 9, fontWeight: 700, color: '#fff', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase' }} title={String(p.nombre || '').toUpperCase()}>{String(p.nombre || '').toUpperCase()}</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: t.text, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'uppercase' }} title={String(p.nombre || '').toUpperCase()}>{String(p.nombre || '').toUpperCase()}</span>
                     <span style={{ fontSize: 7, color: '#f59e0b', fontWeight: 800, textTransform: 'uppercase' }}>Stock: {p.stock_actual} uds</span>
                   </div>
                 </div>
@@ -1500,27 +1551,27 @@ REGLAS DE FORMATO Y ESTILO:
       )}
 
       {/* FULL-WIDTH MASTER TABLE */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 24, overflow: 'hidden', boxShadow: 'none' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', backgroundColor: t.panel, border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, borderRadius: 24, overflow: 'hidden', boxShadow: 'none' }}>
         
         {/* Table Header Filter search */}
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ padding: '16px 24px', borderBottom: `1px solid ${t.border}`, display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ flex: 1 }}>
             <input
               type="text"
               placeholder="Buscar por código, SKU, nombre o categoría..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: '11px 18px', fontSize: 12, outline: 'none', color: '#e5e7eb', transition: 'all 0.2s', fontFamily: "'Inter', system-ui, sans-serif" }}
+              style={{ width: '100%', backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : '#ffffff', border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, borderRadius: 12, padding: '11px 18px', fontSize: 12, outline: 'none', color: t.text, transition: 'all 0.2s', fontFamily: "'Inter', system-ui, sans-serif" }}
             />
           </div>
 
           {/* Sort Dropdown */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Ordenar por:</span>
+            <span style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Ordenar por:</span>
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
-              style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: '10px 14px', fontSize: 10, color: '#fff', outline: 'none', cursor: 'pointer', fontWeight: 700 }}
+              style={{ backgroundColor: t.isDark ? 'rgba(255,255,255,0.03)' : '#ffffff', border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, borderRadius: 10, padding: '10px 14px', fontSize: 10, color: t.text, outline: 'none', cursor: 'pointer', fontWeight: 700 }}
             >
               <option value="nombre">Nombre (A-Z)</option>
               <option value="nombre-desc">Nombre (Z-A)</option>
@@ -1546,16 +1597,16 @@ REGLAS DE FORMATO Y ESTILO:
         <div style={{ overflowX: 'auto', flex: 1 }} className="mac-scrollbar">
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.015)' }}>
+              <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)' }}>
                 {['SKU', 'Producto', 'Categoría', 'Costo', 'Precio Público', 'Ganancia & Margen', 'Stock', 'Acciones'].map((th, idx) => (
-                  <th key={idx} style={{ padding: '14px 20px', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#6b7280', fontFamily: "'Inter', system-ui, sans-serif", whiteSpace: 'nowrap' }}>{th}</th>
+                  <th key={idx} style={{ padding: '14px 20px', fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, fontFamily: "'Inter', system-ui, sans-serif", whiteSpace: 'nowrap' }}>{th}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ padding: '100px 0', textAlign: 'center', color: '#707070', fontSize: 11 }}>
+                  <td colSpan={8} style={{ padding: '100px 0', textAlign: 'center', color: t.textDim, fontSize: 11 }}>
                     No se encontraron activos que coincidan con la búsqueda.
                   </td>
                 </tr>
@@ -1576,25 +1627,25 @@ REGLAS DE FORMATO Y ESTILO:
                   const percent = Math.min(100, (stock / (minStock * 3)) * 100);
 
                   return (
-                    <tr key={p.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background-color 0.2s' }} className="hover-row">
-                      <td style={{ padding: '14px 20px', fontSize: 10, fontFamily: 'monospace', color: '#6b7280', whiteSpace: 'nowrap' }}>
+                    <tr key={p.id} style={{ borderBottom: `1px solid ${t.border}`, transition: 'background-color 0.2s' }} className="hover-row">
+                      <td style={{ padding: '14px 20px', fontSize: 10, fontFamily: 'monospace', color: t.textDim, whiteSpace: 'nowrap' }}>
                         {p.sku || p.codigo || (p.id ? p.id.substring(0, 8) : 'N/A')}
                       </td>
                       
                       <td style={{ padding: '14px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-                          <div style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <div style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: t.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.05)', border: `1px solid ${t.border}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             {p.imagen ? (
                               <img src={p.imagen} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt={p.nombre} />
                             ) : (
-                              <ImageIcon size={20} style={{ color: '#6b7280' }} />
+                              <ImageIcon size={20} style={{ color: t.textDim }} />
                             )}
                           </div>
                           <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <span style={{ 
                               fontSize: 12, 
                               fontWeight: 700, 
-                              color: '#f3f4f6', 
+                              color: t.text, 
                               display: '-webkit-box',
                               WebkitLineClamp: 2,
                               WebkitBoxOrient: 'vertical',
@@ -1608,32 +1659,32 @@ REGLAS DE FORMATO Y ESTILO:
                             }} title={String(p.nombre || '').toUpperCase()}>
                               {String(p.nombre || '').toUpperCase()}
                             </span>
-                            <span style={{ fontSize: 9, fontWeight: 400, color: '#6b7280', fontFamily: "'Inter', system-ui, sans-serif", textTransform: 'uppercase' }}>{p.marca || 'Sin marca'}</span>
+                            <span style={{ fontSize: 9, fontWeight: 400, color: t.textDim, fontFamily: "'Inter', system-ui, sans-serif", textTransform: 'uppercase' }}>{p.marca || 'Sin marca'}</span>
                           </div>
                         </div>
                       </td>
 
                       <td style={{ padding: '14px 20px' }}>
-                        <span style={{ fontSize: 9, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', color: '#9ca3af', padding: '4px 10px', borderRadius: 20, whiteSpace: 'nowrap', fontFamily: "'Inter', system-ui, sans-serif" }}>
+                        <span style={{ fontSize: 9, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', backgroundColor: t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, color: t.textMuted, padding: '4px 10px', borderRadius: 20, whiteSpace: 'nowrap', fontFamily: "'Inter', system-ui, sans-serif" }}>
                           {p.categoria || 'General'}
                         </span>
                       </td>
 
                       <td style={{ padding: '14px 20px' }}>
-                        <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: '#9ca3af' }}>{cost.toLocaleString()}</span>
-                        <span style={{ fontSize: 8, color: '#6b7280', display: 'block', marginTop: 1 }}>BS costo</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'monospace', color: t.textMuted }}>{cost.toLocaleString()}</span>
+                        <span style={{ fontSize: 8, color: t.textDim, display: 'block', marginTop: 1 }}>BS costo</span>
                       </td>
 
                       <td style={{ padding: '14px 20px' }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: '#f3f4f6' }}>{sale.toLocaleString()}</span>
-                        <span style={{ fontSize: 8, color: '#6b7280', display: 'block', marginTop: 1 }}>BS público</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: t.text }}>{sale.toLocaleString()}</span>
+                        <span style={{ fontSize: 8, color: t.textDim, display: 'block', marginTop: 1 }}>BS público</span>
                       </td>
 
                       <td style={{ padding: '14px 20px' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: profit >= 0 ? '#e2e8f0' : '#ef4444' }}>+{profit.toLocaleString()}</span>
-                            <span style={{ fontSize: 8, color: '#6b7280' }}>BS/u</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'monospace', color: profit >= 0 ? t.text : '#ef4444' }}>+{profit.toLocaleString()}</span>
+                            <span style={{ fontSize: 8, color: t.textDim }}>BS/u</span>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{
@@ -1642,7 +1693,7 @@ REGLAS DE FORMATO Y ESTILO:
                               backgroundColor: parseFloat(marginPct) >= 30 ? 'rgba(16,185,129,0.1)' : parseFloat(marginPct) >= 15 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)',
                               padding: '2px 8px', borderRadius: 20, fontFamily: 'monospace'
                             }}>{marginPct}%</span>
-                            <span style={{ fontSize: 8, color: '#6b7280', fontFamily: 'monospace' }}>{totalProfit.toLocaleString()} BS total</span>
+                            <span style={{ fontSize: 8, color: t.textDim, fontFamily: 'monospace' }}>{totalProfit.toLocaleString()} BS total</span>
                           </div>
                         </div>
                       </td>
@@ -1651,10 +1702,10 @@ REGLAS DE FORMATO Y ESTILO:
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 5, minWidth: 80 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: statusColor, flexShrink: 0 }} />
-                            <span style={{ fontSize: 12, fontWeight: 600, color: '#f3f4f6', fontFamily: 'monospace' }}>{stock}</span>
-                            <span style={{ fontSize: 9, color: '#6b7280' }}>uds</span>
+                            <span style={{ fontSize: 12, fontWeight: 600, color: t.text, fontFamily: 'monospace' }}>{stock}</span>
+                            <span style={{ fontSize: 9, color: t.textDim }}>uds</span>
                           </div>
-                          <div style={{ height: 3, width: '100%', backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 2, overflow: 'hidden' }}>
+                          <div style={{ height: 3, width: '100%', backgroundColor: t.isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)', borderRadius: 2, overflow: 'hidden' }}>
                             <div style={{ height: '100%', width: `${percent}%`, backgroundColor: statusColor, borderRadius: 2, transition: 'width 0.3s' }} />
                           </div>
                         </div>
@@ -1662,10 +1713,10 @@ REGLAS DE FORMATO Y ESTILO:
 
                       <td style={{ padding: '14px 20px' }}>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <button onClick={() => handleEditProduct(p)} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <button onClick={() => handleEditProduct(p)} style={{ width: 32, height: 32, borderRadius: 10, border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', color: t.text, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <Edit3 size={12} />
                           </button>
-                          <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id, item: p })} style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'rgba(255,255,255,0.02)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id, item: p })} style={{ width: 32, height: 32, borderRadius: 10, border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <Trash2 size={12} />
                           </button>
                         </div>
@@ -1689,12 +1740,12 @@ REGLAS DE FORMATO Y ESTILO:
               <span style={{ fontSize: 11, color: t.textDim, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Cargando pedidos...</span>
             </div>
           ) : pedidosPendientes.length === 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: 16, backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 24, padding: 40 }}>
-              <div style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#707070' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '300px', gap: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 24, padding: 40 }}>
+              <div style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim }}>
                 <CheckCircle size={32} />
               </div>
               <div style={{ textAlign: 'center' }}>
-                <h4 style={{ fontSize: 14, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Todo al día</h4>
+                <h4 style={{ fontSize: 14, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 4px 0' }}>Todo al día</h4>
                 <p style={{ fontSize: 11, color: t.textDim, margin: 0 }}>No hay nuevos pedidos pendientes por procesar.</p>
               </div>
             </div>
@@ -1711,7 +1762,7 @@ REGLAS DE FORMATO Y ESTILO:
                   <div 
                     key={pedido.id} 
                     style={{ 
-                      backgroundColor: '#141414', 
+                      backgroundColor: t.panel, 
                       border: `1px solid ${t.border}`, 
                       borderRadius: 24, 
                       padding: 24, 
@@ -1721,12 +1772,12 @@ REGLAS DE FORMATO Y ESTILO:
                       transition: 'transform 0.2s',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: 16 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: `1px solid ${t.border}`, paddingBottom: 16 }}>
                       <div>
                         <span style={{ fontSize: 8, fontWeight: 900, color: t.accent, textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: 'monospace' }}>
                           Código: {pedidoCode}
                         </span>
-                        <h3 style={{ fontSize: 14, fontWeight: 900, color: '#fff', margin: '4px 0 0 0' }}>
+                        <h3 style={{ fontSize: 14, fontWeight: 900, color: t.text, margin: '4px 0 0 0' }}>
                           {clientName}
                         </h3>
                       </div>
@@ -1738,31 +1789,31 @@ REGLAS DE FORMATO Y ESTILO:
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10, fontSize: 11, color: t.textDim }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-                        <MapPin size={13} style={{ color: '#707070', marginTop: 1, flexShrink: 0 }} />
+                        <MapPin size={13} style={{ color: t.textDim, marginTop: 1, flexShrink: 0 }} />
                         <span><strong>Dirección:</strong> {clientAddress}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <Tag size={13} style={{ color: '#707070', flexShrink: 0 }} />
+                        <Tag size={13} style={{ color: t.textDim, flexShrink: 0 }} />
                         <span><strong>Pago:</strong> {paymentMethod}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <FileText size={13} style={{ color: '#707070', flexShrink: 0 }} />
+                        <FileText size={13} style={{ color: t.textDim, flexShrink: 0 }} />
                         <span><strong>Fecha:</strong> {pedido.fecha}</span>
                       </div>
                     </div>
 
-                    <div style={{ backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                      <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: '1px solid rgba(255,255,255,0.03)', paddingBottom: 6 }}>
+                    <div style={{ backgroundColor: t.isDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.01)', border: `1px solid ${t.border}`, borderRadius: 16, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      <span style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', borderBottom: `1px solid ${t.border}`, paddingBottom: 6 }}>
                         Productos ({cart.reduce((acc, c) => acc + (parseInt(c.quantity) || 1), 0)} uds)
                       </span>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 180, overflowY: 'auto' }}>
                         {cart.map((item, idx) => (
                           <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11 }}>
                             <div style={{ display: 'flex', flexDirection: 'column' }}>
-                              <span style={{ color: '#fff', fontWeight: 600 }}>{item.nombre}</span>
-                              <span style={{ fontSize: 9, color: '#707070', fontFamily: 'monospace' }}>SKU/Cód: {item.sku || 'N/A'}</span>
+                              <span style={{ color: t.text, fontWeight: 600 }}>{item.nombre}</span>
+                              <span style={{ fontSize: 9, color: t.textDim, fontFamily: 'monospace' }}>SKU/Cód: {item.sku || 'N/A'}</span>
                             </div>
-                            <span style={{ color: '#d4d4d4', fontFamily: 'monospace' }}>
+                            <span style={{ color: t.textMuted, fontFamily: 'monospace' }}>
                               {item.quantity} x {parseFloat(item.precio_venta).toLocaleString()} BS
                             </span>
                           </div>
@@ -1770,10 +1821,10 @@ REGLAS DE FORMATO Y ESTILO:
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 16, marginTop: 'auto' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${t.border}`, paddingTop: 16, marginTop: 'auto' }}>
                       <div>
-                        <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Monto a Cobrar</span>
-                        <p style={{ fontSize: 18, fontWeight: 900, color: '#fff', fontFamily: 'monospace', margin: 0 }}>
+                        <span style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Monto a Cobrar</span>
+                        <p style={{ fontSize: 18, fontWeight: 900, color: t.text, fontFamily: 'monospace', margin: 0 }}>
                           {parseFloat(pedido.monto).toLocaleString()} BS
                         </p>
                       </div>
@@ -1834,14 +1885,14 @@ REGLAS DE FORMATO Y ESTILO:
       {/* PRODUCT CREATION AND EDIT PANEL MODAL */}
       {isModalOpen && editingProduct && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9000, backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(20px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <div style={{ backgroundColor: '#141414', border: `1px solid ${t.border}`, width: '100%', maxWidth: 1060, borderRadius: 28, overflow: 'hidden', boxShadow: 'none', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'scaleIn 0.3s ease-out' }}>
+          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, width: '100%', maxWidth: 1060, borderRadius: 28, overflow: 'hidden', boxShadow: 'none', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'scaleIn 0.3s ease-out' }}>
             
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 32px', borderBottom: `1px solid ${t.border}` }}>
-              <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: '#fff', letterSpacing: '0.1em', margin: 0 }}>
+              <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '0.1em', margin: 0 }}>
                 {editingProduct.nombre ? 'Ficha de Producto / Modificar Ficha' : 'Nuevo Producto / Registrar Producto'}
               </h3>
-              <button onClick={() => setIsModalOpen(false)} style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim, cursor: 'pointer' }}>
+              <button onClick={() => setIsModalOpen(false)} style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: t.textDim, cursor: 'pointer' }}>
                 <X size={14} />
               </button>
             </div>
@@ -1850,22 +1901,22 @@ REGLAS DE FORMATO Y ESTILO:
             <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
               
               {/* Left Side Panel: Interactive Image Manager (380px) */}
-              <div style={{ width: '390px', borderRight: `1px solid ${t.border}`, backgroundColor: 'rgba(0,0,0,0.15)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20, overflowY: 'auto' }} className="mac-scrollbar">
+              <div style={{ width: '390px', borderRight: `1px solid ${t.border}`, backgroundColor: t.isDark ? 'rgba(0,0,0,0.15)' : 'rgba(0,0,0,0.02)', padding: 24, display: 'flex', flexDirection: 'column', gap: 20, overflowY: 'auto' }} className="mac-scrollbar">
                 
                 {/* Large Preview Area */}
-                <div style={{ width: '100%', height: 230, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.3)', border: `1px solid ${t.border}`, overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '100%', height: 230, borderRadius: 20, backgroundColor: t.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)', border: `1px solid ${t.border}`, overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {editingProduct.imagen ? (
                     <img src={editingProduct.imagen} style={{ width: '100%', height: '100%', objectFit: 'contain' }} alt="Portada" />
                   ) : (
-                    <ImageIcon size={44} style={{ color: '#707070' }} />
+                    <ImageIcon size={44} style={{ color: t.textDim }} />
                   )}
                   <div style={{ position: 'absolute', top: 12, left: 12, backgroundColor: '#10b981', color: '#000', fontSize: 7, fontWeight: 900, letterSpacing: '0.15em', padding: '4px 10px', borderRadius: 20, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 4 }}><Star size={8} fill="black" /> Portada Principal</div>
                 </div>
 
                 {/* File Uploader Button */}
                 <div>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>Subir archivos a Supabase</label>
-                  <label style={{ padding: '12px 16px', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', borderRadius: 12, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s' }}>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>Subir archivos a Supabase</label>
+                  <label style={{ padding: '12px 16px', backgroundColor: t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)', border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, color: t.text, borderRadius: 12, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all 0.2s' }}>
                     <input type="file" style={{ display: 'none' }} accept="image/*" multiple onChange={handleImageUpload} />
                     <ImageIcon size={13} /> Subir Imágenes Simultáneas
                   </label>
@@ -1873,14 +1924,14 @@ REGLAS DE FORMATO Y ESTILO:
 
                 {/* Paste URL Input */}
                 <div>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>O ingresar URL manual de foto</label>
+                  <label style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block', marginBottom: 6 }}>O ingresar URL manual de foto</label>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input 
                       type="text" 
                       value={manualUrlInput} 
                       onChange={e => setManualUrlInput(e.target.value)}
                       placeholder="https://ejemplo.com/foto.jpg"
-                      style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '10px 14px', fontSize: 11, outline: 'none', color: '#fff' }} 
+                      style={{ flex: 1, backgroundColor: !isDark ? '#ffffff' : 'rgba(255,255,255,0.02)', border: !isDark ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '10px 14px', fontSize: 11, outline: 'none', color: t.text }} 
                     />
                     <button 
                       onClick={handleAddManualUrl}
@@ -1893,13 +1944,13 @@ REGLAS DE FORMATO Y ESTILO:
 
                 {/* Gallery List thumbnails */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  <span style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Carrusel de Imágenes ({editingProduct.imagenes?.length || 0})</span>
+                  <span style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Carrusel de Imágenes ({editingProduct.imagenes?.length || 0})</span>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {editingProduct.imagenes?.map((img, idx) => {
                       const isCover = editingProduct.imagen === img;
                       return (
-                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${isCover ? '#10b981' : 'rgba(255,255,255,0.05)'}`, borderRadius: 14, padding: 8, transition: 'all 0.2s' }}>
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 10, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: `1px solid ${isCover ? '#10b981' : t.border}`, borderRadius: 14, padding: 8, transition: 'all 0.2s' }}>
                           <div style={{ width: 44, height: 44, borderRadius: 8, overflow: 'hidden', backgroundColor: 'rgba(0,0,0,0.2)', flexShrink: 0 }}>
                             <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
                           </div>
@@ -1937,36 +1988,36 @@ REGLAS DE FORMATO Y ESTILO:
                 
                 {/* Commercial Name */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Nombre Comercial de Producto</label>
+                  <label style={labelStyle}>Nombre Comercial de Producto</label>
                   <input 
                     type="text" 
                     value={editingProduct.nombre} 
                     onChange={e => setEditingProduct({ ...editingProduct, nombre: e.target.value })}
                     placeholder="Ej: CÁMARA PT WIFI 4MP PANEL SOLAR"
-                    style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    style={inputStyle} 
                   />
                 </div>
 
                 {/* SKU & Barcode */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Código SKU</label>
+                    <label style={labelStyle}>Código SKU</label>
                     <input 
                       type="text" 
                       value={editingProduct.sku} 
                       onChange={e => setEditingProduct({ ...editingProduct, sku: e.target.value })}
                       placeholder="Ej: SAKTI-STAND-01"
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Código de barras (UPC/EAN)</label>
+                    <label style={labelStyle}>Código de barras (UPC/EAN)</label>
                     <input 
                       type="text" 
                       value={editingProduct.codigo} 
                       onChange={e => setEditingProduct({ ...editingProduct, codigo: e.target.value })}
                       placeholder="Ej: 779123456789"
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                 </div>
@@ -1974,11 +2025,11 @@ REGLAS DE FORMATO Y ESTILO:
                 {/* Categoria & Marca */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Categoría Principal</label>
+                    <label style={labelStyle}>Categoría Principal</label>
                     <select 
                       value={editingProduct.categoria} 
                       onChange={e => setEditingProduct({ ...editingProduct, categoria: e.target.value })}
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }}
+                      style={selectStyle}
                     >
                       {AMAZON_CATEGORIES.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
@@ -1986,13 +2037,13 @@ REGLAS DE FORMATO Y ESTILO:
                     </select>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Marca / Fabricante</label>
+                    <label style={labelStyle}>Marca / Fabricante</label>
                     <input 
                       type="text" 
                       value={editingProduct.marca} 
                       onChange={e => setEditingProduct({ ...editingProduct, marca: e.target.value })}
                       placeholder="Ej: DAHUA TECHNOLOGY"
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                 </div>
@@ -2000,30 +2051,30 @@ REGLAS DE FORMATO Y ESTILO:
                 {/* Cost, Sale, and Before Prices */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Inversión / Costo (BS)</label>
+                    <label style={labelStyle}>Precio Inversión / Costo (BS)</label>
                     <input 
                       type="number" 
                       value={editingProduct.precio_costo} 
                       onChange={e => setEditingProduct({ ...editingProduct, precio_costo: e.target.value })}
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Venta Público (BS)</label>
+                    <label style={labelStyle}>Precio Venta Público (BS)</label>
                     <input 
                       type="number" 
                       value={editingProduct.precio_venta} 
                       onChange={e => setEditingProduct({ ...editingProduct, precio_venta: e.target.value })}
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio Oferta / Antes (BS)</label>
+                    <label style={labelStyle}>Precio Antes / Tachado (BS)</label>
                     <input 
                       type="number" 
                       value={editingProduct.precio_antes} 
                       onChange={e => setEditingProduct({ ...editingProduct, precio_antes: e.target.value })}
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                 </div>
@@ -2031,30 +2082,30 @@ REGLAS DE FORMATO Y ESTILO:
                 {/* Stock, Garantia & Logistica */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Stock Disponible</label>
+                    <label style={labelStyle}>Stock Disponible</label>
                     <input 
                       type="number" 
                       value={editingProduct.stock_actual} 
                       onChange={e => setEditingProduct({ ...editingProduct, stock_actual: e.target.value })}
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Garantía</label>
+                    <label style={labelStyle}>Garantía</label>
                     <input 
                       type="text" 
                       value={editingProduct.garantia} 
                       onChange={e => setEditingProduct({ ...editingProduct, garantia: e.target.value })}
                       placeholder="Ej: 180 Días"
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Método de Envío</label>
+                    <label style={labelStyle}>Método de Envío</label>
                     <select 
                       value={editingProduct.tipo_envio} 
                       onChange={e => setEditingProduct({ ...editingProduct, tipo_envio: e.target.value })}
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }}
+                      style={selectStyle}
                     >
                       <option value="Envío Gratuito">Envío Gratuito</option>
                       <option value="Costo Adicional">Costo Adicional</option>
@@ -2065,29 +2116,29 @@ REGLAS DE FORMATO Y ESTILO:
                 {/* Video Promocional & Enlace Compra */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>URL del Video Promocional</label>
+                    <label style={labelStyle}>URL del Video Promocional</label>
                     <input 
                       type="text" 
                       value={editingProduct.video_url || ''} 
                       onChange={e => setEditingProduct({ ...editingProduct, video_url: e.target.value })}
                       placeholder="Ej: https://www.youtube.com/watch?v=VIDEO_ID"
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Enlace de Compra (WhatsApp Business)</label>
+                    <label style={labelStyle}>Enlace de Compra (WhatsApp Business)</label>
                     <input 
                       type="text" 
                       value={editingProduct.enlace_compra || ''} 
                       onChange={e => setEditingProduct({ ...editingProduct, enlace_compra: e.target.value })}
                       placeholder="Ej: https://mi-sitio.com/pagar-producto"
-                      style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 14, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                      style={inputStyle} 
                     />
                   </div>
                 </div>
 
                 {/* Ofertas y Combos */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, backgroundColor: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', padding: 16, borderRadius: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, backgroundColor: t.isDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.02)', border: `1px solid ${t.border}`, padding: 16, borderRadius: 14 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <input 
@@ -2097,17 +2148,17 @@ REGLAS DE FORMATO Y ESTILO:
                         onChange={e => setEditingProduct({ ...editingProduct, es_oferta: e.target.checked })}
                         style={{ cursor: 'pointer' }}
                       />
-                      <label htmlFor="modal-es-oferta" style={{ fontSize: 9, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>Activar como Oferta</label>
+                      <label htmlFor="modal-es-oferta" style={{ fontSize: 9, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>Activar como Oferta</label>
                     </div>
                     {editingProduct.es_oferta && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Precio de Oferta Especial (BS)</label>
+                        <label style={labelStyle}>Precio de Oferta Especial (BS)</label>
                         <input 
                           type="number" 
                           value={editingProduct.precio_oferta || ''} 
                           onChange={e => setEditingProduct({ ...editingProduct, precio_oferta: e.target.value })}
                           placeholder="Ej: 120"
-                          style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '10px 14px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                          style={inputStyle} 
                         />
                       </div>
                     )}
@@ -2122,17 +2173,17 @@ REGLAS DE FORMATO Y ESTILO:
                         onChange={e => setEditingProduct({ ...editingProduct, es_combo: e.target.checked })}
                         style={{ cursor: 'pointer' }}
                       />
-                      <label htmlFor="modal-es-combo" style={{ fontSize: 9, fontWeight: 900, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>Activar como Combo / Pack</label>
+                      <label htmlFor="modal-es-combo" style={{ fontSize: 9, fontWeight: 900, color: t.text, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer' }}>Activar como Combo / Pack</label>
                     </div>
                     {editingProduct.es_combo && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                        <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Regalos y Adicionales Incluidos</label>
+                        <label style={labelStyle}>Regalos y Adicionales Incluidos</label>
                         <input 
                           type="text" 
                           value={editingProduct.productos_regalo || ''} 
                           onChange={e => setEditingProduct({ ...editingProduct, productos_regalo: e.target.value })}
                           placeholder="Ej: + Estuche protector gratis"
-                          style={{ width: '100%', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 12, padding: '10px 14px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                          style={inputStyle} 
                         />
                       </div>
                     )}
@@ -2141,7 +2192,7 @@ REGLAS DE FORMATO Y ESTILO:
 
                 {/* Description extended */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontSize: 8, fontWeight: 900, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Descripción / Ficha Técnica Corporativa</label>
+                  <label style={labelStyle}>Descripción / Ficha Técnica Corporativa</label>
                   <div style={{ position: 'relative', width: '100%' }}>
                     <textarea 
                       value={editingProduct.descripcion} 
@@ -2150,8 +2201,8 @@ REGLAS DE FORMATO Y ESTILO:
                       style={{ 
                         width: '100%', 
                         height: 130, 
-                        backgroundColor: 'rgba(255,255,255,0.02)', 
-                        border: '1px solid rgba(255,255,255,0.05)', 
+                        backgroundColor: !isDark ? '#ffffff' : 'rgba(255,255,255,0.02)', 
+                        border: !isDark ? '1px solid rgba(0,0,0,0.12)' : '1px solid rgba(255,255,255,0.05)', 
                         borderRadius: 14, 
                         padding: '12px 16px', 
                         paddingBottom: '36px',

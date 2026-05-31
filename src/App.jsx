@@ -309,15 +309,54 @@ const App = () => {
   // EFECTO DE TEMA GLOBAL
   useEffect(() => {
     const theme = getTheme(isDarkMode);
+    if (isDarkMode) {
+      if (appSettings.appBackground === 'black') {
+        theme.bg = '#000000';
+      } else if (appSettings.appBackground === 'lightGray') {
+        theme.bg = '#222222';
+      } else {
+        theme.bg = '#141414';
+      }
+    }
     document.body.style.backgroundColor = theme.bg;
-  }, [isDarkMode]);
+  }, [isDarkMode, appSettings.appBackground]);
 
-  const globalTheme = useMemo(() => getTheme(isDarkMode), [isDarkMode]);
+  const globalTheme = useMemo(() => {
+    const t = getTheme(isDarkMode);
+    if (isDarkMode) {
+      if (appSettings.appBackground === 'black') {
+        t.bg = '#000000';
+        t.panel = '#0a0a0a';
+        t.surface = '#0a0a0a';
+        t.input = '#000000';
+      } else if (appSettings.appBackground === 'lightGray') {
+        t.bg = '#222222';
+        t.panel = '#2c2c2c';
+        t.surface = '#2c2c2c';
+        t.input = '#222222';
+      }
+    }
+    return t;
+  }, [isDarkMode, appSettings.appBackground]);
 
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
-      <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-500 ${appSettings.interfaceDensity}`}
+      <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
         style={{ backgroundColor: globalTheme.bg, color: globalTheme.text }}>
+        
+        {/* Background Wallpaper with extreme blur and brightness adjustment */}
+        {appSettings.backgroundImage && (
+          <div 
+            className="absolute inset-0 z-0 pointer-events-none transition-all duration-1000"
+            style={{
+              backgroundImage: `url(${appSettings.backgroundImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(60px) brightness(0.35)',
+              transform: 'scale(1.1)'
+            }}
+          />
+        )}
         <Sidebar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 

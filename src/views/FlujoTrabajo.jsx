@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
+import { aiService } from '../services/aiService';
 
 // =========================================================================
 // CRIPTOGRAFÍA CLIENT-SIDE (SubtleCrypto)
@@ -260,6 +261,38 @@ const PLANTILLAS = [
 ];
 
 // =========================================================================
+// REGLA SUPERIOR DE PÁGINA (Word Ruler)
+// =========================================================================
+function PageRuler({ margins, orientation }) {
+  const isVertical = orientation === 'vertical';
+  const widthCm = isVertical ? 21 : 29.7;
+  const totalTicks = Math.floor(widthCm);
+  
+  let marginCm = 2.5;
+  if (margins === 'narrow') marginCm = 1.27;
+  if (margins === 'wide') marginCm = 5.08;
+
+  return (
+    <div className="w-full h-4 bg-neutral-800/20 border-b border-neutral-700/30 flex items-center relative select-none" style={{ fontSize: '7px', color: '#6b7280', minHeight: '16px' }}>
+      {/* Margins */}
+      <div className="absolute left-0 top-0 bottom-0 bg-neutral-700/10 border-r border-neutral-700/20" style={{ width: `${(marginCm / widthCm) * 100}%` }} />
+      <div className="absolute right-0 top-0 bottom-0 bg-neutral-700/10 border-l border-neutral-700/20" style={{ width: `${(marginCm / widthCm) * 100}%` }} />
+      
+      {/* Ticks */}
+      {Array.from({ length: totalTicks + 1 }).map((_, i) => {
+        const leftPercent = (i / widthCm) * 100;
+        return (
+          <div key={i} className="absolute flex flex-col items-center" style={{ left: `${leftPercent}%`, transform: 'translateX(-50%)' }}>
+            <span className="text-[6px] leading-none mb-0.5">{i}</span>
+            <div className="w-px h-1 bg-neutral-600/30" />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// =========================================================================
 // COMPONENTE PRINCIPAL
 // =========================================================================
 export default function FlujoTrabajo({ settings, isDark }) {
@@ -307,11 +340,50 @@ export default function FlujoTrabajo({ settings, isDark }) {
   const [shareMessage, setShareMessage] = useState('');
 
   // --- Versiones & Comentarios ---
-  const [rightSidebarMode, setRightSidebarMode] = useState(null); // null | 'comentarios' | 'versiones'
+  const [rightSidebarMode, setRightSidebarMode] = useState(null); // null | 'comentarios' | 'versiones' | 'copilot'
   const [newComment, setNewComment] = useState('');
   const [versionDescription, setVersionDescription] = useState('');
   const [viewingVersion, setViewingVersion] = useState(null); // Si visualizamos una versión histórica
   
+  // --- Word Engine & Copilot states ---
+  const [zoom, setZoom] = useState(100);
+  const [focusedPageIndex, setFocusedPageIndex] = useState(0);
+  const [showFindReplaceModal, setShowFindReplaceModal] = useState(false);
+  const [findQuery, setFindQuery] = useState('');
+  const [replaceQuery, setReplaceQuery] = useState('');
+  const [pageUpdateTrigger, setPageUpdateTrigger] = useState(0);
+  const [copilotInput, setCopilotInput] = useState('');
+  const [copilotLoading, setCopilotLoading] = useState(false);
+  const [copilotMessages, setCopilotMessages] = useState([
+    { role: 'assistant', content: 'Hola Carlos. Soy tu Asistente Neural de Flujo. Puedo redactar documentos estilo Word (usando múltiples páginas), crear carpetas, o generar plantillas personalizadas. ¿En qué te ayudo hoy?' }
+  ]);
+  const [customTemplates, setCustomTemplates] = useState(() => {
+    const saved = localStorage.getItem('ft_custom_templates');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const pagesContainerRef = useRef(null);
+
+  const pages = useMemo(() => {
+    if (!activeDoc?.contenido) return [''];
+    return activeDoc.contenido.split('<!-- pagebreak -->');
+  }, [activeDoc?.id, pageUpdateTrigger]);
+
+  const getJoinedHTML = () => {
+    if (!pagesContainerRef.current) return activeDoc?.contenido || '';
+    const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+    const pageContents = Array.from(pageDivs).map(div => div.innerHTML);
+    return pageContents.join('<!-- pagebreak -->');
+  };
+
+  const focusActivePage = () => {
+    if (pagesContainerRef.current) {
+      const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+      const activePage = pageDivs[focusedPageIndex] || pageDivs[0];
+      if (activePage) activePage.focus();
+    }
+  };
+
   // --- Admin Console ---
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
@@ -430,11 +502,11 @@ export default function FlujoTrabajo({ settings, isDark }) {
     }
   };
 
-  const createFolder = async () => {
-    if (!newFolderName.trim()) return;
+  const createFolderWithName = async (folderName) => {
+    if (!folderName.trim()) return;
     const newFolderObj = {
       id: crypto.randomUUID(),
-      nombre: newFolderName.trim(),
+      nombre: folderName.trim(),
       owner_id: currentUser.id,
       created_at: new Date().toISOString()
     };
@@ -454,6 +526,11 @@ export default function FlujoTrabajo({ settings, isDark }) {
       console.warn("Error saving folder to Supabase, running in local fallback:", e);
       setIsFallbackMode(true);
     }
+  };
+
+  const createFolder = async () => {
+    if (!newFolderName.trim()) return;
+    await createFolderWithName(newFolderName);
     setNewFolderName('');
     setShowFolderModal(false);
   };
@@ -604,7 +681,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
 
   const saveDocumentContent = async () => {
     if (!activeDoc || viewingVersion) return;
-    const updatedContent = editorRef.current ? editorRef.current.innerHTML : '';
+    const updatedContent = getJoinedHTML();
     
     const updatedDoc = {
       ...activeDoc,
@@ -899,7 +976,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
 
   const handleManualVersion = () => {
     if (!versionDescription.trim()) return;
-    const content = editorRef.current ? editorRef.current.innerHTML : '';
+    const content = getJoinedHTML();
     saveVersionLog(activeDoc.id, content, versionDescription.trim());
     setVersionDescription('');
     alert('¡Versión manual guardada!');
@@ -908,12 +985,8 @@ export default function FlujoTrabajo({ settings, isDark }) {
   const restoreVersion = async (versionObj) => {
     if (!confirm('¿Deseas restaurar el documento a este punto del historial? La versión actual será sobreescrita.')) return;
     
-    const currentContent = editorRef.current ? editorRef.current.innerHTML : '';
+    const currentContent = getJoinedHTML();
     await saveVersionLog(activeDoc.id, currentContent, 'Respaldo antes de restauración');
-
-    if (editorRef.current) {
-      editorRef.current.innerHTML = versionObj.contenido;
-    }
     
     const updatedDoc = {
       ...activeDoc,
@@ -939,6 +1012,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
 
     setDocuments(prev => prev.map(d => d.id === activeDoc.id ? updatedDoc : d));
     setActiveDoc(updatedDoc);
+    setPageUpdateTrigger(prev => prev + 1);
     setViewingVersion(null);
     setRightSidebarMode(null);
     alert('Documento restaurado.');
@@ -1126,9 +1200,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
   const execCommand = (command, value = null) => {
     if (viewingVersion) return;
     document.execCommand(command, false, value);
-    if (editorRef.current) {
-      editorRef.current.focus();
-    }
+    focusActivePage();
     calculateWordCount();
   };
 
@@ -1145,30 +1217,34 @@ export default function FlujoTrabajo({ settings, isDark }) {
   const changeFontFamily = (family) => {
     setFontFamily(family);
     execCommand('fontName', 'tempFamily');
-    const fontElems = editorRef.current.querySelectorAll('font[face="tempFamily"]');
-    fontElems.forEach(font => {
-      font.removeAttribute('face');
-      font.style.fontFamily = family;
-      const span = document.createElement('span');
-      span.style.fontFamily = family;
-      span.innerHTML = font.innerHTML;
-      font.parentNode.replaceChild(span, font);
-    });
+    if (pagesContainerRef.current) {
+      const fontElems = pagesContainerRef.current.querySelectorAll('font[face="tempFamily"]');
+      fontElems.forEach(font => {
+        font.removeAttribute('face');
+        font.style.fontFamily = family;
+        const span = document.createElement('span');
+        span.style.fontFamily = family;
+        span.innerHTML = font.innerHTML;
+        font.parentNode.replaceChild(span, font);
+      });
+    }
   };
 
   // Aplica escala de tamaños en pixeles reales (8px - 72px)
   const changeFontSize = (sizeStr) => {
     setFontSize(sizeStr);
     execCommand('fontSize', '7'); // temporal
-    const fontElems = editorRef.current.querySelectorAll('font[size="7"]');
-    fontElems.forEach(font => {
-      font.removeAttribute('size');
-      font.style.fontSize = sizeStr;
-      const span = document.createElement('span');
-      span.style.fontSize = sizeStr;
-      span.innerHTML = font.innerHTML;
-      font.parentNode.replaceChild(span, font);
-    });
+    if (pagesContainerRef.current) {
+      const fontElems = pagesContainerRef.current.querySelectorAll('font[size="7"]');
+      fontElems.forEach(font => {
+        font.removeAttribute('size');
+        font.style.fontSize = sizeStr;
+        const span = document.createElement('span');
+        span.style.fontSize = sizeStr;
+        span.innerHTML = font.innerHTML;
+        font.parentNode.replaceChild(span, font);
+      });
+    }
   };
 
   const insertChecklist = () => {
@@ -1224,7 +1300,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
   const getSelectedTable = () => {
     if (!window.getSelection().rangeCount) return null;
     let node = window.getSelection().anchorNode;
-    while (node && node !== editorRef.current) {
+    while (node && node !== pagesContainerRef.current) {
       if (node.nodeName === 'TABLE') return node;
       node = node.parentNode;
     }
@@ -1328,14 +1404,14 @@ export default function FlujoTrabajo({ settings, isDark }) {
   };
 
   const handleContextMenu = (e) => {
-    if (editorRef.current && editorRef.current.contains(e.target)) {
+    if (pagesContainerRef.current && pagesContainerRef.current.contains(e.target)) {
       e.preventDefault();
       
       let cell = e.target;
       let cellNode = null;
       let tableNode = null;
       
-      while (cell && cell !== editorRef.current) {
+      while (cell && cell !== pagesContainerRef.current) {
         if (cell.nodeName === 'TD' || cell.nodeName === 'TH') {
           cellNode = cell;
         }
@@ -1364,11 +1440,149 @@ export default function FlujoTrabajo({ settings, isDark }) {
   }, []);
 
   const calculateWordCount = () => {
-    if (!editorRef.current) return;
-    const text = editorRef.current.innerText || '';
+    if (!pagesContainerRef.current) return;
+    const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+    const text = Array.from(pageDivs).map(div => div.innerText).join(' ');
     const cleanText = text.trim();
     const count = cleanText === '' ? 0 : cleanText.split(/\s+/).length;
     setWordCount(count);
+  };
+
+  const insertPageAfterCurrent = () => {
+    if (!pagesContainerRef.current) return;
+    const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+    const pageContents = Array.from(pageDivs).map(div => div.innerHTML);
+    
+    pageContents.splice(focusedPageIndex + 1, 0, '<p>Nueva página</p>');
+    const joined = pageContents.join('<!-- pagebreak -->');
+    
+    setActiveDoc(prev => ({ ...prev, contenido: joined }));
+    setPageUpdateTrigger(prev => prev + 1);
+    setFocusedPageIndex(focusedPageIndex + 1);
+  };
+
+  const deleteCurrentPage = () => {
+    if (!pagesContainerRef.current) return;
+    const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+    if (pageDivs.length <= 1) {
+      alert("No puedes eliminar la única página del documento.");
+      return;
+    }
+    if (!confirm(`¿Estás seguro de eliminar la página ${focusedPageIndex + 1}? El contenido de esta página se perderá.`)) return;
+    
+    const pageContents = Array.from(pageDivs).map(div => div.innerHTML);
+    pageContents.splice(focusedPageIndex, 1);
+    const joined = pageContents.join('<!-- pagebreak -->');
+    
+    setActiveDoc(prev => ({ ...prev, contenido: joined }));
+    setPageUpdateTrigger(prev => prev + 1);
+    setFocusedPageIndex(Math.max(0, focusedPageIndex - 1));
+  };
+
+  const handleReplaceAll = () => {
+    if (!findQuery) return;
+    if (!pagesContainerRef.current) return;
+    const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+    
+    let count = 0;
+    pageDivs.forEach(div => {
+      const html = div.innerHTML;
+      if (html.includes(findQuery)) {
+        const occurrences = html.split(findQuery).length - 1;
+        count += occurrences;
+        div.innerHTML = html.split(findQuery).join(replaceQuery);
+      }
+    });
+    
+    if (count > 0) {
+      calculateWordCount();
+      saveDocumentContent();
+      alert(`Se reemplazaron ${count} coincidencias.`);
+    } else {
+      alert("No se encontraron coincidencias.");
+    }
+    setShowFindReplaceModal(false);
+  };
+
+  const handleSendCopilot = async () => {
+    if (!copilotInput.trim() || copilotLoading) return;
+    const userMsg = copilotInput.trim();
+    setCopilotInput('');
+    setCopilotLoading(true);
+
+    const newMessages = [...copilotMessages, { role: 'user', content: userMsg }];
+    setCopilotMessages(newMessages);
+
+    try {
+      const systemPrompt = `
+        Eres el "Asistente Neural de Flujo" (Inefable FlowWriter AI Copilot).
+        Tu objetivo es ayudar al administrador (Carlos) a gestionar y redactar sus documentos, plantillas y carpetas.
+
+        ACCIONES (JSON MANDATORIO AL FINAL):
+        Puedes realizar las siguientes acciones especiales cuando el usuario lo solicite:
+        - CREAR DOCUMENTO: redactar un nuevo documento desde cero.
+          JSON: { "action": "CREATE_DOCUMENT", "data": { "titulo": "Título del Documento", "contenido": "Contenido HTML del documento. Usa estilos HTML como h1, h2, p, strong, em, table si es necesario. IMPORTANTE: puedes usar '<!-- pagebreak -->' para insertar saltos de página y estructurar un documento de múltiples hojas." } }
+        - CREAR CARPETA: crear una nueva carpeta en el explorador.
+          JSON: { "action": "CREATE_FOLDER", "data": { "nombre": "Nombre de la Carpeta" } }
+        - CREAR PLANTILLA: diseñar una plantilla preestablecida para que el usuario pueda usarla después.
+          JSON: { "action": "GENERATE_TEMPLATE", "data": { "id": "id-unico-generado", "titulo": "Nombre de la Plantilla", "categoria": "Categoría (ej: Legal, Marketing, Negocios, Académico)", "contenido": "Contenido HTML base de la plantilla." } }
+
+        REGLAS CRÍTICAS:
+        1. SIEMPRE responde en español con un estilo elegante, profesional y de copywriter.
+        2. Si el usuario te pide crear un documento, una carpeta o una plantilla, redacta el contenido solicitado y adjunta el comando JSON MANDATORIO al final de tu respuesta, envuelto estrictamente entre estos marcadores: [[[ACTION{tu_json_aqui}]]].
+        3. No le expliques el JSON al usuario, solo di qué acción has realizado.
+        4. Si el documento es largo o el usuario lo pide, utiliza '<!-- pagebreak -->' para separar las páginas.
+        5. Tienes acceso al contexto del documento actual si lo necesitas:
+           - Título actual: "${activeDoc?.titulo || 'Ninguno'}"
+           - Cantidad de páginas actuales: ${pages.length}
+      `;
+
+      const response = await aiService.askRaw(systemPrompt, userMsg, settings);
+      
+      let cleanText = response || 'No he podido procesar tu solicitud.';
+      let actionJSON = null;
+
+      if (cleanText.includes('[[[ACTION')) {
+        const parts = cleanText.split('[[[ACTION');
+        cleanText = parts[0].trim();
+        const actionPart = parts[1].split(']]]');
+        if (actionPart.length > 0) {
+          try {
+            actionJSON = JSON.parse(actionPart[0].trim());
+          } catch (e) {
+            console.error("Error parsing Copilot action JSON:", e);
+          }
+        }
+      }
+
+      setCopilotMessages(prev => [...prev, { role: 'assistant', content: cleanText }]);
+
+      if (actionJSON) {
+        const { action, data } = actionJSON;
+        if (action === 'CREATE_DOCUMENT' && data) {
+          await createDocument(data.titulo || 'Nuevo Documento', data.contenido || '');
+          setPageUpdateTrigger(prev => prev + 1);
+        } else if (action === 'CREATE_FOLDER' && data) {
+          await createFolderWithName(data.nombre);
+        } else if (action === 'GENERATE_TEMPLATE' && data) {
+          const newTemplate = {
+            id: data.id || crypto.randomUUID(),
+            titulo: data.titulo || 'Nueva Plantilla',
+            categoria: data.categoria || 'General',
+            contenido: data.contenido || ''
+          };
+          const updatedTemplates = [...customTemplates, newTemplate];
+          setCustomTemplates(updatedTemplates);
+          localStorage.setItem('ft_custom_templates', JSON.stringify(updatedTemplates));
+        }
+      }
+
+    } catch (err) {
+      console.error(err);
+      setCopilotMessages(prev => [...prev, { role: 'assistant', content: '❌ Error: No se pudo conectar con el servicio neural. Revisa tus llaves de API en Ajustes.' }]);
+    } finally {
+      setCopilotLoading(false);
+    }
   };
 
   const openDocument = (doc) => {
@@ -1873,7 +2087,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                     <div className="space-y-3">
                       <span className="text-[10px] font-bold text-[#bec8d2] uppercase tracking-wider block">Plantillas Rápidas</span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {PLANTILLAS.map(p => (
+                        {[...PLANTILLAS, ...customTemplates].map(p => (
                           <div
                             key={p.id}
                             onClick={() => handleTemplateClick(p)}
@@ -1977,6 +2191,15 @@ export default function FlujoTrabajo({ settings, isDark }) {
                     
                     {/* Botones derecha */}
                     <div className="ml-auto flex items-center gap-2 py-1">
+                      {currentUser?.rol === 'creador_admin' && (
+                        <button
+                          onClick={() => setRightSidebarMode(rightSidebarMode === 'copilot' ? null : 'copilot')}
+                          className="h-6 px-2.5 rounded bg-amber-950/20 text-amber-400 border border-amber-950/30 hover:bg-amber-950/40 text-[8px] font-bold uppercase transition-all flex items-center gap-1"
+                          title="Asistente Neural de Flujo"
+                        >
+                          <Sparkles size={10} /> Copilot IA
+                        </button>
+                      )}
                       {!activeDoc.isShared && (
                         <button
                           onClick={() => { setShowShareModal(true); fetchShares(activeDoc.id); }}
@@ -2133,12 +2356,35 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           <button onClick={() => execCommand('justifyFull')} className="p-1 rounded text-white hover:bg-white/5" title="Justificar"><AlignJustify size={13} /></button>
                         </div>
 
+                        {/* Buscar y Reemplazar */}
+                        <div className="flex items-center gap-1 px-3">
+                          <button
+                            onClick={() => setShowFindReplaceModal(true)}
+                            className="flex items-center gap-1 px-2 py-1 bg-neutral-900 border border-neutral-800 text-white rounded hover:bg-neutral-800 font-bold"
+                            title="Buscar y Reemplazar"
+                          >
+                            <Search size={12} /> <span className="text-[9px]">Buscar y Reemplazar</span>
+                          </button>
+                        </div>
+
                       </div>
                     )}
 
                     {/* --- TAB INSERTAR --- */}
                     {ribbonTab === 'insertar' && (
                       <div className="flex items-center gap-3">
+                        <button
+                          onClick={insertPageAfterCurrent}
+                          className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-[#8ecdff] rounded border border-[#8ecdff]/20 hover:bg-[#8ecdff]/10 font-bold"
+                        >
+                          + Añadir Página
+                        </button>
+                        <button
+                          onClick={deleteCurrentPage}
+                          className="flex items-center gap-1.5 px-3 py-1 bg-red-950/20 text-red-400 rounded border border-red-950/30 hover:bg-red-950/40 font-bold"
+                        >
+                          ✕ Eliminar Página
+                        </button>
                         <button
                           onClick={() => insertWysiwygTable(3, 3)}
                           className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5"
@@ -2279,32 +2525,88 @@ export default function FlujoTrabajo({ settings, isDark }) {
                 )}
 
                 {/* 2. ÁREA DEL CANVASES DE LA PÁGINA */}
-                <div className="flex-1 overflow-y-auto p-8 flex justify-center bg-[#131313] relative">
-                  <div
-                    ref={editorRef}
-                    contentEditable={!viewingVersion && (!activeDoc.isShared || activeDoc.sharedRole === 'editor')}
-                    onInput={calculateWordCount}
-                    onContextMenu={handleContextMenu}
-                    className={`ft-wysiwyg-content w-full outline-none transition-all duration-300 min-h-[900px] border shadow-2xl p-12 ${
-                      orientation === 'vertical' ? 'max-w-[760px]' : 'max-w-[1000px]'
-                    } ${
-                      pageColor === 'dark' 
-                        ? 'bg-[#1c1b1b] text-[#e5e2e1] border-[#3e4851]' 
-                        : 'bg-white text-black border-neutral-300 shadow-neutral-950/20'
-                    } ${
-                      margins === 'narrow' ? 'p-6' : margins === 'wide' ? 'p-20' : 'p-12'
-                    }`}
-                    style={{
-                      fontFamily: fontFamily === 'JetBrains Mono' ? 'JetBrains Mono, monospace' : fontFamily === 'Georgia' ? 'Georgia, serif' : fontFamily === 'Times New Roman' ? 'Times New Roman, serif' : fontFamily === 'Courier New' ? 'Courier New, monospace' : fontFamily === 'Verdana' ? 'Verdana, sans-serif' : fontFamily === 'Arial' ? 'Arial, sans-serif' : 'Inter, sans-serif',
-                      fontSize: fontSize,
-                      lineHeight: '1.6'
+                <div className="flex-1 overflow-y-auto p-8 flex flex-col items-center bg-[#131313] relative">
+                  
+                  {/* Page overflow warnings */}
+                  <div className="w-full max-w-[800px] flex flex-col gap-1 mb-4 z-10">
+                    {pages.map((_, idx) => {
+                      if (!pagesContainerRef.current) return null;
+                      const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+                      const div = pageDivs[idx];
+                      const heightPx = orientation === 'vertical' ? 1123 : 794;
+                      if (div && div.scrollHeight > heightPx + 10) {
+                        return (
+                          <div key={idx} className="bg-red-500/10 text-red-400 border border-red-500/20 px-3 py-1.5 rounded-lg text-[9px] flex items-center justify-between">
+                            <span>⚠️ El contenido de la <strong>Página {idx + 1}</strong> excede el límite físico de la hoja.</span>
+                            <button 
+                              onClick={() => {
+                                if (div) div.focus();
+                              }}
+                              className="underline font-bold uppercase hover:text-red-300"
+                            >
+                              Ir a la página
+                            </button>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  {/* Document Zoom Container */}
+                  <div 
+                    ref={pagesContainerRef}
+                    style={{ 
+                      transform: `scale(${zoom / 100})`, 
+                      transformOrigin: 'top center',
+                      width: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      marginBottom: `${(zoom / 100 - 1) * 1200}px`
                     }}
-                    dangerouslySetInnerHTML={{ __html: activeDoc.contenido }}
-                  />
+                  >
+                    {pages.map((pageHtml, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`relative mb-8 flex flex-col items-center border shadow-2xl transition-all duration-300 ${
+                          pageColor === 'dark' 
+                            ? 'border-[#3e4851] bg-[#1c1b1b]' 
+                            : 'border-neutral-300 bg-white shadow-neutral-950/20'
+                        }`}
+                        style={{
+                          width: `${orientation === 'vertical' ? 794 : 1123}px`,
+                          minHeight: `${orientation === 'vertical' ? 1123 : 794}px`,
+                        }}
+                      >
+                        {/* Page Ruler */}
+                        <PageRuler margins={margins} orientation={orientation} />
+
+                        <div
+                          contentEditable={!viewingVersion && (!activeDoc.isShared || activeDoc.sharedRole === 'editor')}
+                          onInput={calculateWordCount}
+                          onFocus={() => setFocusedPageIndex(idx)}
+                          onContextMenu={handleContextMenu}
+                          className="word-page-content ft-wysiwyg-content w-full outline-none p-12 h-full flex-1"
+                          style={{
+                            padding: margins === 'narrow' ? '24px' : margins === 'wide' ? '80px' : '48px',
+                            color: pageColor === 'dark' ? '#e5e2e1' : '#000000',
+                            fontFamily: fontFamily === 'JetBrains Mono' ? 'JetBrains Mono, monospace' : fontFamily === 'Georgia' ? 'Georgia, serif' : fontFamily === 'Times New Roman' ? 'Times New Roman, serif' : fontFamily === 'Courier New' ? 'Courier New, monospace' : fontFamily === 'Verdana' ? 'Verdana, sans-serif' : fontFamily === 'Arial' ? 'Arial, sans-serif' : 'Inter, sans-serif',
+                            fontSize: fontSize,
+                            lineHeight: '1.6'
+                          }}
+                          dangerouslySetInnerHTML={{ __html: pageHtml }}
+                        />
+                        <div className="absolute bottom-2 left-0 right-0 text-center text-[10px] text-neutral-400/60 select-none pointer-events-none border-t border-dashed border-neutral-700/10 pt-2 font-mono">
+                          Página {idx + 1} de {pages.length}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
                   {/* Comparación Diff Mode */}
                   {viewingVersion && rightSidebarMode === 'versiones' && (
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] pointer-events-none flex justify-center p-8">
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] pointer-events-none flex justify-center p-8 z-50">
                       <div className={`w-full h-full max-h-[900px] rounded-xl border border-neutral-800 bg-[#131313]/95 shadow-2xl p-10 overflow-y-auto text-[11px] select-text pointer-events-auto ${
                         orientation === 'vertical' ? 'max-w-[760px]' : 'max-w-[1000px]'
                       }`}>
@@ -2320,7 +2622,27 @@ export default function FlujoTrabajo({ settings, isDark }) {
                   )}
                 </div>
 
-                {/* 3. COLAPSIBLE LATERAL DERECHA (Comentarios / Versiones) */}
+                {/* Pie de página con Zoom */}
+                <div className="h-8 bg-[#141414] border-t border-[#3e4851] px-4 flex items-center justify-between text-[10px] text-neutral-400 select-none shrink-0 z-10">
+                  <div className="flex items-center gap-3">
+                    <span>Página {focusedPageIndex + 1} de {pages.length}</span>
+                    <span>•</span>
+                    <span>{wordCount} palabras</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span>Zoom: {zoom}%</span>
+                    <input 
+                      type="range" 
+                      min="50" 
+                      max="150" 
+                      value={zoom} 
+                      onChange={(e) => setZoom(parseInt(e.target.value))}
+                      className="w-24 accent-[#8ecdff] cursor-pointer"
+                    />
+                  </div>
+                </div>
+
+                {/* 3. COLAPSIBLE LATERAL DERECHA (Comentarios / Versiones / Copilot) */}
                 {rightSidebarMode && (
                   <aside className="w-80 border-l bg-[#1c1b1b] flex flex-col overflow-hidden absolute right-0 top-12 bottom-0 z-40 animate-in slide-in-from-right duration-200" 
                     style={{ borderColor: '#3e4851' }}>
@@ -2400,6 +2722,62 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           {versions.length === 0 && (
                             <div className="text-center py-10 text-neutral-500 italic">Sin versiones históricas todavía.</div>
                           )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Copilot IA */}
+                    {rightSidebarMode === 'copilot' && (
+                      <div className="flex-1 flex flex-col h-full overflow-hidden">
+                        <div className="p-4 border-b text-[10px] font-bold text-white flex justify-between items-center" style={{ borderColor: '#3e4851' }}>
+                          <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-amber-400" /> Asistente Neural de Flujo</span>
+                          <button onClick={() => setRightSidebarMode(null)} className="text-neutral-500 hover:text-white">✕</button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-4 space-y-4 mac-scrollbar text-[10px]">
+                          {copilotMessages.map((msg, i) => (
+                            <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                              <span className="text-[8px] text-neutral-500 mb-1">
+                                {msg.role === 'user' ? 'Tú (Creador)' : 'Copilot Neural'}
+                              </span>
+                              <div className={`p-3 rounded-xl border max-w-[85%] leading-relaxed ${
+                                msg.role === 'user' 
+                                  ? 'bg-[#8ecdff]/10 border-[#8ecdff]/20 text-white' 
+                                  : 'bg-neutral-900/80 border-neutral-800 text-[#bec8d2]'
+                              }`}>
+                                <p style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</p>
+                              </div>
+                            </div>
+                          ))}
+                          {copilotLoading && (
+                            <div className="flex items-center gap-2 text-neutral-500 italic py-2">
+                              <RefreshCw size={12} className="animate-spin text-[#8ecdff]" />
+                              <span>Procesando instrucción...</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-3 border-t bg-neutral-900" style={{ borderColor: '#3e4851' }}>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={copilotInput}
+                              onChange={(e) => setCopilotInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSendCopilot();
+                              }}
+                              placeholder="Escribe tu mensaje..."
+                              className="flex-1 px-3 h-9 rounded-lg text-[10px] bg-[#131313] border border-neutral-800 text-white outline-none focus:border-[#8ecdff]"
+                              disabled={copilotLoading}
+                            />
+                            <button 
+                              onClick={handleSendCopilot}
+                              className="px-3 h-9 rounded-lg bg-[#00a4ef] text-white text-[10px] font-bold uppercase transition-all disabled:opacity-50"
+                              disabled={copilotLoading || !copilotInput.trim()}
+                            >
+                              Enviar
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -2532,6 +2910,50 @@ export default function FlujoTrabajo({ settings, isDark }) {
               </div>
               <button onClick={createFolder} className="w-full h-8 rounded-lg bg-[#00a4ef] hover:bg-[#00a4ef]/80 text-white text-[10px] font-bold uppercase transition-all">
                 Crear Carpeta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Buscar y Reemplazar */}
+      {showFindReplaceModal && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-[#1c1b1b] p-6 rounded-[24px] border shadow-2xl" style={{ borderColor: '#3e4851' }}>
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-[12px] font-bold text-white flex items-center gap-2">
+                <Search size={14} className="text-[#8ecdff]" /> Buscar y Reemplazar
+              </span>
+              <button onClick={() => setShowFindReplaceModal(false)} className="text-neutral-500 hover:text-white">✕</button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[9px] text-[#bec8d2] font-semibold block mb-1">Buscar Texto</label>
+                <input
+                  type="text"
+                  placeholder="Texto a buscar..."
+                  value={findQuery}
+                  onChange={(e) => setFindQuery(e.target.value)}
+                  className="w-full h-8 px-3 rounded-lg text-[10px] outline-none text-white bg-[#131313] border focus:border-[#8ecdff]"
+                  style={{ borderColor: '#3e4851' }}
+                />
+              </div>
+              <div>
+                <label className="text-[9px] text-[#bec8d2] font-semibold block mb-1">Reemplazar Con</label>
+                <input
+                  type="text"
+                  placeholder="Reemplazar con..."
+                  value={replaceQuery}
+                  onChange={(e) => setReplaceQuery(e.target.value)}
+                  className="w-full h-8 px-3 rounded-lg text-[10px] outline-none text-white bg-[#131313] border focus:border-[#8ecdff]"
+                  style={{ borderColor: '#3e4851' }}
+                />
+              </div>
+              <button 
+                onClick={handleReplaceAll}
+                className="w-full h-8 rounded-lg bg-[#00a4ef] hover:bg-[#00a4ef]/80 text-white text-[10px] font-bold uppercase transition-all"
+              >
+                Reemplazar Todo
               </button>
             </div>
           </div>

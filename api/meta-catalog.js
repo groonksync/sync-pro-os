@@ -91,10 +91,8 @@ function getAdditionalImages(producto) {
 function getDescription(producto) {
   let desc = '';
   if (producto.ficha_tecnica) {
-    // Reemplaza asteriscos por viñetas, pero mantiene los saltos de línea (\n)
-    desc = producto.ficha_tecnica
-      .replace(/\*/g, '•')
-      .trim();
+    // Preserva los asteriscos para que WhatsApp interprete el formato negrita (*texto*)
+    desc = producto.ficha_tecnica.trim();
   }
   if (!desc && producto.nombre) {
     desc = producto.nombre;
