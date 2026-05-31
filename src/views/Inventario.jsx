@@ -577,7 +577,9 @@ const AMAZON_CATEGORIES = [
   "Electrónica", "Computadoras", "Celulares y Accesorios", "Audio y Sonido", "Cámaras y Fotografía",
   "Hogar y Cocina", "Ropa y Calzado", "Belleza y Cuidado Personal", "Deportes y Fitness", "Juguetes y Juegos",
   "Salud y Bienestar", "Libros", "Automotriz", "Herramientas y Bricolaje", "Oficina y Papelería",
-  "Jardín y Exteriores", "Mascotas", "Alimentos y Bebidas", "Accesorios", "Ofertas", "Combos/Packs"
+  "Jardín y Exteriores", "Mascotas", "Alimentos y Bebidas", "Accesorios", "Ofertas", "Combos/Packs",
+  "Cámaras de Seguridad", "Seguridad y Vigilancia", "Redes y Conectividad", "Iluminación Inteligente",
+  "Consolas y Videojuegos", "Construcción y Materiales", "Decoración y Hogar"
 ];
 
 const getCategoryIcon = (category) => {
@@ -587,6 +589,8 @@ const getCategoryIcon = (category) => {
   if (catLower.includes('celular') || catLower.includes('teléfono') || catLower.includes('accesorio')) return Smartphone;
   if (catLower.includes('cámara') || catLower.includes('fotografía') || catLower.includes('seguridad') || catLower.includes('video')) return Video;
   if (catLower.includes('electrónica') || catLower.includes('fuente') || catLower.includes('forza')) return Zap;
+  if (catLower.includes('construcción') || catLower.includes('material')) return Briefcase;
+  if (catLower.includes('decoración') || catLower.includes('adorno')) return Sparkles;
   return Tag;
 };
 
@@ -807,7 +811,8 @@ REGLAS DE FORMATO Y ESTILO:
           precio_oferta: parseFloat(editingProduct.precio_oferta) || 0,
           es_combo: !!editingProduct.es_combo,
           productos_regalo: editingProduct.productos_regalo || '',
-          link_compra: editingProduct.enlace_compra || ''
+          link_compra: editingProduct.enlace_compra || '',
+          stock_display_mode: editingProduct.metadata?.stock_display_mode || 'auto'
         }
       };
       
@@ -884,7 +889,7 @@ REGLAS DE FORMATO Y ESTILO:
       precio_oferta: 0,
       es_combo: false,
       productos_regalo: '',
-      metadata: {}
+      metadata: { stock_display_mode: 'auto' }
     });
     setIsModalOpen(true);
   };
@@ -980,7 +985,19 @@ REGLAS DE FORMATO Y ESTILO:
   const filteredProducts = useMemo(() => {
     let result = [...productos];
     if (selectedCategoryFilter !== 'Todos') {
-      result = result.filter(p => p.categoria === selectedCategoryFilter);
+      if (selectedCategoryFilter === 'Recientes') {
+        const unaSemanaAtras = new Date();
+        unaSemanaAtras.setDate(unaSemanaAtras.getDate() - 7);
+        let recientes = result.filter(p => new Date(p.created_at) >= unaSemanaAtras);
+        if (recientes.length === 0) {
+          recientes = [...result]
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, 15);
+        }
+        result = recientes;
+      } else {
+        result = result.filter(p => p.categoria === selectedCategoryFilter);
+      }
     }
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
@@ -1042,6 +1059,16 @@ REGLAS DE FORMATO Y ESTILO:
     });
 
     return { totalCount, totalInv, totalSaleVal, totalEarns, lowStock, catMap };
+  }, [productos]);
+
+  const recentProductsCount = useMemo(() => {
+    const unaSemanaAtras = new Date();
+    unaSemanaAtras.setDate(unaSemanaAtras.getDate() - 7);
+    let recientes = productos.filter(p => new Date(p.created_at) >= unaSemanaAtras);
+    if (recientes.length === 0) {
+      return Math.min(15, productos.length);
+    }
+    return recientes.length;
   }, [productos]);
 
   const exportToPDF = () => {
@@ -1420,6 +1447,22 @@ REGLAS DE FORMATO Y ESTILO:
             >
               <span>Todos</span>
               <span style={{ backgroundColor: selectedCategoryFilter === 'Todos' ? 'rgba(0,0,0,0.2)' : (t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'), color: selectedCategoryFilter === 'Todos' ? '#10b981' : t.textDim, padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{productos.length}</span>
+            </button>
+
+            <button
+              onClick={() => setSelectedCategoryFilter('Recientes')}
+              style={{
+                padding: '8px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                backgroundColor: selectedCategoryFilter === 'Recientes' ? 'rgba(16, 185, 129, 0.12)' : (t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'),
+                color: selectedCategoryFilter === 'Recientes' ? '#10b981' : t.textMuted,
+                fontSize: 9, fontWeight: 800, transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', gap: 6
+              }}
+              onMouseEnter={e => { if (selectedCategoryFilter !== 'Recientes') e.currentTarget.style.backgroundColor = t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'; }}
+              onMouseLeave={e => { if (selectedCategoryFilter !== 'Recientes') e.currentTarget.style.backgroundColor = t.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'; }}
+            >
+              <span>Recientes</span>
+              <span style={{ backgroundColor: selectedCategoryFilter === 'Recientes' ? 'rgba(0,0,0,0.2)' : (t.isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'), color: selectedCategoryFilter === 'Recientes' ? '#10b981' : t.textDim, padding: '2px 7px', borderRadius: 20, fontSize: 8, fontFamily: 'monospace' }}>{recentProductsCount}</span>
             </button>
 
             {Object.keys(stats.catMap).slice(0, showAllCategories ? undefined : 6).map(catName => {
@@ -2111,6 +2154,26 @@ REGLAS DE FORMATO Y ESTILO:
                       <option value="Costo Adicional">Costo Adicional</option>
                     </select>
                   </div>
+                </div>
+
+                {/* Visualización de Stock en Catálogo */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={labelStyle}>Visualización de Stock en Catálogo</label>
+                  <select 
+                    value={editingProduct.metadata?.stock_display_mode || 'auto'} 
+                    onChange={e => setEditingProduct({ 
+                      ...editingProduct, 
+                      metadata: { 
+                        ...(editingProduct.metadata || {}), 
+                        stock_display_mode: e.target.value 
+                      } 
+                    })}
+                    style={selectStyle}
+                  >
+                    <option value="auto">Automático (Basado en el stock real ingresado)</option>
+                    <option value="force_agotado">Forzar "Agotado" (Muestra Sin Stock con difuminado)</option>
+                    <option value="force_por_agotarse">Forzar "Por Agotarse" (Muestra cartel de urgencia sin difuminar)</option>
+                  </select>
                 </div>
 
                 {/* Video Promocional & Enlace Compra */}

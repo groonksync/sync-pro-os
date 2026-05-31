@@ -1750,8 +1750,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
   }, [activeFolderId, folders, activeSidebarTab]);
 
   return (
-    <div className="flex h-full w-full overflow-hidden" 
-      style={{ backgroundColor: '#141414' }}>
+    <div className="flex h-full w-full overflow-hidden" style={{ backgroundColor: t.bg }}>
       
       {/* SCOPED CSS STYLES FOR WYSIWYG DOCUMENT CANVAS */}
       <style>{`
@@ -1811,13 +1810,12 @@ export default function FlujoTrabajo({ settings, isDark }) {
       `}</style>
       
       {/* 1. SIDEBAR INTERNA DE NAVEGACIÓN */}
-      <aside className="w-60 border-r flex flex-col justify-between shrink-0" 
-        style={{ backgroundColor: '#141414', borderColor: '#3e4851' }}>
+      <aside className="w-60 border-r flex flex-col justify-between shrink-0" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
         <div>
           {/* Cabecera Sidebar (Limpia sin iconos ni subtítulos, con descripción en español) */}
-          <div className="p-5 border-b" style={{ borderColor: '#3e4851' }}>
-            <span className="text-[12px] font-extrabold tracking-widest text-[#8ecdff] block">FLUJO DE TRABAJO</span>
-            <p className="text-[10px] text-[#bec8d2] mt-3 leading-relaxed border-t border-white/5 pt-2.5 font-normal">
+          <div className="p-5 border-b" style={{ borderColor: t.border, borderWidth: '0.5px' }}>
+            <span className="text-[12px] font-extrabold tracking-widest block" style={{ color: t.accent }}>FLUJO DE TRABAJO</span>
+            <p className="text-[10px] mt-3 leading-relaxed border-t pt-2.5 font-normal" style={{ color: t.textMuted, borderColor: t.borderLight }}>
               procesador de texto
             </p>
           </div>
@@ -1861,10 +1859,10 @@ export default function FlujoTrabajo({ settings, isDark }) {
           {activeSidebarTab === 'archivos' && (
             <div className="p-3">
               <div className="flex items-center justify-between px-2 mb-2">
-                <span className="text-[9px] font-bold text-[#bec8d2] uppercase tracking-wider">Carpetas</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Carpetas</span>
                 <button 
                   onClick={() => setShowFolderModal(true)}
-                  className="p-1 rounded hover:bg-white/5 text-[#8ecdff] transition-all"
+                  className="p-1 rounded transition-all hover:bg-white/5" style={{ color: t.accent }}
                   title="Nueva Carpeta"
                 >
                   <FolderPlus size={12} />
@@ -1882,7 +1880,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                       onClick={() => setActiveFolderId(f.id)}
                       className="flex items-center gap-2 text-left truncate flex-grow py-1"
                     >
-                      <Folder size={12} className={activeFolderId === f.id ? 'text-[#8ecdff]' : 'text-neutral-500'} />
+                      <Folder size={12} style={{ color: activeFolderId === f.id ? t.accent : t.textDim }} />
                       <span className="truncate">{f.nombre}</span>
                     </button>
                     <button
@@ -1904,17 +1902,17 @@ export default function FlujoTrabajo({ settings, isDark }) {
 
         {/* Caja de Perfil */}
         {currentUser && (
-          <div className="p-3 border-t" style={{ borderColor: '#3e4851' }}>
-            <div className="bg-[#201f1f] p-3 rounded-xl border" style={{ borderColor: '#3e4851' }}>
+          <div className="p-3 border-t" style={{ borderColor: t.border, borderWidth: '0.5px' }}>
+            <div className="p-3 rounded-xl border" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-5 h-5 rounded bg-[#8ecdff]/20 flex items-center justify-center text-[10px] text-[#8ecdff] font-bold uppercase">
+                <div className="w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold uppercase" style={{ backgroundColor: t.accentSoft, color: t.accent }}>
                   {currentUser.email_decrypted.charAt(0)}
                 </div>
-                <span className="text-[10px] text-white font-medium truncate block flex-1">
+                <span className="text-[10px] font-medium truncate block flex-1" style={{ color: t.text }}>
                   {currentUser.email_decrypted}
                 </span>
               </div>
-              <div className="flex justify-between items-center text-[8px] text-[#bec8d2]">
+              <div className="flex justify-between items-center text-[8px]" style={{ color: t.textMuted }}>
                 <span className="capitalize">{currentUser.rol === 'creador_admin' ? 'Creador Admin' : 'Miembro'}</span>
                 <button 
                   onClick={handleLogout}
@@ -1929,14 +1927,14 @@ export default function FlujoTrabajo({ settings, isDark }) {
       </aside>
 
       {/* 2. ÁREA DE CONTENIDO PRINCIPAL */}
-      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ backgroundColor: '#141414' }}>
+      <div className="flex-1 flex flex-col overflow-hidden relative" style={{ backgroundColor: t.bg }}>
         
         {/* --- A: PANTALLA DE ACCESO (Si no ha iniciado sesión) --- */}
         {!currentUser ? (
           <div className="flex-1 flex flex-col lg:flex-row items-center justify-center p-6 gap-8 overflow-y-auto mac-scrollbar">
-            <div className="w-full max-w-md bg-[#1c1b1b] p-8 rounded-[24px] border shadow-2xl flex flex-col" style={{ borderColor: '#3e4851' }}>
-              <h2 className="text-xl font-bold text-center text-white mb-2">Acceso a Flujo de Trabajo</h2>
-              <p className="text-[10px] text-center text-[#bec8d2] mb-6">
+            <div className="w-full max-w-md p-8 rounded-[24px] border shadow-2xl flex flex-col" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
+              <h2 className="text-xl font-bold text-center mb-2" style={{ color: t.text }}>Acceso a Flujo de Trabajo</h2>
+              <p className="text-[10px] text-center mb-6" style={{ color: t.textMuted }}>
                 Inicia sesión con tu cuenta de colaborador para acceder a los documentos compartidos.
               </p>
 
@@ -1949,34 +1947,32 @@ export default function FlujoTrabajo({ settings, isDark }) {
 
               <form onSubmit={handleAuth} className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-medium text-[#bec8d2] block mb-1">Correo Electrónico</label>
+                  <label className="text-[10px] font-medium block mb-1" style={{ color: t.textMuted }}>Correo Electrónico</label>
                   <input
                     type="email"
                     required
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     placeholder="usuario@dominio.com"
-                    className="w-full h-10 px-3 rounded-lg text-[11px] outline-none text-white transition-all bg-[#131313] border focus:border-[#8ecdff]"
-                    style={{ borderColor: '#3e4851' }}
+                    className="w-full h-10 px-3 rounded-lg text-[11px] outline-none transition-all border" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-medium text-[#bec8d2] block mb-1">Contraseña</label>
+                  <label className="text-[10px] font-medium block mb-1" style={{ color: t.textMuted }}>Contraseña</label>
                   <input
                     type="password"
                     required
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full h-10 px-3 rounded-lg text-[11px] outline-none text-white transition-all bg-[#131313] border focus:border-[#8ecdff]"
-                    style={{ borderColor: '#3e4851' }}
+                    className="w-full h-10 px-3 rounded-lg text-[11px] outline-none transition-all border" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={authLoading}
-                  className="w-full h-10 rounded-lg bg-[#00a4ef] hover:bg-[#00a4ef]/80 text-white text-[11px] font-bold uppercase transition-all shadow-md mt-2 flex items-center justify-center gap-2"
+                  className="w-full h-10 rounded-lg text-white text-[11px] font-bold uppercase transition-all shadow-md mt-2 flex items-center justify-center gap-2" style={{ backgroundColor: t.accent, color: t.isDark ? '#1e1e1e' : '#ffffff' }}
                 >
                   {authLoading ? (
                     <RefreshCw size={14} className="animate-spin" />
@@ -1988,13 +1984,13 @@ export default function FlujoTrabajo({ settings, isDark }) {
                 </button>
               </form>
 
-              <div className="mt-6 pt-4 border-t flex justify-center text-[10px] gap-2" style={{ borderColor: '#3e4851' }}>
+              <div className="mt-6 pt-4 border-t flex justify-center text-[10px] gap-2" style={{ borderColor: t.border, borderWidth: '0.5px' }}>
                 <span className="text-neutral-500">
                   {authMode === 'login' ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}
                 </span>
                 <button
                   onClick={() => setAuthMode(authMode === 'login' ? 'register' : 'login')}
-                  className="text-[#8ecdff] hover:underline font-medium"
+                  className="hover:underline font-medium" style={{ color: t.accent }}
                 >
                   {authMode === 'login' ? 'Regístrate aquí' : 'Inicia Sesión'}
                 </button>
@@ -2012,10 +2008,10 @@ export default function FlujoTrabajo({ settings, isDark }) {
                 {/* Cabecera del Dashboard */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
-                    <h1 className="text-xl font-bold text-white">
+                    <h1 className="text-xl font-bold" style={{ color: t.text }}>
                       {activeSidebarTab === 'admin' ? 'Consola del Creador' : currentFolderName}
                     </h1>
-                    <p className="text-[10px] text-[#bec8d2]">Gestiona y procesa tus documentos con seguridad e identidad local.</p>
+                    <p className="text-[10px]" style={{ color: t.textMuted }}>Gestiona y procesa tus documentos con seguridad e identidad local.</p>
                   </div>
 
                   {activeSidebarTab !== 'admin' && (
@@ -2026,14 +2022,13 @@ export default function FlujoTrabajo({ settings, isDark }) {
                         placeholder="Buscar documentos..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-9 w-60 px-3.5 rounded-lg border outline-none text-[10px] text-white placeholder-neutral-500 transition-all focus:border-[#8ecdff]"
-                        style={{ backgroundColor: '#141414', borderColor: '#3e4851' }}
+                        className="h-9 w-60 px-3.5 rounded-lg border outline-none text-[10px] transition-all placeholder-neutral-500" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                       />
                       
                       {/* Botón de crear documento */}
                       <button
                         onClick={() => createDocument('Nuevo Documento', '')}
-                        className="h-9 px-4 rounded-lg bg-[#00a4ef] hover:bg-[#00a4ef]/80 text-white text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 shadow"
+                        className="h-9 px-4 rounded-lg text-white text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 shadow" style={{ backgroundColor: t.accent, color: t.isDark ? '#1e1e1e' : '#ffffff' }}
                       >
                         <Plus size={14} /> Nuevo Documento
                       </button>
@@ -2046,20 +2041,20 @@ export default function FlujoTrabajo({ settings, isDark }) {
                   <div className="space-y-6">
                     {/* KPIs de Admin */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="bg-[#1c1b1b] p-5 rounded-[20px] border" style={{ borderColor: '#3e4851' }}>
+                      <div className="p-5 rounded-[20px] border" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
                         <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider block">Miembros Registrados</span>
                         <div className="flex items-baseline gap-2 mt-2">
                           <span className="text-3xl font-extrabold text-white">{adminUsers.length}</span>
-                          <span className="text-[9px] text-[#8ecdff]">Cuentas activas</span>
+                          <span className="text-[9px]" style={{ color: t.accent }}>Cuentas activas</span>
                         </div>
                       </div>
-                      <div className="bg-[#1c1b1b] p-5 rounded-[20px] border" style={{ borderColor: '#3e4851' }}>
+                      <div className="p-5 rounded-[20px] border" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
                         <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider block">Privacidad del Creador</span>
                         <p className="text-[10px] text-[#bec8d2] mt-2">
                           Todas las contraseñas están irreversiblemente cifradas.
                         </p>
                       </div>
-                      <div className="bg-[#1c1b1b] p-5 rounded-[20px] border" style={{ borderColor: '#3e4851' }}>
+                      <div className="p-5 rounded-[20px] border" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
                         <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider block">Estado del Servidor</span>
                         <div className="flex items-center gap-2 mt-2 text-green-400 text-[10px]">
                           <div className="w-2 h-2 rounded-full bg-green-500 animate-ping"></div>
@@ -2069,8 +2064,8 @@ export default function FlujoTrabajo({ settings, isDark }) {
                     </div>
 
                     {/* Tabla de Usuarios Registrados */}
-                    <div className="bg-[#1c1b1b] rounded-[24px] border overflow-hidden" style={{ borderColor: '#3e4851' }}>
-                      <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: '#3e4851' }}>
+                    <div className="rounded-[24px] border overflow-hidden" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
+                      <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: t.border, borderWidth: '0.5px' }}>
                         <span className="text-[10px] font-bold text-white">Miembros del Sistema</span>
                         <button 
                           onClick={fetchAdminUsers}
@@ -2088,7 +2083,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                         <div className="overflow-x-auto">
                           <table className="w-full text-left border-collapse text-[10px]">
                             <thead>
-                              <tr className="border-b text-neutral-400" style={{ borderColor: '#3e4851', backgroundColor: 'rgba(255,255,255,0.02)' }}>
+                              <tr className="border-b" style={{ borderColor: t.border, color: t.textMuted, backgroundColor: t.hover, borderWidth: '0.5px' }}>
                                 <th className="p-4 font-semibold">Correo Descifrado</th>
                                 <th className="p-4 font-semibold">Fecha Registro</th>
                                 <th className="p-4 font-semibold">Documentos Creados</th>
@@ -2099,7 +2094,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                             </thead>
                             <tbody>
                               {adminUsers.map(usr => (
-                                <tr key={usr.id} className="border-b hover:bg-white/5" style={{ borderColor: '#3e4851' }}>
+                                <tr key={usr.id} className="border-b" style={{ borderColor: t.border, color: t.text, backgroundColor: 'transparent', borderWidth: '0.5px' }}>
                                   <td className="p-4 font-medium text-white">{usr.email_decrypted || 'Desconocido'}</td>
                                   <td className="p-4 text-[#bec8d2]">
                                     {new Date(usr.created_at).toLocaleDateString()}
@@ -2142,10 +2137,10 @@ export default function FlujoTrabajo({ settings, isDark }) {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       
                       {/* Widget Temporizador Pomodoro */}
-                      <div className="bg-[#1c1b1b] p-5 rounded-[24px] border flex flex-col justify-between" style={{ borderColor: '#3e4851' }}>
+                      <div className="p-5 rounded-[24px] border flex flex-col justify-between" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
                         <div className="flex justify-between items-center mb-3">
                           <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Sesión de Enfoque</span>
-                          <Clock size={14} className="text-[#8ecdff]" />
+                          <Clock size={14} style={{ color: t.accent }} />
                         </div>
                         <div className="flex flex-col items-center py-2">
                           <span className="text-3xl font-extrabold text-white tracking-widest font-mono">
@@ -2155,7 +2150,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                         <div className="flex gap-2 mt-3">
                           <button
                             onClick={() => setFocusActive(!focusActive)}
-                            className="flex-1 h-8 rounded-lg bg-[#00a4ef]/10 text-[#8ecdff] border border-[#00a4ef]/30 font-bold text-[9px] uppercase hover:bg-[#00a4ef]/20 transition-all flex items-center justify-center gap-1"
+                            className="flex-1 h-8 rounded-lg font-bold text-[9px] uppercase transition-all flex items-center justify-center gap-1" style={{ backgroundColor: t.accentSoft, color: t.accent, border: `1px solid ${t.border}` }}
                           >
                             {focusActive ? <Pause size={10} /> : <Play size={10} />}
                             {focusActive ? 'Pausar' : 'Enfocar'}
@@ -2170,7 +2165,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                       </div>
 
                       {/* Widget Meta de Escritura Diaria */}
-                      <div className="bg-[#1c1b1b] p-5 rounded-[24px] border flex items-center gap-4" style={{ borderColor: '#3e4851' }}>
+                      <div className="p-5 rounded-[24px] border flex items-center gap-4" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
                         <div className="relative shrink-0 w-16 h-16">
                           <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                             <path
@@ -2181,7 +2176,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                             />
                             <path
-                              className="text-[#8ecdff]"
+                              style={{ color: t.accent }}
                               strokeDasharray="60, 100"
                               strokeWidth="3.5"
                               strokeLinecap="round"
@@ -2200,7 +2195,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                       </div>
 
                       {/* KPI de Documentos */}
-                      <div className="bg-[#1c1b1b] p-5 rounded-[24px] border flex flex-col justify-between" style={{ borderColor: '#3e4851' }}>
+                      <div className="p-5 rounded-[24px] border flex flex-col justify-between" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
                         <div>
                           <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Documentos del Workspace</span>
                           <span className="text-2xl font-extrabold text-white mt-2 block">{documents.length}</span>
@@ -2217,12 +2212,12 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           <div
                             key={p.id}
                             onClick={() => handleTemplateClick(p)}
-                            className="bg-[#1c1b1b] hover:bg-[#201f1f] p-4 rounded-[20px] border cursor-pointer group transition-all relative overflow-hidden"
+                            className="p-4 rounded-[20px] border cursor-pointer group transition-all relative overflow-hidden" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}
                             style={{ borderColor: '#3e4851' }}
                           >
-                            <div className="absolute inset-0 bg-[#00a4ef]/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style={{ backgroundColor: t.accentSoft }}></div>
                             <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center mb-3 group-hover:scale-105 transition-all">
-                              <Sparkles size={14} className="text-[#8ecdff]" />
+                              <Sparkles size={14} style={{ color: t.accent }} />
                             </div>
                             <span className="text-[9px] font-bold text-neutral-500 uppercase">{p.categoria}</span>
                             <h4 className="text-[11px] font-bold text-white mt-1 group-hover:text-[#8ecdff] transition-all truncate">
@@ -2234,8 +2229,8 @@ export default function FlujoTrabajo({ settings, isDark }) {
                     </div>
 
                     {/* Fila 3: Lista de Documentos */}
-                    <div className="bg-[#1c1b1b] rounded-[24px] border overflow-hidden" style={{ borderColor: '#3e4851' }}>
-                      <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: '#3e4851' }}>
+                    <div className="rounded-[24px] border overflow-hidden" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
+                      <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: t.border, borderWidth: '0.5px' }}>
                         <span className="text-[10px] font-bold text-white">Archivos Recientes</span>
                         <span className="text-[8px] text-[#bec8d2]">{filteredDocuments.length} documentos</span>
                       </div>
@@ -2243,7 +2238,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse text-[10px]">
                           <thead>
-                            <tr className="border-b text-neutral-400" style={{ borderColor: '#3e4851', backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                            <tr className="border-b" style={{ borderColor: t.border, color: t.textMuted, backgroundColor: t.hover, borderWidth: '0.5px' }}>
                               <th className="p-4 font-semibold">Título</th>
                               <th className="p-4 font-semibold">Tipo</th>
                               <th className="p-4 font-semibold">Última Modificación</th>
@@ -2260,7 +2255,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                               >
                                 <td className="p-4 font-semibold text-white">
                                   <div className="flex items-center gap-2">
-                                    <FileText size={12} className="text-[#8ecdff]" />
+                                    <FileText size={12} style={{ color: t.accent }} />
                                     <span className="group-hover:text-[#8ecdff] transition-all truncate max-w-xs">{doc.titulo}</span>
                                     {doc.isShared && (
                                       <span className="px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-900 text-[7px] uppercase font-bold shrink-0">
@@ -2301,8 +2296,8 @@ export default function FlujoTrabajo({ settings, isDark }) {
               <div className="flex-1 flex flex-col overflow-hidden">
                 
                 {/* 1. RIBBON TOOLBAR (Microsoft Word Ribbon Avanzado en Español) */}
-                <div className="border-b shrink-0" style={{ backgroundColor: '#141414', borderColor: '#3e4851' }}>
-                  <div className="flex border-b px-4 text-[9px] font-bold uppercase tracking-wider text-neutral-500" style={{ borderColor: '#3e4851' }}>
+                <div className="border-b shrink-0" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
+                  <div className="flex border-b px-4 text-[9px] font-bold uppercase tracking-wider" style={{ borderColor: t.border, color: t.textDim }}>
                     {['inicio', 'insertar', 'disposicion', 'revision', 'vista'].map(tab => (
                       <button
                         key={tab}
@@ -2366,7 +2361,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                   </div>
 
                   {/* Cinta Ribbon */}
-                  <div className="p-3 flex items-center gap-3 flex-wrap min-h-12 text-[10px]" style={{ backgroundColor: '#141414' }}>
+                  <div className="p-3 flex items-center gap-3 flex-wrap min-h-12 text-[10px]" style={{ backgroundColor: t.panel }}>
                     
                     {/* --- INICIO TAB --- */}
                     {ribbonTab === 'inicio' && (
@@ -2378,7 +2373,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           <select
                             value={fontFamily}
                             onChange={(e) => changeFontFamily(e.target.value)}
-                            className="bg-[#201f1f] text-white border border-[#3e4851] rounded px-1.5 py-0.5 outline-none text-[9px]"
+                            className="border rounded px-1.5 py-0.5 outline-none text-[9px]" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                           >
                             <option value="Inter">Inter (Sans)</option>
                             <option value="Arial">Arial</option>
@@ -2396,7 +2391,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           <select
                             value={fontSize}
                             onChange={(e) => changeFontSize(e.target.value)}
-                            className="bg-[#201f1f] text-white border border-[#3e4851] rounded px-1.5 py-0.5 outline-none text-[9px]"
+                            className="border rounded px-1.5 py-0.5 outline-none text-[9px]" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                           >
                             {['8px', '9px', '10px', '11px', '12px', '14px', '16px', '18px', '20px', '22px', '24px', '26px', '28px', '36px', '48px', '72px'].map(size => (
                               <option key={size} value={size}>{size}</option>
@@ -2410,7 +2405,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           <select
                             onChange={(e) => handleStyleChange(e.target.value)}
                             defaultValue="p"
-                            className="bg-[#201f1f] text-white border border-[#3e4851] rounded px-1.5 py-0.5 outline-none text-[9px] font-semibold"
+                            className="border rounded px-1.5 py-0.5 outline-none text-[9px] font-semibold" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                           >
                             <option value="p">Normal (Párrafo)</option>
                             <option value="h1">Título 1 (Grande)</option>
@@ -2445,7 +2440,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                             <span className="text-[8px] text-neutral-500 font-bold">Resaltar:</span>
                             <select
                               onChange={(e) => execCommand('hiliteColor', e.target.value)}
-                              className="bg-[#201f1f] text-white border border-[#3e4851] rounded px-1 text-[8px]"
+                              className="border rounded px-1 text-[8px]" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                               title="Marcador de Resaltado"
                               defaultValue="transparent"
                             >
@@ -2513,13 +2508,13 @@ export default function FlujoTrabajo({ settings, isDark }) {
                         </button>
                         <button
                           onClick={insertImage}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5 font-bold text-[9px]"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded border hover:bg-white/5 font-bold text-[9px]" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                         >
                           Imagen
                         </button>
                         <button
                           onClick={insertVideo}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5 font-bold text-[9px]"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded border hover:bg-white/5 font-bold text-[9px]" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                         >
                           Video
                         </button>
@@ -2535,19 +2530,19 @@ export default function FlujoTrabajo({ settings, isDark }) {
                         </button>
                         <button
                           onClick={() => insertWysiwygTable(3, 3)}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded border hover:bg-white/5" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                         >
                           <Table size={12} /> Insertar Tabla 3x3
                         </button>
                         <button
                           onClick={insertChecklist}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded border hover:bg-white/5" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                         >
                           <CheckSquare size={12} /> Checklist
                         </button>
                         <button
                           onClick={() => execCommand('insertHorizontalRule')}
-                          className="flex items-center gap-1.5 px-3 py-1 bg-[#201f1f] text-white rounded border border-[#3e4851] hover:bg-white/5"
+                          className="flex items-center gap-1.5 px-3 py-1 rounded border hover:bg-white/5" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                         >
                           Línea Divisoria
                         </button>
@@ -2782,7 +2777,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                 </div>
 
                 {/* Pie de página con Zoom */}
-                <div className="h-8 bg-[#141414] border-t border-[#3e4851] px-4 flex items-center justify-between text-[10px] text-neutral-400 select-none shrink-0 z-10">
+                <div className="h-8 border-t px-4 flex items-center justify-between text-[10px] select-none shrink-0 z-10" style={{ backgroundColor: t.panel, borderColor: t.border, color: t.textMuted, borderWidth: '0.5px' }}>
                   <div className="flex items-center gap-3">
                     <span>Página {focusedPageIndex + 1} de {pages.length}</span>
                     <span>•</span>
@@ -2796,7 +2791,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                       max="150" 
                       value={zoom} 
                       onChange={(e) => setZoom(parseInt(e.target.value))}
-                      className="w-24 accent-[#8ecdff] cursor-pointer"
+                      className="w-24 cursor-pointer" style={{ accentColor: t.accent }}
                     />
                   </div>
                 </div>
@@ -2809,7 +2804,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                     {/* Comentarios */}
                     {rightSidebarMode === 'comentarios' && (
                       <div className="flex-1 flex flex-col h-full overflow-hidden">
-                        <div className="p-4 border-b text-[10px] font-bold text-white flex justify-between items-center" style={{ borderColor: '#3e4851' }}>
+                        <div className="p-4 border-b text-[10px] font-bold flex justify-between items-center" style={{ borderColor: t.border, color: t.text }}>
                           <span>Comentarios del Documento</span>
                           <button onClick={() => setRightSidebarMode(null)} className="text-neutral-500 hover:text-white">✕</button>
                         </div>
@@ -2827,7 +2822,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                             <div className="text-center py-10 text-neutral-500 italic">No hay comentarios en este archivo.</div>
                           )}
                         </div>
-                        <div className="p-3 border-t bg-neutral-900" style={{ borderColor: '#3e4851' }}>
+                        <div className="p-3 border-t" style={{ backgroundColor: t.bg, borderColor: t.border }}>
                           <textarea
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
@@ -2844,7 +2839,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                     {/* Versiones */}
                     {rightSidebarMode === 'versiones' && (
                       <div className="flex-1 flex flex-col h-full overflow-hidden">
-                        <div className="p-4 border-b text-[10px] font-bold text-white flex justify-between items-center" style={{ borderColor: '#3e4851' }}>
+                        <div className="p-4 border-b text-[10px] font-bold flex justify-between items-center" style={{ borderColor: t.border, color: t.text }}>
                           <span>Historial de Versiones</span>
                           <button onClick={() => setRightSidebarMode(null)} className="text-neutral-500 hover:text-white">✕</button>
                         </div>
@@ -2856,7 +2851,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                             placeholder="Descripción de la versión..."
                             className="w-full px-2.5 h-8 rounded-lg text-[9px] bg-[#131313] border border-neutral-800 text-white outline-none focus:border-[#8ecdff]"
                           />
-                          <button onClick={handleManualVersion} className="w-full h-8 rounded-lg bg-[#00a4ef]/10 text-[#8ecdff] border border-[#00a4ef]/30 text-[9px] font-bold uppercase transition-all">
+                          <button onClick={handleManualVersion} className="w-full h-8 rounded-lg text-[9px] font-bold uppercase transition-all" style={{ backgroundColor: t.accentSoft, color: t.accent, border: `1px solid ${t.border}` }}>
                             Guardar Hito Manual
                           </button>
                         </div>
@@ -2888,7 +2883,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                     {/* Copilot IA */}
                     {rightSidebarMode === 'copilot' && (
                       <div className="flex-1 flex flex-col h-full overflow-hidden">
-                        <div className="p-4 border-b text-[10px] font-bold text-white flex justify-between items-center" style={{ borderColor: '#3e4851' }}>
+                        <div className="p-4 border-b text-[10px] font-bold flex justify-between items-center" style={{ borderColor: t.border, color: t.text }}>
                           <span className="flex items-center gap-1.5"><Sparkles size={12} className="text-amber-400" /> Asistente Neural de Flujo</span>
                           <button onClick={() => setRightSidebarMode(null)} className="text-neutral-500 hover:text-white">✕</button>
                         </div>
@@ -2916,7 +2911,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           )}
                         </div>
 
-                        <div className="p-3 border-t bg-neutral-900" style={{ borderColor: '#3e4851' }}>
+                        <div className="p-3 border-t" style={{ backgroundColor: t.bg, borderColor: t.border }}>
                           <div className="flex gap-2">
                             <input
                               type="text"
@@ -2960,7 +2955,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
           <div className="w-full max-w-lg bg-[#1c1b1b] p-6 rounded-[24px] border shadow-2xl" style={{ borderColor: '#3e4851' }}>
             <div className="flex justify-between items-center mb-4">
               <span className="text-[12px] font-bold text-white flex items-center gap-2">
-                <Share2 size={14} className="text-[#8ecdff]" /> Compartir Documento
+                <Share2 size={14} style={{ color: t.accent }} /> Compartir Documento
               </span>
               <button onClick={() => { setShowShareModal(false); setShareMessage(''); }} className="text-neutral-500 hover:text-white">✕</button>
             </div>
@@ -3013,7 +3008,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                 </select>
               </div>
 
-              <button onClick={shareDocument} className="w-full h-8 rounded-lg bg-[#00a4ef] hover:bg-[#00a4ef]/80 text-white text-[10px] font-bold uppercase transition-all">
+              <button onClick={shareDocument} className="w-full h-8 rounded-lg text-white text-[10px] font-bold uppercase transition-all" style={{ backgroundColor: t.accent, color: t.isDark ? '#1e1e1e' : '#ffffff' }}>
                 Agregar Colaborador
               </button>
 
@@ -3048,10 +3043,10 @@ export default function FlujoTrabajo({ settings, isDark }) {
       {/* Modal: Crear Carpeta */}
       {showFolderModal && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-[#1c1b1b] p-6 rounded-[24px] border shadow-2xl" style={{ borderColor: '#3e4851' }}>
+          <div className="w-full max-w-sm p-6 rounded-[24px] border shadow-2xl" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
             <div className="flex justify-between items-center mb-4">
               <span className="text-[12px] font-bold text-white flex items-center gap-2">
-                <Folder size={14} className="text-[#8ecdff]" /> Crear Nueva Carpeta
+                <Folder size={14} style={{ color: t.accent }} /> Crear Nueva Carpeta
               </span>
               <button onClick={() => setShowFolderModal(false)} className="text-neutral-500 hover:text-white">✕</button>
             </div>
@@ -3063,11 +3058,10 @@ export default function FlujoTrabajo({ settings, isDark }) {
                   placeholder="Ej: Contratos 2026"
                   value={newFolderName}
                   onChange={(e) => setNewFolderName(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg text-[10px] outline-none text-white bg-[#131313] border focus:border-[#8ecdff]"
-                  style={{ borderColor: '#3e4851' }}
+                  className="w-full h-8 px-3 rounded-lg text-[10px] outline-none border" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                 />
               </div>
-              <button onClick={createFolder} className="w-full h-8 rounded-lg bg-[#00a4ef] hover:bg-[#00a4ef]/80 text-white text-[10px] font-bold uppercase transition-all">
+              <button onClick={createFolder} className="w-full h-8 rounded-lg text-white text-[10px] font-bold uppercase transition-all" style={{ backgroundColor: t.accent, color: t.isDark ? '#1e1e1e' : '#ffffff' }}>
                 Crear Carpeta
               </button>
             </div>
@@ -3078,10 +3072,10 @@ export default function FlujoTrabajo({ settings, isDark }) {
       {/* Modal: Buscar y Reemplazar */}
       {showFindReplaceModal && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm bg-[#1c1b1b] p-6 rounded-[24px] border shadow-2xl" style={{ borderColor: '#3e4851' }}>
+          <div className="w-full max-w-sm p-6 rounded-[24px] border shadow-2xl" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
             <div className="flex justify-between items-center mb-4">
               <span className="text-[12px] font-bold text-white flex items-center gap-2">
-                <Search size={14} className="text-[#8ecdff]" /> Buscar y Reemplazar
+                <Search size={14} style={{ color: t.accent }} /> Buscar y Reemplazar
               </span>
               <button onClick={() => setShowFindReplaceModal(false)} className="text-neutral-500 hover:text-white">✕</button>
             </div>
@@ -3093,8 +3087,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
                   placeholder="Texto a buscar..."
                   value={findQuery}
                   onChange={(e) => setFindQuery(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg text-[10px] outline-none text-white bg-[#131313] border focus:border-[#8ecdff]"
-                  style={{ borderColor: '#3e4851' }}
+                  className="w-full h-8 px-3 rounded-lg text-[10px] outline-none border" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                 />
               </div>
               <div>
@@ -3104,13 +3097,12 @@ export default function FlujoTrabajo({ settings, isDark }) {
                   placeholder="Reemplazar con..."
                   value={replaceQuery}
                   onChange={(e) => setReplaceQuery(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg text-[10px] outline-none text-white bg-[#131313] border focus:border-[#8ecdff]"
-                  style={{ borderColor: '#3e4851' }}
+                  className="w-full h-8 px-3 rounded-lg text-[10px] outline-none border" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
                 />
               </div>
               <button 
                 onClick={handleReplaceAll}
-                className="w-full h-8 rounded-lg bg-[#00a4ef] hover:bg-[#00a4ef]/80 text-white text-[10px] font-bold uppercase transition-all"
+                className="w-full h-8 rounded-lg text-white text-[10px] font-bold uppercase transition-all" style={{ backgroundColor: t.accent, color: t.isDark ? '#1e1e1e' : '#ffffff' }}
               >
                 Reemplazar Todo
               </button>

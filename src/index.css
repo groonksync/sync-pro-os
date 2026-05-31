@@ -510,3 +510,13 @@ button, input, a, select, [role="button"] {
   background: #94a3b8;
 }
 
+/* Custom Catalog search input override for light mode */
+.light-mode .catalog-search-input {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+.light-mode .catalog-search-input::placeholder {
+  color: #64748b !important;
+}
+

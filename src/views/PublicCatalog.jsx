@@ -3,7 +3,7 @@ import {
   Package, Search, X, ShoppingCart, CheckCircle, 
   Home, Music, Smartphone, LayoutGrid, Star, ChevronLeft, ChevronRight,
   TrendingUp, Tag, Plus, Minus, Trash2, ArrowRight, Image as ImageIcon,
-  Box as BoxIcon, Video, Zap
+  Box as BoxIcon, Video, Zap, Briefcase, Sparkles, Sun, Moon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
@@ -38,6 +38,8 @@ const getCategoryIcon = (category) => {
   if (catLower.includes('celular') || catLower.includes('teléfono') || catLower.includes('accesorio')) return Smartphone;
   if (catLower.includes('cámara') || catLower.includes('fotografía') || catLower.includes('seguridad') || catLower.includes('video')) return Video;
   if (catLower.includes('electrónica') || catLower.includes('fuente') || catLower.includes('forza')) return Zap;
+  if (catLower.includes('construcción') || catLower.includes('material')) return Briefcase;
+  if (catLower.includes('decoración') || catLower.includes('adorno')) return Sparkles;
   return Tag;
 };
 
@@ -83,8 +85,10 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
   }, [p]);
 
   const stock = parseInt(p.stock_actual || 0);
-  const isAgotado = stock <= 0;
-  const isLow = stock > 0 && stock <= 5;
+  const displayMode = p.metadata?.stock_display_mode || 'auto';
+  
+  const isAgotado = displayMode === 'force_agotado' || (displayMode === 'auto' && stock <= 0);
+  const isLow = displayMode === 'force_por_agotarse' || (displayMode === 'auto' && stock > 0 && stock <= 5);
 
   const isOferta = !!(p.es_oferta || p.metadata?.es_oferta);
   const isCombo = !!(p.es_combo || p.metadata?.es_combo);
@@ -158,6 +162,8 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
           </div>
           {isAgotado ? (
             <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sin Stock</span>
+          ) : displayMode === 'force_por_agotarse' ? (
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Últimas uds</span>
           ) : isLow ? (
             <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} Disp.</span>
           ) : (
@@ -166,7 +172,7 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
         </div>
 
         {/* Image container — AGOTADO overlay lives ONLY here */}
-        <div style={{ height: isMobile ? 140 : 250, borderRadius: 12, backgroundColor: '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
+        <div style={{ height: isMobile ? 140 : 250, borderRadius: 12, backgroundColor: t.isDark ? t.bg : '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
           {isAgotado && (
             <div style={{
               position: 'absolute',
@@ -201,8 +207,28 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
             </div>
           )}
           {!isAgotado && isCombo && (
-            <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 5, backgroundColor: '#3b82f6', color: '#fff', fontSize: 8, fontWeight: 950, padding: '4px 8px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 4px 10px rgba(59,130,Blue,0.3)' }}>
+            <div style={{ position: 'absolute', top: 10, right: 10, zIndex: 5, backgroundColor: '#3b82f6', color: '#fff', fontSize: 8, fontWeight: 950, padding: '4px 8px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 4px 10px rgba(59,130,246,0.3)' }}>
               COMBO PACK
+            </div>
+          )}
+
+          {!isAgotado && isLow && (
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: 'rgba(245, 158, 11, 0.95)',
+              color: '#000000',
+              fontSize: isMobile ? 7 : 9,
+              fontWeight: 900,
+              padding: '5px 0',
+              textAlign: 'center',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              zIndex: 5
+            }}>
+              ⚠️ ¡Por Agotarse!
             </div>
           )}
 
@@ -351,9 +377,10 @@ const PublicCatalog = () => {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  const [isDark, setIsDark] = useState(true);
+  const [isDark, setIsDark] = useState(false);
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -476,7 +503,8 @@ const PublicCatalog = () => {
   // Cart operations
   const addToCart = (product) => {
     const stockLimit = parseInt(product.stock_actual || 0);
-    if (stockLimit <= 0) {
+    const displayMode = product.metadata?.stock_display_mode || 'auto';
+    if (displayMode === 'force_agotado' || (displayMode === 'auto' && stockLimit <= 0)) {
       setToast({ show: true, message: 'Producto sin stock disponible', type: 'error' });
       return;
     }
@@ -484,7 +512,7 @@ const PublicCatalog = () => {
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
-        if (existing.quantity >= stockLimit) {
+        if (displayMode !== 'force_por_agotarse' && existing.quantity >= stockLimit) {
           setToast({ show: true, message: 'No hay más unidades en stock', type: 'error' });
           return prev;
         }
@@ -499,13 +527,14 @@ const PublicCatalog = () => {
   const updateCartQuantity = (id, amount) => {
     const product = productos.find(p => p.id === id);
     const stockLimit = parseInt(product?.stock_actual || 0);
+    const displayMode = product?.metadata?.stock_display_mode || 'auto';
 
     setCart(prev => {
       return prev.map(item => {
         if (item.id === id) {
           const newQty = item.quantity + amount;
           if (newQty <= 0) return null;
-          if (newQty > stockLimit) {
+          if (displayMode !== 'force_por_agotarse' && newQty > stockLimit) {
             setToast({ show: true, message: 'Excede el stock disponible', type: 'error' });
             return item;
           }
@@ -646,133 +675,241 @@ const PublicCatalog = () => {
   }, [selectedProduct]);
 
   return (
-    <div style={{ height: '100%', minHeight: '100vh', width: '100%', backgroundColor: t.bg, color: t.text, fontFamily: 'Outfit, sans-serif', transition: 'background-color 0.4s', overflowX: 'hidden', overflowY: 'auto' }}>
+    <div 
+      className={isDark ? '' : 'light-mode'}
+      style={{ 
+        height: '100%', minHeight: '100vh', width: '100%', backgroundColor: t.bg, color: t.text, fontFamily: 'Outfit, sans-serif', transition: 'background-color 0.4s', overflowX: 'hidden', overflowY: 'auto',
+        paddingBottom: isMobile ? 'calc(90px + env(safe-area-inset-bottom))' : 0
+      }}
+    >
       <Toast message={toast.message} type={toast.type} show={toast.show} t={t} onClose={() => setToast(prev => ({ ...prev, show: false }))} />
 
       {/* TOP CONTROL PANEL */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '24px 32px', borderBottom: `1px solid ${t.border}` }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 900, letterSpacing: '-0.03em', textTransform: 'uppercase', margin: 0 }}>
-            Inventario
-          </h1>
-          <span style={{ fontSize: 9, fontWeight: 900, color: t.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-            Catálogo Principal
-          </span>
+      <div style={{ 
+        display: 'flex', 
+        flexDirection: isMobile ? 'column' : 'row',
+        justifyContent: 'space-between', 
+        alignItems: isMobile ? 'stretch' : 'center', 
+        padding: isMobile ? '16px 20px' : '24px 32px', 
+        borderBottom: `1px solid ${t.border}`,
+        gap: isMobile ? 12 : 0,
+        backgroundColor: t.panel
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ fontSize: isMobile ? 18 : 24, fontWeight: 900, letterSpacing: '-0.03em', textTransform: 'uppercase', margin: 0 }}>
+              Catálogo
+            </h1>
+            <span style={{ fontSize: 8, fontWeight: 900, color: t.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+              Productos Disponibles
+            </span>
+          </div>
+          {isMobile && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {/* Theme Toggle for Mobile */}
+              <button
+                onClick={() => setIsDark(!isDark)}
+                style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.textDim }}
+              >
+                {isDark ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+              {/* Cart for Mobile */}
+              <button 
+                onClick={() => setIsCartOpen(true)}
+                style={{ position: 'relative', width: 36, height: 36, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.accent }}
+              >
+                <ShoppingCart size={14} />
+                {cartCount > 0 && (
+                  <span className="animate-bounce" style={{ position: 'absolute', top: -3, right: -3, backgroundColor: '#ef4444', color: '#fff', fontSize: 8, fontWeight: 900, borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Search Input Centralized */}
-        <div style={{ position: 'relative', width: '40%', minWidth: 260 }}>
+        <div style={{ position: 'relative', width: isMobile ? '100%' : '40%', minWidth: isMobile ? 'auto' : 260 }}>
           <input 
             type="text" 
             placeholder="Buscar por nombre, categoría, SKU o código..." 
+            className="catalog-search-input"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 30, padding: '12px 20px 12px 20px', fontSize: 11, outline: 'none', color: t.text, transition: 'all 0.2s' }} 
+            style={{ 
+              width: '100%', 
+              backgroundColor: isDark ? t.inputBg : '#f1f5f9', 
+              border: `1px solid ${isDark ? t.border : '#cbd5e1'}`, 
+              borderRadius: 30, 
+              padding: isMobile ? '10px 16px' : '12px 20px', 
+              fontSize: 11, 
+              outline: 'none', 
+              color: isDark ? t.text : '#0f172a', 
+              transition: 'all 0.2s' 
+            }} 
           />
         </div>
 
-        {/* Controls: Cart Trigger (removed Tienda/Gestor pill selector) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <button 
-            onClick={() => setIsCartOpen(true)}
-            style={{ position: 'relative', width: 44, height: 44, borderRadius: '50%', backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.accent, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-          >
-            <ShoppingCart size={18} />
-            {cartCount > 0 && (
-              <span className="animate-bounce" style={{ position: 'absolute', top: -4, right: -4, backgroundColor: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 900, borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${t.bg}` }}>
-                {cartCount}
-              </span>
-            )}
-          </button>
-        </div>
+        {/* Controls: Cart & Theme Toggles (Desktop only) */}
+        {!isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => setIsDark(!isDark)}
+              style={{ width: 44, height: 44, borderRadius: '50%', backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.textDim, transition: 'all 0.2s', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+              title={isDark ? "Activar Modo Día" : "Activar Modo Noche"}
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            {/* Cart Button */}
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              style={{ position: 'relative', width: 44, height: 44, borderRadius: '50%', backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.accent, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+            >
+              <ShoppingCart size={18} />
+              {cartCount > 0 && (
+                <span className="animate-bounce" style={{ position: 'absolute', top: -4, right: -4, backgroundColor: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 900, borderRadius: '50%', width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${t.bg}` }}>
+                  {cartCount}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* MAIN TWO-COLUMN LAYOUT */}
-      <div style={{ display: 'flex', padding: '32px' }}>
-        {/* SIDEBAR FILTROS */}
-        <aside style={{ width: 260, paddingRight: 32, display: 'flex', flexDirection: 'column', gap: 32, flexShrink: 0 }}>
-          {/* Categorías */}
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: t.textMuted, margin: 0 }}>Categorías</h4>
-              {uniqueCategories.length > 7 && (
-                <button 
-                  onClick={() => setShowAllCategories(!showAllCategories)}
-                  style={{ background: 'none', border: 'none', color: t.accent, fontSize: 8, fontWeight: 900, cursor: 'pointer', textTransform: 'uppercase', padding: 0 }}
-                >
-                  {showAllCategories ? 'Menos' : 'Más'}
-                </button>
-              )}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <button 
-                onClick={() => setActiveCategory('Todos')}
-                style={{ 
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                  backgroundColor: activeCategory === 'Todos' ? t.accentSoft : 'transparent', color: activeCategory === 'Todos' ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <LayoutGrid size={16} />
-                  <span style={{ fontSize: 11, fontWeight: 700 }}>Todos</span>
-                </div>
-                <span style={{ fontSize: 9, fontWeight: 900, backgroundColor: activeCategory === 'Todos' ? t.accent : t.inputBg, color: activeCategory === 'Todos' ? '#000' : t.textMuted, padding: '2px 8px', borderRadius: 20 }}>
-                  {productos.length}
-                </span>
-              </button>
-
-              {uniqueCategories.slice(0, showAllCategories ? undefined : 7).map(catName => {
-                const Icon = getCategoryIcon(catName);
-                const isActive = activeCategory === catName;
-                const count = categoryCounts[catName] || 0;
-                return (
+      {/* MAIN LAYOUT */}
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', padding: isMobile ? '12px' : '32px' }}>
+        {/* SIDEBAR FILTROS (Desktop only) */}
+        {!isMobile && (
+          <aside style={{ width: 260, paddingRight: 32, display: 'flex', flexDirection: 'column', gap: 32, flexShrink: 0 }}>
+            {/* Categorías */}
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: t.textMuted, margin: 0 }}>Categorías</h4>
+                {uniqueCategories.length > 7 && (
                   <button 
-                    key={catName}
-                    onClick={() => setActiveCategory(catName)}
-                    style={{ 
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                      backgroundColor: isActive ? t.accentSoft : 'transparent', color: isActive ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
-                    }}
+                    onClick={() => setShowAllCategories(!showAllCategories)}
+                    style={{ background: 'none', border: 'none', color: t.accent, fontSize: 8, fontWeight: 900, cursor: 'pointer', textTransform: 'uppercase', padding: 0 }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <Icon size={16} />
-                      <span style={{ fontSize: 11, fontWeight: 700 }}>{catName}</span>
-                    </div>
-                    <span style={{ fontSize: 9, fontWeight: 900, backgroundColor: isActive ? t.accent : t.inputBg, color: isActive ? '#000' : t.textMuted, padding: '2px 8px', borderRadius: 20 }}>
-                      {count}
-                    </span>
+                    {showAllCategories ? 'Menos' : 'Más'}
                   </button>
-                );
-              })}
-            </div>
-          </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button 
+                  onClick={() => setActiveCategory('Todos')}
+                  style={{ 
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                    backgroundColor: activeCategory === 'Todos' ? t.accentSoft : 'transparent', color: activeCategory === 'Todos' ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <LayoutGrid size={16} />
+                    <span style={{ fontSize: 11, fontWeight: 700 }}>Todos</span>
+                  </div>
+                  <span style={{ fontSize: 9, fontWeight: 900, backgroundColor: activeCategory === 'Todos' ? t.accent : t.inputBg, color: activeCategory === 'Todos' ? '#000' : t.textMuted, padding: '2px 8px', borderRadius: 20 }}>
+                    {productos.length}
+                  </span>
+                </button>
 
-          {/* Subfiltros de Estado */}
-          <div>
-            <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: t.textMuted, marginBottom: 16 }}>Subfiltros Estado</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {['Todos los ítems', 'Novedades', 'Más Vendidos', 'En Descuento'].map(sub => {
-                const isActive = activeSubfilter === sub;
-                return (
-                  <button
-                    key={sub}
-                    onClick={() => setActiveSubfilter(sub)}
-                    style={{ 
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                      backgroundColor: 'transparent', color: isActive ? t.accent : t.textMuted, transition: 'all 0.2s', width: '100%', textAlign: 'left'
-                    }}
-                  >
-                    <span style={{ fontSize: 11, fontWeight: isActive ? 900 : 500 }}>{sub}</span>
-                    <ArrowRight size={12} style={{ opacity: isActive ? 1 : 0, transition: 'opacity 0.2s', color: t.accent }} />
-                  </button>
-                );
-              })}
+                {uniqueCategories.slice(0, showAllCategories ? undefined : 7).map(catName => {
+                  const Icon = getCategoryIcon(catName);
+                  const isActive = activeCategory === catName;
+                  const count = categoryCounts[catName] || 0;
+                  return (
+                    <button 
+                      key={catName}
+                      onClick={() => setActiveCategory(catName)}
+                      style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                        backgroundColor: isActive ? t.accentSoft : 'transparent', color: isActive ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <Icon size={16} />
+                        <span style={{ fontSize: 11, fontWeight: 700 }}>{catName}</span>
+                      </div>
+                      <span style={{ fontSize: 9, fontWeight: 900, backgroundColor: isActive ? t.accent : t.inputBg, color: isActive ? '#000' : t.textMuted, padding: '2px 8px', borderRadius: 20 }}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        </aside>
+
+            {/* Subfiltros de Estado */}
+            <div>
+              <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em', color: t.textMuted, marginBottom: 16 }}>Subfiltros Estado</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {['Todos los ítems', 'Novedades', 'Más Vendidos', 'En Descuento'].map(sub => {
+                  const isActive = activeSubfilter === sub;
+                  return (
+                    <button
+                      key={sub}
+                      onClick={() => setActiveSubfilter(sub)}
+                      style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                        backgroundColor: 'transparent', color: isActive ? t.accent : t.textMuted, transition: 'all 0.2s', width: '100%', textAlign: 'left'
+                      }}
+                    >
+                      <span style={{ fontSize: 11, fontWeight: isActive ? 900 : 500 }}>{sub}</span>
+                      <ArrowRight size={12} style={{ opacity: isActive ? 1 : 0, transition: 'opacity 0.2s', color: t.accent }} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </aside>
+        )}
 
         {/* PRODUCTS GRID SECTION */}
         <section style={{ flex: 1 }}>
+          {/* Mobile Horizontal Category Slider */}
+          {isMobile && (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '4px 4px 16px 4px', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }} className="hide-scrollbar">
+              <button
+                onClick={() => setActiveCategory('Todos')}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 20,
+                  border: `1px solid ${activeCategory === 'Todos' ? t.accent : t.border}`,
+                  backgroundColor: activeCategory === 'Todos' ? t.accentSoft : t.panel,
+                  color: activeCategory === 'Todos' ? t.accent : t.textDim,
+                  fontSize: 10,
+                  fontWeight: 900,
+                  cursor: 'pointer'
+                }}
+              >
+                Todos ({productos.length})
+              </button>
+              {uniqueCategories.map(catName => {
+                const count = categoryCounts[catName] || 0;
+                const isActive = activeCategory === catName;
+                return (
+                  <button
+                    key={catName}
+                    onClick={() => setActiveCategory(catName)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: 20,
+                      border: `1px solid ${isActive ? t.accent : t.border}`,
+                      backgroundColor: isActive ? t.accentSoft : t.panel,
+                      color: isActive ? t.accent : t.textDim,
+                      fontSize: 10,
+                      fontWeight: 900,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {catName} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0', color: t.textMuted }}>Cargando catálogo...</div>
           ) : filteredProducts.length === 0 ? (
@@ -782,7 +919,11 @@ const PublicCatalog = () => {
             </div>
           ) : (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(280px, 1fr))', 
+                gap: isMobile ? 12 : 20 
+              }}>
                 {filteredProducts.map(p => (
                   <ProductCard 
                     key={p.id} 
@@ -791,9 +932,9 @@ const PublicCatalog = () => {
                     addToCart={addToCart} 
                     onOpenDetails={(prod) => { setSelectedProduct(prod); setSelectedImageIndex(0); setMediaTab('images'); }} 
                     WHATSAPP_NUMBER={WHATSAPP_NUMBER}
+                    isMobile={isMobile}
                   />
                 ))}
-
               </div>
             </div>
           )}
@@ -820,7 +961,7 @@ const PublicCatalog = () => {
             <div style={{ overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               
               {/* Media viewer on top (fully occupying width) */}
-              <div style={{ position: 'relative', width: '100%', height: isMobile ? 220 : 320, backgroundColor: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${t.border}` }}>
+              <div style={{ position: 'relative', width: '100%', height: isMobile ? 220 : 320, backgroundColor: isDark ? t.bg : '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${t.border}`, flexShrink: 0 }}>
                 {mediaTab === 'video' && getVideoUrl(selectedProduct) ? (
                   <iframe 
                     src={getEmbedVideoUrl(getVideoUrl(selectedProduct))}
@@ -872,16 +1013,33 @@ const PublicCatalog = () => {
 
               {/* Thumbnail Selector (Only shown in Images tab) */}
               {mediaTab === 'images' && allImages.length > 1 && (
-                <div style={{ display: 'flex', gap: 10, padding: isMobile ? '10px 16px' : '16px 28px', overflowX: 'auto', backgroundColor: t.inputBg, borderBottom: `1px solid ${t.border}` }}>
+                <div style={{ 
+                  display: 'flex', 
+                  gap: 10, 
+                  padding: isMobile ? '12px 16px' : '16px 28px', 
+                  overflowX: 'auto', 
+                  backgroundColor: t.inputBg, 
+                  borderBottom: `1px solid ${t.border}`,
+                  flexShrink: 0 
+                }}>
                   {allImages.map((img, idx) => (
                     <button 
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
                       style={{ 
-                        width: isMobile ? 44 : 54, height: isMobile ? 44 : 54, borderRadius: 10, border: `2px solid ${selectedImageIndex === idx ? t.accent : t.border}`, overflow: 'hidden', padding: 0, cursor: 'pointer', flexShrink: 0 
+                        width: isMobile ? 50 : 60, 
+                        height: isMobile ? 50 : 60, 
+                        borderRadius: 8, 
+                        border: `2px solid ${selectedImageIndex === idx ? t.accent : t.border}`, 
+                        overflow: 'hidden', 
+                        padding: 0, 
+                        cursor: 'pointer', 
+                        flexShrink: 0,
+                        backgroundColor: isDark ? t.bg : '#ffffff',
+                        transition: 'border-color 0.2s, transform 0.1s'
                       }}
                     >
-                      <img src={img} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+                      <img src={img} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 2 }} alt="" />
                     </button>
                   ))}
                 </div>
@@ -991,13 +1149,19 @@ const PublicCatalog = () => {
                 + Añadir al Carrito
               </button>
               <button 
+                onClick={() => window.open(`https://wa.me/c/${WHATSAPP_NUMBER}`, '_blank')}
+                style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: 'none', backgroundColor: '#25D366', color: '#ffffff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+              >
+                📱 Catálogo WhatsApp
+              </button>
+              <button 
                 onClick={() => {
                   window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre} (SKU: ${selectedProduct.sku || selectedProduct.codigo || 'N/A'})`, '_blank');
                   setSelectedProduct(null);
                 }}
                 style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: 'none', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
               >
-                Preguntar por WhatsApp
+                Preguntar por Chat
               </button>
             </div>
 
@@ -1155,7 +1319,7 @@ const PublicCatalog = () => {
                     placeholder="Ej: Juan Pérez" 
                     value={clientName} 
                     onChange={e => setClientName(e.target.value)}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }} 
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }} 
                   />
                 </div>
 
@@ -1167,7 +1331,7 @@ const PublicCatalog = () => {
                     value={clientAddress} 
                     onChange={e => setClientAddress(e.target.value)}
                     rows={3}
-                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff', resize: 'none', fontFamily: 'inherit' }} 
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text, resize: 'none', fontFamily: 'inherit' }} 
                   />
                 </div>
 
@@ -1177,7 +1341,7 @@ const PublicCatalog = () => {
                   <select 
                     value={paymentMethod} 
                     onChange={e => setPaymentMethod(e.target.value)}
-                    style={{ width: '100%', backgroundColor: '#141414', border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: '#fff' }}
+                    style={{ width: '100%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, borderRadius: 12, padding: '12px 16px', fontSize: 12, outline: 'none', color: t.text }}
                   >
                     <option value="Efectivo">Efectivo contra entrega</option>
                     <option value="Transferencia QR">Transferencia Bancaria / QR</option>
@@ -1190,7 +1354,7 @@ const PublicCatalog = () => {
                   <ShoppingCart size={20} style={{ color: '#10b981' }} />
                   <div>
                     <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted }}>Total de Compra</span>
-                    <p style={{ fontSize: 16, fontFamily: 'monospace', fontWeight: 900, color: '#fff', margin: 0 }}>{cartTotal.toLocaleString()} BS.</p>
+                    <p style={{ fontSize: 16, fontFamily: 'monospace', fontWeight: 900, color: t.text, margin: 0 }}>{cartTotal.toLocaleString()} BS.</p>
                   </div>
                 </div>
               </div>
@@ -1274,6 +1438,145 @@ const PublicCatalog = () => {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* BOTTOM TAB BAR FOR MOBILE */}
+      {isMobile && (
+        <div style={{ 
+          position: 'fixed', bottom: 0, left: 0, right: 0, 
+          height: 'calc(64px + env(safe-area-inset-bottom))', 
+          backgroundColor: t.panel, borderTop: `1px solid ${t.border}`, 
+          display: 'flex', alignItems: 'center', justifyContent: 'space-around', zIndex: 800, 
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
+          boxSizing: 'border-box'
+        }}>
+          <button 
+            onClick={() => { setActiveCategory('Todos'); setActiveSubfilter('Todos los ítems'); setSearchTerm(''); }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: activeCategory === 'Todos' ? t.accent : t.textDim, cursor: 'pointer' }}
+          >
+            <Home size={18} />
+            <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase' }}>Inicio</span>
+          </button>
+          
+          <button 
+            onClick={() => setIsMobileFiltersOpen(true)}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: t.textDim, cursor: 'pointer' }}
+          >
+            <LayoutGrid size={18} />
+            <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase' }}>Filtros</span>
+          </button>
+          
+          <button 
+            onClick={() => setIsCartOpen(true)}
+            style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: cartCount > 0 ? t.accent : t.textDim, cursor: 'pointer' }}
+          >
+            <ShoppingCart size={18} />
+            {cartCount > 0 && (
+              <span className="animate-bounce" style={{ position: 'absolute', top: -4, right: 8, backgroundColor: '#ef4444', color: '#fff', fontSize: 7, fontWeight: 900, borderRadius: '50%', width: 14, height: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {cartCount}
+              </span>
+            )}
+            <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase' }}>Carrito</span>
+          </button>
+
+          <button 
+            onClick={() => window.open(`https://wa.me/c/${WHATSAPP_NUMBER}`, '_blank')}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: '#25D366', cursor: 'pointer' }}
+          >
+            <Briefcase size={18} />
+            <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase' }}>Catálogo</span>
+          </button>
+          
+          <button 
+            onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Vengo del catálogo y tengo una consulta.`, '_blank')}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, background: 'none', border: 'none', color: '#10b981', cursor: 'pointer' }}
+          >
+            <Smartphone size={18} />
+            <span style={{ fontSize: 8, fontWeight: 900, textTransform: 'uppercase' }}>Consulta</span>
+          </button>
+        </div>
+      )}
+
+      {/* MOBILE FILTERS SHEET */}
+      {isMobile && isMobileFiltersOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+          <div 
+            onClick={() => setIsMobileFiltersOpen(false)}
+            style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
+          />
+          <div style={{ 
+            position: 'relative', width: '100%', backgroundColor: t.panel, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+            padding: '24px', zIndex: 1, borderTop: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 20,
+            maxHeight: '80vh', overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ fontSize: 13, fontWeight: 900, textTransform: 'uppercase', color: t.text }}>Filtros del Catálogo</h3>
+              <button 
+                onClick={() => setIsMobileFiltersOpen(false)}
+                style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: t.inputBg, border: 'none', color: t.textMuted, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+            
+            {/* Categorías */}
+            <div>
+              <h4 style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', color: t.textMuted, marginBottom: 12 }}>Categorías</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <button 
+                  onClick={() => { setActiveCategory('Todos'); setIsMobileFiltersOpen(false); }}
+                  style={{ 
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none',
+                    backgroundColor: activeCategory === 'Todos' ? t.accentSoft : 'transparent', color: activeCategory === 'Todos' ? t.accent : t.textDim, width: '100%', textAlign: 'left'
+                  }}
+                >
+                  <span style={{ fontSize: 11, fontWeight: 700 }}>Todos</span>
+                  <span style={{ fontSize: 9, fontWeight: 900, backgroundColor: activeCategory === 'Todos' ? t.accent : t.inputBg, color: activeCategory === 'Todos' ? '#000' : t.textMuted, padding: '2px 8px', borderRadius: 20 }}>{productos.length}</span>
+                </button>
+                {uniqueCategories.map(catName => {
+                  const count = categoryCounts[catName] || 0;
+                  const isActive = activeCategory === catName;
+                  return (
+                    <button 
+                      key={catName}
+                      onClick={() => { setActiveCategory(catName); setIsMobileFiltersOpen(false); }}
+                      style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none',
+                        backgroundColor: isActive ? t.accentSoft : 'transparent', color: isActive ? t.accent : t.textDim, width: '100%', textAlign: 'left'
+                      }}
+                    >
+                      <span style={{ fontSize: 11, fontWeight: 700 }}>{catName}</span>
+                      <span style={{ fontSize: 9, fontWeight: 900, backgroundColor: isActive ? t.accent : t.inputBg, color: isActive ? '#000' : t.textMuted, padding: '2px 8px', borderRadius: 20 }}>{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Subfiltros */}
+            <div>
+              <h4 style={{ fontSize: 9, fontWeight: 900, textTransform: 'uppercase', color: t.textMuted, marginBottom: 12 }}>Subfiltros Estado</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {['Todos los ítems', 'Novedades', 'Más Vendidos', 'En Descuento'].map(sub => {
+                  const isActive = activeSubfilter === sub;
+                  return (
+                    <button
+                      key={sub}
+                      onClick={() => { setActiveSubfilter(sub); setIsMobileFiltersOpen(false); }}
+                      style={{ 
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 10, border: 'none',
+                        backgroundColor: isActive ? t.accentSoft : 'transparent', color: isActive ? t.accent : t.textMuted, width: '100%', textAlign: 'left'
+                      }}
+                    >
+                      <span style={{ fontSize: 11, fontWeight: isActive ? 900 : 500 }}>{sub}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}
