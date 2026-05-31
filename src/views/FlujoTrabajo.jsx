@@ -365,9 +365,60 @@ export default function FlujoTrabajo({ settings, isDark }) {
   const [showRuler, setShowRuler] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [customAlert, setCustomAlert] = useState(null);
+  const [customPrompt, setCustomPrompt] = useState(null);
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+
   const showAlert = (message, title = 'Notificación') => {
     setCustomAlert({ title, message });
   };
+
+  const showPrompt = (title, defaultValue, placeholder, onSubmit) => {
+    setCustomPrompt({ title, defaultValue, placeholder, onSubmit });
+  };
+
+  const pushToUndo = (contentStr) => {
+    setUndoStack(prev => [...prev.slice(-19), contentStr]);
+    setRedoStack([]);
+  };
+
+  const handleUndo = () => {
+    if (undoStack.length === 0 || !activeDoc) return;
+    const previous = undoStack[undoStack.length - 1];
+    setUndoStack(prev => prev.slice(0, -1));
+    setRedoStack(prev => [...prev, activeDoc.contenido]);
+    setActiveDoc(prev => ({ ...prev, contenido: previous }));
+    setPageUpdateTrigger(prev => prev + 1);
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length === 0 || !activeDoc) return;
+    const next = redoStack[redoStack.length - 1];
+    setRedoStack(prev => prev.slice(0, -1));
+    setUndoStack(prev => [...prev, activeDoc.contenido]);
+    setActiveDoc(prev => ({ ...prev, contenido: next }));
+    setPageUpdateTrigger(prev => prev + 1);
+  };
+
+  useEffect(() => {
+    const handleGlobalShortcuts = (e) => {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      if (isCmdOrCtrl && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      } else if (isCmdOrCtrl && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        handleRedo();
+      }
+    };
+    window.addEventListener('keydown', handleGlobalShortcuts);
+    return () => window.removeEventListener('keydown', handleGlobalShortcuts);
+  }, [undoStack, redoStack, activeDoc]);
+
   const [pageOverflows, setPageOverflows] = useState({});
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -729,6 +780,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
       updated_at: new Date().toISOString()
     };
 
+    pushToUndo(activeDoc.contenido);
     saveVersionLog(activeDoc.id, updatedContent);
 
     const local = JSON.parse(localStorage.getItem('ft_documents') || '[]');
@@ -1287,6 +1339,26 @@ export default function FlujoTrabajo({ settings, isDark }) {
     }
   };
 
+  const insertLink = () => {
+    showPrompt("Insertar Enlace", "https://", "Introduce la URL del enlace...", (url) => {
+      if (!url || !url.trim()) return;
+      execCommand('createLink', url.trim());
+      saveDocumentContent();
+    });
+  };
+
+  const insertBlockquote = () => {
+    const quoteHtml = `<blockquote style="border-left: 4px solid ${t.accent}; padding-left: 1rem; margin: 10px 0; font-style: italic; color: ${t.textMuted};">Cita o texto destacado.</blockquote><p></p>`;
+    insertHtmlAtCursor(quoteHtml);
+    saveDocumentContent();
+  };
+
+  const insertCodeBlock = () => {
+    const codeHtml = `<pre style="background-color: ${t.inputBg}; border: 0.5px solid ${t.border}; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; margin: 10px 0; overflow-x: auto; color: ${t.text};" contenteditable="true"><code>// Escribe tu código aquí</code></pre><p></p>`;
+    insertHtmlAtCursor(codeHtml);
+    saveDocumentContent();
+  };
+
   const insertChecklist = () => {
     const checklistHtml = `<div class="ft-todo-item" style="display: flex; align-items: center; gap: 8px; margin: 4px 0;"><input type="checkbox" style="width: 16px; height: 16px; accent-color: ${t.accent}; cursor: pointer;" /> <span style="font-size: 11px; color: ${t.text};">Nuevo checklist</span></div>`;
     insertHtmlAtCursor(checklistHtml);
@@ -1314,8 +1386,20 @@ export default function FlujoTrabajo({ settings, isDark }) {
     let sel, range;
     if (window.getSelection) {
       sel = window.getSelection();
-      if (sel.getRangeAt && sel.rangeCount) {
+      let isInsidePage = false;
+      if (sel.rangeCount > 0) {
         range = sel.getRangeAt(0);
+        let nodeToCheck = range.commonAncestorContainer;
+        while (nodeToCheck) {
+          if (nodeToCheck.classList && nodeToCheck.classList.contains('word-page-content')) {
+            isInsidePage = true;
+            break;
+          }
+          nodeToCheck = nodeToCheck.parentNode;
+        }
+      }
+
+      if (isInsidePage && range) {
         range.deleteContents();
         const el = document.createElement("div");
         el.innerHTML = html;
@@ -1331,6 +1415,25 @@ export default function FlujoTrabajo({ settings, isDark }) {
           range.collapse(true);
           sel.removeAllRanges();
           sel.addRange(range);
+        }
+      } else {
+        // Fallback: Si no está enfocado en la hoja, insertar al final de la página activa enfocada
+        if (pagesContainerRef.current) {
+          const pageDivs = pagesContainerRef.current.querySelectorAll('.word-page-content');
+          const activePage = pageDivs[focusedPageIndex] || pageDivs[0];
+          if (activePage) {
+            const el = document.createElement("div");
+            el.innerHTML = html;
+            while (el.firstChild) {
+              activePage.appendChild(el.firstChild);
+            }
+            // Mover el cursor al final de la hoja activa
+            const newRange = document.createRange();
+            newRange.selectNodeContents(activePage);
+            newRange.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+          }
         }
       }
     }
@@ -1434,13 +1537,16 @@ export default function FlujoTrabajo({ settings, isDark }) {
   };
 
   const promptInsertTable = () => {
-    const rowsStr = prompt("Número de filas:", "3");
-    const colsStr = prompt("Número de columnas:", "3");
-    const r = parseInt(rowsStr);
-    const c = parseInt(colsStr);
-    if (!isNaN(r) && !isNaN(c) && r > 0 && c > 0) {
-      insertWysiwygTable(r, c);
-    }
+    showPrompt("Insertar Tabla (Número de Filas):", "3", "Número de filas...", (rowsStr) => {
+      const r = parseInt(rowsStr);
+      if (isNaN(r) || r <= 0) return;
+      showPrompt("Insertar Tabla (Número de Columnas):", "3", "Número de columnas...", (colsStr) => {
+        const c = parseInt(colsStr);
+        if (!isNaN(c) && c > 0) {
+          insertWysiwygTable(r, c);
+        }
+      });
+    });
   };
 
   const handleContextMenu = (e) => {
@@ -1520,51 +1626,53 @@ export default function FlujoTrabajo({ settings, isDark }) {
   };
 
   const insertImage = () => {
-    const url = prompt("Introduce la URL de la imagen (o presiona Enter para subir una desde tu computadora):");
-    if (url === null) return;
-    if (url.trim()) {
-      const imgHtml = `<img src="${url.trim()}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" alt="Imagen" />`;
-      insertHtmlAtCursor(imgHtml);
-      saveDocumentContent();
-    } else {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const imgHtml = `<img src="${event.target.result}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" alt="Imagen" />`;
-            insertHtmlAtCursor(imgHtml);
-            saveDocumentContent();
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-      input.click();
-    }
+    showPrompt("Insertar Imagen", "", "Introduce la URL de la imagen (o presiona Aceptar vacío para subir un archivo)...", (url) => {
+      if (url === null) return;
+      if (url.trim()) {
+        const imgHtml = `<img src="${url.trim()}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" alt="Imagen" />`;
+        insertHtmlAtCursor(imgHtml);
+        saveDocumentContent();
+      } else {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const imgHtml = `<img src="${event.target.result}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0;" alt="Imagen" />`;
+              insertHtmlAtCursor(imgHtml);
+              saveDocumentContent();
+            };
+            reader.readAsDataURL(file);
+          }
+        };
+        input.click();
+      }
+    });
   };
 
   const insertVideo = () => {
-    const url = prompt("Introduce la URL del video (YouTube o enlace directo mp4/webm):");
-    if (!url) return;
-    let videoHtml = '';
-    if (url.includes('youtube.com') || url.includes('youtu.be')) {
-      let videoId = '';
-      if (url.includes('youtube.com/watch?v=')) {
-        videoId = url.split('v=')[1].split('&')[0];
-      } else if (url.includes('youtu.be/')) {
-        videoId = url.split('youtu.be/')[1].split('?')[0];
+    showPrompt("Insertar Video", "", "URL de YouTube o enlace directo mp4/webm...", (url) => {
+      if (!url || !url.trim()) return;
+      let videoHtml = '';
+      if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        let videoId = '';
+        if (url.includes('youtube.com/watch?v=')) {
+          videoId = url.split('v=')[1].split('&')[0];
+        } else if (url.includes('youtu.be/')) {
+          videoId = url.split('youtu.be/')[1].split('?')[0];
+        }
+        videoHtml = `<div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 10px 0; border-radius: 8px;">
+          <iframe src="https://www.youtube.com/embed/${videoId}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen></iframe>
+        </div><p></p>`;
+      } else {
+        videoHtml = `<video controls src="${url.trim()}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; display: block;"></video><p></p>`;
       }
-      videoHtml = `<div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; margin: 10px 0; border-radius: 8px;">
-        <iframe src="https://www.youtube.com/embed/${videoId}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" allowfullscreen></iframe>
-      </div><p></p>`;
-    } else {
-      videoHtml = `<video controls src="${url}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 10px 0; display: block;"></video><p></p>`;
-    }
-    insertHtmlAtCursor(videoHtml);
-    saveDocumentContent();
+      insertHtmlAtCursor(videoHtml);
+      saveDocumentContent();
+    });
   };
 
   const toggleRecording = async () => {
@@ -2427,6 +2535,8 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           <button onClick={() => execCommand('strikeThrough')} className="w-6 h-6 rounded hover:bg-white/5 text-white flex items-center justify-center" title="Tachado">
                             <Strikethrough size={12} />
                           </button>
+                          <button onClick={() => execCommand('subscript')} className="w-6 h-6 rounded hover:bg-white/5 text-white text-[9px] font-bold" title="Subíndice">X<sub>2</sub></button>
+                          <button onClick={() => execCommand('superscript')} className="w-6 h-6 rounded hover:bg-white/5 text-white text-[9px] font-bold" title="Superíndice">X<sup>2</sup></button>
                         </div>
 
                         {/* Color de Letra y Resaltado (Marcador) */}
@@ -2509,6 +2619,27 @@ export default function FlujoTrabajo({ settings, isDark }) {
                           className="flex items-center gap-1.5 px-3 py-1 bg-red-950/20 text-red-400 rounded border border-red-950/30 hover:bg-red-950/40 font-bold"
                         >
                           ✕ Eliminar Página
+                        </button>
+                        <button
+                          onClick={insertLink}
+                          className="flex items-center gap-1.5 px-3 py-1 rounded border hover:bg-white/5 font-bold text-[9px]" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
+                          title="Hipervínculo"
+                        >
+                          Hipervínculo
+                        </button>
+                        <button
+                          onClick={insertBlockquote}
+                          className="flex items-center gap-1.5 px-3 py-1 rounded border hover:bg-white/5 font-bold text-[9px]" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
+                          title="Cita Destacada"
+                        >
+                          Cita
+                        </button>
+                        <button
+                          onClick={insertCodeBlock}
+                          className="flex items-center gap-1.5 px-3 py-1 rounded border hover:bg-white/5 font-bold text-[9px]" style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
+                          title="Bloque de Código"
+                        >
+                          Bloque Código
                         </button>
                         <button
                           onClick={insertImage}
@@ -3116,6 +3247,49 @@ export default function FlujoTrabajo({ settings, isDark }) {
       )}
 
       
+      {/* Modal de Prompt Personalizado */}
+      {customPrompt && (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm p-6 rounded-[24px] border shadow-2xl" style={{ backgroundColor: t.panel, borderColor: t.border, borderWidth: '0.5px' }}>
+            <h3 className="text-sm font-bold mb-2" style={{ color: t.text }}>{customPrompt.title}</h3>
+            <input 
+              type="text"
+              id="custom-prompt-input"
+              defaultValue={customPrompt.defaultValue}
+              placeholder={customPrompt.placeholder}
+              className="w-full h-9 px-3 rounded-lg text-[11px] outline-none border mb-4 focus:ring-1"
+              style={{ backgroundColor: t.inputBg, borderColor: t.border, color: t.text }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  customPrompt.onSubmit(e.target.value);
+                  setCustomPrompt(null);
+                }
+              }}
+            />
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setCustomPrompt(null)}
+                className="flex-1 h-9 rounded-lg text-[10px] font-bold uppercase transition-all"
+                style={{ backgroundColor: t.accentSoft, color: t.textMuted, border: `1px solid ${t.border}` }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  const val = document.getElementById('custom-prompt-input').value;
+                  customPrompt.onSubmit(val);
+                  setCustomPrompt(null);
+                }}
+                className="flex-1 h-9 rounded-lg text-white text-[10px] font-bold uppercase transition-all"
+                style={{ backgroundColor: t.accent, color: t.isDark ? '#1e1e1e' : '#ffffff' }}
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Alerta Personalizado */}
       {customAlert && (
         <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
