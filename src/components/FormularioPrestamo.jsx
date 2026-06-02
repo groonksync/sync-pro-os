@@ -72,8 +72,7 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const handlerCache = useRef({});
 
-  // Handlers estables por campo — evitan pérdida de foco
-  const getHandler = useCallback((field) => {
+const getHandler = useCallback((field) => {
     if (!handlerCache.current[field]) {
       handlerCache.current[field] = (val) => {
         setForm(prev => ({ ...prev, [field]: val }));
