@@ -466,11 +466,14 @@ const CommandCenter = ({
 
   const ActiveAILogo = settings.aiProvider === 'deepseek' ? DeepSeekLogo : GoogleLogo;
 
-  // Períodos para selector
+  // Períodos para selector — desde mayo 2026 en adelante
   const generarPeriodos = () => {
     const periodos = [];
-    for (let i = -6; i <= 2; i++) {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+    const hoy = new Date();
+    const inicio = new Date(2026, 4, 1); // Mayo 2026
+    const desde = hoy > inicio ? inicio : hoy;
+    for (let i = 0; i <= 4; i++) {
+      const d = new Date(desde.getFullYear(), desde.getMonth() + i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       const label = d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
       periodos.push({ key, label, esActual: i === 0 });
@@ -595,18 +598,6 @@ const CommandCenter = ({
             >
               <RefreshCw size={12} />
             </button>
-          </div>
-
-          {/* Estado sistema */}
-          <div style={{
-            padding: '8px 14px', backgroundColor: t.panel,
-            border: `1px solid ${t.border}`, borderRadius: '12px',
-          }}>
-            <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Sistema</p>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: t.success, marginTop: '1px', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.success, display: 'inline-block' }}></span>
-              Operativo
-            </p>
           </div>
         </div>
       </div>
@@ -750,61 +741,112 @@ const CommandCenter = ({
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          FILA 2: TIMELINE DE COBROS
+          FILA 2: COBROS — TIMELINE MEJORADO
           ══════════════════════════════════════════════════════ */}
       <section style={{ marginBottom: '24px' }}>
         <div style={{
-          padding: '20px', backgroundColor: t.panel,
-          border: `1px solid ${t.border}`, borderRadius: '14px',
+          padding: '24px', backgroundColor: t.panel,
+          border: `1px solid ${t.border}`, borderRadius: '16px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <CalendarDays size={18} color={t.warning} />
-              <h3 style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0 }}>
-                Cobros de {periodosDisponibles.find(p => p.key === periodoMes)?.label || periodoMes}
-              </h3>
+          {/* Header con fecha destacada */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            marginBottom: '20px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{
+                width: '42px', height: '42px', borderRadius: '12px',
+                backgroundColor: `${t.warning}20`, color: t.warning,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <CalendarDays size={20} />
+              </div>
+              <div>
+                <h3 style={{ fontSize: '14px', fontWeight: 700, color: t.text, margin: 0 }}>
+                  Cobros — {periodosDisponibles.find(p => p.key === periodoMes)?.label || periodoMes}
+                </h3>
+                <p style={{
+                  fontSize: '10px', color: t.textDim, margin: '2px 0 0',
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                }}>
+                  <span style={{
+                    display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%',
+                    backgroundColor: cobrosDelPeriodo.length > 0 ? t.warning : t.success,
+                  }} />
+                  {cobrosDelPeriodo.length} deudores · {categorias.totales.totalPendiente.toLocaleString()} {settings?.loanDefaultCurrency || 'BOB'} pendientes
+                </p>
+              </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '10px', color: t.textDim, fontWeight: 600 }}>
-                {cobrosDelPeriodo.length} deudores · {categorias.totales.totalPendiente.toLocaleString()} BS
-              </span>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              {['AL_DIA', 'PENDIENTE', 'DEUDOR_1MES', 'DEUDOR_CRITICO'].map(cat => {
+                const count = cobrosDelPeriodo.filter(p => p.categoria === cat).length;
+                if (count === 0) return null;
+                return (
+                  <div key={cat} onClick={() => setFiltroCategoria(filtroCategoria === cat ? null : cat)}
+                    style={{
+                      padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '9px', fontWeight: 600,
+                      backgroundColor: filtroCategoria === cat ? (cat === 'DEUDOR_CRITICO' ? '#ef444420' : `${t.accent}20`) : t.input,
+                      color: filtroCategoria === cat ? (cat === 'DEUDOR_CRITICO' ? '#ef4444' : t.accent) : t.textDim,
+                      border: `1px solid ${filtroCategoria === cat ? (cat === 'DEUDOR_CRITICO' ? '#ef444440' : `${t.accent}40`) : 'transparent'}`,
+                      display: 'flex', alignItems: 'center', gap: '4px',
+                    }}>
+                    <span style={{
+                      width: '5px', height: '5px', borderRadius: '50%',
+                      backgroundColor: cat === 'AL_DIA' ? '#22c55e' : cat === 'PENDIENTE' ? '#eab308' : cat === 'DEUDOR_1MES' ? '#f97316' : '#ef4444',
+                    }} />
+                    {count}
+                  </div>
+                );
+              })}
+              {filtroCategoria && (
+                <div onClick={() => setFiltroCategoria(null)}
+                  style={{
+                    padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '9px',
+                    color: t.textDim, border: `1px solid ${t.border}`,
+                  }}>
+                  ✕
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Tabla de cobros */}
+          {/* Tabla de cobros con diseño mejorado */}
           {cobrosFiltrados.length > 0 ? (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '600px' }}>
+            <div style={{ overflowX: 'auto', borderRadius: '12px', border: `1px solid ${t.borderLight || t.border}` }}>
+              <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '650px' }}>
                 <thead>
-                  <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                  <tr style={{
+                    backgroundColor: t.input,
+                    borderBottom: `1px solid ${t.border}`,
+                  }}>
                     <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Prestamista</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Categoría</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Meses Deuda</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Diálogo Riesgo</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Capital Orig.</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés/Mes</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Acción</th>
+                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Estado</th>
+                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Deuda</th>
+                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Capital</th>
+                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés</th>
+                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Cobrar</th>
                   </tr>
                 </thead>
                 <tbody>
                   {cobrosFiltrados.map(p => {
                     const badgeColor = p.dialog?.color || t.textDim;
+                    const isCritico = p.categoria === 'DEUDOR_CRITICO';
                     return (
                       <tr key={p.id} style={{
-                        borderBottom: `1px solid ${t.border}`,
-                        transition: 'background 0.2s',
-                        backgroundColor: p.categoria === 'DEUDOR_CRITICO' ? `${t.danger}08` : 'transparent',
+                        borderBottom: `1px solid ${t.borderLight || t.border}`,
+                        transition: 'background 0.15s',
+                        backgroundColor: isCritico ? `${t.danger}06` : 'transparent',
                       }}
                         onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = p.categoria === 'DEUDOR_CRITICO' ? `${t.danger}08` : 'transparent'}
+                        onMouseLeave={e => e.currentTarget.style.backgroundColor = isCritico ? `${t.danger}06` : 'transparent'}
                       >
                         <td style={{ padding: '12px 14px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <div style={{
-                              width: '30px', height: '30px', borderRadius: '10px',
+                              width: '32px', height: '32px', borderRadius: '10px',
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: '10px', fontWeight: 700,
-                              backgroundColor: `${badgeColor}20`, color: badgeColor,
+                              fontSize: '11px', fontWeight: 700,
+                              backgroundColor: `${badgeColor}18`, color: badgeColor,
                             }}>
                               {p.nombre?.charAt(0) || '?'}
                             </div>
@@ -812,7 +854,7 @@ const CommandCenter = ({
                               <p style={{ fontSize: '12px', fontWeight: 600, color: t.text, margin: 0 }}>
                                 {p.nombre || 'Sin nombre'}
                               </p>
-                              <p style={{ fontSize: '9px', color: t.textDim, margin: '2px 0 0 0' }}>
+                              <p style={{ fontSize: '9px', color: t.textDim, margin: '2px 0 0' }}>
                                 {p.moneda || 'Bs'} · {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toFixed(0)} Bs/mes
                               </p>
                             </div>
@@ -820,33 +862,75 @@ const CommandCenter = ({
                         </td>
                         <td style={{ padding: '12px 14px' }}>
                           <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            display: 'inline-flex', alignItems: 'center', gap: '5px',
                             padding: '4px 10px', borderRadius: '8px',
                             backgroundColor: `${badgeColor}15`, color: badgeColor,
                             fontSize: '10px', fontWeight: 600,
                           }}>
                             {(() => {
                               const IconComp = DIALOG_ICONS[p.dialog?.icono] || CheckCircle;
-                              return <IconComp size={12} color={badgeColor} style={{ marginRight: '2px' }} />;
+                              return <IconComp size={11} />;
                             })()}
                             {p.categoria === 'AL_DIA' ? 'Al Día' :
                               p.categoria === 'PENDIENTE' ? 'Pendiente' :
-                              p.categoria === 'DEUDOR_1MES' ? 'Deudor 1M' : 'Crítico'}
+                              p.categoria === 'DEUDOR_1MES' ? 'Vencido' : 'Crítico'}
                           </span>
                         </td>
                         <td style={{ padding: '12px 14px' }}>
                           <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>
-                            {p.mesesAtraso > 0 ? `${p.mesesAtraso} mes${p.mesesAtraso > 1 ? 'es' : ''}` : '0'}
+                            {p.mesesAtraso > 0 ? `${p.mesesAtraso} mes${p.mesesAtraso > 1 ? 'es' : ''}` : 'Al corriente'}
                           </p>
-                          {p.mesesAdeudados?.length > 0 && (
-                            <p style={{ fontSize: '8px', color: t.textDim, margin: '2px 0 0 0' }}>
-                              {p.mesesAdeudados.join(', ')}
-                            </p>
+                          {p.mesesAtraso > 3 && (
+                            <div style={{
+                              marginTop: '4px', padding: '2px 8px', borderRadius: '4px',
+                              backgroundColor: `${t.danger}15`, color: t.danger,
+                              fontSize: '8px', fontWeight: 600, display: 'inline-block',
+                            }}>
+                              ⚠ Riesgo alto
+                            </div>
                           )}
                         </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          <div style={{
-                            padding: '8px 12px', borderRadius: '10px',
+                        <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                          <p style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0, fontFamily: 'monospace' }}>
+                            {(parseFloat(p.capital) || 0).toLocaleString()}
+                          </p>
+                        </td>
+                        <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                          <p style={{ fontSize: '11px', fontWeight: 600, color: '#22c55e', margin: 0, fontFamily: 'monospace' }}>
+                            +{(parseFloat(p.capital) * (parseFloat(p.interes) / 100) || 0).toLocaleString()}
+                          </p>
+                        </td>
+                        <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                          <button onClick={() => abrirModalPago(p)}
+                            style={{
+                              padding: '6px 14px', borderRadius: '8px', border: 'none',
+                              backgroundColor: isCritico ? '#ef4444' : t.accent,
+                              color: 'white', fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+                              transition: 'all 0.15s',
+                            }}
+                            onMouseEnter={e => e.target.style.opacity = '0.8'}
+                            onMouseLeave={e => e.target.style.opacity = '1'}>
+                            Cobrar
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div style={{
+              textAlign: 'center', padding: '40px 20px',
+              color: t.textDim, fontSize: '11px',
+            }}>
+              <CalendarDays size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
+              <p style={{ margin: 0, fontWeight: 500 }}>No hay cobros para este período</p>
+              <p style={{ margin: '4px 0 0', fontSize: '9px' }}>Selecciona otro mes o agrega nuevos préstamos</p>
+            </div>
+          )}
+        </div>
+      </section>
                             backgroundColor: `${badgeColor}10`,
                             border: `1px solid ${badgeColor}20`,
                             maxWidth: '200px',
