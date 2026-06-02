@@ -9,6 +9,7 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 import FormularioPrestamo from '../components/FormularioPrestamo';
+import ErrorBoundary from '../components/ErrorBoundary';
 import { useAmortizacion, useAmortizacionGlobal, generarCronograma, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
 
@@ -181,12 +182,14 @@ const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
           maxWidth: '820px', width: '100%',
           animation: 'scaleIn 0.2s ease-out',
         }}>
-          <FormularioPrestamo
-            isDark={isDark}
-            onClose={onClose}
-            onSave={onSave}
-            initialData={prestamo}
-          />
+          <ErrorBoundary>
+            <FormularioPrestamo
+              isDark={isDark}
+              onClose={onClose}
+              onSave={onSave}
+              initialData={prestamo}
+            />
+          </ErrorBoundary>
         </div>
       </div>
     </div>
