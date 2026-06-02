@@ -105,10 +105,17 @@ function loadSettings() {
   }
 }
 
+function notifySettingsChanged() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('settings-changed'));
+  }
+}
+
 function saveSettings(settings) {
   cachedSettings = settings;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    notifySettingsChanged();
   } catch (e) {
     console.warn('Error saving settings:', e);
   }

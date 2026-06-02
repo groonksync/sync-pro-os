@@ -1097,23 +1097,23 @@ export default function Ajustes({ isDark, settings: propSettings, onUpdateSettin
   // ─── RENDER PRINCIPAL ───────────────────────────────────
   return (
     <div style={{
-      maxWidth: '1100px', margin: '0 auto', padding: '24px 20px',
+      width: '100%', padding: '32px',
       color: '#d4d4d4',
     }}>
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#d4d4d4', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#d4d4d4', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
           Panel de Control
         </h2>
         <p style={{ fontSize: '11px', color: '#707070', margin: 0 }}>
-          Personaliza cada aspecto de la aplicación
+          Personaliza cada aspecto de la aplicación — los cambios se guardan automáticamente
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: '24px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
         {/* Sidebar de navegación */}
         <div style={{
-          width: '220px', flexShrink: 0, position: 'sticky', top: '24px',
+          width: '240px', flexShrink: 0, position: 'sticky', top: '32px',
           display: 'flex', flexDirection: 'column', gap: '2px',
         }}>
           {SECCIONES.map(sec => {
