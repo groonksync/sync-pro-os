@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { getTheme } from '../lib/theme';
 
-const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isCollapsed, setIsCollapsed, isDark, setIsDark }) => {
+const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isCollapsed, setIsCollapsed, isDark, setIsDark, sidebarBg }) => {
   const t = useMemo(() => getTheme(isDark), [isDark]);
   const [hoveredItem, setHoveredItem] = useState(null);
 
@@ -108,7 +108,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
   return (
     <div 
       className={`${isCollapsed ? 'w-20' : 'w-64'} flex flex-col h-full py-6 px-3 transition-all duration-500 ease-in-out overflow-visible relative group/sidebar border-r`}
-      style={{ backgroundColor: t.bg, borderColor: t.border }}
+      style={{ backgroundColor: sidebarBg || t.bg, borderColor: t.border, transition: 'background-color 0.3s' }}
     >
       {/* Collapse button */}
       <button 

@@ -616,7 +616,7 @@ const CommandCenter = ({
           ══════════════════════════════════════════════════════ */}
       <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'}`} style={{ marginBottom: '20px' }}>
         
-        {/* KPI 1: Capital */}
+        {/* KPI 1: Capital / Ingresos */}
         <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.accent}15` }}>

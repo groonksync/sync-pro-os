@@ -542,6 +542,16 @@ export default function FlujoTrabajo({ settings, isDark }) {
     }
   }, [activeDoc]);
 
+  useEffect(() => {
+    if (activeDoc?.metadata) {
+      setOrientation(activeDoc.metadata.orientation || 'vertical');
+      setMargins(activeDoc.metadata.margins || 'normal');
+      setPageColor(activeDoc.metadata.pageColor || 'dark');
+      if (activeDoc.metadata.fontFamily) setFontFamily(activeDoc.metadata.fontFamily);
+      if (activeDoc.metadata.fontSize) setFontSize(activeDoc.metadata.fontSize);
+    }
+  }, [activeDoc?.id]);
+
   // Pomodoro Timer Effect
   useEffect(() => {
     if (focusActive) {
@@ -780,10 +790,12 @@ export default function FlujoTrabajo({ settings, isDark }) {
     if (!activeDoc || viewingVersion) return;
     const updatedContent = getJoinedHTML();
     
+    const metadata = { orientation, margins, pageColor, fontFamily, fontSize };
     const updatedDoc = {
       ...activeDoc,
       contenido: updatedContent,
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      metadata
     };
 
     pushToUndo(activeDoc.contenido);
@@ -792,7 +804,7 @@ export default function FlujoTrabajo({ settings, isDark }) {
     const local = JSON.parse(localStorage.getItem('ft_documents') || '[]');
     const index = local.findIndex(d => d.id === activeDoc.id);
     if (index !== -1) {
-      local[index] = { ...local[index], contenido: updatedContent, updated_at: updatedDoc.updated_at };
+      local[index] = { ...local[index], contenido: updatedContent, updated_at: updatedDoc.updated_at, metadata };
     } else {
       local.unshift(updatedDoc);
     }
@@ -812,6 +824,9 @@ export default function FlujoTrabajo({ settings, isDark }) {
       console.warn("Error saving document content to Supabase, running in local fallback:", e);
       setIsFallbackMode(true);
     }
+
+    showAlert('✅ Documento guardado con éxito');
+    setActiveDoc(null);
   };
 
   const deleteDocument = async (docId) => {

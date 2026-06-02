@@ -306,15 +306,8 @@ const App = () => {
 
   // EFECTO DE TEMA GLOBAL
   useEffect(() => {
-    const theme = getTheme(isDarkMode);
+    const theme = getTheme(isDarkMode, { appearanceMode: appSettings.appBackground, accentColor: appSettings.accentColor });
     if (isDarkMode) {
-      if (appSettings.appBackground === 'black') {
-        theme.bg = '#000000';
-      } else if (appSettings.appBackground === 'lightGray') {
-        theme.bg = '#222222';
-      } else {
-        theme.bg = '#141414';
-      }
       document.documentElement.classList.remove('light-mode');
       document.documentElement.classList.add('dark-mode');
     } else {
@@ -322,43 +315,36 @@ const App = () => {
       document.documentElement.classList.add('light-mode');
     }
     document.body.style.backgroundColor = theme.bg;
-  }, [isDarkMode, appSettings.appBackground]);
+  }, [isDarkMode, appSettings.appBackground, appSettings.accentColor]);
 
   const globalTheme = useMemo(() => {
-    const t = getTheme(isDarkMode);
-    if (isDarkMode) {
-      if (appSettings.appBackground === 'black') {
-        t.bg = '#000000';
-        t.panel = '#0a0a0a';
-        t.surface = '#0a0a0a';
-        t.input = '#000000';
-      } else if (appSettings.appBackground === 'lightGray') {
-        t.bg = '#222222';
-        t.panel = '#2c2c2c';
-        t.surface = '#2c2c2c';
-        t.input = '#222222';
-      }
-    }
-    return t;
-  }, [isDarkMode, appSettings.appBackground]);
+    return getTheme(isDarkMode, { appearanceMode: appSettings.appBackground, accentColor: appSettings.accentColor });
+  }, [isDarkMode, appSettings.appBackground, appSettings.accentColor]);
 
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
       <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
         style={{ backgroundColor: globalTheme.bg, color: globalTheme.text }}>
         
-        {/* Background Wallpaper with extreme blur and brightness adjustment */}
+        {/* Background Wallpaper with extreme blur */}
         {appSettings.backgroundImage && (
-          <div 
-            className="absolute inset-0 z-0 pointer-events-none transition-all duration-1000"
-            style={{
-              backgroundImage: `url(${appSettings.backgroundImage})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              filter: 'blur(60px) brightness(0.35)',
-              transform: 'scale(1.1)'
-            }}
-          />
+          <>
+            <div 
+              className="absolute inset-0 z-0 pointer-events-none transition-all duration-1000"
+              style={{
+                backgroundImage: `url(${appSettings.backgroundImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                filter: `blur(60px) brightness(0.7) saturate(1.3)`,
+                transform: 'scale(1.1)'
+              }}
+            />
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+              backgroundColor: globalTheme.bg,
+              opacity: 0.25,
+            }} />
+          </>
         )}
         <Sidebar 
           activeTab={activeTab} 
@@ -369,6 +355,12 @@ const App = () => {
           setIsCollapsed={setIsSidebarCollapsed}
           isDark={isDarkMode}
           setIsDark={setIsDarkMode}
+          sidebarBg={(() => {
+            if (appSettings.sidebarColor === 'same' || !appSettings.sidebarColor) return globalTheme.bg;
+            if (appSettings.sidebarColor === 'black') return '#000000';
+            if (appSettings.sidebarColor === 'lightGray') return '#2a2a2a';
+            return '#141414';
+          })()}
           counts={{ 
             meetings: Array.isArray(meetingsList) ? meetingsList.length : 0, 
             prestamos: Array.isArray(data?.prestamos) ? data.prestamos.length : 0,
