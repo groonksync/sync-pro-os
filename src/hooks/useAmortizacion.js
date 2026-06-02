@@ -1,17 +1,28 @@
 import { useMemo } from 'react';
 
 // ─── CONSTANTES ───────────────────────────────────────────────
-const TASA_MORA_DIARIA = 0.05; // 5% del interés mensual por día de atraso
-const DIAS_GRACIA = 0; // Días de gracia antes de aplicar mora
+const TASA_MORA_DIARIA = 0.05;
+const DIAS_GRACIA = 0;
 
 // ─── UTILIDADES ───────────────────────────────────────────────
+function toDate(str) {
+  const [y, m, d] = str.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 function getFechaVencimiento(inicio, mesIndex) {
-  const d = new Date(inicio);
-  // Usar el día exacto del inicio del contrato como día de pago
-  const diaPago = Math.min(d.getDate(), 28);
-  // Primer pago: mes siguiente al inicio, usando el día original del contrato
-  const venc = new Date(d.getFullYear(), d.getMonth() + 1 + mesIndex, diaPago);
-  return venc.toISOString().split('T')[0];
+  const d = toDate(inicio);
+  const diaPago = d.getDate();
+  // Primer pago: mes siguiente al inicio
+  const venc = new Date(d.getFullYear(), d.getMonth() + 1 + mesIndex, 1);
+  const ultimoDiaMes = new Date(venc.getFullYear(), venc.getMonth() + 1, 0).getDate();
+  const diaSeguro = Math.min(diaPago, ultimoDiaMes);
+  venc.setDate(diaSeguro);
+  return formatDate(venc);
 }
 
 function diasEntre(fecha1, fecha2) {
@@ -91,8 +102,95 @@ function generarCronograma(prestamo) {
   return cuotas;
 }
 
+// ─── GENERAR CRONOGRAMA DIARIO ──────────────────────────────────
+function generarCronogramaDiario(prestamo) {
+  if (!prestamo?.id) return [];
+  const { inicio, capital, interes, pagos, plazo_meses, tipo_pago } = prestamo;
+  const tasaInteres = parseFloat(interes) || 0;
+  const capitalNum = parseFloat(capital) || 0;
+  const meses = parseInt(plazo_meses) || 1;
+  const totalDias = meses * 30;
+  const interesTotal = Math.round(capitalNum * (tasaInteres / 100) * meses * 100) / 100;
+  const capitalDiario = capitalNum / totalDias;
+  const interesDiario = interesTotal / totalDias;
+  const cuotaDiaria = capitalDiario + interesDiario;
+  const pagosArr = Array.isArray(pagos) ? pagos : [];
+  const startDate = toDate(inicio);
+  const hoy = new Date();
+  const cuotas = [];
+
+  let capitalAcumulado = 0;
+
+  for (let dia = 0; dia < totalDias; dia++) {
+    const fechaActual = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + dia);
+    const key = formatDate(fechaActual);
+    capitalAcumulado += capitalDiario;
+
+    let estado = 'pendiente';
+    const isPagado = pagosArr.includes(key);
+    if (isPagado) {
+      estado = 'pagado';
+    } else if (fechaActual < hoy) {
+      estado = 'vencido';
+    } else {
+      const futuroLimite = new Date(hoy.getFullYear(), hoy.getMonth() + 2, 1);
+      if (fechaActual >= futuroLimite) estado = 'futuro';
+    }
+
+    cuotas.push({
+      key,
+      label: `${fechaActual.getDate()} ${fechaActual.toLocaleString('es', { month: 'short' })}`,
+      fechaVencimiento: formatDate(fechaActual),
+      interes: Math.round(interesDiario * 100) / 100,
+      capital: Math.round(capitalDiario * 100) / 100,
+      total: Math.round(cuotaDiaria * 100) / 100,
+      pagado: isPagado,
+      mora: 0,
+      diasAtraso: 0,
+      estado,
+      diaActual: dia + 1,
+      totalDias,
+      capitalAmortizado: Math.round(Math.min(capitalAcumulado, capitalNum) * 100) / 100,
+      capitalRestante: Math.round(Math.max(capitalNum - capitalAcumulado, 0) * 100) / 100,
+      timestamp: fechaActual.toISOString(),
+    });
+  }
+
+  return cuotas;
+}
+
 // ─── CALCULAR RESUMEN ──────────────────────────────────────────
 function calcularResumen(cuotas) {
+  return _calcularResumen(cuotas);
+}
+
+function calcularResumenDiario(cuotas) {
+  if (!cuotas?.length) return null;
+  const pagadas = cuotas.filter(c => c.estado === 'pagado').length;
+  const vencidas = cuotas.filter(c => c.estado === 'vencido').length;
+  const pendientes = cuotas.filter(c => c.estado === 'pendiente').length;
+  const totalPagado = cuotas.filter(c => c.estado === 'pagado').reduce((s, c) => s + c.total, 0);
+  const saldoRestante = cuotas.length > 0 ? cuotas[cuotas.length - 1].capitalRestante : 0;
+  const ultimaPagada = [...cuotas].reverse().find(c => c.estado === 'pagado');
+  const progreso = cuotas.length > 0
+    ? `${(pagadas / cuotas.length * 100).toFixed(0)}%`
+    : '0%';
+
+  return {
+    totalDias: cuotas.length,
+    diasPagados: pagadas,
+    diasVencidos: vencidas,
+    diasPendientes: pendientes,
+    totalPagado: Math.round(totalPagado * 100) / 100,
+    saldoRestante,
+    progreso,
+    ultimoDiaPagado: ultimaPagada?.key || null,
+    cuotaDiaria: cuotas[0]?.total || 0,
+    capitalRestante: saldoRestante,
+  };
+}
+
+function _calcularResumen(cuotas) {
   if (!cuotas?.length) return null;
   const totalCuotas = cuotas.length;
   const cuotasPagadas = cuotas.filter(c => c.estado === 'pagado').length;
@@ -213,12 +311,17 @@ function calcularEstadisticas(prestamos) {
 export function useAmortizacion(prestamo) {
   return useMemo(() => {
     if (!prestamo?.id) return { cuotas: [], resumen: null, proyeccion: [] };
+    if (prestamo.tipo_pago === 'diario') {
+      const cuotas = generarCronogramaDiario(prestamo);
+      const resumen = calcularResumenDiario(cuotas);
+      return { cuotas, resumen, proyeccion: [] };
+    }
     const cuotas = generarCronograma(prestamo);
     const resumen = calcularResumen(cuotas);
     const proyeccion = proyectarSiguientes(prestamo);
     return { cuotas, resumen, proyeccion };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prestamo?.id, prestamo?.inicio, prestamo?.fin, prestamo?.capital, prestamo?.interes, prestamo?.pagos]);
+  }, [prestamo?.id, prestamo?.inicio, prestamo?.fin, prestamo?.capital, prestamo?.interes, prestamo?.pagos, prestamo?.tipo_pago, prestamo?.plazo_meses]);
 }
 
 export function useAmortizacionGlobal(prestamos) {
@@ -237,4 +340,4 @@ export function useAmortizacionGlobal(prestamos) {
   }, [prestamos]);
 }
 
-export { generarCronograma, calcularResumen, proyectarSiguientes, calcularEstadisticas };
+export { generarCronograma, generarCronogramaDiario, calcularResumen, calcularResumenDiario, proyectarSiguientes, calcularEstadisticas };

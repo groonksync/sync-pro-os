@@ -117,6 +117,9 @@ const getHandler = useCallback((field) => {
       inicio: today.toISOString().split('T')[0],
       fin: fin.toISOString().split('T')[0],
       estado: 'Activo',
+      tipo_pago: 'mensual',
+      plazo_meses: 1,
+      cuenta_bancaria: '',
       // Paso 3: Garantía
       tipoGarantia: '',
       garantia: '',
@@ -248,6 +251,9 @@ const getHandler = useCallback((field) => {
         inicio: form.inicio || '',
         fin: form.fin || '',
         estado: form.estado || 'Activo',
+        tipo_pago: form.tipo_pago || 'mensual',
+        plazo_meses: parseInt(form.plazo_meses) || 1,
+        cuenta_bancaria: form.cuenta_bancaria?.trim() || '',
         tipoGarantia: form.tipoGarantia || '',
         garantia: form.garantia?.trim() || '',
         drive_contrato: form.drive_contrato?.trim() || '',
@@ -412,14 +418,136 @@ const getHandler = useCallback((field) => {
 
   // ─── RENDER: PASO 2 - FINANCIEROS ────────────────────────
   const renderPasoFinanciero = () => {
+    const isDiario = form.tipo_pago === 'diario';
+
+    const capitalNum = parseFloat(form.capital) || 0;
+    const tasaInteres = parseFloat(form.interes) || 0;
+    const meses = parseInt(form.plazo_meses) || 1;
+    const totalDias = meses * 30;
+    const interesTotal = capitalNum * (tasaInteres / 100) * meses;
+    const capitalDiario = totalDias > 0 ? capitalNum / totalDias : 0;
+    const interesDiario = totalDias > 0 ? interesTotal / totalDias : 0;
+    const cuotaDiaria = capitalDiario + interesDiario;
+    const interesMensual = capitalNum * (tasaInteres / 100);
+
+    const renderResumenDiario = () => (
+      <div style={{
+        padding: '16px', borderRadius: '12px',
+        backgroundColor: `${t.accent}08`, border: `1px solid ${t.accent}20`,
+      }}>
+        <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, margin: '0 0 10px' }}>
+          <BadgePercent size={10} style={{ display: 'inline', marginRight: '4px' }} />
+          Resumen — Pago Diario con Amortización
+        </p>
+
+        <div style={{ display: 'grid', gap: '6px', marginBottom: '12px' }}>
+          {Array.from({ length: meses }, (_, i) => {
+            const mes = i + 1;
+            const pagoMes = cuotaDiaria * 30;
+            return (
+              <div key={mes} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: t.text }}>
+                <span style={{ color: t.textDim }}>Mes {mes} ({30} días):</span>
+                <span style={{ fontWeight: 600 }}>{pagoMes.toFixed(2)} {form.moneda}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div style={{
+          padding: '10px 0', borderTop: `1px solid ${t.accent}20`,
+          display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: t.accent,
+        }}>
+          <span>Total {totalDias} días:</span>
+          <span>{(cuotaDiaria * totalDias).toFixed(2)} {form.moneda}</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '12px' }}>
+          <div style={{ textAlign: 'center', padding: '8px', borderRadius: '8px', backgroundColor: `${t.accent}10` }}>
+            <p style={{ fontSize: '8px', color: t.textDim, margin: '0 0 2px' }}>CUOTA DIARIA</p>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: t.accent, margin: 0 }}>
+              {cuotaDiaria.toFixed(2)} {form.moneda}
+            </p>
+          </div>
+          <div style={{ textAlign: 'center', padding: '8px', borderRadius: '8px', backgroundColor: `${t.accent}10` }}>
+            <p style={{ fontSize: '8px', color: t.textDim, margin: '0 0 2px' }}>CAPITAL/DÍA</p>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0 }}>
+              {capitalDiario.toFixed(2)}
+            </p>
+          </div>
+          <div style={{ textAlign: 'center', padding: '8px', borderRadius: '8px', backgroundColor: `${t.accent}10` }}>
+            <p style={{ fontSize: '8px', color: t.textDim, margin: '0 0 2px' }}>INTERÉS/DÍA</p>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: '#10b981', margin: 0 }}>
+              {interesDiario.toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        <p style={{ fontSize: '9px', color: t.textDim, margin: '10px 0 0', textAlign: 'center' }}>
+          Primer cobro: {new Date(form.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'long' })} + 1 día
+        </p>
+      </div>
+    );
+
+    const renderResumenMensual = () => (
+      <div style={{
+        padding: '16px', borderRadius: '12px',
+        backgroundColor: `${t.accent}08`, border: `1px solid ${t.accent}20`,
+      }}>
+        <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, margin: '0 0 8px' }}>Resumen del Préstamo</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ fontSize: '10px', color: t.textDim, margin: '0 0 2px' }}>Interés mensual calculado:</p>
+            <p style={{ fontSize: '16px', fontWeight: 700, color: t.accent, margin: 0 }}>
+              {interesMensual.toLocaleString()} {form.moneda}
+            </p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: '10px', color: t.textDim, margin: '0 0 2px' }}>Primer cobro:</p>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+              {(() => {
+                const d = new Date(form.inicio);
+                const mes = new Date(d.getFullYear(), d.getMonth() + 1, Math.min(d.getDate(), new Date(d.getFullYear(), d.getMonth() + 2, 0).getDate()));
+                return mes.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+              })()}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+
     return (
       <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>Términos Financieros</h3>
-          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Define el capital, interés y plazo del préstamo</p>
+          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Define el capital, interés y modalidad del préstamo</p>
         </div>
 
-        {/* Capital y Moneda lado a lado */}
+        {/* Modalidad de Pago */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+            <CreditCard size={10} style={{ display: 'inline', marginRight: '4px' }} /> Modalidad de Pago
+          </label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {[
+              { value: 'mensual', label: 'Mensual (Interés)', desc: 'Pago único mensual de interés' },
+              { value: 'diario', label: 'Diario (Amortización)', desc: 'Cuota diaria con amortización de capital' },
+            ].map(opt => (
+              <div key={opt.value} onClick={() => getHandler('tipo_pago')(opt.value)}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: '10px', cursor: 'pointer',
+                  backgroundColor: form.tipo_pago === opt.value ? `${t.accent}15` : t.input,
+                  border: `1.5px solid ${form.tipo_pago === opt.value ? t.accent : t.border}`,
+                  transition: 'all 0.2s',
+                }}>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: form.tipo_pago === opt.value ? t.accent : t.text, margin: '0 0 2px' }}>
+                  {opt.label}
+                </p>
+                <p style={{ fontSize: '9px', color: t.textDim, margin: 0 }}>{opt.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '22px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.capital ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
@@ -449,7 +577,6 @@ const getHandler = useCallback((field) => {
           </div>
         </div>
 
-        {/* Interés y Estado */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.interes ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
@@ -479,56 +606,63 @@ const getHandler = useCallback((field) => {
           </div>
         </div>
 
-        {/* Fechas */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', marginBottom: '20px' }}>
-          <div>
-            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.inicio ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
-              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Inicio
+        {isDiario ? (
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Plazo en meses
             </label>
-            <input type="date" value={form.inicio} onChange={e => getHandler('inicio')(e.target.value)}
+            <select value={form.plazo_meses} onChange={e => getHandler('plazo_meses')(e.target.value)}
               style={{
-                width: '100%', padding: '10px 12px', fontSize: '12px',
-                backgroundColor: t.input, border: `1px solid ${errors.inicio ? t.danger : t.border}`,
-                color: t.text, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
-              }} />
-            {errors.inicio && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.inicio}</p>}
+                width: '100%', padding: '12px', fontSize: '13px', fontWeight: 600,
+                backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+                borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
+              }}>
+              {[1,2,3,4,5,6,9,12].map(m => <option key={m} value={m}>{m} mes{m !== 1 ? 'es' : ''} ({m * 30} días)</option>)}
+            </select>
           </div>
-          <div>
-            <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.fin ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
-              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Vencimiento
-            </label>
-            <input type="date" value={form.fin} onChange={e => getHandler('fin')(e.target.value)}
-              style={{
-                width: '100%', padding: '10px 12px', fontSize: '12px',
-                backgroundColor: t.input, border: `1px solid ${errors.fin ? t.danger : t.border}`,
-                color: t.text, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
-              }} />
-            {errors.fin && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.fin}</p>}
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', marginBottom: '20px' }}>
+            <div>
+              <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.inicio ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
+                <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Inicio
+              </label>
+              <input type="date" value={form.inicio} onChange={e => getHandler('inicio')(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 12px', fontSize: '12px',
+                  backgroundColor: t.input, border: `1px solid ${errors.inicio ? t.danger : t.border}`,
+                  color: t.text, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
+                }} />
+              {errors.inicio && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.inicio}</p>}
+            </div>
+            <div>
+              <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.fin ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
+                <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Vencimiento
+              </label>
+              <input type="date" value={form.fin} onChange={e => getHandler('fin')(e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 12px', fontSize: '12px',
+                  backgroundColor: t.input, border: `1px solid ${errors.fin ? t.danger : t.border}`,
+                  color: t.text, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
+                }} />
+              {errors.fin && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.fin}</p>}
+            </div>
           </div>
+        )}
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+            <Building2 size={10} style={{ display: 'inline', marginRight: '4px' }} /> Cuenta Bancaria (para QR/transferencias)
+          </label>
+          <input type="text" value={form.cuenta_bancaria} onChange={e => getHandler('cuenta_bancaria')(e.target.value)}
+            style={{
+              width: '100%', padding: '10px 12px', fontSize: '12px',
+              backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
+              borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
+            }}
+            placeholder="Ej: BCP: 123-456789-0-00 - Carlos Joel" />
         </div>
 
-        {/* Resumen en vivo */}
-        <div style={{
-          padding: '16px', borderRadius: '12px',
-          backgroundColor: `${t.accent}08`, border: `1px solid ${t.accent}20`,
-        }}>
-          <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, margin: '0 0 8px' }}>Resumen del Préstamo</p>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <p style={{ fontSize: '10px', color: t.textDim, margin: '0 0 2px' }}>Interés mensual calculado:</p>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: t.accent, margin: 0 }}>
-                {(parseFloat(form.capital) * (parseFloat(form.interes) / 100) || 0).toLocaleString()} {form.moneda}
-              </p>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: '10px', color: t.textDim, margin: '0 0 2px' }}>Pago único mensual</p>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                {(parseFloat(form.capital) / 6 + parseFloat(form.capital) * (parseFloat(form.interes) / 100) || 0).toLocaleString()} {form.moneda}
-                <span style={{ fontSize: '9px', color: t.textDim }}> /mes</span>
-              </p>
-            </div>
-          </div>
-        </div>
+        {isDiario ? renderResumenDiario() : renderResumenMensual()}
       </div>
     );
   };

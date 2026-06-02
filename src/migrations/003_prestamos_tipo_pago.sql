@@ -1,0 +1,3 @@
+ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS tipo_pago TEXT DEFAULT 'mensual';
+ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS plazo_meses INTEGER;
+ALTER TABLE prestamos ADD COLUMN IF NOT EXISTS cuenta_bancaria TEXT DEFAULT '';
