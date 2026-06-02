@@ -321,7 +321,10 @@ const App = () => {
 
   // EFECTO DE TEMA GLOBAL
   useEffect(() => {
-    const theme = getTheme(isDarkMode, { appearanceMode: appSettings.appBackground, accentColor: appSettings.accentColor });
+    const theme = getTheme(isDarkMode, { 
+      appearanceMode: appSettings.appearanceMode || appSettings.appBackground || 'darkGray', 
+      accentColor: appSettings.accentColor 
+    });
     if (isDarkMode) {
       document.documentElement.classList.remove('light-mode');
       document.documentElement.classList.add('dark-mode');
@@ -330,11 +333,14 @@ const App = () => {
       document.documentElement.classList.add('light-mode');
     }
     document.body.style.backgroundColor = theme.bg;
-  }, [isDarkMode, appSettings.appBackground, appSettings.accentColor]);
+  }, [isDarkMode, appSettings.appearanceMode, appSettings.appBackground, appSettings.accentColor]);
 
   const globalTheme = useMemo(() => {
-    return getTheme(isDarkMode, { appearanceMode: appSettings.appBackground, accentColor: appSettings.accentColor });
-  }, [isDarkMode, appSettings.appBackground, appSettings.accentColor]);
+    return getTheme(isDarkMode, { 
+      appearanceMode: appSettings.appearanceMode || appSettings.appBackground || 'darkGray', 
+      accentColor: appSettings.accentColor 
+    });
+  }, [isDarkMode, appSettings.appearanceMode, appSettings.appBackground, appSettings.accentColor]);
 
   return (
     <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
