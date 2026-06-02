@@ -8,6 +8,48 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 
+// ─── COMPONENTE CAMPO REUTILIZABLE (FUERA del componente padre para evitar remontaje en cada render) ──
+const Campo = ({ t, label, icon: Icon, value, onChange, hasError, error, placeholder, type = 'text', required, textarea, noLabel }) => {
+  return (
+    <div>
+      {!noLabel && (
+        <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: hasError ? (t.danger || '#ef4444') : t.textMuted, display: 'block', marginBottom: '5px' }}>
+          {Icon && <Icon size={10} style={{ display: 'inline', marginRight: '4px' }} />}
+          {label} {required && <span style={{ color: t.danger || '#ef4444' }}>*</span>}
+        </label>
+      )}
+      {textarea ? (
+        <textarea value={value} onChange={e => onChange(e.target.value)}
+          style={{
+            width: '100%', padding: '10px 12px', fontSize: '12px', lineHeight: 1.5,
+            backgroundColor: t.input, border: `1px solid ${hasError ? (t.danger || '#ef4444') : t.border}`,
+            color: t.text, borderRadius: '10px', outline: 'none', resize: 'vertical',
+            minHeight: '70px', transition: 'border 0.2s',
+          }}
+          onFocus={e => { if (!hasError) e.target.style.borderColor = t.accent; }}
+          onBlur={e => { if (!hasError) e.target.style.borderColor = t.border; }}
+          placeholder={placeholder} />
+      ) : (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '0 12px', backgroundColor: t.input,
+          border: `1px solid ${hasError ? (t.danger || '#ef4444') : t.border}`,
+          borderRadius: '10px', transition: 'border 0.2s',
+        }}>
+          <input type={type} value={value} onChange={e => onChange(e.target.value)}
+            style={{
+              flex: 1, padding: '10px 0', fontSize: '12px', fontWeight: 500,
+              background: 'transparent', border: 'none', outline: 'none',
+              color: t.text, width: '100%',
+            }}
+            placeholder={placeholder} />
+        </div>
+      )}
+      {hasError && error && <p style={{ fontSize: '9px', color: t.danger || '#ef4444', margin: '3px 0 0', fontWeight: 500 }}>{error}</p>}
+    </div>
+  );
+};
+
 // ─── CONSTANTES ───────────────────────────────────────────────
 const PASOS = [
   { id: 'datos', label: 'Datos Personales', icon: User, desc: 'Información del deudor' },
@@ -127,18 +169,9 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
     const errs = {};
     if (pasoActual === 0) {
       if (!form.nombre?.trim()) errs.nombre = 'El nombre es obligatorio';
-      if (!form.ci?.trim()) errs.ci = 'El CI es obligatorio';
-      if (!form.telefono?.trim()) errs.telefono = 'El teléfono es obligatorio';
     }
     if (pasoActual === 1) {
       if (!form.capital || parseFloat(form.capital) <= 0) errs.capital = 'Capital inválido';
-      if (!form.interes || parseFloat(form.interes) <= 0) errs.interes = 'Interés inválido';
-      if (!form.inicio) errs.inicio = 'Fecha de inicio requerida';
-      if (!form.fin) errs.fin = 'Fecha de fin requerida';
-    }
-    if (pasoActual === 2) {
-      if (!form.tipoGarantia) errs.tipoGarantia = 'Selecciona un tipo de garantía';
-      if (!form.garantia?.trim()) errs.garantia = 'Describe la garantía';
     }
     return errs;
   }, [form]);
@@ -170,24 +203,23 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
     }
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
+      setTouched(Object.keys(form).reduce((a, k) => ({ ...a, [k]: true }), {}));
     } else {
       setPaso(i);
     }
   };
 
-  // ─── SUBMIT ──────────────────────────────────────────────
+// ─── SUBMIT ──────────────────────────────────────────────
   const handleSubmit = async () => {
-    // Validar todos los pasos completos antes de enviar
+    // Validar solo campos obligatorios antes de enviar
     const errsPaso0 = validate(0);
     const errsPaso1 = validate(1);
-    const errsPaso2 = validate(2);
-    const allErrors = { ...errsPaso0, ...errsPaso1, ...errsPaso2 };
+    const allErrors = { ...errsPaso0, ...errsPaso1 };
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
       // Llevar al primer paso con error
       if (Object.keys(errsPaso0).length > 0) setPaso(0);
       else if (Object.keys(errsPaso1).length > 0) setPaso(1);
-      else if (Object.keys(errsPaso2).length > 0) setPaso(2);
       return;
     }
 
@@ -282,48 +314,7 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
     </div>
   );
 
-  // ─── RENDER: CAMPO REUTILIZABLE ──────────────────────────
-  const Campo = ({ label, icon: Icon, value, onChange, error, placeholder, type = 'text', required, textarea, noLabel }) => {
-    const hasError = error && touched[label];
-    return (
-      <div>
-        {!noLabel && (
-          <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: hasError ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
-            {Icon && <Icon size={10} style={{ display: 'inline', marginRight: '4px' }} />}
-            {label} {required && <span style={{ color: t.danger }}>*</span>}
-          </label>
-        )}
-        {textarea ? (
-          <textarea value={value} onChange={e => onChange(e.target.value)}
-            style={{
-              width: '100%', padding: '10px 12px', fontSize: '12px', lineHeight: 1.5,
-              backgroundColor: t.input, border: `1px solid ${hasError ? t.danger : t.border}`,
-              color: t.text, borderRadius: '10px', outline: 'none', resize: 'vertical',
-              minHeight: '70px', transition: 'border 0.2s',
-            }}
-            onFocus={e => { if (!hasError) e.target.style.borderColor = t.accent; }}
-            onBlur={e => { if (!hasError) e.target.style.borderColor = t.border; }}
-            placeholder={placeholder} />
-        ) : (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '8px',
-            padding: '0 12px', backgroundColor: t.input,
-            border: `1px solid ${hasError ? t.danger : t.border}`,
-            borderRadius: '10px', transition: 'border 0.2s',
-          }}>
-            <input type={type} value={value} onChange={e => onChange(e.target.value)}
-              style={{
-                flex: 1, padding: '10px 0', fontSize: '12px', fontWeight: 500,
-                background: 'transparent', border: 'none', outline: 'none',
-                color: t.text, width: '100%',
-              }}
-              placeholder={placeholder} />
-          </div>
-        )}
-        {hasError && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{error}</p>}
-      </div>
-    );
-  };
+  // Nota: Campo se define FUERA del componente (línea 11) para evitar que React lo desmonte/vuelva a montar en cada render.
 
   // ─── RENDER: PASO 1 - DATOS PERSONALES ───────────────────
   const renderPasoDatos = () => {
@@ -392,22 +383,22 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-          <Campo label="Nombre Completo" icon={User} value={form.nombre} onChange={makeHandler('nombre')}
-            error={errors.nombre} placeholder="Ej: Juan Pérez" required />
-          <Campo label="Cédula de Identidad" icon={FileSignature} value={form.ci} onChange={makeHandler('ci')}
-            error={errors.ci} placeholder="Ej: 1234567" required />
-          <Campo label="Teléfono / WhatsApp" icon={Smartphone} value={form.telefono} onChange={makeHandler('telefono')}
-            error={errors.telefono} placeholder="Ej: 71234567" required />
-          <Campo label="Correo Electrónico" icon={Mail} value={form.email} onChange={makeHandler('email')}
-            error={errors.email} placeholder="Ej: juan@email.com" />
-          <Campo label="Dirección" icon={MapPin} value={form.direccion} onChange={makeHandler('direccion')}
-            error={errors.direccion} placeholder="Dirección de domicilio" />
-          <Campo label="Ocupación" icon={Briefcase} value={form.ocupacion} onChange={makeHandler('ocupacion')}
-            error={errors.ocupacion} placeholder="Ej: Comerciante" />
+          <Campo t={t} label="Nombre Completo" icon={User} value={form.nombre} onChange={makeHandler('nombre')}
+            hasError={!!errors.nombre && !!touched.nombre} error={errors.nombre} placeholder="Ej: Juan Pérez" required />
+          <Campo t={t} label="Cédula de Identidad" icon={FileSignature} value={form.ci} onChange={makeHandler('ci')}
+            hasError={!!errors.ci && !!touched.ci} error={errors.ci} placeholder="Ej: 1234567" required />
+          <Campo t={t} label="Teléfono / WhatsApp" icon={Smartphone} value={form.telefono} onChange={makeHandler('telefono')}
+            hasError={!!errors.telefono && !!touched.telefono} error={errors.telefono} placeholder="Ej: 71234567" required />
+          <Campo t={t} label="Correo Electrónico" icon={Mail} value={form.email} onChange={makeHandler('email')}
+            hasError={!!errors.email && !!touched.email} error={errors.email} placeholder="Ej: juan@email.com" />
+          <Campo t={t} label="Dirección" icon={MapPin} value={form.direccion} onChange={makeHandler('direccion')}
+            hasError={!!errors.direccion && !!touched.direccion} error={errors.direccion} placeholder="Dirección de domicilio" />
+          <Campo t={t} label="Ocupación" icon={Briefcase} value={form.ocupacion} onChange={makeHandler('ocupacion')}
+            hasError={!!errors.ocupacion && !!touched.ocupacion} error={errors.ocupacion} placeholder="Ej: Comerciante" />
         </div>
         <div style={{ marginTop: '14px' }}>
-          <Campo label="Referencias Personales" icon={Users} value={form.referencias} onChange={makeHandler('referencias')}
-            error={errors.referencias} placeholder="Nombre y teléfono de referencia" textarea />
+          <Campo t={t} label="Referencias Personales" icon={Users} value={form.referencias} onChange={makeHandler('referencias')}
+            hasError={!!errors.referencias && !!touched.referencias} error={errors.referencias} placeholder="Nombre y teléfono de referencia" textarea />
         </div>
       </div>
     );
@@ -590,8 +581,8 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <Campo label="Descripción de la Garantía" icon={FileText} value={form.garantia}
-            onChange={makeHandler('garantia')} error={errors.garantia}
+          <Campo t={t} label="Descripción de la Garantía" icon={FileText} value={form.garantia}
+            onChange={makeHandler('garantia')} hasError={!!errors.garantia && !!touched.garantia} error={errors.garantia}
             placeholder="Describe el bien o documento que respalda el préstamo (Ej: Toyota Corolla 2019, placas 1234ABC)" textarea />
         </div>
 

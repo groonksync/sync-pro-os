@@ -243,18 +243,24 @@ ipcMain.handle('create-folder-structure', async (event, { rootPath, empresa, pro
     }
 
     const basePath = process.env.VITE_DEV_SERVER_URL 
-      ? path.join(process.cwd(), 'public', 'edicion_de_video')
-      : path.join(__dirname, '../dist', 'edicion_de_video');
+      ? path.join(process.cwd(), 'public', 'plantillas_adobe')
+      : path.join(__dirname, '../dist', 'plantillas_adobe');
 
     if (templates.premiere) {
       const src = path.join(basePath, 'premiere_pro', `${templates.premiere}.prproj`);
       const dest = path.join(projectPath, '01_Premiere Pro', `${folderName}.prproj`);
+      if (!fs.existsSync(src)) {
+        return { success: false, error: `Plantilla de Premiere no encontrada: ${templates.premiere}` };
+      }
       await fs.copyFile(src, dest);
     }
 
     if (templates.afterEffects) {
       const src = path.join(basePath, 'after_effects', `${templates.afterEffects}.aep`);
       const dest = path.join(projectPath, '02_After Effects', `${folderName}.aep`);
+      if (!fs.existsSync(src)) {
+        return { success: false, error: `Plantilla de After Effects no encontrada: ${templates.afterEffects}` };
+      }
       await fs.copyFile(src, dest);
     }
 
