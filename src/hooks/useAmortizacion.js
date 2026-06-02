@@ -6,7 +6,11 @@ const DIAS_GRACIA = 0;
 
 // ─── UTILIDADES ───────────────────────────────────────────────
 function toDate(str) {
-  const [y, m, d] = str.split('-').map(Number);
+  if (!str) return new Date();
+  const parts = str.split('-');
+  if (parts.length !== 3) return new Date();
+  const [y, m, d] = parts.map(Number);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return new Date();
   return new Date(y, m - 1, d);
 }
 
@@ -44,8 +48,8 @@ function generarCronograma(prestamo) {
   const interesMensual = Math.round(capitalNum * (tasaInteres / 100));
   const pagosArr = Array.isArray(pagos) ? pagos : [];
   const cuotas = [];
-  const startDate = new Date(inicio);
-  const endDate = fin ? new Date(fin) : new Date();
+  const startDate = toDate(inicio);
+  const endDate = fin ? toDate(fin) : new Date();
   const hoy = new Date();
 
   // Calculate max months
