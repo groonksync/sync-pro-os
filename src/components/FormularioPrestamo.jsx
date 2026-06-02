@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   User, FileSignature, Smartphone, DollarSign, BadgePercent, CalendarDays,
   ShieldCheck, ExternalLink, ChevronLeft, ChevronRight, Save, X, Check, CheckCircle2,
@@ -8,47 +8,38 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import { getTheme } from '../lib/theme';
 
-// ─── COMPONENTE CAMPO REUTILIZABLE (FUERA del componente padre para evitar remontaje en cada render) ──
-const Campo = ({ t, label, icon: Icon, value, onChange, hasError, error, placeholder, type = 'text', required, textarea, noLabel }) => {
+// ─── COMPONENTE CAMPO REUTILIZABLE ──
+const Campo = React.memo(({ t, label, icon: Icon, value, onChange, hasError, error, placeholder, type = 'text', required, textarea }) => {
+  const borderColor = hasError ? (t.danger || '#ef4444') : t.border;
   return (
     <div>
-      {!noLabel && (
-        <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: hasError ? (t.danger || '#ef4444') : t.textMuted, display: 'block', marginBottom: '5px' }}>
-          {Icon && <Icon size={10} style={{ display: 'inline', marginRight: '4px' }} />}
-          {label} {required && <span style={{ color: t.danger || '#ef4444' }}>*</span>}
-        </label>
-      )}
+      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: hasError ? (t.danger || '#ef4444') : t.textMuted, display: 'block', marginBottom: '5px' }}>
+        {Icon && <Icon size={10} style={{ display: 'inline', marginRight: '4px' }} />}
+        {label} {required && <span style={{ color: t.danger || '#ef4444' }}>*</span>}
+      </label>
       {textarea ? (
         <textarea value={value} onChange={e => onChange(e.target.value)}
           style={{
             width: '100%', padding: '10px 12px', fontSize: '12px', lineHeight: 1.5,
-            backgroundColor: t.input, border: `1px solid ${hasError ? (t.danger || '#ef4444') : t.border}`,
+            backgroundColor: t.input, border: `1px solid ${borderColor}`,
             color: t.text, borderRadius: '10px', outline: 'none', resize: 'vertical',
-            minHeight: '70px', transition: 'border 0.2s',
+            minHeight: '70px', transition: 'border 0.2s', boxSizing: 'border-box',
           }}
-          onFocus={e => { if (!hasError) e.target.style.borderColor = t.accent; }}
-          onBlur={e => { if (!hasError) e.target.style.borderColor = t.border; }}
           placeholder={placeholder} />
       ) : (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '8px',
-          padding: '0 12px', backgroundColor: t.input,
-          border: `1px solid ${hasError ? (t.danger || '#ef4444') : t.border}`,
-          borderRadius: '10px', transition: 'border 0.2s',
-        }}>
-          <input type={type} value={value} onChange={e => onChange(e.target.value)}
-            style={{
-              flex: 1, padding: '10px 0', fontSize: '12px', fontWeight: 500,
-              background: 'transparent', border: 'none', outline: 'none',
-              color: t.text, width: '100%',
-            }}
-            placeholder={placeholder} />
-        </div>
+        <input type={type} value={value} onChange={e => onChange(e.target.value)}
+          style={{
+            width: '100%', padding: '10px 12px', fontSize: '12px', fontWeight: 500,
+            backgroundColor: t.input, border: `1px solid ${borderColor}`,
+            color: t.text, borderRadius: '8px', outline: 'none',
+            transition: 'border 0.2s', boxSizing: 'border-box',
+          }}
+          placeholder={placeholder} />
       )}
       {hasError && error && <p style={{ fontSize: '9px', color: t.danger || '#ef4444', margin: '3px 0 0', fontWeight: 500 }}>{error}</p>}
     </div>
   );
-};
+});
 
 // ─── CONSTANTES ───────────────────────────────────────────────
 const PASOS = [
@@ -79,6 +70,24 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
   const [touched, setTouched] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [uploadingFoto, setUploadingFoto] = useState(false);
+  const handlerCache = useRef({});
+
+  // Handlers estables por campo — evitan pérdida de foco
+  const getHandler = useCallback((field) => {
+    if (!handlerCache.current[field]) {
+      handlerCache.current[field] = (val) => {
+        setForm(prev => ({ ...prev, [field]: val }));
+        setTouched(prev => ({ ...prev, [field]: true }));
+        setErrors(prev => {
+          if (!prev[field]) return prev;
+          const c = { ...prev };
+          delete c[field];
+          return c;
+        });
+      };
+    }
+    return handlerCache.current[field];
+  }, []);
 
   // Estado del formulario
   const [form, setForm] = useState(() => {
@@ -318,8 +327,6 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
 
   // ─── RENDER: PASO 1 - DATOS PERSONALES ───────────────────
   const renderPasoDatos = () => {
-    const makeHandler = (field) => (val) => handleChange(field, val);
-
     return (
       <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
         <div style={{ marginBottom: '24px' }}>
@@ -382,22 +389,22 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-          <Campo t={t} label="Nombre Completo" icon={User} value={form.nombre} onChange={makeHandler('nombre')}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px' }}>
+          <Campo t={t} label="Nombre Completo" icon={User} value={form.nombre} onChange={getHandler('nombre')}
             hasError={!!errors.nombre && !!touched.nombre} error={errors.nombre} placeholder="Ej: Juan Pérez" required />
-          <Campo t={t} label="Cédula de Identidad" icon={FileSignature} value={form.ci} onChange={makeHandler('ci')}
-            hasError={!!errors.ci && !!touched.ci} error={errors.ci} placeholder="Ej: 1234567" required />
-          <Campo t={t} label="Teléfono / WhatsApp" icon={Smartphone} value={form.telefono} onChange={makeHandler('telefono')}
-            hasError={!!errors.telefono && !!touched.telefono} error={errors.telefono} placeholder="Ej: 71234567" required />
-          <Campo t={t} label="Correo Electrónico" icon={Mail} value={form.email} onChange={makeHandler('email')}
+          <Campo t={t} label="Cédula de Identidad" icon={FileSignature} value={form.ci} onChange={getHandler('ci')}
+            hasError={!!errors.ci && !!touched.ci} error={errors.ci} placeholder="Ej: 1234567" />
+          <Campo t={t} label="Teléfono / WhatsApp" icon={Smartphone} value={form.telefono} onChange={getHandler('telefono')}
+            hasError={!!errors.telefono && !!touched.telefono} error={errors.telefono} placeholder="Ej: 71234567" />
+          <Campo t={t} label="Correo Electrónico" icon={Mail} value={form.email} onChange={getHandler('email')}
             hasError={!!errors.email && !!touched.email} error={errors.email} placeholder="Ej: juan@email.com" />
-          <Campo t={t} label="Dirección" icon={MapPin} value={form.direccion} onChange={makeHandler('direccion')}
+          <Campo t={t} label="Dirección" icon={MapPin} value={form.direccion} onChange={getHandler('direccion')}
             hasError={!!errors.direccion && !!touched.direccion} error={errors.direccion} placeholder="Dirección de domicilio" />
-          <Campo t={t} label="Ocupación" icon={Briefcase} value={form.ocupacion} onChange={makeHandler('ocupacion')}
+          <Campo t={t} label="Ocupación" icon={Briefcase} value={form.ocupacion} onChange={getHandler('ocupacion')}
             hasError={!!errors.ocupacion && !!touched.ocupacion} error={errors.ocupacion} placeholder="Ej: Comerciante" />
         </div>
-        <div style={{ marginTop: '14px' }}>
-          <Campo t={t} label="Referencias Personales" icon={Users} value={form.referencias} onChange={makeHandler('referencias')}
+        <div style={{ marginTop: '22px' }}>
+          <Campo t={t} label="Referencias Personales" icon={Users} value={form.referencias} onChange={getHandler('referencias')}
             hasError={!!errors.referencias && !!touched.referencias} error={errors.referencias} placeholder="Nombre y teléfono de referencia" textarea />
         </div>
       </div>
@@ -406,8 +413,6 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
 
   // ─── RENDER: PASO 2 - FINANCIEROS ────────────────────────
   const renderPasoFinanciero = () => {
-    const makeHandler = (field) => (val) => handleChange(field, val);
-
     return (
       <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
         <div style={{ marginBottom: '24px' }}>
@@ -416,34 +421,29 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
         </div>
 
         {/* Capital y Moneda lado a lado */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '22px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.capital ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
               <DollarSign size={10} style={{ display: 'inline', marginRight: '4px' }} /> Capital <span style={{ color: t.danger }}>*</span>
             </label>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '0 12px', backgroundColor: t.input,
-              border: `1px solid ${errors.capital ? t.danger : t.border}`, borderRadius: '10px',
-            }}>
-              <input type="number" value={form.capital} onChange={e => handleChange('capital', e.target.value)}
-                style={{
-                  flex: 1, padding: '12px 0', fontSize: '14px', fontWeight: 700, fontFamily: 'monospace',
-                  background: 'transparent', border: 'none', outline: 'none', color: t.text,
-                }}
-                placeholder="0.00" />
-            </div>
+            <input type="number" value={form.capital} onChange={e => getHandler('capital')(e.target.value)}
+              style={{
+                width: '100%', padding: '12px', fontSize: '14px', fontWeight: 700, fontFamily: 'monospace',
+                backgroundColor: t.input, border: `1px solid ${errors.capital ? t.danger : t.border}`,
+                color: t.text, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
+              }}
+              placeholder="0.00" />
             {errors.capital && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.capital}</p>}
           </div>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
               <Wallet size={10} style={{ display: 'inline', marginRight: '4px' }} /> Moneda
             </label>
-            <select value={form.moneda} onChange={e => handleChange('moneda', e.target.value)}
+            <select value={form.moneda} onChange={e => getHandler('moneda')(e.target.value)}
               style={{
                 width: '100%', padding: '12px', fontSize: '13px', fontWeight: 600,
                 backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                borderRadius: '10px', outline: 'none',
+                borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
               }}>
               {MONEDAS.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
@@ -451,35 +451,29 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
         </div>
 
         {/* Interés y Estado */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.interes ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
-              <BadgePercent size={10} style={{ display: 'inline', marginRight: '4px' }} /> Interés Mensual (%) <span style={{ color: t.danger }}>*</span>
+              <BadgePercent size={10} style={{ display: 'inline', marginRight: '4px' }} /> Interés Mensual (%)
             </label>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '0 12px', backgroundColor: t.input,
-              border: `1px solid ${errors.interes ? t.danger : t.border}`, borderRadius: '10px',
-            }}>
-              <input type="number" step="0.1" value={form.interes} onChange={e => handleChange('interes', e.target.value)}
-                style={{
-                  flex: 1, padding: '12px 0', fontSize: '14px', fontWeight: 600, fontFamily: 'monospace',
-                  background: 'transparent', border: 'none', outline: 'none', color: t.accent,
-                }}
-                placeholder="5" />
-              <span style={{ fontSize: '11px', fontWeight: 600, color: t.textDim }}>%</span>
-            </div>
+            <input type="number" step="0.1" value={form.interes} onChange={e => getHandler('interes')(e.target.value)}
+              style={{
+                width: '100%', padding: '12px', fontSize: '14px', fontWeight: 600, fontFamily: 'monospace',
+                backgroundColor: t.input, border: `1px solid ${errors.interes ? t.danger : t.border}`,
+                color: t.accent, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
+              }}
+              placeholder="5" />
             {errors.interes && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.interes}</p>}
           </div>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
               <CheckCircle2 size={10} style={{ display: 'inline', marginRight: '4px' }} /> Estado Inicial
             </label>
-            <select value={form.estado} onChange={e => handleChange('estado', e.target.value)}
+            <select value={form.estado} onChange={e => getHandler('estado')(e.target.value)}
               style={{
                 width: '100%', padding: '12px', fontSize: '13px', fontWeight: 600,
                 backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                borderRadius: '10px', outline: 'none',
+                borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
               }}>
               {ESTADOS_INICIALES.map(e => <option key={e} value={e}>{e}</option>)}
             </select>
@@ -487,28 +481,28 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
         </div>
 
         {/* Fechas */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.inicio ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
-              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Inicio <span style={{ color: t.danger }}>*</span>
+              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Inicio
             </label>
-            <input type="date" value={form.inicio} onChange={e => handleChange('inicio', e.target.value)}
+            <input type="date" value={form.inicio} onChange={e => getHandler('inicio')(e.target.value)}
               style={{
                 width: '100%', padding: '10px 12px', fontSize: '12px',
                 backgroundColor: t.input, border: `1px solid ${errors.inicio ? t.danger : t.border}`,
-                color: t.text, borderRadius: '10px', outline: 'none',
+                color: t.text, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
               }} />
             {errors.inicio && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.inicio}</p>}
           </div>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.fin ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
-              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Vencimiento <span style={{ color: t.danger }}>*</span>
+              <CalendarDays size={10} style={{ display: 'inline', marginRight: '4px' }} /> Fecha de Vencimiento
             </label>
-            <input type="date" value={form.fin} onChange={e => handleChange('fin', e.target.value)}
+            <input type="date" value={form.fin} onChange={e => getHandler('fin')(e.target.value)}
               style={{
                 width: '100%', padding: '10px 12px', fontSize: '12px',
                 backgroundColor: t.input, border: `1px solid ${errors.fin ? t.danger : t.border}`,
-                color: t.text, borderRadius: '10px', outline: 'none',
+                color: t.text, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
               }} />
             {errors.fin && <p style={{ fontSize: '9px', color: t.danger, margin: '3px 0 0', fontWeight: 500 }}>{errors.fin}</p>}
           </div>
@@ -542,25 +536,23 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
 
   // ─── RENDER: PASO 3 - GARANTÍA ───────────────────────────
   const renderPasoGarantia = () => {
-    const makeHandler = (field) => (val) => handleChange(field, val);
-
     return (
       <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>Garantía & Documentos</h3>
-          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Respaldo documental del préstamo</p>
+          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Respaldo documental del préstamo (opcional)</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', marginBottom: '20px' }}>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: errors.tipoGarantia ? t.danger : t.textMuted, display: 'block', marginBottom: '5px' }}>
-              <ShieldCheck size={10} style={{ display: 'inline', marginRight: '4px' }} /> Tipo de Garantía <span style={{ color: t.danger }}>*</span>
+              <ShieldCheck size={10} style={{ display: 'inline', marginRight: '4px' }} /> Tipo de Garantía
             </label>
-            <select value={form.tipoGarantia} onChange={e => handleChange('tipoGarantia', e.target.value)}
+            <select value={form.tipoGarantia} onChange={e => getHandler('tipoGarantia')(e.target.value)}
               style={{
                 width: '100%', padding: '10px 12px', fontSize: '12px', fontWeight: 500,
                 backgroundColor: t.input, border: `1px solid ${errors.tipoGarantia ? t.danger : t.border}`,
-                color: t.text, borderRadius: '10px', outline: 'none',
+                color: t.text, borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
               }}>
               {TIPOS_GARANTIA.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
             </select>
@@ -570,32 +562,32 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
               <Link size={10} style={{ display: 'inline', marginRight: '4px' }} /> Link Contrato (Drive)
             </label>
-            <input type="url" value={form.drive_contrato} onChange={e => handleChange('drive_contrato', e.target.value)}
+            <input type="url" value={form.drive_contrato} onChange={e => getHandler('drive_contrato')(e.target.value)}
               style={{
                 width: '100%', padding: '10px 12px', fontSize: '12px',
                 backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                borderRadius: '10px', outline: 'none',
+                borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
               }}
               placeholder="https://drive.google.com/..." />
           </div>
         </div>
 
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '20px' }}>
           <Campo t={t} label="Descripción de la Garantía" icon={FileText} value={form.garantia}
-            onChange={makeHandler('garantia')} hasError={!!errors.garantia && !!touched.garantia} error={errors.garantia}
+            onChange={getHandler('garantia')} hasError={!!errors.garantia && !!touched.garantia} error={errors.garantia}
             placeholder="Describe el bien o documento que respalda el préstamo (Ej: Toyota Corolla 2019, placas 1234ABC)" textarea />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px', marginBottom: '16px' }}>
           <div>
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
               <Image size={10} style={{ display: 'inline', marginRight: '4px' }} /> Link Fotos (Drive)
             </label>
-            <input type="url" value={form.drive_fotos} onChange={e => handleChange('drive_fotos', e.target.value)}
+            <input type="url" value={form.drive_fotos} onChange={e => getHandler('drive_fotos')(e.target.value)}
               style={{
                 width: '100%', padding: '10px 12px', fontSize: '12px',
                 backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                borderRadius: '10px', outline: 'none',
+                borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
               }}
               placeholder="https://photos.app.goo.gl/..." />
           </div>
@@ -603,11 +595,11 @@ const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => 
             <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
               <Lock size={10} style={{ display: 'inline', marginRight: '4px' }} /> Notas Internas
             </label>
-            <input type="text" value={form.notas} onChange={e => handleChange('notas', e.target.value)}
+            <input type="text" value={form.notas} onChange={e => getHandler('notas')(e.target.value)}
               style={{
                 width: '100%', padding: '10px 12px', fontSize: '12px',
                 backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                borderRadius: '10px', outline: 'none',
+                borderRadius: '8px', outline: 'none', boxSizing: 'border-box',
               }}
               placeholder="Información adicional..." />
           </div>
