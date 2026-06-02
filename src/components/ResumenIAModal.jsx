@@ -1,13 +1,13 @@
 import React, { useMemo, useRef } from 'react';
 import { X, Download, FileText, Brain, TrendingUp, DollarSign, Package, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 /**
  * Modal profesional para mostrar el Resumen Ejecutivo IA.
  * Recibe el contenido JSON estructurado y lo renderiza como tablas comparativas.
  */
 const ResumenIAModal = ({ isOpen, onClose, contenido, cargando, isDark, titulo, onExportPDF }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const contentRef = useRef(null);
 
   // Parsear el contenido JSON de la IA

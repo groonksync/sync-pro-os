@@ -1,13 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Trash2, Table, MoreHorizontal } from 'lucide-react';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 /**
  * Editor especializado para Guion Técnico con tablas editables.
  * Cada bloque puede ser texto o tabla.
  */
 const NotaGuionTecnico = ({ bloques = [], onChange, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [activeColMenu, setActiveColMenu] = useState(null); // { bloqueId, colIndex }
 
   const parsed = (() => {

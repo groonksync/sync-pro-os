@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 import { aiService } from '../services/aiService';
 
 // === ICONOS SVG INLINE AUTO-CONTENIDOS ===
@@ -148,7 +148,7 @@ const Icons = {
 };
 
 const Notas = ({ settings, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
 
   // --- Estados de Datos ---
   const [notas, setNotas] = useState([]);
@@ -1478,7 +1478,7 @@ INSTRUCCIÓN: ${instruction}
 // 1. TELEPROMPTER WORKSPACE COMPONENT
 // ==========================================
 const TeleprompterWorkspace = ({ note, onUpdate, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(25); // 5 to 45 fps
   const [fontSize, setFontSize] = useState(30); // 20px to 50px
@@ -1657,7 +1657,7 @@ const TeleprompterWorkspace = ({ note, onUpdate, isDark }) => {
 // 2. PROMPT PLAYGROUND COMPONENT
 // ==========================================
 const PromptPlayground = ({ note, onUpdate, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [copied, setCopied] = useState(false);
   const [newVarName, setNewVarName] = useState('');
 

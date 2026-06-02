@@ -1,10 +1,10 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Plus, FileText, Printer, Trash2, CheckCircle2, Clock, ArrowLeft, Activity } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const Recibos = ({ data, setData, isDark = true }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const recibos = data.recibos || [];
   const [view, setView] = useState('list'); // 'list' | 'create' | 'print'
   const [activeRecibo, setActiveRecibo] = useState(null);

@@ -4,10 +4,10 @@ import {
   FileText, Calendar, Bell, ChevronRight, Edit3, X
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const Pagos = ({ servicios = [], onRefresh, isDark = true }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [activeService, setActiveService] = useState(null);

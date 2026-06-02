@@ -5,10 +5,10 @@ import {
   Calendar as CalendarIcon, Filter, Layers, Zap, Target, Star, MoreHorizontal
 } from 'lucide-react';
 import { getCalendarList, getCalendarEvents, createCalendarEvent } from '../lib/googleApi';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const GoogleCalendar = ({ token, user, settings, isDark = true }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [calendarList, setCalendarList] = useState([]);
   const [selectedCalendars, setSelectedCalendars] = useState([]);
   const [events, setEvents] = useState([]);

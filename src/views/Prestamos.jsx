@@ -7,7 +7,7 @@ import {
   Heart, BarChart3, PieChart, Wallet
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 import FormularioPrestamo from '../components/FormularioPrestamo';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useAmortizacion, useAmortizacionGlobal, generarCronograma, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
@@ -22,7 +22,7 @@ const toastStyles = {
 
 // ─── TOAST NOTIFICATION ──────────────────────────────────────
 const ToastNotification = ({ message, type = 'success', onClose, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const { bg, border, icon: Icon, color } = toastStyles[type] || toastStyles.success;
   
   useEffect(() => {
@@ -47,7 +47,7 @@ const ToastNotification = ({ message, type = 'success', onClose, isDark }) => {
 
 // ─── MODAL ELIMINACIÓN SEGURA ────────────────────────────────
 const DeleteConfirmModal = ({ target, isDark, onConfirm, onCancel }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [step, setStep] = useState(1);
   const [typed, setTyped] = useState('');
   const [loading, setLoading] = useState(false);
@@ -171,7 +171,7 @@ const DeleteConfirmModal = ({ target, isDark, onConfirm, onCancel }) => {
 
 // ─── MODAL PRESTAMO (WIZARD) ─────────────────────────────────
 const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   return (
     <div className="fixed inset-0 z-[9997] overflow-y-auto"
       style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
@@ -198,7 +198,7 @@ const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────
 const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSelection }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [prestamoView, setPrestamoView] = useState('list'); 
   const [activePrestamo, setActivePrestamo] = useState(null);
   const [selectedPrestamistaName, setSelectedPrestamistaName] = useState(null);

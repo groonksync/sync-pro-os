@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import { Plus, Trash2, ShoppingCart, Check } from 'lucide-react';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 /**
  * Editor especializado para Lista de Compras.
  * Renderiza items con checkbox, cantidad y precio.
  */
 const NotaListaCompras = ({ items = [], onChange, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
 
   const parsedItems = (() => {
     if (!items || items.length === 0) {

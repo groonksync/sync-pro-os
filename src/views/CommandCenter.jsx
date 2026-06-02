@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
 import { generarCronograma } from '../hooks/useAmortizacion';
 import CommandModal from '../components/CommandModal';
@@ -169,7 +169,7 @@ const CommandCenter = ({
   onQuickPayment,
   onNavigateTo,
 }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const hoy = new Date();
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
   const isMobile = settings?.isMobileMode;

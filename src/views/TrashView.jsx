@@ -22,7 +22,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const getIconForType = (tipo, isDark = true) => {
   const theme = getTheme(isDark);
@@ -65,7 +65,7 @@ const getLabelForType = (tipo) => {
 };
 
 const TrashView = ({ settings, isDark = true }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [dbError, setDbError] = useState(false);

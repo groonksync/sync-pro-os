@@ -6,7 +6,7 @@ import {
   Users, Briefcase, Hash, Phone, Mail, FileText, Image, Link, Lock, Wallet, Camera
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 // ─── COMPONENTE CAMPO REUTILIZABLE ──
 const Campo = React.memo(({ t, label, icon: Icon, value, onChange, hasError, error, placeholder, type = 'text', required, textarea }) => {
@@ -63,7 +63,7 @@ const TIPOS_GARANTIA = [
 
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────
 const FormularioPrestamo = ({ isDark, onClose, onSave, initialData = null }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [paso, setPaso] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});

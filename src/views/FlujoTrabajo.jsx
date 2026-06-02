@@ -46,7 +46,7 @@ import {
   ListOrdered
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 import { aiService } from '../services/aiService';
 
 // =========================================================================
@@ -296,7 +296,7 @@ function PageRuler({ margins, orientation }) {
 // COMPONENTE PRINCIPAL
 // =========================================================================
 export default function FlujoTrabajo({ settings, isDark }) {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
 
   // --- Estados de Sesión ---
   const [currentUser, setCurrentUser] = useState(null);

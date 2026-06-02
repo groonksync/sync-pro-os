@@ -4,7 +4,7 @@ import {
   CreditCard, FileText, CheckCircle, ExternalLink, Archive,
   ChevronRight, AlertTriangle, Ban, Zap
 } from 'lucide-react';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const getCheckState = () => {
   try {
@@ -14,7 +14,7 @@ const getCheckState = () => {
 };
 
 const Notifications = ({ data = {}, servicios = [], theReminders = [], onNavigate, isDark = true }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const today = new Date();
   const [checked, setChecked] = useState(getCheckState);
 

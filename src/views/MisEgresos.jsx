@@ -7,7 +7,7 @@ import {
   HelpCircle, Video, Cloud, Music, Palette, Scissors
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 // Categorías para gastos individuales
 const GASTO_CATEGORIAS = [
@@ -38,7 +38,7 @@ const catGastoConfig = Object.fromEntries(GASTO_CATEGORIAS.map(c => [c.label, c]
 const catServicioConfig = Object.fromEntries(SERVICIO_CATEGORIAS.map(c => [c.label, c]));
 
 const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, isDark = true, initialFilterText = '' }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const egresos = data.egresos || [];
   const ventas  = data.ventas  || [];
   const prestamosList = data.prestamos || [];

@@ -5,7 +5,7 @@ import {
   Circle, Loader, PackageCheck
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const ESTADOS = ['Sin Iniciar', 'En Edición', 'En Revisión', 'Entregado'];
 const TIPOS = ['Edición', 'Colorización', 'Mixing', 'Motion Graphics', 'VFX', 'Documental', 'Otro'];
@@ -48,7 +48,7 @@ const StatusBadge = ({ estado, t }) => {
 };
 
 const Proyectos = ({ proyectos, setProyectos, isDark = true }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [view, setView] = useState('list'); // 'list' | 'create' | 'detail'
   const [activeProyecto, setActiveProyecto] = useState(null);
   const [loading, setLoading] = useState(false);

@@ -8,7 +8,7 @@ import {
   Music, Smartphone, Sparkles
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 import { aiService } from '../services/aiService';
 import { safeDelete } from '../lib/trashService';
 
@@ -595,7 +595,7 @@ const getCategoryIcon = (category) => {
 };
 
 const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);

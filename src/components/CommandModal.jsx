@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { X, Check, AlertTriangle } from 'lucide-react';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 /**
  * Modal de confirmación reutilizable para el CommandCenter.

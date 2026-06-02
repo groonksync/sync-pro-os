@@ -31,10 +31,10 @@ import {
   Building2,
   Workflow
 } from 'lucide-react';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isCollapsed, setIsCollapsed, isDark, setIsDark, sidebarBg }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [hoveredItem, setHoveredItem] = useState(null);
 
   const handleOpenCatalog = () => {

@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import CryptoJS from 'crypto-js';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 // --- Password Strength Utility ---
 const getPasswordStrength = (pass) => {
@@ -51,7 +51,7 @@ const getPasswordStrength = (pass) => {
 };
 
 const BovedaPass = ({ settings, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [masterPassword, setMasterPassword] = useState('');
   const [isMasterPasswordCreated, setIsMasterPasswordCreated] = useState(() => {

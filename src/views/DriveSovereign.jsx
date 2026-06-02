@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Cloud, Folder, File, FileText, Image as ImageIcon, Video, ChevronRight, Search, Download, ExternalLink, Plus, ArrowLeft, MoreVertical, RefreshCw, Trash2, Upload, Grid, List, AlignJustify, X, CheckCircle2, AlertCircle, FolderPlus } from 'lucide-react';
 import { getDriveFiles, createDriveFolder, uploadFileToDrive, downloadDriveFile, deleteDriveFile } from '../lib/googleApi';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const ICON = (mimeType, size = 24, isDark = true) => {
   const theme = getTheme(isDark);
@@ -16,7 +16,7 @@ const fmtSize = (b) => { if (!b) return '--'; const k=1024,s=['B','KB','MB','GB'
 const fmtDate = (d) => d ? new Date(d).toLocaleDateString('es-ES', { day:'2-digit', month:'short', year:'numeric' }) : '--';
 
 export default function DriveSovereign({ token, user, onLoginSuccess, isDark = true }) {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [files, setFiles] = useState([]);
   const [folder, setFolder] = useState({ id: 'root', name: 'Mi Unidad' });
   const [history, setHistory] = useState([]);

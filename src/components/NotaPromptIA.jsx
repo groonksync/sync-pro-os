@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import { Copy, Sparkles, Zap } from 'lucide-react';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 /**
  * Editor especializado para Prompt IA.
  * Muestra el prompt con sintaxis resaltada y un botón para copiar.
  */
 const NotaPromptIA = ({ contenido = '', onChange, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [copied, setCopied] = React.useState(false);
 
   const handleCopy = () => {

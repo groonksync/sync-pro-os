@@ -30,7 +30,7 @@ import {
   Trophy, Truck, Tv, Twitch, Twitter, Umbrella,
 } from 'lucide-react';
 import { useSettings } from '../lib/settingsStore';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const ICONS = {
   Pallete: Palette, Monitor: Monitor, Sidebar: Sidebar, Image: Image,

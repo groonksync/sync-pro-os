@@ -6,7 +6,7 @@ import {
   Box as BoxIcon, Video, Zap, Briefcase, Sparkles, Sun, Moon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const parseWhatsAppMarkdown = (text) => {
   if (!text) return '';

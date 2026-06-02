@@ -44,6 +44,21 @@ function isHexLight(hex) {
 }
 
 export function getTheme(isDark = true, custom = {}) {
+  // Auto-leer settings de localStorage si no se especificó appearanceMode
+  if (!custom.appearanceMode && typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem('sovereign_settings');
+      if (raw) {
+        const s = JSON.parse(raw);
+        custom = {
+          ...custom,
+          appearanceMode: s.appearanceMode || s.appBackground || 'darkGray',
+          accentColor: custom.accentColor || s.accentColor || (isDark ? '#a0a0a0' : '#475569'),
+        };
+      }
+    } catch {}
+  }
+
   const base = isDark
     ? MODOS[custom.appearanceMode] || MODOS.darkGray
     : LIGHT;
@@ -80,3 +95,4 @@ export function getTheme(isDark = true, custom = {}) {
 }
 
 export const c = getTheme(true);
+export { useTheme } from './useTheme';

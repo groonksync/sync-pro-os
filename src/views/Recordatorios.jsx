@@ -5,10 +5,10 @@ import {
   ShoppingCart, Lightbulb, X, User, DollarSign, FileText
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [recordatorios, setRecordatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('Todos');
@@ -396,7 +396,7 @@ const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
 };
 
 const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDark }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const pc = colorFunc(r.prioridad);
   return (
     <div 

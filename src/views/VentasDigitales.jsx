@@ -1,13 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { Plus, TrendingUp, Download, Trash2, ArrowUpRight, ShoppingBag, Globe } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const PLATAFORMAS = ['Gumroad', 'Etsy', 'Shopify', 'Patreon', 'Gumroad', 'Ko-fi', 'Directo', 'Otra'];
 const CATEGORIAS = ['Preset', 'Plantilla', 'Curso', 'Pack de Footage', 'LUT', 'Plugin', 'Otro'];
 
 const VentasDigitales = ({ data, setData, isDark = true }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const ventas = data.ventas || [];
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);

@@ -17,10 +17,10 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
 import { aiService } from '../services/aiService';
-import { getTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
 
 const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark = true, token }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [viewState, setViewState] = useState('dashboard'); 
   const [activeClient, setActiveClient] = useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null);
@@ -1126,7 +1126,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
 
 // ── REORGANIZED 3-COLUMN PROJECT ENGINE VIEW ──
 const ProjectEngineView = ({ isDark = true }) => {
-  const t = useMemo(() => getTheme(isDark), [isDark]);
+  const t = useTheme(isDark);
   const [projects, setProjects] = useState(() => {
     return JSON.parse(localStorage.getItem('inefable_proyectos_edicion') || '[]');
   });
