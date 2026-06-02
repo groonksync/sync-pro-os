@@ -369,6 +369,12 @@ export default function FlujoTrabajo({ settings, isDark }) {
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
 
+  // --- Nuevos Estados Word Pro ---
+  const [copiedFormat, setCopiedFormat] = useState(null);
+  const [watermark, setWatermark] = useState('Ninguna'); // 'Ninguna' | 'CONFIDENCIAL' | 'BORRADOR' | 'URGENTE'
+  const [headerText, setHeaderText] = useState('Documento de Flujo de Trabajo');
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+
   const showAlert = (message, title = 'Notificación') => {
     setCustomAlert({ title, message });
   };
