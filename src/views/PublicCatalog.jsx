@@ -959,7 +959,7 @@ const PublicCatalog = () => {
         )}
 
         {/* PRODUCTS GRID SECTION */}
-        <section style={{ flex: 1 }}>
+        <section style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {/* Mobile Horizontal Category Slider */}
           {isMobile && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '4px 4px 16px 4px', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }} className="hide-scrollbar">
@@ -1016,7 +1016,7 @@ const PublicCatalog = () => {
                   {"Productos Destacados"}
                 </h4>
               </div>
-              <div style={{ position: 'relative' }}>
+              <div style={{ position: 'relative', padding: !isMobile ? '0 28px' : '0' }}>
                 {!isMobile && isCarouselHovered && (
                   <>
                     <button
@@ -1024,7 +1024,7 @@ const PublicCatalog = () => {
                       aria-label="Anterior"
                       style={{
                         position: 'absolute',
-                        left: -14,
+                        left: 4,
                         top: '50%',
                         transform: 'translateY(-50%)',
                         zIndex: 10,
@@ -1032,10 +1032,10 @@ const PublicCatalog = () => {
                         height: 36,
                         borderRadius: '50%',
                         border: '1px solid rgba(255,255,255,0.12)',
-                        backgroundColor: t.isDark ? 'rgba(26,26,26,0.75)' : 'rgba(255,255,255,0.75)',
+                        backgroundColor: t.isDark ? 'rgba(26,26,26,0.85)' : 'rgba(255,255,255,0.85)',
                         backdropFilter: 'blur(12px)',
                         WebkitBackdropFilter: 'blur(12px)',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
                         color: t.text,
                         cursor: 'pointer',
                         display: 'flex',
@@ -1052,7 +1052,7 @@ const PublicCatalog = () => {
                       aria-label="Siguiente"
                       style={{
                         position: 'absolute',
-                        right: -14,
+                        right: 4,
                         top: '50%',
                         transform: 'translateY(-50%)',
                         zIndex: 10,
@@ -1060,10 +1060,10 @@ const PublicCatalog = () => {
                         height: 36,
                         borderRadius: '50%',
                         border: '1px solid rgba(255,255,255,0.12)',
-                        backgroundColor: t.isDark ? 'rgba(26,26,26,0.75)' : 'rgba(255,255,255,0.75)',
+                        backgroundColor: t.isDark ? 'rgba(26,26,26,0.85)' : 'rgba(255,255,255,0.85)',
                         backdropFilter: 'blur(12px)',
                         WebkitBackdropFilter: 'blur(12px)',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
                         color: t.text,
                         cursor: 'pointer',
                         display: 'flex',
