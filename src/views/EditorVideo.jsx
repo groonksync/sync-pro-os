@@ -1163,24 +1163,56 @@ const ProjectEngineView = ({ isDark = true }) => {
         const path = await window.electronAPI.selectDirectory();
         if (path) setDestinationPath(path);
       } else {
-        if (!window.showDirectoryPicker) throw new Error('Navegador no soportado.');
+        if (!window.showDirectoryPicker) {
+          alert('La creación real de carpetas solo está disponible en la app de escritorio o en navegadores compatibles.');
+          return;
+        }
         const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
         setDirHandle(handle);
-        setDestinationPath(handle.name || 'Directorio Local');
+        setDestinationPath(handle.name);
       }
     } catch (e) {
-      console.error(e);
+      if (e.name !== 'AbortError' && e.name !== 'SecurityError') {
+        console.error(e);
+      }
     }
   };
 
+  const ensureDir = async (parentHandle, pathParts) => {
+    let current = parentHandle;
+    for (const part of pathParts) {
+      if (part) {
+        current = await current.getDirectoryHandle(part, { create: true });
+      }
+    }
+    return current;
+  };
+
+  const writeFile = async (dirHandle, fileName, content) => {
+    const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+  };
+
   const handleGenerate = async () => {
-    if (!destinationPath || !empresa || !proyecto) {
-      alert('Completa todos los campos obligatorios: Directorio, Cliente y Proyecto.');
+    if (!empresa || !proyecto) {
+      alert('Completa todos los campos obligatorios: Cliente y Proyecto.');
+      return;
+    }
+    if (!window.electronAPI && !dirHandle) {
+      alert('Primero selecciona un directorio de destino con el botón "Vincular".');
+      return;
+    }
+    if (window.electronAPI && !destinationPath) {
+      alert('Primero selecciona un directorio de destino con el botón "Vincular".');
       return;
     }
     setIsGenerating(true);
-    setStatusMsg('');
+    setStatusMsg('Creando estructura...');
     try {
+      const folderName = finalProjectFolderName;
+
       if (window.electronAPI) {
         const result = await window.electronAPI.createFolderStructure({
           rootPath: destinationPath,
@@ -1194,18 +1226,55 @@ const ProjectEngineView = ({ isDark = true }) => {
         } else {
           setStatusMsg(`Error: ${result ? result.error : 'Desconocido'}`);
         }
-      } else {
-        setTimeout(() => {
-          setIsGenerating(false);
-          setStatusMsg('Estructura generada exitosamente (Simulado en Web).');
-        }, 1500);
+      } else if (dirHandle) {
+        const clientDir = await ensureDir(dirHandle, [empresa]);
+        const projectDir = await ensureDir(clientDir, [folderName]);
+
+        const subdirs = [
+          '01_Premiere Pro',
+          '02_After Effects',
+          '03_video/video 01',
+          '03_video/video 02',
+          '03_video/video 03',
+          '03_video/video 04',
+          '03_video/video 06',
+          '03_video/video bar',
+          '03_video/video tragos',
+          '04_audio',
+          '05_imágenes/PNG',
+          '06_IA'
+        ];
+
+        if (incSFX) subdirs.push('04_audio/SFX_Comunes');
+        if (incLogos) subdirs.push('03_video/Logotipos_Marca');
+        if (incMOGRTs) subdirs.push('01_Premiere Pro/MOGRTs_Sovereign');
+
+        for (const sub of subdirs) {
+          const parts = sub.split('/');
+          await ensureDir(projectDir, parts);
+        }
+
+        if (selectedPremiere) {
+          const prDir = await ensureDir(projectDir, ['01_Premiere Pro']);
+          await writeFile(prDir, `${folderName}.prproj`, '<?xml version="1.0" encoding="UTF-8"?>\n<PremiereData Version="3">\n  <Project>\n    <Resources/>\n  </Project>\n</PremiereData>');
+        }
+
+        if (selectedAE) {
+          const aeDir = await ensureDir(projectDir, ['02_After Effects']);
+          await writeFile(aeDir, `${folderName}.aep`, JSON.stringify({
+            version: "1.0",
+            name: folderName,
+            composition: { width: 1920, height: 1080, frameRate: 30, duration: 10 }
+          }, null, 2));
+        }
+
+        setStatusMsg(`Estructura creada exitosamente dentro de: ${destinationPath}/${empresa}/${folderName}`);
       }
     } catch (err) {
       console.error(err);
       setStatusMsg(`Error al generar: ${err.message}`);
-      setIsGenerating(false);
     } finally {
-      if (window.electronAPI) setIsGenerating(false);
+      setIsGenerating(false);
     }
   };
 
