@@ -210,7 +210,7 @@ ipcMain.handle('select-directory', async () => {
   return result.filePaths[0];
 });
 
-ipcMain.handle('create-folder-structure', async (event, { rootPath, empresa, proyecto, templates }) => {
+ipcMain.handle('create-folder-structure', async (event, { rootPath, empresa, proyecto, templates, options = {} }) => {
   try {
     const today = new Date().toISOString().split('T')[0];
     const safeEmpresa = empresa.replace(/ /g, '_');
@@ -237,6 +237,10 @@ ipcMain.handle('create-folder-structure', async (event, { rootPath, empresa, pro
       '05_imágenes/PNG',
       '06_IA'
     ];
+
+    if (options.incSFX) dirs.push('04_audio/SFX_Comunes');
+    if (options.incLogos) dirs.push('03_video/Logotipos_Marca');
+    if (options.incMOGRTs) dirs.push('01_Premiere Pro/MOGRTs_Sovereign');
     
     for (const dir of dirs) {
       await fs.mkdir(path.join(projectPath, dir), { recursive: true });
@@ -246,22 +250,34 @@ ipcMain.handle('create-folder-structure', async (event, { rootPath, empresa, pro
       ? path.join(process.cwd(), 'public', 'plantillas_adobe')
       : path.join(__dirname, '../dist', 'plantillas_adobe');
 
+    const writePlaceholderPrproj = async (dest) => {
+      const header = '<?xml version="1.0" encoding="UTF-8"?>\n<PremiereData Version="3">\n  <Project>\n    <Resources/>\n    <Sequence>\n      <Media>\n        <VideoChannelCount>1</VideoChannelCount>\n        <AudioChannelCount>2</AudioChannelCount>\n      </Media>\n    </Sequence>\n  </Project>\n</PremiereData>';
+      await fs.writeFile(dest, header, 'utf-8');
+    };
+
+    const writePlaceholderAep = async (dest) => {
+      const header = `{\n  "version": "1.0",\n  "name": "${folderName}",\n  "composition": {\n    "width": 1920,\n    "height": 1080,\n    "frameRate": 30,\n    "duration": 10\n  }\n}`;
+      await fs.writeFile(dest, header, 'utf-8');
+    };
+
     if (templates.premiere) {
       const src = path.join(basePath, 'premiere_pro', `${templates.premiere}.prproj`);
       const dest = path.join(projectPath, '01_Premiere Pro', `${folderName}.prproj`);
-      if (!fs.existsSync(src)) {
-        return { success: false, error: `Plantilla de Premiere no encontrada: ${templates.premiere}` };
+      if (existsSync(src)) {
+        await fs.copyFile(src, dest);
+      } else {
+        await writePlaceholderPrproj(dest);
       }
-      await fs.copyFile(src, dest);
     }
 
     if (templates.afterEffects) {
       const src = path.join(basePath, 'after_effects', `${templates.afterEffects}.aep`);
       const dest = path.join(projectPath, '02_After Effects', `${folderName}.aep`);
-      if (!fs.existsSync(src)) {
-        return { success: false, error: `Plantilla de After Effects no encontrada: ${templates.afterEffects}` };
+      if (existsSync(src)) {
+        await fs.copyFile(src, dest);
+      } else {
+        await writePlaceholderAep(dest);
       }
-      await fs.copyFile(src, dest);
     }
 
     return { success: true, projectPath };
