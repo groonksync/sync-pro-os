@@ -210,73 +210,49 @@ ipcMain.handle('select-directory', async () => {
   return result.filePaths[0];
 });
 
-ipcMain.handle('create-folder-structure', async (event, { rootPath, empresa, proyecto, templates, options = {} }) => {
+ipcMain.handle('create-folder-structure', async (event, { rootPath, cliente, proyecto, projectDate, templates }) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    const safeEmpresa = empresa.replace(/ /g, '_');
-    const safeProyecto = proyecto.replace(/ /g, '_');
+    const today = projectDate || new Date().toISOString().split('T')[0];
+    const safeCliente = cliente ? cliente.replace(/\s+/g, '_') : '';
+    const safeProyecto = (proyecto || 'PROYECTO').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_áéíóúÁÉÍÓÚüÜñÑ-]/g, '');
     
-    const companyPath = path.join(rootPath, empresa);
-    await fs.mkdir(companyPath, { recursive: true });
-    
-    const folderName = `${today}_${safeEmpresa}_${safeProyecto}`;
-    const projectPath = path.join(companyPath, folderName);
-    await fs.mkdir(projectPath, { recursive: true });
-    
-    const dirs = [
-      '01_Premiere Pro',
-      '02_After Effects',
-      '03_video/video 01',
-      '03_video/video 02',
-      '03_video/video 03',
-      '03_video/video 04',
-      '03_video/video 06',
-      '03_video/video bar',
-      '03_video/video tragos',
-      '04_audio',
-      '05_imágenes/PNG',
-      '06_IA'
-    ];
+    const folderName = `${today.replace(/-/g, '')}_${safeProyecto}`;
 
-    if (options.incSFX) dirs.push('04_audio/SFX_Comunes');
-    if (options.incLogos) dirs.push('03_video/Logotipos_Marca');
-    if (options.incMOGRTs) dirs.push('01_Premiere Pro/MOGRTs_Sovereign');
-    
+    let basePath = rootPath;
+    if (safeCliente) {
+      basePath = path.join(rootPath, safeCliente);
+    }
+
+    const projectPath = path.join(basePath, folderName);
+    await fs.mkdir(projectPath, { recursive: true });
+
+    const dirs = ['01_PR', '02_AE', '03_Videos', '04_Audios', '05_Imágenes'];
+
     for (const dir of dirs) {
       await fs.mkdir(path.join(projectPath, dir), { recursive: true });
     }
 
-    const basePath = process.env.VITE_DEV_SERVER_URL 
+    const templatesDir = process.env.VITE_DEV_SERVER_URL 
       ? path.join(process.cwd(), 'public', 'plantillas_adobe')
       : path.join(__dirname, '../dist', 'plantillas_adobe');
 
-    const writePlaceholderPrproj = async (dest) => {
-      const header = '<?xml version="1.0" encoding="UTF-8"?>\n<PremiereData Version="3">\n  <Project>\n    <Resources/>\n    <Sequence>\n      <Media>\n        <VideoChannelCount>1</VideoChannelCount>\n        <AudioChannelCount>2</AudioChannelCount>\n      </Media>\n    </Sequence>\n  </Project>\n</PremiereData>';
-      await fs.writeFile(dest, header, 'utf-8');
-    };
-
-    const writePlaceholderAep = async (dest) => {
-      const header = `{\n  "version": "1.0",\n  "name": "${folderName}",\n  "composition": {\n    "width": 1920,\n    "height": 1080,\n    "frameRate": 30,\n    "duration": 10\n  }\n}`;
-      await fs.writeFile(dest, header, 'utf-8');
-    };
-
     if (templates.premiere) {
-      const src = path.join(basePath, 'premiere_pro', `${templates.premiere}.prproj`);
-      const dest = path.join(projectPath, '01_Premiere Pro', `${folderName}.prproj`);
+      const src = path.join(templatesDir, 'premiere_pro', `${templates.premiere}.prproj`);
+      const dest = path.join(projectPath, '01_PR', `${folderName}.prproj`);
       if (existsSync(src)) {
         await fs.copyFile(src, dest);
       } else {
-        await writePlaceholderPrproj(dest);
+        await fs.writeFile(dest, '', 'utf-8');
       }
     }
 
     if (templates.afterEffects) {
-      const src = path.join(basePath, 'after_effects', `${templates.afterEffects}.aep`);
-      const dest = path.join(projectPath, '02_After Effects', `${folderName}.aep`);
+      const src = path.join(templatesDir, 'after_effects', `${templates.afterEffects}.aep`);
+      const dest = path.join(projectPath, '02_AE', `${folderName}.aep`);
       if (existsSync(src)) {
         await fs.copyFile(src, dest);
       } else {
-        await writePlaceholderAep(dest);
+        await fs.writeFile(dest, '', 'utf-8');
       }
     }
 
