@@ -1124,26 +1124,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
   );
 };
 
-// ── REORGANIZED 3-COLUMN PROJECT ENGINE VIEW ──
 const ProjectEngineView = ({ isDark = true }) => {
   const t = useTheme(isDark);
-  const [projects, setProjects] = useState(() => {
-    return JSON.parse(localStorage.getItem('inefable_proyectos_edicion') || '[]');
-  });
-  const [activeProject, setActiveProject] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('Todos');
-  const [searchTerm, setSearchTerm] = useState('');
-  
-  // Form states
-  const [formName, setFormName] = useState('');
-  const [formClient, setFormClient] = useState('');
-  const [formStatus, setFormStatus] = useState('En Curso');
-  const [formStartDate, setFormStartDate] = useState(new Date().toISOString().split('T')[0]);
-  const [formEndDate, setFormEndDate] = useState('');
-  const [formRate, setFormRate] = useState('');
-  const [formNotes, setFormNotes] = useState('');
 
-  // Folder structure generator states
   const [carpetaMaestra, setCarpetaMaestra] = useState('Base de Edición Principal');
   const [empresa, setEmpresa] = useState('');
   const [proyecto, setProyecto] = useState('');
@@ -1159,132 +1142,20 @@ const ProjectEngineView = ({ isDark = true }) => {
   const [incMOGRTs, setIncMOGRTs] = useState(false);
 
   const [treeCollapsed, setTreeCollapsed] = useState({
-    root: false,
-    client: false,
-    project: false,
-    pr: false,
-    ae: false,
-    video: false,
-    audio: false,
-    img: false,
+    root: false, client: false, project: false,
+    pr: false, ae: false, video: false, audio: false, img: false,
   });
 
   const templates = [
     '1080x1920_25fps', '1080x1920_30fps', '1080x1920_60fps',
     '1920x1080_25fps', '1920x1080_30fps', '1920x1080_60fps',
-    '4K_Horizontal_25fps', '4K_Horizontal_30fps', '4K_Horizontal_60fps'
+    '4K_Horizontal_25fps', '4K_Horizontal_30fps', '4K_Horizontal_60fps',
+    '4K_Vertical_25fps', '4K_Vertical_30fps', '4K_Vertical_60fps'
   ];
 
   const cleanFolderName = (txt) => txt.replace(/ /g, '_');
   const today = new Date().toISOString().split('T')[0];
   const finalProjectFolderName = `${today}_${cleanFolderName(empresa || 'CLIENTE')}_${cleanFolderName(proyecto || 'PROYECTO')}`;
-
-  const saveProjectsToStorage = (updatedList) => {
-    localStorage.setItem('inefable_proyectos_edicion', JSON.stringify(updatedList));
-    setProjects(updatedList);
-  };
-
-  const handleCreateProject = () => {
-    const name = prompt('Nombre del Proyecto de Edición:');
-    if (!name || !name.trim()) return;
-    const client = prompt('Cliente / Marca:');
-    
-    const newProj = {
-      id: crypto.randomUUID(),
-      nombre: name.trim(),
-      cliente: client ? client.trim() : 'Independiente',
-      estado: 'En Curso',
-      fecha_inicio: new Date().toISOString().split('T')[0],
-      fecha_entrega: '',
-      tarifa: 0,
-      notas: 'Notas de edición...'
-    };
-    
-    const updated = [newProj, ...projects];
-    saveProjectsToStorage(updated);
-    setActiveProject(newProj);
-    
-    // Sync state for detail fields
-    setFormName(newProj.nombre);
-    setFormClient(newProj.cliente);
-    setFormStatus(newProj.estado);
-    setFormStartDate(newProj.fecha_inicio);
-    setFormEndDate(newProj.fecha_entrega);
-    setFormRate(newProj.tarifa);
-    setFormNotes(newProj.notas);
-  };
-
-  const handleSelectProject = (p) => {
-    setActiveProject(p);
-    setFormName(p.nombre);
-    setFormClient(p.cliente);
-    setFormStatus(p.estado);
-    setFormStartDate(p.fecha_inicio);
-    setFormEndDate(p.fecha_entrega);
-    setFormRate(p.tarifa);
-    setFormNotes(p.notas);
-  };
-
-  const handleUpdateProject = () => {
-    if (!activeProject) return;
-    const updated = projects.map(p => {
-      if (p.id === activeProject.id) {
-        const item = {
-          ...p,
-          nombre: formName,
-          cliente: formClient,
-          estado: formStatus,
-          fecha_inicio: formStartDate,
-          fecha_entrega: formEndDate,
-          tarifa: parseFloat(formRate) || 0,
-          notas: formNotes
-        };
-        setActiveProject(item);
-        return item;
-      }
-      return p;
-    });
-    saveProjectsToStorage(updated);
-    alert('✅ Cambios del proyecto guardados');
-  };
-
-  const handleDeleteProject = (projId, e) => {
-    e.stopPropagation();
-    const proj = projects.find(p => p.id === projId);
-    if (!proj) return;
-    if (!confirm(`¿Eliminar el proyecto "${proj.nombre}" y enviarlo a la papelera?`)) return;
-    
-    // Move to local trash
-    try {
-      const localTrash = JSON.parse(localStorage.getItem('inefable_local_trash') || '[]');
-      localTrash.push({
-        id: `trash-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        tipo_dato: 'proyecto',
-        nombre_item: proj.nombre,
-        datos_originales: proj,
-        borrado_el: new Date().toISOString(),
-        expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-      });
-      localStorage.setItem('inefable_local_trash', JSON.stringify(localTrash));
-    } catch (err) { console.error(err); }
-
-    const updated = projects.filter(p => p.id !== projId);
-    saveProjectsToStorage(updated);
-    if (activeProject?.id === projId) {
-      setActiveProject(null);
-    }
-  };
-
-  const downloadNotes = () => {
-    if (!activeProject) return;
-    const element = document.createElement("a");
-    const file = new Blob([formNotes], {type: 'text/plain'});
-    element.href = URL.createObjectURL(file);
-    element.download = `notas_proyecto_${activeProject.nombre.replace(/ /g, '_')}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
 
   const handleSelectDirectory = async () => {
     try {
@@ -1303,8 +1174,8 @@ const ProjectEngineView = ({ isDark = true }) => {
   };
 
   const handleGenerate = async () => {
-    if (!carpetaMaestra || !empresa || !proyecto) {
-      alert('Completa la nomenclatura.');
+    if (!destinationPath || !empresa || !proyecto) {
+      alert('Completa todos los campos obligatorios: Directorio, Cliente y Proyecto.');
       return;
     }
     setIsGenerating(true);
@@ -1315,21 +1186,18 @@ const ProjectEngineView = ({ isDark = true }) => {
           rootPath: destinationPath,
           empresa,
           proyecto,
-          templates: {
-            premiere: selectedPremiere,
-            afterEffects: selectedAE
-          }
+          templates: { premiere: selectedPremiere, afterEffects: selectedAE },
+          options: { incSFX, incLogos, incMOGRTs }
         });
         if (result && result.success) {
-          setStatusMsg('Estructura inyectada en el disco local.');
+          setStatusMsg(`Estructura creada exitosamente en: ${result.projectPath || destinationPath}`);
         } else {
           setStatusMsg(`Error: ${result ? result.error : 'Desconocido'}`);
         }
       } else {
-        // Simulado en web
         setTimeout(() => {
           setIsGenerating(false);
-          setStatusMsg('Estructura inyectada en el disco local (Simulado en Web).');
+          setStatusMsg('Estructura generada exitosamente (Simulado en Web).');
         }, 1500);
       }
     } catch (err) {
@@ -1337,9 +1205,7 @@ const ProjectEngineView = ({ isDark = true }) => {
       setStatusMsg(`Error al generar: ${err.message}`);
       setIsGenerating(false);
     } finally {
-      if (window.electronAPI) {
-        setIsGenerating(false);
-      }
+      if (window.electronAPI) setIsGenerating(false);
     }
   };
 
@@ -1347,472 +1213,259 @@ const ProjectEngineView = ({ isDark = true }) => {
     setTreeCollapsed(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  // Filtrado de proyectos
-  const filteredProjects = projects.filter(p => {
-    const matchSearch = p.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        p.cliente.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = filterStatus === 'Todos' || p.estado === filterStatus;
-    return matchSearch && matchStatus;
-  });
-
-  // Estadísticas
-  const total = projects.length;
-  const enCurso = projects.filter(p => p.estado === 'En Curso').length;
-  const completados = projects.filter(p => p.estado === 'Completado').length;
-  const pausados = projects.filter(p => p.estado === 'Pausado').length;
-
   return (
-    <div className="flex-grow flex flex-col p-6 space-y-6 max-w-[1400px] mx-auto w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
-       {/* Tab Title */}
-       <header className="flex justify-between items-center pb-4" style={{ borderBottom: `1px solid ${t.border}` }}>
-          <div>
-             <h2 className="text-base font-black uppercase tracking-wider text-white">Mesa de Trabajo — Proyectos de Edición</h2>
-             <p className="text-[7.5px] font-bold uppercase tracking-widest" style={{ color: t.textDim }}>Workspace de control de montaje, tarifas y notas de corte</p>
-          </div>
-          <div className="flex items-center gap-2 text-[8px] font-black uppercase text-neutral-400">
-             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-             Nexus Activo
-          </div>
-       </header>
+    <div className="flex-grow flex flex-col p-6 space-y-6 w-full animate-in fade-in duration-500 overflow-y-auto mac-scrollbar">
+      <header className="flex justify-between items-center pb-4" style={{ borderBottom: `1px solid ${t.border}` }}>
+        <div>
+          <h2 className="text-base font-black uppercase tracking-wider text-white">Generador de Estructura de Proyectos</h2>
+          <p className="text-[7.5px] font-bold uppercase tracking-widest" style={{ color: t.textDim }}>
+            Crea carpetas y archivos .prproj / .aep para Premiere Pro y After Effects
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-[8px] font-black uppercase text-neutral-400">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+          Sistema Activo
+        </div>
+      </header>
 
-       {/* THREE COLUMN GRID */}
-       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-          
-          {/* COLUMN 1: LISTA DE PROYECTOS */}
-          <div className="flex flex-col space-y-5">
-             {/* Stats & Badge */}
-             <div className="p-4 rounded-xl space-y-3.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                <div className="flex justify-between items-center">
-                   <span className="text-[9px] font-black uppercase tracking-widest text-white">Estadísticas de Edición</span>
-                   <span className="text-[9px] bg-white/5 border border-white/5 px-2 py-0.5 rounded font-bold text-white font-mono">{total} Proyectos</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                   <div className="p-2 rounded bg-zinc-950/40 border border-white/2">
-                      <p className="text-[6.5px] font-bold text-neutral-400 uppercase tracking-wider">En Curso</p>
-                      <p className="text-base font-bold text-sky-400">{enCurso}</p>
-                   </div>
-                   <div className="p-2 rounded bg-zinc-950/40 border border-white/2">
-                      <p className="text-[6.5px] font-bold text-neutral-400 uppercase tracking-wider">Completados</p>
-                      <p className="text-base font-bold text-emerald-400">{completados}</p>
-                   </div>
-                   <div className="p-2 rounded bg-zinc-950/40 border border-white/2">
-                      <p className="text-[6.5px] font-bold text-neutral-400 uppercase tracking-wider">Pausados</p>
-                      <p className="text-base font-bold text-amber-400">{pausados}</p>
-                   </div>
-                </div>
-             </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-5">
+          <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+            <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+              <FolderOpen size={14} color={t.accent}/>
+              <span className="text-[10px] font-black uppercase tracking-widest text-white">Configuración del Proyecto</span>
+            </div>
 
-             {/* Proyectos CRUD list */}
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-2">
-                      <Briefcase size={14} color={t.accent}/>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Lista de Proyectos</span>
-                   </div>
-                   <button onClick={handleCreateProject} className="px-2.5 py-1 rounded text-[7.5px] font-black uppercase transition-all"
-                     style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: t.panel }}>
-                      + Nuevo Proyecto
-                   </button>
-                </div>
-
-                {/* Filters */}
+            <div className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Directorio de Destino</label>
                 <div className="flex gap-2">
-                   <input type="text" placeholder="Filtrar..." value={searchTerm} onChange={e=>setSearchTerm(e.target.value)}
-                     className="flex-1 rounded p-2 text-[9px] outline-none"
-                     style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                   
-                   <select value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}
-                     className="rounded p-1 text-[8.5px] font-bold uppercase tracking-wider outline-none cursor-pointer"
-                     style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
-                      <option value="Todos">Todos</option>
-                      <option value="En Curso">En Curso</option>
-                      <option value="Completado">Completado</option>
-                      <option value="Pausado">Pausado</option>
-                   </select>
+                  <input type="text" value={destinationPath || 'No seleccionado...'} disabled
+                    className="flex-1 rounded p-2 text-[9px] font-mono outline-none truncate"
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textDim }} />
+                  <button onClick={handleSelectDirectory} className="px-3 rounded text-[8px] font-black uppercase transition-all"
+                    style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: t.panel }}>Vincular</button>
                 </div>
+              </div>
 
-                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 mac-scrollbar">
-                   {filteredProjects.map(p => (
-                      <div key={p.id} onClick={() => handleSelectProject(p)} className="p-3 rounded-lg flex items-center justify-between cursor-pointer transition-all hover:bg-white/2"
-                        style={{ border: `1px solid ${activeProject?.id === p.id ? t.accent : t.border}` }}>
-                         <div className="min-w-0">
-                            <h4 className="text-xs font-bold text-white truncate max-w-[150px] uppercase">{p.nombre}</h4>
-                            <p className="text-[7.5px] text-neutral-500 mt-0.5 uppercase">Cliente: {p.cliente}</p>
-                         </div>
-                         <div className="flex items-center gap-2">
-                            <span className="text-[6.5px] font-mono font-black uppercase px-1.5 py-0.5 rounded"
-                              style={{
-                                 border: `1px solid ${p.estado === 'Completado' ? '#10b981' : p.estado === 'Pausado' ? '#fbbf24' : '#60a5fa'}`,
-                                 color: p.estado === 'Completado' ? '#10b981' : p.estado === 'Pausado' ? '#fbbf24' : '#60a5fa'
-                              }}>
-                               {p.estado}
-                            </span>
-                            <button onClick={(e) => handleDeleteProject(p.id, e)} className="p-1 rounded transition-all hover:bg-rose-500/10 text-neutral-500 hover:text-rose-400">
-                               <Trash2 size={11}/>
-                            </button>
-                         </div>
-                      </div>
-                   ))}
-                   {filteredProjects.length === 0 && (
-                      <div className="py-8 text-center" style={{ border: `1px dashed ${t.border}`, borderRadius: 8 }}>
-                         <p className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500">Sin proyectos registrados.</p>
-                      </div>
-                   )}
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Carpeta Maestra</label>
+                  <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)}
+                    className="w-full rounded p-2 text-[10px] outline-none"
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
                 </div>
-             </div>
+                <div className="space-y-1">
+                  <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Empresa</label>
+                  <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanizacion"
+                    className="w-full rounded p-2 text-[10px] outline-none"
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Proyecto</label>
+                <input type="text" value={proyecto} onChange={e=>setProyecto(e.target.value)} placeholder="Ej: Spot Comercial"
+                  className="w-full rounded p-2 text-[10px] outline-none"
+                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Plantilla Premiere Pro</label>
+                  <select value={selectedPremiere} onChange={e=>setSelectedPremiere(e.target.value)}
+                    className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
+                    <option value="">Ninguna (crear placeholder)</option>
+                    {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Plantilla After Effects</label>
+                  <select value={selectedAE} onChange={e=>setSelectedAE(e.target.value)}
+                    className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
+                    <option value="">Ninguna (crear placeholder)</option>
+                    {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Módulos Extra</label>
+                <div className="grid grid-cols-3 gap-1">
+                  <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                    <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="accent-neutral-500" />
+                    <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>SFX Audio</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                    <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="accent-neutral-500" />
+                    <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Logos</span>
+                  </label>
+                  <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
+                    <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="accent-neutral-500" />
+                    <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>MOGRTs</span>
+                  </label>
+                </div>
+              </div>
+
+              <button onClick={handleGenerate} disabled={isGenerating || !destinationPath}
+                className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
+                style={{
+                  backgroundColor: isGenerating ? t.panel : t.accent,
+                  border: `1px solid ${isGenerating || !destinationPath ? t.border : t.accent}`,
+                  color: isGenerating || !destinationPath ? t.textDim : '#000',
+                  cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer'
+                }}>
+                {isGenerating ? 'Generando...' : 'Generar Estructura'}
+              </button>
+              {statusMsg && <p className="text-center text-[7.5px] font-black uppercase tracking-wider text-emerald-500 mt-1">{statusMsg}</p>}
+            </div>
           </div>
+        </div>
 
-          {/* COLUMN 2: ENTORNO E INGESTA */}
-          <div className="flex flex-col space-y-5">
-             {/* Local Folder Structure Generator */}
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <FolderOpen size={14} color={t.accent}/>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Generador de Entorno Local</span>
+        <div className="space-y-5">
+          <div className="p-5 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+            <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
+              <div className="flex items-center gap-2">
+                <Grid size={14} color={t.accent}/>
+                <span className="text-[10px] font-black uppercase tracking-widest text-white">Vista Previa del Árbol</span>
+              </div>
+              <span className="text-[7px] font-mono text-neutral-400">Estructura Dinámica</span>
+            </div>
+
+            <div className="font-mono text-[9px] space-y-1.5 text-neutral-300 pl-1 select-none overflow-y-auto max-h-[500px] mac-scrollbar">
+              <div>
+                <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('root')}>
+                  <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.root ? '-rotate-90' : ''}`}/>
+                  <Folder size={10} color={t.accent}/>
+                  <span className="font-bold text-white">{carpetaMaestra || 'Carpeta Maestra'}</span>
                 </div>
-
-                <div className="space-y-3 text-xs">
-                   <div className="space-y-1">
-                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Directorio de Destino</label>
-                      <div className="flex gap-2">
-                         <input type="text" value={destinationPath || 'No seleccionado...'} disabled
-                           className="flex-1 rounded p-2 text-[9px] font-mono outline-none truncate"
-                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textDim }} />
-                         <button onClick={handleSelectDirectory} className="px-3 rounded text-[8px] font-black uppercase transition-all"
-                           style={{ border: `1px solid ${t.accent}`, color: t.accent, backgroundColor: t.panel }}>Vincular</button>
+                {!treeCollapsed.root && (
+                  <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                    <div>
+                      <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('client')}>
+                        <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.client ? '-rotate-90' : ''}`}/>
+                        <Folder size={10} color={t.accent}/>
+                        <span className="font-bold">{empresa || 'Cliente'}</span>
                       </div>
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Carpeta Maestra</label>
-                         <input type="text" value={carpetaMaestra} onChange={e=>setCarpetaMaestra(e.target.value)}
-                           className="w-full rounded p-2 text-[10px] outline-none"
-                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Empresa</label>
-                         <input type="text" value={empresa} onChange={e=>setEmpresa(e.target.value)} placeholder="Ej: Urbanizacion"
-                           className="w-full rounded p-2 text-[10px] outline-none"
-                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-                   </div>
-
-                   <div className="space-y-1">
-                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Proyecto</label>
-                      <input type="text" value={proyecto} onChange={e=>setProyecto(e.target.value)} placeholder="Ej: Spot Comercial"
-                         className="w-full rounded p-2 text-[10px] outline-none"
-                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                   </div>
-
-                   <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Premiere Template</label>
-                         <select value={selectedPremiere} onChange={e=>setSelectedPremiere(e.target.value)}
-                           className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
-                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="">Ninguna</option>
-                            {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
-                         </select>
-                      </div>
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">After Effects Template</label>
-                         <select value={selectedAE} onChange={e=>setSelectedAE(e.target.value)}
-                           className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
-                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
-                            <option value="">Ninguna</option>
-                            {templates.map(tmp => <option key={tmp} value={tmp}>{tmp}</option>)}
-                         </select>
-                      </div>
-                   </div>
-
-                   <div className="space-y-1">
-                      <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Módulos Extra</label>
-                      <div className="grid grid-cols-3 gap-1">
-                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
-                            <input type="checkbox" checked={incSFX} onChange={e=>setIncSFX(e.target.checked)} className="accent-neutral-500" />
-                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>SFX Audio</span>
-                         </label>
-                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
-                            <input type="checkbox" checked={incLogos} onChange={e=>setIncLogos(e.target.checked)} className="accent-neutral-500" />
-                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Logos</span>
-                         </label>
-                         <label className="flex items-center gap-1.5 p-1.5 rounded cursor-pointer transition-all" style={{ border: `1px solid ${t.border}` }}>
-                            <input type="checkbox" checked={incMOGRTs} onChange={e=>setIncMOGRTs(e.target.checked)} className="accent-neutral-500" />
-                            <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>MOGRTs</span>
-                         </label>
-                      </div>
-                   </div>
-
-                   <button onClick={handleGenerate} disabled={isGenerating || !destinationPath}
-                      className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider flex items-center justify-center gap-2 transition-all mt-2"
-                      style={{
-                         backgroundColor: t.panel,
-                         border: `1px solid ${isGenerating || !destinationPath ? t.border : t.accent}`,
-                         color: isGenerating || !destinationPath ? t.textDim : t.accent,
-                         cursor: isGenerating || !destinationPath ? 'not-allowed' : 'pointer'
-                      }}>
-                      {isGenerating ? 'Generando...' : 'Generar Estructura'}
-                   </button>
-                   {statusMsg && <p className="text-center text-[7.5px] font-black uppercase tracking-wider text-emerald-500 mt-1">{statusMsg}</p>}
-                </div>
-             </div>
-
-             {/* Interactive Visual Directory Tree */}
-             <div className="p-5 rounded-xl space-y-3" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center justify-between pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <div className="flex items-center gap-2">
-                      <Grid size={14} color={t.accent}/>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-white">Visualizador de Árbol de Directorio</span>
-                   </div>
-                   <span className="text-[7px] font-mono text-neutral-400">Estructura Dinámica</span>
-                </div>
-
-                <div className="font-mono text-[9px] space-y-1.5 text-neutral-300 pl-1 select-none overflow-y-auto max-h-[220px] mac-scrollbar">
-                   {/* Root Node */}
-                   <div>
-                      <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('root')}>
-                         <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.root ? '-rotate-90' : ''}`}/>
-                         <Folder size={10} color={t.accent}/>
-                         <span className="font-bold text-white">{carpetaMaestra || 'Carpeta Maestra'}</span>
-                      </div>
-                      
-                      {!treeCollapsed.root && (
-                         <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
-                            {/* Client Node */}
-                            <div>
-                               <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('client')}>
-                                  <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.client ? '-rotate-90' : ''}`}/>
-                                  <Folder size={10} color={t.accent}/>
-                                  <span className="font-bold">{empresa || 'Cliente'}</span>
-                               </div>
-                               
-                               {!treeCollapsed.client && (
-                                  <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
-                                     {/* Project Folder */}
-                                     <div>
-                                        <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('project')}>
-                                           <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.project ? '-rotate-90' : ''}`}/>
-                                           <Folder size={10} color={t.accent}/>
-                                           <span className="text-white truncate max-w-[170px]">{finalProjectFolderName}</span>
-                                        </div>
-
-                                        {!treeCollapsed.project && (
-                                           <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
-                                              {/* 01_Premiere */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('pr')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.pr ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>01_Premiere Pro</span>
-                                                 </div>
-                                                 {!treeCollapsed.pr && (
-                                                    <div className="pl-4 border-l border-neutral-800 space-y-1 mt-1">
-                                                       {selectedPremiere && (
-                                                          <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                             <File size={9}/>
-                                                             <span>{finalProjectFolderName}.prproj</span>
-                                                          </div>
-                                                       )}
-                                                       {incMOGRTs && (
-                                                          <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                             <Folder size={9}/>
-                                                             <span>MOGRTs_Sovereign</span>
-                                                          </div>
-                                                       )}
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 02_AE */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('ae')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.ae ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>02_After Effects</span>
-                                                 </div>
-                                                 {!treeCollapsed.ae && selectedAE && (
-                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
-                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                          <File size={9}/>
-                                                          <span>{finalProjectFolderName}.aep</span>
-                                                       </div>
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 03_video */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('video')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.video ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>03_video</span>
-                                                 </div>
-                                                 {!treeCollapsed.video && (
-                                                    <div className="pl-4 border-l border-neutral-800 space-y-0.5 mt-1 text-neutral-400 text-[8.5px]">
-                                                       <div>📁 video 01</div>
-                                                       <div>📁 video 02</div>
-                                                       <div>📁 video 03</div>
-                                                       <div>📁 video 04</div>
-                                                       <div>📁 video 06</div>
-                                                       <div>📁 video bar</div>
-                                                       <div>📁 video tragos</div>
-                                                       {incLogos && <div>📁 PNG/Logotipos_Marca</div>}
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 04_audio */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('audio')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.audio ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>04_audio</span>
-                                                 </div>
-                                                 {!treeCollapsed.audio && incSFX && (
-                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
-                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                          <Folder size={9}/>
-                                                          <span>SFX_Comunes</span>
-                                                       </div>
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 05_imágenes */}
-                                              <div>
-                                                 <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('img')}>
-                                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.img ? '-rotate-90' : ''}`}/>
-                                                    <Folder size={10} color="#94a3b8"/>
-                                                    <span>05_imágenes</span>
-                                                 </div>
-                                                 {!treeCollapsed.img && (
-                                                    <div className="pl-4 border-l border-neutral-800 mt-1">
-                                                       <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
-                                                          <Folder size={9}/>
-                                                          <span>PNG</span>
-                                                       </div>
-                                                    </div>
-                                                 )}
-                                              </div>
-
-                                              {/* 06_IA */}
-                                              <div className="flex items-center gap-1 text-neutral-400">
-                                                 <Folder size={10} color="#94a3b8"/>
-                                                 <span>06_IA</span>
-                                              </div>
-                                           </div>
-                                        )}
-                                     </div>
-                                  </div>
-                               )}
+                      {!treeCollapsed.client && (
+                        <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                          <div>
+                            <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('project')}>
+                              <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.project ? '-rotate-90' : ''}`}/>
+                              <Folder size={10} color={t.accent}/>
+                              <span className="text-white truncate max-w-[300px]">{finalProjectFolderName}</span>
                             </div>
-                         </div>
+                            {!treeCollapsed.project && (
+                              <div className="pl-4 border-l border-neutral-800 space-y-1.5 mt-1.5">
+                                <div>
+                                  <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('pr')}>
+                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.pr ? '-rotate-90' : ''}`}/>
+                                    <Folder size={10} color="#94a3b8"/>
+                                    <span>01_Premiere Pro</span>
+                                  </div>
+                                  {!treeCollapsed.pr && (
+                                    <div className="pl-4 border-l border-neutral-800 space-y-1 mt-1">
+                                      <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                        <File size={9}/>
+                                        <span>{finalProjectFolderName}.prproj</span>
+                                      </div>
+                                      {incMOGRTs && (
+                                        <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                          <Folder size={9}/>
+                                          <span>MOGRTs_Sovereign</span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('ae')}>
+                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.ae ? '-rotate-90' : ''}`}/>
+                                    <Folder size={10} color="#94a3b8"/>
+                                    <span>02_After Effects</span>
+                                  </div>
+                                  {!treeCollapsed.ae && (
+                                    <div className="pl-4 border-l border-neutral-800 mt-1">
+                                      <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                        <File size={9}/>
+                                        <span>{finalProjectFolderName}.aep</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('video')}>
+                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.video ? '-rotate-90' : ''}`}/>
+                                    <Folder size={10} color="#94a3b8"/>
+                                    <span>03_video</span>
+                                  </div>
+                                  {!treeCollapsed.video && (
+                                    <div className="pl-4 border-l border-neutral-800 space-y-0.5 mt-1 text-neutral-400 text-[8.5px]">
+                                      <div>📁 video 01</div>
+                                      <div>📁 video 02</div>
+                                      <div>📁 video 03</div>
+                                      <div>📁 video 04</div>
+                                      <div>📁 video 06</div>
+                                      <div>📁 video bar</div>
+                                      <div>📁 video tragos</div>
+                                      {incLogos && <div>📁 Logotipos_Marca</div>}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('audio')}>
+                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.audio ? '-rotate-90' : ''}`}/>
+                                    <Folder size={10} color="#94a3b8"/>
+                                    <span>04_audio</span>
+                                  </div>
+                                  {!treeCollapsed.audio && incSFX && (
+                                    <div className="pl-4 border-l border-neutral-800 mt-1">
+                                      <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                        <Folder size={9}/>
+                                        <span>SFX_Comunes</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div>
+                                  <div className="flex items-center gap-1 cursor-pointer" onClick={() => toggleTree('img')}>
+                                    <ChevronDown size={10} className={`transform transition-transform ${treeCollapsed.img ? '-rotate-90' : ''}`}/>
+                                    <Folder size={10} color="#94a3b8"/>
+                                    <span>05_imágenes</span>
+                                  </div>
+                                  {!treeCollapsed.img && (
+                                    <div className="pl-4 border-l border-neutral-800 mt-1">
+                                      <div className="flex items-center gap-1 text-[8.5px] text-neutral-400">
+                                        <Folder size={9}/>
+                                        <span>PNG</span>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="flex items-center gap-1 text-neutral-400">
+                                  <Folder size={10} color="#94a3b8"/>
+                                  <span>06_IA</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       )}
-                   </div>
-                </div>
-             </div>
-          </div>
-
-          {/* COLUMN 3: DETALLE DEL PROYECTO */}
-          <div className="flex flex-col space-y-5">
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <Edit3 size={14} color={t.accent}/>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Detalles del Proyecto</span>
-                </div>
-
-                {activeProject ? (
-                   <div className="space-y-3 text-xs">
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Nombre del Proyecto</label>
-                         <input type="text" value={formName} onChange={e=>setFormName(e.target.value)}
-                           className="w-full rounded p-2 text-[10px] outline-none"
-                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                         <div className="space-y-1">
-                            <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Cliente / Marca</label>
-                            <input type="text" value={formClient} onChange={e=>setFormClient(e.target.value)}
-                              className="w-full rounded p-2 text-[10px] outline-none"
-                              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                         </div>
-                         <div className="space-y-1">
-                            <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Estado</label>
-                            <select value={formStatus} onChange={e=>setFormStatus(e.target.value)}
-                              className="w-full rounded p-2 text-[9px] outline-none cursor-pointer"
-                              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}>
-                               <option value="En Curso">En Curso</option>
-                               <option value="Completado">Completado</option>
-                               <option value="Pausado">Pausado</option>
-                            </select>
-                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                         <div className="space-y-1">
-                            <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Fecha de Inicio</label>
-                            <input type="date" value={formStartDate} onChange={e=>setFormStartDate(e.target.value)}
-                              className="w-full rounded p-2 text-[10px] outline-none"
-                              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                         </div>
-                         <div className="space-y-1">
-                            <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Fecha de Entrega</label>
-                            <input type="date" value={formEndDate} onChange={e=>setFormEndDate(e.target.value)}
-                              className="w-full rounded p-2 text-[10px] outline-none"
-                              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                         </div>
-                      </div>
-
-                      <div className="space-y-1">
-                         <label className="text-[7.5px] font-black uppercase tracking-wider text-neutral-400">Tarifa / Presupuesto ($)</label>
-                         <input type="number" value={formRate} onChange={e=>setFormRate(e.target.value)}
-                           className="w-full rounded p-2 text-[10px] font-mono outline-none"
-                           style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                      </div>
-
-                      <button onClick={handleUpdateProject}
-                         className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider transition-all mt-2"
-                         style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
-                         Guardar Cambios
-                      </button>
-                   </div>
-                ) : (
-                   <div className="py-12 text-center text-neutral-500 italic">
-                      Selecciona un proyecto de la lista para editar sus detalles.
-                   </div>
+                    </div>
+                  </div>
                 )}
-             </div>
-
-             {/* Notas de Corte & Edición */}
-             <div className="p-5 rounded-xl space-y-4" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                <div className="flex items-center gap-2 pb-2" style={{ borderBottom: `1px solid ${t.border}` }}>
-                   <FileText size={14} color={t.accent}/>
-                   <span className="text-[10px] font-black uppercase tracking-widest text-white">Notas de Corte & Edición</span>
-                </div>
-
-                {activeProject ? (
-                   <div className="space-y-3">
-                      <textarea value={formNotes} onChange={e=>setFormNotes(e.target.value)}
-                        className="w-full rounded p-3 text-[9px] font-mono outline-none h-[180px] resize-none mac-scrollbar"
-                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}
-                        placeholder="Notas de montaje..." />
-
-                      <button onClick={downloadNotes} className="w-full py-2.5 rounded font-black text-[9px] uppercase tracking-wider transition-all"
-                        style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
-                         Descargar Notas (TXT)
-                      </button>
-                   </div>
-                ) : (
-                   <div className="py-12 text-center text-neutral-500 italic">
-                      Selecciona un proyecto para ver y editar sus notas.
-                   </div>
-                )}
-             </div>
+              </div>
+            </div>
           </div>
-
-       </div>
+        </div>
+      </div>
     </div>
   );
 };
