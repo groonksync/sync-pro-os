@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Package, Search, X, ShoppingCart, CheckCircle, 
   Home, Music, Smartphone, LayoutGrid, Star, ChevronLeft, ChevronRight,
@@ -34,12 +34,12 @@ const parseWhatsAppMarkdown = (text) => {
 const getCategoryIcon = (category) => {
   const catLower = category?.toLowerCase() || '';
   if (catLower.includes('computadoras') || catLower.includes('pc') || catLower.includes('laptop')) return BoxIcon;
-  if (catLower.includes('audio') || catLower.includes('sonido') || catLower.includes('música') || catLower.includes('micrófono')) return Music;
-  if (catLower.includes('celular') || catLower.includes('teléfono') || catLower.includes('accesorio')) return Smartphone;
-  if (catLower.includes('cámara') || catLower.includes('fotografía') || catLower.includes('seguridad') || catLower.includes('video')) return Video;
-  if (catLower.includes('electrónica') || catLower.includes('fuente') || catLower.includes('forza')) return Zap;
-  if (catLower.includes('construcción') || catLower.includes('material')) return Briefcase;
-  if (catLower.includes('decoración') || catLower.includes('adorno')) return Sparkles;
+  if (catLower.includes('audio') || catLower.includes('música') || catLower.includes('micrófono')) return Music;
+  if (catLower.includes('celular') || catLower.includes('teléfono') || catLower.includes('tablet') || catLower.includes('accesorio')) return Smartphone;
+  if (catLower.includes('cámara') || catLower.includes('dron') || catLower.includes('seguridad') || catLower.includes('video')) return Video;
+  if (catLower.includes('electrónica') || catLower.includes('electrodoméstico') || catLower.includes('gamer') || catLower.includes('videojuego') || catLower.includes('fuente') || catLower.includes('forza')) return Zap;
+  if (catLower.includes('herramienta') || catLower.includes('construcción') || catLower.includes('material')) return Briefcase;
+  if (catLower.includes('hogar') || catLower.includes('cocina') || catLower.includes('decoración') || catLower.includes('adorno')) return Sparkles;
   return Tag;
 };
 
@@ -87,8 +87,9 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
   const stock = parseInt(p.stock_actual || 0);
   const displayMode = p.metadata?.stock_display_mode || 'auto';
   
-  const isAgotado = displayMode === 'force_agotado' || (displayMode === 'auto' && stock <= 0);
-  const isLow = displayMode === 'force_por_agotarse' || (displayMode === 'auto' && stock > 0 && stock <= 5);
+  const isUnlimited = displayMode === 'force_disponible_sin_stock';
+  const isAgotado = (displayMode === 'force_agotado' || (displayMode === 'auto' && stock <= 0)) && !isUnlimited && displayMode !== 'force_lanzamiento';
+  const isLow = displayMode === 'force_por_agotarse' || (displayMode === 'auto' && stock > 0 && stock <= 5 && !isUnlimited && displayMode !== 'force_lanzamiento');
 
   const isOferta = !!(p.es_oferta || p.metadata?.es_oferta);
   const isCombo = !!(p.es_combo || p.metadata?.es_combo);
@@ -161,9 +162,13 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
             )}
           </div>
           {isAgotado ? (
-            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sin Stock</span>
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#ef4444', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{"Sin Stock"}</span>
+          ) : displayMode === 'force_lanzamiento' ? (
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#8b5cf6', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{"Muy Pronto"}</span>
+          ) : isUnlimited ? (
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{"Disponible"}</span>
           ) : displayMode === 'force_por_agotarse' ? (
-            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Últimas uds</span>
+            <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{"Últimas uds"}</span>
           ) : isLow ? (
             <span style={{ fontSize: isMobile ? 6 : 7, fontWeight: 900, color: '#fbbf24', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stock} Disp.</span>
           ) : (
@@ -171,35 +176,8 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
           )}
         </div>
 
-        {/* Image container — AGOTADO overlay lives ONLY here */}
+        {/* Image container */}
         <div style={{ height: isMobile ? 140 : 250, borderRadius: 12, backgroundColor: t.isDark ? t.bg : '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, position: 'relative' }}>
-          {isAgotado && (
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              backgroundColor: 'rgba(0,0,0,0.55)',
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 6,
-              borderRadius: 12
-            }}>
-              <span style={{
-                backgroundColor: '#ef4444',
-                color: '#ffffff',
-                fontSize: isMobile ? 8 : 11,
-                fontWeight: 900,
-                padding: isMobile ? '5px 12px' : '9px 22px',
-                borderRadius: 30,
-                letterSpacing: '0.15em',
-                textTransform: 'uppercase',
-                boxShadow: '0 4px 20px rgba(239, 68, 68, 0.5)'
-              }}>AGOTADO</span>
-            </div>
-          )}
-
           {/* Eye-catching badge overlays */}
           {!isAgotado && isOferta && discountPercent > 0 && (
             <div style={{ position: 'absolute', top: 10, left: 10, zIndex: 5, backgroundColor: '#ef4444', color: '#fff', fontSize: 8, fontWeight: 950, padding: '4px 8px', borderRadius: 8, textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 4px 10px rgba(239,68,68,0.3)' }}>
@@ -212,7 +190,44 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
             </div>
           )}
 
-          {!isAgotado && isLow && (
+          {/* Bottom overlays without card blur */}
+          {isAgotado ? (
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              backgroundColor: '#ef4444',
+              color: '#ffffff',
+              fontSize: isMobile ? 7 : 9,
+              fontWeight: 900,
+              padding: '5px 0',
+              textAlign: 'center',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              zIndex: 5
+            }}>
+              {"\u26a0\ufe0f Agotado / Sin Stock"}
+            </div>
+          ) : displayMode === 'force_lanzamiento' ? (
+            <div style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+              color: '#ffffff',
+              fontSize: isMobile ? 7 : 9,
+              fontWeight: 900,
+              padding: '5px 0',
+              textAlign: 'center',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              zIndex: 5
+            }}>
+              {"\ud83d\ude80 Pr\u00f3ximo Lanzamiento"}
+            </div>
+          ) : (!isAgotado && isLow) ? (
             <div style={{
               position: 'absolute',
               bottom: 0,
@@ -228,12 +243,18 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
               textTransform: 'uppercase',
               zIndex: 5
             }}>
-              ⚠️ ¡Por Agotarse!
+              {"\u26a0\ufe0f \u00a1Por Agotarse!"}
             </div>
-          )}
+          ) : null}
 
           {cardImages.length > 0 ? (
-            <img src={cardImages[activeImageIndex]} style={{ width: '100%', height: '100%', objectFit: 'contain', padding: isMobile ? 6 : 12 }} alt={p.nombre} />
+            <img 
+              src={cardImages[activeImageIndex]} 
+              style={{ width: '100%', height: '100%', objectFit: 'contain', padding: isMobile ? 6 : 12 }} 
+              alt={p.nombre} 
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <ImageIcon size={isMobile ? 20 : 32} style={{ color: t.textDim }} />
           )}
@@ -342,26 +363,41 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
         </div>
 
         <div style={{ display: 'flex', gap: 4, width: isMobile ? '100%' : 'auto' }}>
-          <button 
-            onClick={() => addToCart(p)}
-            style={{ 
-              flex: isMobile ? 1 : 'none',
-              padding: isMobile ? '6px 8px' : '8px 12px', borderRadius: 8, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: isMobile ? 7 : 8, fontWeight: 900, 
-              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center'
-            }}
-          >
-            + Carrito
-          </button>
-          <button 
-            onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa comprar: ${p.nombre}`, '_blank')}
-            style={{ 
-              flex: isMobile ? 1 : 'none',
-              padding: isMobile ? '6px 8px' : '8px 14px', borderRadius: 8, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: isMobile ? 7 : 8, fontWeight: 900, 
-              textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center'
-            }}
-          >
-            Comprar
-          </button>
+          {displayMode === 'force_lanzamiento' ? (
+            <button 
+              disabled
+              style={{ 
+                width: '100%',
+                padding: isMobile ? '6px 8px' : '8px 12px', borderRadius: 8, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.05)', border: `1px solid ${t.border}`, color: t.textDim, fontSize: isMobile ? 7 : 8, fontWeight: 900, 
+                textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'not-allowed', textAlign: 'center'
+              }}
+            >
+              {"Pr\u00f3ximamente"}
+            </button>
+          ) : (
+            <>
+              <button 
+                onClick={() => addToCart(p)}
+                style={{ 
+                  flex: isMobile ? 1 : 'none',
+                  padding: isMobile ? '6px 8px' : '8px 12px', borderRadius: 8, backgroundColor: t.inputBg, border: `1px solid ${t.border}`, color: t.text, fontSize: isMobile ? 7 : 8, fontWeight: 900, 
+                  textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center'
+                }}
+              >
+                + Carrito
+              </button>
+              <button 
+                onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa comprar: ${p.nombre}`, '_blank')}
+                style={{ 
+                  flex: isMobile ? 1 : 'none',
+                  padding: isMobile ? '6px 8px' : '8px 14px', borderRadius: 8, backgroundColor: t.accent, border: 'none', color: '#000', fontSize: isMobile ? 7 : 8, fontWeight: 900, 
+                  textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', transition: 'all 0.2s', textAlign: 'center'
+                }}
+              >
+                Comprar
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -381,6 +417,18 @@ const PublicCatalog = () => {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [isCarouselHovered, setIsCarouselHovered] = useState(false);
+  const carruselRef = useRef(null);
+
+  const scrollCarousel = (direction) => {
+    if (carruselRef.current) {
+      const scrollAmount = 300;
+      carruselRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -408,6 +456,10 @@ const PublicCatalog = () => {
       if (p.categoria) list.add(p.categoria);
     });
     return Array.from(list).sort();
+  }, [productos]);
+
+  const featuredProducts = useMemo(() => {
+    return productos.filter(p => p.metadata?.is_featured === true);
   }, [productos]);
 
   const t = useMemo(() => {
@@ -488,6 +540,43 @@ const PublicCatalog = () => {
       result = result.filter(p => p.precio_antes && p.precio_antes > p.precio_venta);
     }
 
+    // Sort by category order when viewing "Todos" to keep layout organized
+    if (activeCategory === 'Todos') {
+      const categoryOrder = [
+        'computadoras',
+        'laptop',
+        'tablet',
+        'gamer',
+        'celulares',
+        'audio',
+        'drones',
+        'electrodomésticos',
+        'cocina',
+        'hogar',
+        'herramientas'
+      ];
+      
+      result = [...result].sort((a, b) => {
+        const catA = (a.categoria || '').toLowerCase();
+        const catB = (b.categoria || '').toLowerCase();
+        
+        let indexA = categoryOrder.findIndex(c => catA.includes(c));
+        let indexB = categoryOrder.findIndex(c => catB.includes(c));
+        
+        if (indexA === -1) indexA = 9999;
+        if (indexB === -1) indexB = 9999;
+        
+        if (indexA !== indexB) {
+          return indexA - indexB;
+        }
+        
+        const catCompare = catA.localeCompare(catB);
+        if (catCompare !== 0) return catCompare;
+        
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      });
+    }
+
     return result;
   }, [productos, searchTerm, activeCategory, activeSubfilter]);
 
@@ -504,15 +593,18 @@ const PublicCatalog = () => {
   const addToCart = (product) => {
     const stockLimit = parseInt(product.stock_actual || 0);
     const displayMode = product.metadata?.stock_display_mode || 'auto';
-    if (displayMode === 'force_agotado' || (displayMode === 'auto' && stockLimit <= 0)) {
-      setToast({ show: true, message: 'Producto sin stock disponible', type: 'error' });
+    const isUnlimited = displayMode === 'force_disponible_sin_stock';
+    const isAgotado = (displayMode === 'force_agotado' || (displayMode === 'auto' && stockLimit <= 0)) && !isUnlimited && displayMode !== 'force_lanzamiento';
+
+    if (isAgotado || displayMode === 'force_lanzamiento') {
+      setToast({ show: true, message: 'Producto no disponible para compra', type: 'error' });
       return;
     }
 
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
-        if (displayMode !== 'force_por_agotarse' && existing.quantity >= stockLimit) {
+        if (!isUnlimited && displayMode !== 'force_por_agotarse' && existing.quantity >= stockLimit) {
           setToast({ show: true, message: 'No hay más unidades en stock', type: 'error' });
           return prev;
         }
@@ -534,7 +626,8 @@ const PublicCatalog = () => {
         if (item.id === id) {
           const newQty = item.quantity + amount;
           if (newQty <= 0) return null;
-          if (displayMode !== 'force_por_agotarse' && newQty > stockLimit) {
+          const isUnlimited = displayMode === 'force_disponible_sin_stock';
+          if (!isUnlimited && displayMode !== 'force_por_agotarse' && newQty > stockLimit) {
             setToast({ show: true, message: 'Excede el stock disponible', type: 'error' });
             return item;
           }
@@ -866,7 +959,7 @@ const PublicCatalog = () => {
         )}
 
         {/* PRODUCTS GRID SECTION */}
-        <section style={{ flex: 1 }}>
+        <section style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           {/* Mobile Horizontal Category Slider */}
           {isMobile && (
             <div style={{ display: 'flex', gap: 8, overflowX: 'auto', padding: '4px 4px 16px 4px', whiteSpace: 'nowrap', WebkitOverflowScrolling: 'touch' }} className="hide-scrollbar">
@@ -907,6 +1000,147 @@ const PublicCatalog = () => {
                   </button>
                 );
               })}
+            </div>
+          )}
+
+          {/* Productos Destacados Slider */}
+          {!loading && featuredProducts.length > 0 && (
+            <div
+              style={{ marginBottom: 24, padding: isMobile ? '0 4px' : '0' }}
+              onMouseEnter={() => setIsCarouselHovered(true)}
+              onMouseLeave={() => setIsCarouselHovered(false)}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Star size={13} style={{ color: '#fbbf24' }} fill="#fbbf24" />
+                <h4 style={{ fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.15em', color: t.text, margin: 0 }}>
+                  {"Productos Destacados"}
+                </h4>
+              </div>
+              <div style={{ position: 'relative', padding: !isMobile ? '0 28px' : '0' }}>
+                {!isMobile && isCarouselHovered && (
+                  <>
+                    <button
+                      onClick={() => scrollCarousel('left')}
+                      aria-label="Anterior"
+                      style={{
+                        position: 'absolute',
+                        left: 4,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 10,
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        backgroundColor: t.isDark ? 'rgba(26,26,26,0.85)' : 'rgba(255,255,255,0.85)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                        color: t.text,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                      className="carousel-nav-btn"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+                    <button
+                      onClick={() => scrollCarousel('right')}
+                      aria-label="Siguiente"
+                      style={{
+                        position: 'absolute',
+                        right: 4,
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        zIndex: 10,
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        backgroundColor: t.isDark ? 'rgba(26,26,26,0.85)' : 'rgba(255,255,255,0.85)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
+                        color: t.text,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                      className="carousel-nav-btn"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </>
+                )}
+                <div
+                  ref={carruselRef}
+                  style={{
+                    display: 'flex',
+                    gap: 12,
+                    overflowX: 'auto',
+                    paddingBottom: 12,
+                    scrollBehavior: 'smooth',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                  className="hide-scrollbar"
+                >
+                  {featuredProducts.map(p => {
+                    const isProdOferta = !!(p.es_oferta || p.metadata?.es_oferta);
+                    const pOferta = parseFloat(p.precio_oferta || p.metadata?.precio_oferta) || 0;
+                    const finalPriceVal = isProdOferta && pOferta > 0 ? pOferta : parseFloat(p.precio_venta || 0);
+                    const prodImages = [];
+                    if (p.imagen) prodImages.push(p.imagen);
+                    if (Array.isArray(p.imagenes)) {
+                      p.imagenes.forEach(img => { if (img && !prodImages.includes(img)) prodImages.push(img); });
+                    }
+
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => { setSelectedProduct(p); setSelectedImageIndex(0); setMediaTab('images'); }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 12,
+                          padding: 10,
+                          borderRadius: 14,
+                          backgroundColor: t.panel,
+                          border: `1px solid ${t.borderLight}`,
+                          minWidth: isMobile ? '220px' : '260px',
+                          maxWidth: isMobile ? '220px' : '260px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                        }}
+                        className="hover-card"
+                      >
+                        <div style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: isDark ? t.bg : '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, flexShrink: 0, padding: 4 }}>
+                          {prodImages.length > 0 ? (
+                            <img
+                              src={prodImages[0]}
+                              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                              alt={p.nombre}
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <ImageIcon size={14} style={{ color: t.textDim }} />
+                          )}
+                        </div>
+                        <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ fontSize: 10, fontWeight: 900, color: t.text, textTransform: 'uppercase', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineHeight: '1.3em', height: '2.6em', letterSpacing: '0.03em' }}>{p.nombre}</span>
+                          <span style={{ fontSize: 11, fontFamily: 'monospace', fontWeight: 900, color: t.text }}>{finalPriceVal.toLocaleString()} <span style={{ fontSize: 7, color: t.textMuted }}>BS.</span></span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           )}
 
@@ -975,6 +1209,8 @@ const PublicCatalog = () => {
                     src={allImages[selectedImageIndex]} 
                     style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
                     alt={selectedProduct.nombre} 
+                    loading="eager"
+                    decoding="async"
                   />
                 ) : (
                   <ImageIcon size={60} style={{ color: t.textDim }} />
@@ -1142,27 +1378,49 @@ const PublicCatalog = () => {
 
             {/* Footer actions */}
             <div style={{ padding: isMobile ? '12px 16px' : '20px 28px', borderTop: `1px solid ${t.border}`, display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 8 : 12, backgroundColor: t.inputBg }}>
-              <button 
-                onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
-                style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
-              >
-                + Añadir al Carrito
-              </button>
-              <button 
-                onClick={() => window.open(`https://wa.me/c/${WHATSAPP_NUMBER}`, '_blank')}
-                style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: 'none', backgroundColor: '#25D366', color: '#ffffff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-              >
-                📱 Catálogo WhatsApp
-              </button>
-              <button 
-                onClick={() => {
-                  window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre} (SKU: ${selectedProduct.sku || selectedProduct.codigo || 'N/A'})`, '_blank');
-                  setSelectedProduct(null);
-                }}
-                style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: 'none', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
-              >
-                Preguntar por Chat
-              </button>
+              {selectedProduct.metadata?.stock_display_mode === 'force_lanzamiento' ? (
+                <>
+                  <button 
+                    disabled
+                    style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.textDim, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'not-allowed' }}
+                  >
+                    {"Pr\u00f3ximamente"}
+                  </button>
+                  <button 
+                    onClick={() => {
+                      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa saber m\u00e1s sobre el pr\u00f3ximo lanzamiento de: ${selectedProduct.nombre}`, '_blank');
+                      setSelectedProduct(null);
+                    }}
+                    style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: 'none', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+                  >
+                    Preguntar por Chat
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button 
+                    onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }}
+                    style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+                  >
+                    + Añadir al Carrito
+                  </button>
+                  <button 
+                    onClick={() => window.open(`https://wa.me/c/${WHATSAPP_NUMBER}`, '_blank')}
+                    style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: 'none', backgroundColor: '#25D366', color: '#ffffff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                  >
+                    📱 Catálogo WhatsApp
+                  </button>
+                  <button 
+                    onClick={() => {
+                      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola! Me interesa: ${selectedProduct.nombre} (SKU: ${selectedProduct.sku || selectedProduct.codigo || 'N/A'})`, '_blank');
+                      setSelectedProduct(null);
+                    }}
+                    style={{ width: '100%', padding: isMobile ? '12px' : '14px', borderRadius: 10, border: 'none', backgroundColor: t.accent, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', cursor: 'pointer' }}
+                  >
+                    Preguntar por Chat
+                  </button>
+                </>
+              )}
             </div>
 
           </div>

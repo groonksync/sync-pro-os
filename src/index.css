@@ -182,6 +182,16 @@ button {
   color: #d4d4d4 !important;
 }
 
+.carousel-nav-btn:hover {
+  transform: scale(1.1) !important;
+  filter: brightness(1.2);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.3) !important;
+}
+
+.carousel-nav-btn:active {
+  transform: scale(0.95) !important;
+}
+
 /* ===== CARDS ===== */
 .premium-card {
   background-color: #141414 !important;
