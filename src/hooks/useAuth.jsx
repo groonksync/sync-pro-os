@@ -25,10 +25,14 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
+    const redirectTo = window.location.hostname === 'localhost'
+      ? 'http://localhost:5173'
+      : 'https://sync-pro-os.vercel.app';
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin
+        redirectTo
       }
     });
     if (error) console.error('Error al iniciar sesion:', error.message);
