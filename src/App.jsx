@@ -64,6 +64,7 @@ const LoginScreen = ({ onLogin, loading }) => (
 
 const AppContent = () => {
   const { user, loading, signInWithGoogle } = useAuth();
+
   const [googleToken, setGoogleToken] = useState(() => localStorage.getItem('sovereign_google_token'));
   const [googleUser, setGoogleUser] = useState(() => {
     const saved = localStorage.getItem('sovereign_google_user');
@@ -82,32 +83,18 @@ const AppContent = () => {
       const checkRes = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + googleToken);
       if (!checkRes.ok) {
         console.warn("Token de Google expirado. El usuario deberá reconectar.");
-        // No limpiar el token aquí para evitar pérdida de datos;
-        // las APIs mostrarán error 401 que el usuario puede manejar reconectando desde Ajustes.
       }
     } catch (error) {
-      // Sin conexión o error de red - no crítico
       console.warn("No se pudo verificar el token de Google (posiblemente sin conexión):", error.message);
     }
   };
 
-  // Verificar rutas públicas primero
-  const path = window.location.pathname;
-  const isPortal = path.startsWith('/portal/');
-  const isCatalog = path === '/catalogo' || path === '/catalogo/';
-
-  if (isCatalog) return <PublicCatalog />;
-  if (isPortal) return <ClientPortal portalId={path.split('/portal/')[1]} />;
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#141414' }}>
-        <div className="animate-spin" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #2e2e30', borderTopColor: '#10b981' }} />
-      </div>
-    );
-  }
-
-  if (!user) return <LoginScreen onLogin={signInWithGoogle} loading={loading} />;
+  // Cargar/Renovar al iniciar
+  useEffect(() => {
+    refreshGoogleToken();
+    const interval = setInterval(refreshGoogleToken, 50 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Guardar en localStorage cuando cambie el estado
   useEffect(() => {
@@ -381,6 +368,24 @@ const AppContent = () => {
       accentColor: appSettings.accentColor 
     });
   }, [isDarkMode, appSettings.appearanceMode, appSettings.appBackground, appSettings.accentColor]);
+
+  // Verificar rutas públicas primero
+  const path = window.location.pathname;
+  const isPortal = path.startsWith('/portal/');
+  const isCatalog = path === '/catalogo' || path === '/catalogo/';
+
+  if (isCatalog) return <PublicCatalog />;
+  if (isPortal) return <ClientPortal portalId={path.split('/portal/')[1]} />;
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#141414' }}>
+        <div className="animate-spin" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #2e2e30', borderTopColor: '#10b981' }} />
+      </div>
+    );
+  }
+
+  if (!user) return <LoginScreen onLogin={signInWithGoogle} loading={loading} />;
 
   return (
     <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
