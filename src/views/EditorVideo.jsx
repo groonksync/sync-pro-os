@@ -1153,7 +1153,11 @@ const ProjectEngineView = ({ isDark = true }) => {
   const effectiveDate = customDate || today;
   const safeCliente = cliente ? cleanFolderName(cliente) : '';
   const safeProyecto = cleanFolderName(proyecto || 'PROYECTO');
-  const finalProjectFolderName = `${effectiveDate.replace(/-/g, '')}_${safeProyecto}`;
+  const formatDateShort = (dateStr) => {
+    const [y, m, d] = dateStr.split('-');
+    return `${d}-${m}-${y.slice(-2)}`;
+  };
+  const finalProjectFolderName = `${safeProyecto}_${formatDateShort(effectiveDate)}`;
 
   const handleSelectDirectory = async () => {
     try {

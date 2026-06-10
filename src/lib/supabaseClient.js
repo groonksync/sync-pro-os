@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-url.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-console.log('Supabase URL detectada:', supabaseUrl);
-
-if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.error('ERROR: Faltan las variables de entorno de Supabase');
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Faltan variables de entorno de Supabase. ' +
+    'Crea un archivo .env en la raíz del proyecto con VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY.'
+  )
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)

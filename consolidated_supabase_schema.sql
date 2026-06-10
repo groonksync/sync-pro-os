@@ -244,8 +244,12 @@ create table if not exists prestamos (
   drive_fotos    text,
   notas          text,
   pagos          jsonb default '[]'::jsonb,
+  tipo_prestamo  text default 'otorgado',
   created_at     timestamptz default now()
 );
+
+-- Asegurar columnas para tabla prestamos en caso de que ya exista
+alter table prestamos add column if not exists tipo_prestamo text default 'otorgado';
 
 -- 15. PRESTAMOS HISTORIAL
 create table if not exists prestamos_historial (

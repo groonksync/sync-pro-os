@@ -2,12 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
 
-// Este script se puede ejecutar localmente o mediante una tarea programada para escribir
-// directamente un archivo meta-catalog.xml estático en la carpeta /public.
-// Esto evita cualquier problema de enrutamiento o servidor con Vercel.
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 
-const supabaseUrl = 'https://wcewgxkizvsnffhbqqet.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndjZXdneGtpenZzbmZmaGJxcWV0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3NTUwNDIsImV4cCI6MjA5MjMzMTA0Mn0.CeQqKNJKevS8RmQf-VMwOlJzvMpJWp1HUdswZRnufFo';
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('ERROR: Define VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en el entorno.');
+  console.error('Ejecuta: node --env-file=.env build-catalog.js');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

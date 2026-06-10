@@ -4,7 +4,7 @@ import {
   ExternalLink, User, CreditCard, ArrowRight, ShieldCheck, CalendarDays, CheckCircle2,
   Check, X, AlertCircle, Trash2, AlertTriangle, Edit3, Search, Eye, EyeOff, Clock,
   MoreHorizontal, Filter, Download, Printer, RefreshCw, TrendingUp, Percent,
-  Heart, BarChart3, PieChart, Wallet
+  Heart, BarChart3, PieChart, Wallet, Bookmark
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
@@ -200,6 +200,7 @@ const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
 const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSelection }) => {
   const t = useTheme(isDark);
   const [prestamoView, setPrestamoView] = useState('list'); 
+  const [filtroTipo, setFiltroTipo] = useState('otorgado'); // 'otorgado' | 'recibido' 
   const [activePrestamo, setActivePrestamo] = useState(null);
   const [selectedPrestamistaName, setSelectedPrestamistaName] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -339,8 +340,23 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   const togglePago = (mes) => {
     if (!activePrestamo) return;
     const current = Array.isArray(activePrestamo.pagos) ? activePrestamo.pagos : [];
-    const newPagos = current.includes(mes) ? current.filter(m => m !== mes) : [...current, mes];
-    setActivePrestamo({ ...activePrestamo, pagos: newPagos });
+    const esRecibido = getTipoPrestamo(activePrestamo) === 'recibido';
+
+    if (esRecibido) {
+      const mesReservado = `${mes}_reservado`;
+      let newPagos;
+      if (current.includes(mes)) {
+        newPagos = current.filter(m => m !== mes && m !== mesReservado);
+      } else if (current.includes(mesReservado)) {
+        newPagos = [...current.filter(m => m !== mesReservado), mes];
+      } else {
+        newPagos = [...current, mesReservado];
+      }
+      setActivePrestamo({ ...activePrestamo, pagos: newPagos });
+    } else {
+      const newPagos = current.includes(mes) ? current.filter(m => m !== mes) : [...current, mes];
+      setActivePrestamo({ ...activePrestamo, pagos: newPagos });
+    }
   };
 
   const generateTimeline = () => {
@@ -362,7 +378,15 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
     return months;
   };
 
-  const prestamosList = Array.isArray(data?.prestamos) ? data.prestamos : [];
+  const prestamosListAll = Array.isArray(data?.prestamos) ? data.prestamos : [];
+  const getTipoPrestamo = useCallback((p) => {
+    if (p.tipo_prestamo) return p.tipo_prestamo;
+    if (p.notas && p.notas.includes('[TIPO:recibido]')) return 'recibido';
+    return 'otorgado';
+  }, []);
+  const prestamosList = useMemo(() => {
+    return prestamosListAll.filter(p => getTipoPrestamo(p) === filtroTipo);
+  }, [prestamosListAll, filtroTipo, getTipoPrestamo]);
 
   const prestamistasGrouped = useMemo(() => {
     const groups = {};
@@ -501,13 +525,67 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'flex-end',
               gap: '16px', marginBottom: '32px',
             }}>
-              <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Cartera de Préstamos</h2>
-                <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Dashboard Analítico — Gestión de Capital</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+                    {filtroTipo === 'recibido' ? 'Mis Deudas & Créditos' : 'Cartera de Préstamos'}
+                  </h2>
+                  <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
+                    {filtroTipo === 'recibido' ? 'Control de préstamos bancarios y deudas con terceros' : 'Dashboard Analítico — Gestión de Capital'}
+                  </p>
+                </div>
+                {/* Switcher de Tipo de Préstamo */}
+                <div style={{ display: 'flex', padding: '2px', borderRadius: '10px', backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                  <button
+                    onClick={() => setFiltroTipo('otorgado')}
+                    style={{
+                      padding: '6px 12px', borderRadius: '8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                      backgroundColor: filtroTipo === 'otorgado' ? t.accent : 'transparent',
+                      color: filtroTipo === 'otorgado' ? '#000000' : t.textDim
+                    }}
+                  >
+                    Otorgados (A Clientes)
+                  </button>
+                  <button
+                    onClick={() => setFiltroTipo('recibido')}
+                    style={{
+                      padding: '6px 12px', borderRadius: '8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                      backgroundColor: filtroTipo === 'recibido' ? t.accent : 'transparent',
+                      color: filtroTipo === 'recibido' ? '#000000' : t.textDim
+                    }}
+                  >
+                    Recibidos (Banco / Deudas)
+                  </button>
+                </div>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button 
-                  onClick={handleNewPrestamo} 
+                  onClick={() => {
+                    setEditPrestamo({
+                      nombre: '',
+                      ci: '',
+                      telefono: '',
+                      email: '',
+                      direccion: '',
+                      referencias: '',
+                      ocupacion: '',
+                      foto: '',
+                      capital: '',
+                      interes: settings?.loanDefaultInterest || 5,
+                      moneda: settings?.loanDefaultCurrency || 'BOB',
+                      inicio: new Date().toISOString().split('T')[0],
+                      fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                      estado: 'Activo',
+                      tipoGarantia: '',
+                      garantia: '',
+                      drive_contrato: '',
+                      drive_fotos: '',
+                      notes: '',
+                      pagos: [],
+                      tipo_prestamo: filtroTipo
+                    });
+                    setShowForm(true);
+                  }} 
                   style={{
                     backgroundColor: t.accent, color: 'white', border: 'none',
                     borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
@@ -530,11 +608,11 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)',
               gap: '12px', marginBottom: '24px',
             }}>
-              <KPICard t={t} icon={DollarSign} label="Capital Activo" value={stats.capitalActivo.toLocaleString()} moneda="BOB" color={t.accent} />
-              <KPICard t={t} icon={TrendingUp} label="Rendimiento Mensual" value={stats.rendimientoMensual.toLocaleString()} moneda="BOB" color="#10b981" />
+              <KPICard t={t} icon={DollarSign} label={filtroTipo === 'recibido' ? "Deuda Recibida" : "Capital Activo"} value={stats.capitalActivo.toLocaleString()} moneda="BOB" color={t.accent} />
+              <KPICard t={t} icon={TrendingUp} label={filtroTipo === 'recibido' ? "Interés Mensual a Pagar" : "Rendimiento Mensual"} value={stats.rendimientoMensual.toLocaleString()} moneda="BOB" color="#10b981" />
               <KPICard t={t} icon={Percent} label="Tasa Promedio" value={stats.tasaPromedio.toFixed(1)} moneda="%" color="#f59e0b" />
               <KPICard t={t} icon={AlertTriangle} label="Mora Acumulada" value={stats.totalMora.toLocaleString()} moneda="BOB" color="#ef4444" />
-              <KPICard t={t} icon={Heart} label="Índice de Salud" value={stats.indiceSalud.toFixed(0)} moneda="/100" color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
+              <KPICard t={t} icon={Heart} label={filtroTipo === 'recibido' ? "Índice de Cumplimiento" : "Índice de Salud"} value={stats.indiceSalud.toFixed(0)} moneda="/100" color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
             </div>
 
             {/* Gráficos: Bar Chart + Donut Chart */}
@@ -1189,18 +1267,19 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       <tbody>
                         {ledgerCuotas.map((c) => {
                           const isPaid = (activePrestamo.pagos || []).includes(c.key);
+                          const isReserved = (activePrestamo.pagos || []).includes(`${c.key}_reservado`);
                           return (
                             <tr key={c.key} onClick={() => togglePago(c.key)}
                               style={{
                                 cursor: 'pointer', transition: 'background 0.15s',
                                 borderBottom: `1px solid ${t.border}`,
-                                backgroundColor: isPaid ? 'rgba(16, 185, 129, 0.04)' : 'transparent',
+                                backgroundColor: isPaid ? 'rgba(16, 185, 129, 0.04)' : isReserved ? 'rgba(245, 158, 11, 0.04)' : 'transparent',
                               }}
-                              onMouseEnter={e => e.currentTarget.style.backgroundColor = isPaid ? 'rgba(16, 185, 129, 0.08)' : t.hover}
-                              onMouseLeave={e => e.currentTarget.style.backgroundColor = isPaid ? 'rgba(16, 185, 129, 0.04)' : 'transparent'}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = isPaid ? 'rgba(16, 185, 129, 0.08)' : isReserved ? 'rgba(245, 158, 11, 0.08)' : t.hover}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = isPaid ? 'rgba(16, 185, 129, 0.04)' : isReserved ? 'rgba(245, 158, 11, 0.04)' : 'transparent'}
                             >
                               <td style={{ padding: '10px 14px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : t.text }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : isReserved ? '#f59e0b' : t.text }}>
                                   {c.label}
                                 </span>
                               </td>
@@ -1210,13 +1289,13 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                                 </span>
                               </td>
                               <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : t.accent }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : isReserved ? '#f59e0b' : t.accent }}>
                                   {c.interes.toLocaleString()}
                                 </span>
                               </td>
                               <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
-                                  <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : t.text }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : isReserved ? '#f59e0b' : t.text }}>
                                     {c.total.toLocaleString()}
                                   </span>
                                   {c.mora > 0 && (
@@ -1230,6 +1309,10 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                                 {isPaid ? (
                                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: t.success }}>
                                     <CheckCircle2 size={12} /> Pagado
+                                  </span>
+                                ) : isReserved ? (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: '#f59e0b' }}>
+                                    <Bookmark size={12} /> Reservado
                                   </span>
                                 ) : c.estado === 'vencido' ? (
                                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: '#ef4444' }}>

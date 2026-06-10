@@ -36,6 +36,12 @@ function formatPrice(precio) {
  */
 function getAvailability(producto) {
   if (!producto) return 'out of stock';
+  
+  // Si se forzó la disponibilidad sin stock
+  if (producto.metadata?.stock_display_mode === 'force_disponible_sin_stock') {
+    return 'in stock';
+  }
+  
   const stock = parseInt(producto.stock_actual) || 0;
   const estado = (producto.estado || '').toLowerCase();
   if (estado === 'agotado' || stock <= 0) return 'out of stock';
@@ -106,18 +112,36 @@ function getDescription(producto) {
  */
 function getGoogleCategory(categoria) {
   const categorias = {
-    'Audio y Sonido':    'Electronics > Audio > Headphones',
-    'Accesorios':        'Electronics > Electronics Accessories',
     'Computadoras':      'Electronics > Computers',
-    'Smartphones':       'Electronics > Communications > Phones',
-    'Tablets':           'Electronics > Computers > Tablet Computers',
-    'Fotografía':        'Cameras & Optics > Cameras',
-    'Gaming':            'Electronics > Video Game Consoles & Accessories',
-    'Iluminación':       'Electronics > Lighting',
+    'Laptop':            'Electronics > Computers > Laptop Computers',
+    'Tablet':            'Electronics > Computers > Tablet Computers',
+    'Gamer':             'Electronics > Video Game Consoles & Accessories',
+    'Celulares':         'Electronics > Communications > Phones',
+    'Drones':            'Cameras & Optics > Cameras > Camera Accessories',
+    'Electrodomésticos': 'Home & Garden > Household Appliances',
+    'Cocina':            'Home & Garden > Kitchen & Dining',
     'Hogar':             'Home & Garden',
-    'Ropa':              'Apparel & Accessories',
+    'Herramientas':      'Hardware > Tools',
+    'Audio':             'Electronics > Audio',
+    'Cámaras':           'Cameras & Optics > Cameras',
+    'Videojuegos':       'Electronics > Video Game Consoles & Accessories',
+    'Electrónica':       'Electronics',
+    'Accesorios':        'Electronics > Electronics Accessories',
+    'Iluminación':       'Electronics > Lighting',
+    'Redes':             'Electronics > Networking',
+    'Seguridad':         'Electronics > Security & Surveillance',
+    'Deportes':          'Sporting Goods',
     'Belleza':           'Health & Beauty',
-    'Cosméticos':        'Health & Beauty > Beauty > Cosmetics',
+    'Salud':             'Health & Beauty > Health Care',
+    'Juguetes':          'Toys & Games',
+    'Mascotas':          'Animals & Pet Supplies',
+    'Jardín':            'Home & Garden > Lawn & Garden',
+    'Automotriz':        'Vehicles & Parts > Vehicle Parts & Accessories',
+    'Libros':            'Media > Books',
+    'Ropa':              'Apparel & Accessories > Clothing',
+    'Calzado':           'Apparel & Accessories > Shoes',
+    'Combos/Packs':      'Electronics',
+    'Ofertas':           'Electronics'
   };
   return categorias[categoria] || 'Electronics';
 }
@@ -199,7 +223,10 @@ function generateXML(productos) {
     }
 
     // Cantidad en stock para Meta
-    if (typeof p.stock_actual !== 'undefined') {
+    if (p.metadata?.stock_display_mode === 'force_disponible_sin_stock') {
+      itemXml += `
+      <g:quantity_to_sell_on_facebook>99</g:quantity_to_sell_on_facebook>`;
+    } else if (typeof p.stock_actual !== 'undefined') {
       itemXml += `
       <g:quantity_to_sell_on_facebook>${Math.max(0, parseInt(p.stock_actual) || 0)}</g:quantity_to_sell_on_facebook>`;
     }

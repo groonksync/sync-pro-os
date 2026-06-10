@@ -4,10 +4,11 @@ import {
   ShoppingCart, Calendar, Edit3, Save, X, Search, Mail, Phone, FileText, 
   AlertTriangle, TrendingUp, TrendingDown, Layers, Settings, DollarSign, Activity,
   Sliders, Filter, Landmark, Banknote, AlertCircle, Sparkles, Check, Megaphone, 
-  HelpCircle, Video, Cloud, Music, Palette, Scissors
+  HelpCircle, Video, Cloud, Music, Palette, Scissors, Bookmark, Clock
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
+import { generarCronograma, generarCronogramaDiario } from '../hooks/useAmortizacion';
 
 // Categorías para gastos individuales
 const GASTO_CATEGORIAS = [
@@ -87,6 +88,59 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   // Helper para convertir el presupuesto en base a la moneda
   const formatBudget = (val) => {
     return formatCurrency(val);
+  };
+
+  const getTipoPrestamo = (p) => {
+    if (p.tipo_prestamo) return p.tipo_prestamo;
+    if (p.notas && p.notas.includes('[TIPO:recibido]')) return 'recibido';
+    return 'otorgado';
+  };
+
+  const prestamosRecibidos = useMemo(() => {
+    return prestamosList.filter(p => getTipoPrestamo(p) === 'recibido');
+  }, [prestamosList]);
+
+  const totalDeudaRecibida = useMemo(() => {
+    return prestamosRecibidos.reduce((acc, p) => acc + (parseFloat(p.capital) || 0), 0);
+  }, [prestamosRecibidos]);
+
+  const cuotasRecibidasMes = useMemo(() => {
+    const list = [];
+    prestamosRecibidos.forEach(p => {
+      const cuotas = p.tipo_pago === 'diario' ? generarCronogramaDiario(p) : generarCronograma(p);
+      const matches = cuotas.filter(c => c.key.startsWith(periodoMes));
+      matches.forEach(c => {
+        list.push({
+          prestamo: p,
+          cuota: c,
+        });
+      });
+    });
+    return list;
+  }, [prestamosRecibidos, periodoMes]);
+
+  const handleToggleRecibidoPago = async (prestamo, cuotaKey) => {
+    const current = Array.isArray(prestamo.pagos) ? prestamo.pagos : [];
+    const keyReservado = `${cuotaKey}_reservado`;
+    let newPagos;
+    if (current.includes(cuotaKey)) {
+      newPagos = current.filter(m => m !== cuotaKey && m !== keyReservado);
+    } else if (current.includes(keyReservado)) {
+      newPagos = [...current.filter(m => m !== keyReservado), cuotaKey];
+    } else {
+      newPagos = [...current, keyReservado];
+    }
+    
+    try {
+      const updatedPrestamo = { ...prestamo, pagos: newPagos };
+      const { error } = await supabase.from('prestamos').upsert(updatedPrestamo);
+      if (error) throw error;
+      
+      const updatedList = prestamosList.map(p => p.id === prestamo.id ? updatedPrestamo : p);
+      setData(prev => ({ ...prev, prestamos: updatedList }));
+    } catch (err) {
+      console.error("Error toggling recibido payment:", err);
+    }
   };
 
   // ── Filtros para transacciones ──────────────────────────────────────────
@@ -212,6 +266,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   // 1. Intereses cobrados de préstamos activos
   const prestamosInteresMes = useMemo(() => {
     return prestamosList.reduce((acc, p) => {
+      if (getTipoPrestamo(p) !== 'otorgado') return acc;
       const isPaidThisMonth = Array.isArray(p.pagos) && p.pagos.includes(periodoMes);
       if (isPaidThisMonth) {
         const interest = (parseFloat(p.capital) || 0) * ((parseFloat(p.interes) || 0) / 100);
@@ -222,7 +277,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   }, [prestamosList, periodoMes]);
 
   const prestamosAcreditadosMes = useMemo(() => {
-    return prestamosList.filter(p => Array.isArray(p.pagos) && p.pagos.includes(periodoMes));
+    return prestamosList.filter(p => getTipoPrestamo(p) === 'otorgado' && Array.isArray(p.pagos) && p.pagos.includes(periodoMes));
   }, [prestamosList, periodoMes]);
 
   // 2. Utilidades obtenidas de ventas de catálogo (monto venta - costo de productos)
@@ -708,7 +763,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
             {/* KPI 1: Total Gastado */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Gastado Total (Consolidado)</span>
                 <CreditCard size={14} className="text-neutral-500" />
@@ -720,7 +775,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 2: Presupuesto Mensual */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Presupuesto Mes</span>
                 <button 
@@ -741,7 +796,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 3: Ingresos del Mes */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Ingresos del Mes</span>
                 <TrendingUp size={14} className="text-emerald-500" />
@@ -753,7 +808,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 4: Margen Neto */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Margen Neto Mes</span>
                 {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
@@ -768,111 +823,123 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
           </div>
 
-          {/* Segunda fila: Progreso Presupuesto y Límites Categorías Sin Sombras */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Segunda fila: Progreso Presupuesto General Horizontal */}
+          <div className="w-full p-6 rounded-3xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-8 transition-all" style={{ backgroundColor: t.panel }}>
             
-            {/* Columna Izquierda: Progreso General */}
-            <div className="lg:col-span-5 p-6 rounded-3xl border border-white/5 flex flex-col justify-between gap-6" style={{ backgroundColor: t.bg }}>
-              <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-2">Presupuesto Mensual Consumido</h3>
-                <p className="text-[10px] text-neutral-400">Consumo total del presupuesto asignado para el periodo mensual actual</p>
-              </div>
-
-              {/* Progress Visual */}
-              <div className="flex flex-col items-center justify-center py-4">
-                <div className="relative w-36 h-36 flex items-center justify-center rounded-full border border-white/5" style={{ backgroundColor: t.bg }}>
-                  {/* Círculo de progreso estilizado */}
-                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.02)" strokeWidth="6" fill="transparent" />
-                    <circle 
-                      cx="50" 
-                      cy="50" 
-                      r="42" 
-                      stroke={getProgressColor(budgetUsagePercent)} 
-                      strokeWidth="6" 
-                      fill="transparent" 
-                      strokeDasharray={2 * Math.PI * 42}
-                      strokeDashoffset={(2 * Math.PI * 42) * (1 - budgetUsagePercent / 100)}
-                      strokeLinecap="round"
-                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-                    />
-                  </svg>
-                  <div className="absolute text-center">
-                    <span className="text-3xl font-black text-white">{budgetUsagePercent}%</span>
-                    <span className="text-[8px] text-neutral-500 font-bold uppercase tracking-widest block mt-1">Consumido</span>
-                  </div>
+            {/* Lado Izquierdo: Título y Círculo de Progreso */}
+            <div className="flex flex-col sm:flex-row items-center gap-6 flex-shrink-0">
+              <div className="relative w-28 h-28 flex items-center justify-center rounded-full border border-white/5 bg-black/10">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.02)" strokeWidth="6" fill="transparent" />
+                  <circle 
+                    cx="50" 
+                    cy="50" 
+                    r="42" 
+                    stroke={getProgressColor(budgetUsagePercent)} 
+                    strokeWidth="6" 
+                    fill="transparent" 
+                    strokeDasharray={2 * Math.PI * 42}
+                    strokeDashoffset={(2 * Math.PI * 42) * (1 - budgetUsagePercent / 100)}
+                    strokeLinecap="round"
+                    style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                  />
+                </svg>
+                <div className="absolute text-center">
+                  <span className="text-2xl font-black text-white">{budgetUsagePercent}%</span>
+                  <span className="text-[7px] text-neutral-500 font-bold uppercase tracking-widest block">Consumido</span>
                 </div>
               </div>
-
-              {/* Status details */}
-              <div className="space-y-3 bg-black/20 p-4 rounded-xl border border-white/5 text-[11px] font-medium">
-                <div className="flex justify-between">
-                  <span className="text-neutral-400">Total Consumido:</span>
-                  <span className="text-white">{formatCurrency(totalEgresosMes)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-neutral-400">Presupuesto Límite:</span>
-                  <span className="text-white">{formatBudget(monthlyBudget)}</span>
-                </div>
-                <div className="h-px bg-white/5 my-2"></div>
-                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-wide">
-                  <span className="text-neutral-400">Remanente Disponible:</span>
-                  <span className={monthlyBudget - totalEgresosMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
-                    {formatCurrency(monthlyBudget - totalEgresosMes)}
-                  </span>
-                </div>
+              <div className="text-center sm:text-left">
+                <h3 className="text-sm font-black uppercase tracking-wider text-white">Presupuesto Mensual Consumido</h3>
+                <p className="text-[10px] text-neutral-400 mt-1 max-w-[280px]">Progreso general de tus egresos frente al límite asignado para este mes.</p>
               </div>
             </div>
 
-            {/* Columna Derecha: Límites por Categoría */}
-            <div className="lg:col-span-7 p-6 rounded-3xl border border-white/5 flex flex-col gap-6" style={{ backgroundColor: t.bg }}>
+            {/* Lado Derecho: 3 Tarjetas de Métricas en Fila */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:w-auto flex-grow max-w-3xl">
+              
+              {/* Tarjeta 1: Total Consumido */}
+              <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col justify-between min-h-[90px]">
+                <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Total Consumido</span>
+                <p className="text-lg font-bold text-white tracking-tight mt-2">{formatCurrency(totalEgresosMes)}</p>
+                <span className="text-[8px] text-neutral-500 mt-1 font-bold">Gastos acumulados</span>
+              </div>
+
+              {/* Tarjeta 2: Presupuesto Límite */}
+              <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col justify-between min-h-[90px]">
+                <div className="flex items-center justify-between">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Límite Establecido</span>
+                  <button onClick={handleOpenBudgetEditor} className="p-1 rounded-md border border-white/5 bg-white/5 text-neutral-400 hover:text-white transition-all">
+                    <Sliders size={10} />
+                  </button>
+                </div>
+                <p className="text-lg font-bold text-white tracking-tight mt-2">{formatBudget(monthlyBudget)}</p>
+                <button onClick={handleOpenBudgetEditor} className="text-[8px] text-neutral-500 hover:text-white uppercase tracking-wider font-bold text-left mt-1">Ajustar límite</button>
+              </div>
+
+              {/* Tarjeta 3: Remanente Disponible */}
+              <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col justify-between min-h-[90px]">
+                <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Remanente</span>
+                <p className={`text-lg font-bold tracking-tight mt-2 ${monthlyBudget - totalEgresosMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {formatCurrency(monthlyBudget - totalEgresosMes)}
+                </p>
+                <span className="text-[8px] text-neutral-500 mt-1 font-bold">Disponible para gastar</span>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Tercera fila: Presupuestos por Categoría (Grilla) y Préstamos/Obligaciones */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            {/* Columna Izquierda: Categorías como una grilla de 2 columnas */}
+            <div className="lg:col-span-6 p-6 rounded-3xl border border-white/5 flex flex-col gap-6" style={{ backgroundColor: t.panel }}>
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Presupuestos por Categoría</h3>
-                  <p className="text-[10px] text-neutral-400">Control de gastos específicos del mes (Suscripciones incluidas)</p>
+                  <p className="text-[10px] text-neutral-400">Control de gastos específicos del mes</p>
                 </div>
                 <button onClick={handleOpenBudgetEditor} className="text-[9px] font-black uppercase tracking-widest rounded-lg px-3 py-1.5 transition-all border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10 text-white flex items-center gap-1.5">
-                  <Sliders size={10} /> Configurar Límites
+                  <Sliders size={10} /> Configurar
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {egresosPorCategoriaMes.map(cat => {
                   const Icon = cat.icon;
                   const isExceeded = cat.total > cat.limit;
                   return (
-                    <div key={cat.label} className="bg-zinc-950/20 p-3 rounded-xl border border-white/5 flex flex-col gap-2">
+                    <div key={cat.label} className="bg-zinc-950/30 p-3 rounded-xl border border-white/5 flex flex-col gap-2">
                       <div className="flex items-center justify-between text-[11px] font-semibold">
                         <span className="flex items-center gap-2" style={{ color: cat.color }}>
                           <Icon size={12} />
                           {cat.label}
                         </span>
-                        <div className="flex items-center gap-1.5 font-mono text-[10px]">
+                        <div className="flex items-center gap-1 font-mono text-[9px]">
                           <span className={isExceeded ? 'text-rose-400 font-bold' : 'text-white'}>
                             {formatCurrency(cat.total)}
                           </span>
-                          <span className="text-neutral-500">/</span>
-                          <span className="text-neutral-400">{formatBudget(cat.limit)}</span>
                         </div>
                       </div>
                       
                       {/* Bar */}
-                      <div className="h-2 w-full bg-white/5 rounded-xl overflow-hidden">
+                      <div className="h-1.5 w-full bg-white/5 rounded-xl overflow-hidden">
                         <div 
                           className="h-full rounded-xl transition-all duration-700"
                           style={{
-                            width: `${cat.pct}%`,
+                            width: `${Math.min(cat.pct, 100)}%`,
                             backgroundColor: getProgressColor(cat.pct)
                           }}
                         />
                       </div>
 
-                      {/* Warning if exceeded */}
-                      <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider">
-                        <span className="text-neutral-500">{cat.pct}% del límite consumido</span>
+                      {/* Info */}
+                      <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider text-neutral-500">
+                        <span>{cat.pct}% límite: {formatBudget(cat.limit)}</span>
                         {isExceeded && (
-                          <span className="text-rose-400 flex items-center gap-1 font-mono text-[8px]">
-                            <AlertTriangle size={10} /> Excedido por {formatCurrency(cat.total - cat.limit)}
+                          <span className="text-rose-400 font-mono">
+                            +{formatCurrency(cat.total - cat.limit)}
                           </span>
                         )}
                       </div>
@@ -880,7 +947,86 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   );
                 })}
               </div>
+            </div>
 
+            {/* Columna Derecha: Préstamos & Obligaciones (Cuentas recibidas/bancarias y otorgadas) */}
+            <div className="lg:col-span-6 p-6 rounded-3xl border border-white/5 flex flex-col gap-6" style={{ backgroundColor: t.panel }}>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Préstamos y Obligaciones</h3>
+                <p className="text-[10px] text-neutral-400">Control de créditos recibidos (deudas) y otorgados (activos)</p>
+              </div>
+
+              {/* Métricas en la parte superior */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-zinc-950/30 p-3 rounded-xl border border-white/5 flex flex-col">
+                  <span className="text-[8px] font-black uppercase text-neutral-400 tracking-wider">Créditos Recibidos (Deudas)</span>
+                  <span className="text-sm font-bold text-rose-400 mt-1 font-mono">{formatCurrency(totalDeudaRecibida)}</span>
+                  <span className="text-[7px] text-neutral-500 mt-0.5">Total capital a pagar</span>
+                </div>
+                <div className="bg-zinc-950/30 p-3 rounded-xl border border-white/5 flex flex-col">
+                  <span className="text-[8px] font-black uppercase text-neutral-400 tracking-wider">Créditos Otorgados</span>
+                  <span className="text-sm font-bold text-emerald-400 mt-1 font-mono">{formatCurrency(prestamosList.filter(p => getTipoPrestamo(p) === 'otorgado').reduce((s, p) => s + (parseFloat(p.capital) || 0), 0))}</span>
+                  <span className="text-[7px] text-neutral-500 mt-0.5">Capital activo prestado</span>
+                </div>
+              </div>
+
+              {/* Lista scrollable de cuotas pendientes para este mes */}
+              <div className="flex flex-col gap-3 flex-grow overflow-y-auto max-h-[220px] pr-1">
+                <h4 className="text-[9px] font-black uppercase tracking-wider text-white">Cuotas del Mes ({periodoMes})</h4>
+                {cuotasRecibidasMes.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-6 text-neutral-500 text-[10px] italic border border-dashed border-white/5 rounded-xl bg-black/10">
+                    Sin obligaciones de pago registradas para este periodo
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {cuotasRecibidasMes.map(({ prestamo, cuota }) => {
+                      const isPaid = (prestamo.pagos || []).includes(cuota.key);
+                      const isReserved = (prestamo.pagos || []).includes(`${cuota.key}_reservado`);
+                      
+                      let statusBadge = (
+                        <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-rose-500/10 text-rose-400 border border-rose-500/10 flex items-center gap-1">
+                          <Clock size={8} /> Pendiente
+                        </span>
+                      );
+                      if (isPaid) {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/10 flex items-center gap-1">
+                            <Check size={8} /> Pagado
+                          </span>
+                        );
+                      } else if (isReserved) {
+                        statusBadge = (
+                          <span className="px-2 py-0.5 rounded text-[8px] font-black uppercase bg-amber-500/10 text-amber-500 border border-amber-500/10 flex items-center gap-1">
+                            <Bookmark size={8} /> Reservado
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <div 
+                          key={`${prestamo.id}-${cuota.key}`}
+                          onClick={() => handleToggleRecibidoPago(prestamo, cuota.key)}
+                          className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 hover:bg-zinc-950/40 transition-all flex items-center justify-between cursor-pointer"
+                        >
+                          <div className="flex flex-col gap-0.5 min-w-0">
+                            <span className="text-[11px] font-bold text-white truncate">{prestamo.nombre || 'Préstamo Bancario'}</span>
+                            <span className="text-[8px] text-neutral-400 flex items-center gap-1">
+                              Cuota: {cuota.label} • Venc. {cuota.fechaVencimiento}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <span className="text-[11px] font-bold text-white font-mono">{formatCurrency(cuota.total)}</span>
+                              <span className="block text-[7px] text-neutral-500">Monto cuota</span>
+                            </div>
+                            {statusBadge}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
           </div>
@@ -889,7 +1035,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Estadística 1: Mayor Gasto */}
-            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.panel }}>
               <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
                 <TrendingDown size={20} />
               </div>
@@ -907,7 +1053,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* Estadística 2: Promedio Diario */}
-            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.panel }}>
               <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center flex-shrink-0">
                 <Calendar size={20} />
               </div>
@@ -919,7 +1065,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* Estadística 3: Frecuencia de Gastos */}
-            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.panel }}>
               <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center flex-shrink-0">
                 <Activity size={20} />
               </div>
@@ -942,7 +1088,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           {/* Fila superior: KPIs de Ganancias */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* KPI 1: Ingresos Totales Periodo */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Ingresos Totales (Período)</span>
                 <TrendingUp size={14} className="text-emerald-400" />
@@ -954,7 +1100,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 2: Egresos Totales Periodo */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Egresos Totales (Período)</span>
                 <TrendingDown size={14} className="text-rose-400" />
@@ -966,7 +1112,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 3: Margen Neto Consolidado */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.bg }}>
+            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Balance Neto Consolidado</span>
                 {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
@@ -981,7 +1127,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
             {/* KPI 4: Registrar Ganancia Manual */}
             <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02] cursor-pointer" 
-                 style={{ backgroundColor: t.bg }} onClick={() => setShowIncomeForm(true)}>
+                 style={{ backgroundColor: t.panel }} onClick={() => setShowIncomeForm(true)}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Acción Rápida</span>
                 <Plus size={14} className="text-neutral-400" />

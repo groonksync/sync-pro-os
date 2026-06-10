@@ -98,6 +98,7 @@ const getHandler = useCallback((field) => {
         tipo_pago: 'mensual', plazo_meses: 1, cuenta_bancaria: '',
         tipoGarantia: '', garantia: '', drive_contrato: '', drive_fotos: '',
         notas: '', pagos: [],
+        tipo_prestamo: 'otorgado',
       };
       const merged = { ...defaults, ...initialData };
       return {
@@ -111,6 +112,7 @@ const getHandler = useCallback((field) => {
         cuenta_bancaria: merged.cuenta_bancaria || '',
         capital: merged.capital?.toString() || '',
         interes: merged.interes?.toString() || '5',
+        tipo_prestamo: merged.tipo_prestamo || 'otorgado',
       };
     }
     const today = new Date();
@@ -118,6 +120,7 @@ const getHandler = useCallback((field) => {
     fin.setMonth(fin.getMonth() + 6);
     return {
       // Paso 1: Datos Personales
+      tipo_prestamo: 'otorgado',
       nombre: '',
       ci: '',
       telefono: '',
@@ -276,28 +279,56 @@ const getHandler = useCallback((field) => {
         drive_fotos: form.drive_fotos?.trim() || '',
         notas: form.notas?.trim() || '',
         pagos: form.pagos || [],
+        tipo_prestamo: form.tipo_prestamo || 'otorgado'
       };
 
+      let saveError;
+      let newRecordData;
       if (initialData?.id) {
         const { error } = await supabase.from('prestamos').update(payload).eq('id', initialData.id);
-        if (error) throw error;
-        // Audit trail
-        await supabase.from('prestamos_historial').insert([{
-          prestamo_id: initialData.id,
-          accion: 'MODIFICADO',
-          detalle: `Préstamo modificado: ${payload.nombre}`,
-          datos_previos: initialData,
-        }]);
-      } else {
-        const { data: newRecord, error } = await supabase.from('prestamos').insert([payload]).select();
-        if (error) throw error;
-        // Audit trail
-        if (newRecord?.[0]) {
+        saveError = error;
+        if (!error) {
           await supabase.from('prestamos_historial').insert([{
-            prestamo_id: newRecord[0].id,
+            prestamo_id: initialData.id,
+            accion: 'MODIFICADO',
+            detalle: `Préstamo modificado: ${payload.nombre}`,
+            datos_previos: initialData,
+          }]);
+        }
+      } else {
+        const { error, data } = await supabase.from('prestamos').insert([payload]).select();
+        saveError = error;
+        newRecordData = data;
+        if (!error && data?.[0]) {
+          await supabase.from('prestamos_historial').insert([{
+            prestamo_id: data[0].id,
             accion: 'CREADO',
             detalle: `Nuevo préstamo creado: ${payload.nombre} - ${payload.capital} ${payload.moneda}`,
           }]);
+        }
+      }
+
+      if (saveError) {
+        if (saveError.message && (saveError.message.includes('tipo_prestamo') || saveError.code === '42703')) {
+          const { tipo_prestamo, ...fallbackPayload } = payload;
+          fallbackPayload.notas = `[TIPO:${form.tipo_prestamo}] ${(form.notas || '').trim()}`.trim();
+          
+          if (initialData?.id) {
+            const { error: retryErr } = await supabase.from('prestamos').update(fallbackPayload).eq('id', initialData.id);
+            if (retryErr) throw retryErr;
+          } else {
+            const { error: retryErr, data } = await supabase.from('prestamos').insert([fallbackPayload]).select();
+            if (retryErr) throw retryErr;
+            if (data?.[0]) {
+              await supabase.from('prestamos_historial').insert([{
+                prestamo_id: data[0].id,
+                accion: 'CREADO',
+                detalle: `Nuevo préstamo creado (con fallback): ${fallbackPayload.nombre}`,
+              }]);
+            }
+          }
+        } else {
+          throw saveError;
         }
       }
 
@@ -348,11 +379,16 @@ const getHandler = useCallback((field) => {
 
   // ─── RENDER: PASO 1 - DATOS PERSONALES ───────────────────
   const renderPasoDatos = () => {
+    const esRecibido = form.tipo_prestamo === 'recibido';
     return (
       <div style={{ animation: 'fadeIn 0.25s ease-out' }}>
         <div style={{ marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>Datos Personales</h3>
-          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Información básica del prestatario</p>
+          <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>
+            {esRecibido ? 'Datos del Acreedor / Banco' : 'Datos del Prestatario'}
+          </h3>
+          <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>
+            {esRecibido ? 'Información de la entidad o persona que te otorgó el préstamo' : 'Información básica de la persona que recibe tu dinero'}
+          </p>
         </div>
 
         {/* Foto del prestatario */}
@@ -390,7 +426,7 @@ const getHandler = useCallback((field) => {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', color: t.textDim }}>
                 <Camera size={24} />
                 <span style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                  {uploadingFoto ? 'Subiendo...' : 'Foto'}
+                  {uploadingFoto ? 'Subiendo...' : esRecibido ? 'Logo/Foto' : 'Foto'}
                 </span>
               </div>
             )}
@@ -411,22 +447,22 @@ const getHandler = useCallback((field) => {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '22px' }}>
-          <Campo t={t} label="Nombre Completo" icon={User} value={form.nombre} onChange={getHandler('nombre')}
-            hasError={!!errors.nombre && !!touched.nombre} error={errors.nombre} placeholder="Ej: Juan Pérez" required />
-          <Campo t={t} label="Cédula de Identidad" icon={FileSignature} value={form.ci} onChange={getHandler('ci')}
+          <Campo t={t} label={esRecibido ? "Nombre de la Entidad / Acreedor" : "Nombre Completo"} icon={User} value={form.nombre} onChange={getHandler('nombre')}
+            hasError={!!errors.nombre && !!touched.nombre} error={errors.nombre} placeholder={esRecibido ? "Ej: Banco Unión o Pedro Gómez" : "Ej: Juan Pérez"} required />
+          <Campo t={t} label={esRecibido ? "NIT / Identificación" : "Cédula de Identidad"} icon={FileSignature} value={form.ci} onChange={getHandler('ci')}
             hasError={!!errors.ci && !!touched.ci} error={errors.ci} placeholder="Ej: 1234567" />
           <Campo t={t} label="Teléfono / WhatsApp" icon={Smartphone} value={form.telefono} onChange={getHandler('telefono')}
             hasError={!!errors.telefono && !!touched.telefono} error={errors.telefono} placeholder="Ej: 71234567" />
           <Campo t={t} label="Correo Electrónico" icon={Mail} value={form.email} onChange={getHandler('email')}
-            hasError={!!errors.email && !!touched.email} error={errors.email} placeholder="Ej: juan@email.com" />
-          <Campo t={t} label="Dirección" icon={MapPin} value={form.direccion} onChange={getHandler('direccion')}
-            hasError={!!errors.direccion && !!touched.direccion} error={errors.direccion} placeholder="Dirección de domicilio" />
-          <Campo t={t} label="Ocupación" icon={Briefcase} value={form.ocupacion} onChange={getHandler('ocupacion')}
-            hasError={!!errors.ocupacion && !!touched.ocupacion} error={errors.ocupacion} placeholder="Ej: Comerciante" />
+            hasError={!!errors.email && !!touched.email} error={errors.email} placeholder="Ej: contacto@entidad.com" />
+          <Campo t={t} label="Dirección / Ubicación" icon={MapPin} value={form.direccion} onChange={getHandler('direccion')}
+            hasError={!!errors.direccion && !!touched.direccion} error={errors.direccion} placeholder="Ej: Av. Arce #123" />
+          <Campo t={t} label={esRecibido ? "Contacto Interno" : "Ocupación"} icon={Briefcase} value={form.ocupacion} onChange={getHandler('ocupacion')}
+            hasError={!!errors.ocupacion && !!touched.ocupacion} error={errors.ocupacion} placeholder={esRecibido ? "Ej: Ejecutivo de Crédito" : "Ej: Comerciante"} />
         </div>
         <div style={{ marginTop: '22px' }}>
-          <Campo t={t} label="Referencias Personales" icon={Users} value={form.referencias} onChange={getHandler('referencias')}
-            hasError={!!errors.referencias && !!touched.referencias} error={errors.referencias} placeholder="Nombre y teléfono de referencia" textarea />
+          <Campo t={t} label={esRecibido ? "Notas del Crédito / Condiciones" : "Referencias Personales"} icon={Users} value={form.referencias} onChange={getHandler('referencias')}
+            hasError={!!errors.referencias && !!touched.referencias} error={errors.referencias} placeholder={esRecibido ? "Ej: Ejecutivo: Javier Paz, Telf: 78945612" : "Nombre y teléfono de referencia"} textarea />
         </div>
       </div>
     );
@@ -536,6 +572,32 @@ const getHandler = useCallback((field) => {
         <div style={{ marginBottom: '24px' }}>
           <h3 style={{ fontSize: '15px', fontWeight: 700, color: t.text, margin: '0 0 4px' }}>Términos Financieros</h3>
           <p style={{ fontSize: '11px', color: t.textDim, margin: 0 }}>Define el capital, interés y modalidad del préstamo</p>
+        </div>
+
+        {/* Tipo de Préstamo */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '5px' }}>
+            <Building2 size={10} style={{ display: 'inline', marginRight: '4px' }} /> Tipo de Préstamo
+          </label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {[
+              { value: 'otorgado', label: 'Capital Colocado (Otorgado)', desc: 'Prestas dinero a un cliente (cobras interés)' },
+              { value: 'recibido', label: 'Capital Recibido (Deuda/Banco)', desc: 'Te prestas de un banco o persona (pagas cuotas)' },
+            ].map(opt => (
+              <div key={opt.value} onClick={() => handleChange('tipo_prestamo', opt.value)}
+                style={{
+                  flex: 1, padding: '12px', borderRadius: '10px', cursor: 'pointer',
+                  backgroundColor: form.tipo_prestamo === opt.value ? `${t.accent}15` : t.input,
+                  border: `1.5px solid ${form.tipo_prestamo === opt.value ? t.accent : t.border}`,
+                  transition: 'all 0.2s',
+                }}>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: form.tipo_prestamo === opt.value ? t.accent : t.text, margin: '0 0 2px' }}>
+                  {opt.label}
+                </p>
+                <p style={{ fontSize: '9px', color: t.textDim, margin: 0 }}>{opt.desc}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Modalidad de Pago */}
@@ -759,14 +821,15 @@ const getHandler = useCallback((field) => {
 
   // ─── RENDER: PASO 4 - RESUMEN ────────────────────────────
   const renderPasoResumen = () => {
+    const esRecibido = form.tipo_prestamo === 'recibido';
     const resumenItems = [
-      { label: 'Prestatario', value: form.nombre || '—', icon: User },
-      { label: 'CI / Documento', value: form.ci || '—', icon: FileSignature },
+      { label: esRecibido ? 'Acreedor / Banco' : 'Prestatario', value: form.nombre || '—', icon: User },
+      { label: esRecibido ? 'NIT / Identificación' : 'CI / Documento', value: form.ci || '—', icon: FileSignature },
       { label: 'Contacto', value: form.telefono || '—', icon: Smartphone },
       { label: 'Capital', value: `${(parseFloat(form.capital) || 0).toLocaleString()} ${form.moneda}`, icon: DollarSign },
       { label: 'Interés', value: `${form.interes}% mensual`, icon: BadgePercent },
       { label: 'Periodo', value: `${form.inicio ? new Date(form.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : '—'} → ${form.fin ? new Date(form.fin).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}`, icon: CalendarDays },
-      { label: 'Garantía', value: form.tipoGarantia ? `${form.tipoGarantia} — ${form.garantia?.substring(0, 40)}${(form.garantia?.length || 0) > 40 ? '...' : ''}` : '—', icon: ShieldCheck },
+      { label: esRecibido ? 'Garantía Otorgada' : 'Garantía Recibida', value: form.tipoGarantia ? `${form.tipoGarantia} — ${form.garantia?.substring(0, 40)}${(form.garantia?.length || 0) > 40 ? '...' : ''}` : '—', icon: ShieldCheck },
     ];
 
     const moneda = form.moneda || 'BOB';

@@ -7,8 +7,8 @@ const MODOS = {
     overlay: 'rgba(20,20,20,0.95)',
   },
   black: {
-    bg: '#000000', panel: '#0d0d0d', surface: '#050505',
-    input: '#111111', border: '#1a1a1a', borderLight: '#2a2a2a',
+    bg: '#000000', panel: '#121212', surface: '#161616',
+    input: '#1e1e1e', border: '#252528', borderLight: '#2e2e30',
     overlay: 'rgba(0,0,0,0.95)',
   },
   lightGray: {

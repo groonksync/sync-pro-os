@@ -73,8 +73,11 @@ function generarCronograma(prestamo) {
     let estado = 'pendiente';
 
     const isPagado = pagosArr.includes(key);
+    const isReservado = pagosArr.includes(`${key}_reservado`);
     if (isPagado) {
       estado = 'pagado';
+    } else if (isReservado) {
+      estado = 'reservado';
     } else {
       if (vencDate < hoy) {
         estado = 'vencido';
@@ -96,6 +99,7 @@ function generarCronograma(prestamo) {
       capital: 0,
       total: interesMensual,
       pagado: isPagado,
+      reservado: isReservado,
       mora,
       diasAtraso,
       estado,
@@ -198,11 +202,13 @@ function _calcularResumen(cuotas) {
   if (!cuotas?.length) return null;
   const totalCuotas = cuotas.length;
   const cuotasPagadas = cuotas.filter(c => c.estado === 'pagado').length;
+  const cuotasReservadas = cuotas.filter(c => c.estado === 'reservado').length;
   const cuotasPendientes = cuotas.filter(c => c.estado === 'pendiente').length;
   const cuotasVencidas = cuotas.filter(c => c.estado === 'vencido').length;
   const cuotasFuturas = cuotas.filter(c => c.estado === 'futuro').length;
 
   const totalPagado = cuotas.filter(c => c.estado === 'pagado').reduce((s, c) => s + c.total, 0);
+  const totalReservado = cuotas.filter(c => c.estado === 'reservado').reduce((s, c) => s + c.total, 0);
   const totalPendiente = cuotas.filter(c => c.estado === 'pendiente' || c.estado === 'vencido').reduce((s, c) => s + c.total, 0);
   const totalMora = cuotas.reduce((s, c) => s + (c.mora || 0), 0);
   const interesPromedio = cuotas.length > 0 ? cuotas[0].interes : 0;
@@ -211,10 +217,12 @@ function _calcularResumen(cuotas) {
   return {
     totalCuotas,
     cuotasPagadas,
+    cuotasReservadas,
     cuotasPendientes,
     cuotasVencidas,
     cuotasFuturas,
     totalPagado,
+    totalReservado,
     totalPendiente,
     totalMora,
     interesPromedio,

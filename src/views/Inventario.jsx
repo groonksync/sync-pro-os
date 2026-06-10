@@ -574,23 +574,23 @@ const DEFAULT_PRODUCTS = [
 ];
 
 const AMAZON_CATEGORIES = [
-  "Electrónica", "Computadoras", "Celulares y Accesorios", "Audio y Sonido", "Cámaras y Fotografía",
-  "Hogar y Cocina", "Ropa y Calzado", "Belleza y Cuidado Personal", "Deportes y Fitness", "Juguetes y Juegos",
-  "Salud y Bienestar", "Libros", "Automotriz", "Herramientas y Bricolaje", "Oficina y Papelería",
-  "Jardín y Exteriores", "Mascotas", "Alimentos y Bebidas", "Accesorios", "Ofertas", "Combos/Packs",
-  "Cámaras de Seguridad", "Seguridad y Vigilancia", "Redes y Conectividad", "Iluminación Inteligente",
-  "Consolas y Videojuegos", "Construcción y Materiales", "Decoración y Hogar"
+  "Computadoras", "Laptop", "Tablet", "Gamer", "Celulares", "Drones",
+  "Electrodomésticos", "Cocina", "Hogar", "Herramientas", "Audio",
+  "Cámaras", "Videojuegos", "Electrónica", "Accesorios", "Iluminación",
+  "Redes", "Seguridad", "Deportes", "Belleza", "Salud",
+  "Juguetes", "Mascotas", "Jardín", "Automotriz", "Libros",
+  "Ropa", "Calzado", "Combos/Packs", "Ofertas"
 ];
 
 const getCategoryIcon = (category) => {
   const catLower = category?.toLowerCase() || '';
   if (catLower.includes('computadoras') || catLower.includes('pc') || catLower.includes('laptop')) return BoxIcon;
-  if (catLower.includes('audio') || catLower.includes('sonido') || catLower.includes('música') || catLower.includes('micrófono')) return Music;
-  if (catLower.includes('celular') || catLower.includes('teléfono') || catLower.includes('accesorio')) return Smartphone;
-  if (catLower.includes('cámara') || catLower.includes('fotografía') || catLower.includes('seguridad') || catLower.includes('video')) return Video;
-  if (catLower.includes('electrónica') || catLower.includes('fuente') || catLower.includes('forza')) return Zap;
-  if (catLower.includes('construcción') || catLower.includes('material')) return Briefcase;
-  if (catLower.includes('decoración') || catLower.includes('adorno')) return Sparkles;
+  if (catLower.includes('audio') || catLower.includes('música') || catLower.includes('micrófono')) return Music;
+  if (catLower.includes('celular') || catLower.includes('teléfono') || catLower.includes('tablet') || catLower.includes('accesorio')) return Smartphone;
+  if (catLower.includes('cámara') || catLower.includes('dron') || catLower.includes('seguridad') || catLower.includes('video')) return Video;
+  if (catLower.includes('electrónica') || catLower.includes('electrodoméstico') || catLower.includes('gamer') || catLower.includes('videojuego') || catLower.includes('fuente') || catLower.includes('forza')) return Zap;
+  if (catLower.includes('herramienta') || catLower.includes('construcción') || catLower.includes('material')) return Briefcase;
+  if (catLower.includes('hogar') || catLower.includes('cocina') || catLower.includes('decoración') || catLower.includes('adorno')) return Sparkles;
   return Tag;
 };
 
@@ -602,6 +602,27 @@ const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [aiLoading, setAiLoading] = useState(false);
+
+  const handleToggleFeatured = async (product) => {
+    const isFeatured = !product.metadata?.is_featured;
+    const updatedMetadata = {
+      ...(product.metadata || {}),
+      is_featured: isFeatured
+    };
+    try {
+      const { error } = await supabase
+        .from('productos')
+        .update({ metadata: updatedMetadata })
+        .eq('id', product.id);
+      
+      if (error) throw error;
+      setProductos(prev => prev.map(p => p.id === product.id ? { ...p, metadata: updatedMetadata } : p));
+      setToast({ show: true, message: isFeatured ? 'Producto destacado' : 'Removido de destacados' });
+    } catch (err) {
+      console.error('Error toggling featured status:', err);
+      alert('Error al cambiar destacado: ' + err.message);
+    }
+  };
 
   const optimizeDescriptionWithAI = async () => {
     if (!editingProduct?.descripcion || !editingProduct?.nombre) return;
@@ -812,7 +833,8 @@ REGLAS DE FORMATO Y ESTILO:
           es_combo: !!editingProduct.es_combo,
           productos_regalo: editingProduct.productos_regalo || '',
           link_compra: editingProduct.enlace_compra || '',
-          stock_display_mode: editingProduct.metadata?.stock_display_mode || 'auto'
+          stock_display_mode: editingProduct.metadata?.stock_display_mode || 'auto',
+          is_featured: !!editingProduct.metadata?.is_featured
         }
       };
       
@@ -1685,23 +1707,47 @@ REGLAS DE FORMATO Y ESTILO:
                             )}
                           </div>
                           <div style={{ minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                            <span style={{ 
-                              fontSize: 12, 
-                              fontWeight: 700, 
-                              color: t.text, 
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
-                              overflow: 'hidden', 
-                              maxWidth: '280px', 
-                              fontFamily: "'Inter', system-ui, sans-serif", 
-                              letterSpacing: '-0.01em',
-                              textTransform: 'uppercase',
-                              lineHeight: '1.4em',
-                              maxHeight: '2.8em'
-                            }} title={String(p.nombre || '').toUpperCase()}>
-                              {String(p.nombre || '').toUpperCase()}
-                            </span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ 
+                                fontSize: 12, 
+                                fontWeight: 700, 
+                                color: t.text, 
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                                overflow: 'hidden', 
+                                maxWidth: '280px', 
+                                fontFamily: "'Inter', system-ui, sans-serif", 
+                                letterSpacing: '-0.01em',
+                                textTransform: 'uppercase',
+                                lineHeight: '1.4em',
+                                maxHeight: '2.8em'
+                              }} title={String(p.nombre || '').toUpperCase()}>
+                                {String(p.nombre || '').toUpperCase()}
+                              </span>
+                              
+                              {/* Botón rápido de destacar */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleFeatured(p);
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: 2,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: p.metadata?.is_featured ? '#eab308' : '#707070',
+                                  transition: 'color 0.2s',
+                                }}
+                                title={p.metadata?.is_featured ? "Quitar de destacados" : "Destacar producto"}
+                              >
+                                <Star size={14} fill={p.metadata?.is_featured ? '#eab308' : 'none'} />
+                              </button>
+                            </div>
                             <span style={{ fontSize: 9, fontWeight: 400, color: t.textDim, fontFamily: "'Inter', system-ui, sans-serif", textTransform: 'uppercase' }}>{p.marca || 'Sin marca'}</span>
                           </div>
                         </div>
@@ -2155,26 +2201,50 @@ REGLAS DE FORMATO Y ESTILO:
                     </select>
                   </div>
                 </div>
+                 {/* Visualizacion de Stock & Destacado */}
+                 <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+                   {/* Visualizacion de Stock en Catálogo */}
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                     <label style={labelStyle}>{"Visualizaci\u00f3n de Stock en Cat\u00e1logo"}</label>
+                     <select 
+                       value={editingProduct.metadata?.stock_display_mode || 'auto'} 
+                       onChange={e => setEditingProduct({ 
+                         ...editingProduct, 
+                         metadata: { 
+                           ...(editingProduct.metadata || {}), 
+                           stock_display_mode: e.target.value 
+                         } 
+                       })}
+                       style={selectStyle}
+                     >
+                       <option value="auto">{"Autom\u00e1tico (Basado en el stock real ingresado)"}</option>
+                       <option value="force_agotado">{"Forzar \"Agotado\" (Muestra Sin Stock sin difuminar)"}</option>
+                       <option value="force_por_agotarse">{"Forzar \"Por Agotarse\" (Muestra cartel de urgencia)"}</option>
+                       <option value="force_disponible_sin_stock">{"Forzar \"Disponible\" (Ilimitado / Sin Stock visible)"}</option>
+                       <option value="force_lanzamiento">{"Forzar \"Pr\u00f3ximo Lanzamiento\" (Lanzamiento muy pronto)"}</option>
+                     </select>
+                   </div>
 
-                {/* Visualización de Stock en Catálogo */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={labelStyle}>Visualización de Stock en Catálogo</label>
-                  <select 
-                    value={editingProduct.metadata?.stock_display_mode || 'auto'} 
-                    onChange={e => setEditingProduct({ 
-                      ...editingProduct, 
-                      metadata: { 
-                        ...(editingProduct.metadata || {}), 
-                        stock_display_mode: e.target.value 
-                      } 
-                    })}
-                    style={selectStyle}
-                  >
-                    <option value="auto">Automático (Basado en el stock real ingresado)</option>
-                    <option value="force_agotado">Forzar "Agotado" (Muestra Sin Stock con difuminado)</option>
-                    <option value="force_por_agotarse">Forzar "Por Agotarse" (Muestra cartel de urgencia sin difuminar)</option>
-                  </select>
-                </div>
+                   {/* Destacado */}
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
+                     <label style={labelStyle}>{"Destacar Producto"}</label>
+                     <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: `1px solid ${t.border}`, borderRadius: 12, fontSize: 11, fontWeight: 700, color: t.text, height: '42px', transition: 'all 0.2s' }}>
+                       <input 
+                         type="checkbox"
+                         checked={!!editingProduct.metadata?.is_featured}
+                         onChange={e => setEditingProduct({
+                           ...editingProduct,
+                           metadata: {
+                             ...(editingProduct.metadata || {}),
+                             is_featured: e.target.checked
+                           }
+                         })}
+                         style={{ accentColor: t.accent, cursor: 'pointer' }}
+                       />
+                       <span>{"⭐ Destacado"}</span>
+                     </label>
+                   </div>
+                 </div>
 
                 {/* Video Promocional & Enlace Compra */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

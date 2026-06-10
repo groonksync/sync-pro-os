@@ -29,7 +29,8 @@ import {
   StickyNote,
   ShieldCheck,
   Building2,
-  Workflow
+  Workflow,
+  Image
 } from 'lucide-react';
 import { getTheme, useTheme } from '../lib/theme';
 
@@ -55,6 +56,7 @@ const Sidebar = ({ activeTab, setActiveTab, counts, settings, googleUser, isColl
     { id: 'calendar', label: 'Calendario', icon: Calendar },
     { id: 'recordatorios', label: 'Recordatorios', icon: Bell, count: counts?.notificaciones },
     { id: 'flujo-trabajo', label: 'Flujo de Trabajo', icon: Workflow },
+    { id: 'conversor-imagenes', label: 'Conversor WebP', icon: Image },
     { id: 'boveda', label: 'Contraseñas', icon: ShieldCheck },
     { id: 'papelera', label: 'Papelera', icon: Trash2 },
   ];
