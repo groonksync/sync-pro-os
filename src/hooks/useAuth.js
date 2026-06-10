@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -24,22 +25,67 @@ export function AuthProvider({ children }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
+    setAuthError(null);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin
+        redirectTo: window.location.origin,
+        skipBrowserRedirect: true
       }
     });
-    if (error) console.error('Error al iniciar sesión:', error.message);
-  };
+    if (error) {
+      setAuthError(error.message);
+      console.error('Error al iniciar sesión:', error.message);
+    }
+  }, []);
 
-  const signOut = async () => {
+  const signInWithGooglePopup = useCallback(async () => {
+    setAuthError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      setAuthError(err.message);
+      console.error('Error al iniciar sesión:', err.message);
+    }
+  }, []);
+
+  const handleGoogleCredential = useCallback(async (credential) => {
+    setAuthError(null);
+    try {
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: credential
+      });
+      if (error) throw error;
+      return data;
+    } catch (err) {
+      setAuthError(err.message);
+      console.error('Error al validar con Supabase:', err.message);
+      return null;
+    }
+  }, []);
+
+  const signOut = useCallback(async () => {
     await supabase.auth.signOut();
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ session, user, loading, signInWithGoogle, signOut }}>
+    <AuthContext.Provider value={{
+      session, user, loading, authError,
+      signInWithGoogle, signInWithGooglePopup,
+      handleGoogleCredential, signOut,
+      setAuthError
+    }}>
       {children}
     </AuthContext.Provider>
   );
