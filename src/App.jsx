@@ -389,8 +389,7 @@ const AppContent = () => {
   }, [isDarkMode, appSettings.appearanceMode, appSettings.appBackground, appSettings.accentColor]);
 
   return (
-    <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
-      <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
+    <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
         style={{ backgroundColor: globalTheme.bg, color: globalTheme.text }}>
         
         {/* Background Wallpaper with extreme blur */}
@@ -452,14 +451,15 @@ const AppContent = () => {
           />
         )}
       </div>
-    </GoogleOAuthProvider>
   );
 };
 
 const App = () => (
-  <AuthProvider>
-    <AppContent />
-  </AuthProvider>
+  <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  </GoogleOAuthProvider>
 );
 
 export default App;
