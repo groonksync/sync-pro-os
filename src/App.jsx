@@ -19,13 +19,11 @@ import PublicCatalog from './views/PublicCatalog';
 import BovedaPass from './views/BovedaPass';
 import FlujoTrabajo from './views/FlujoTrabajo';
 import ConversorWebP from './views/ConversorWebP';
-import { GoogleOAuthProvider } from '@react-oauth/google';
-import { GoogleLogin } from '@react-oauth/google';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { supabase } from './lib/supabaseClient';
 import { getTheme } from './lib/theme';
 
-const LoginScreen = ({ onLogin, authError }) => (
+const LoginScreen = ({ onLogin, loading }) => (
   <div style={{
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
     height: '100vh', width: '100vw', backgroundColor: '#141414', color: '#d4d4d4',
@@ -43,24 +41,20 @@ const LoginScreen = ({ onLogin, authError }) => (
     <p style={{ fontSize: 10, color: '#9e9e9e', maxWidth: 300, textAlign: 'center', lineHeight: '1.6' }}>
       Inicia sesión con tu cuenta de Google para acceder a tu espacio de trabajo.
     </p>
-    <GoogleLogin
-      onSuccess={credentialResponse => {
-        onLogin(credentialResponse.credential);
-      }}
-      onError={() => {
-        console.error('Error en login de Google');
-      }}
-      theme="filled_black"
-      size="large"
-      text="signin_with"
-      shape="pill"
-      width="280"
-    />
-    {authError && (
-      <p style={{ fontSize: 8, color: '#e04a4a', textAlign: 'center', maxWidth: 300 }}>
-        Error: {authError}
-      </p>
-    )}
+    <button onClick={onLogin} disabled={loading} style={{
+      display: 'flex', alignItems: 'center', gap: 10, padding: '12px 24px',
+      borderRadius: 12, border: '1px solid #2e2e30', backgroundColor: '#1a1a1a',
+      color: loading ? '#525252' : '#d4d4d4', cursor: loading ? 'not-allowed' : 'pointer',
+      fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', transition: 'all 0.2s'
+    }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      {loading ? 'Verificando...' : 'Iniciar sesión con Google'}
+    </button>
     <p style={{ fontSize: 7, color: '#525252', textAlign: 'center', marginTop: 8 }}>
       Solo los usuarios autorizados pueden acceder al panel de administración.<br/>
       El catálogo público sigue disponible sin inicio de sesión.
@@ -69,7 +63,7 @@ const LoginScreen = ({ onLogin, authError }) => (
 );
 
 const AppContent = () => {
-  const { user, loading, authError, handleGoogleCredential } = useAuth();
+  const { user, loading, signInWithGoogle } = useAuth();
   const [googleToken, setGoogleToken] = useState(() => localStorage.getItem('sovereign_google_token'));
   const [googleUser, setGoogleUser] = useState(() => {
     const saved = localStorage.getItem('sovereign_google_user');
@@ -113,7 +107,7 @@ const AppContent = () => {
     );
   }
 
-  if (!user) return <LoginScreen onLogin={handleGoogleCredential} authError={authError} />;
+  if (!user) return <LoginScreen onLogin={signInWithGoogle} loading={loading} />;
 
   // Guardar en localStorage cuando cambie el estado
   useEffect(() => {
@@ -455,11 +449,9 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <GoogleOAuthProvider clientId="834249589474-pdrp08eljve6vo7v4egddv10llkeh2it.apps.googleusercontent.com">
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  </GoogleOAuthProvider>
+  <AuthProvider>
+    <AppContent />
+  </AuthProvider>
 );
 
 export default App;
