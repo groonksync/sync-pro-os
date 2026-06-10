@@ -65,6 +65,10 @@ const LoginScreen = ({ onLogin, loading }) => (
 const AppContent = () => {
   const { user, loading, signInWithGoogle } = useAuth();
 
+  const [activeTab, setActiveTab] = useState('resumen');
+  const [meetingsList, setMeetingsList] = useState([]);
+  const [servicios, setServicios] = useState([]);
+  const [selectedPrestamoId, setSelectedPrestamoId] = useState(null);
   const [googleToken, setGoogleToken] = useState(() => localStorage.getItem('sovereign_google_token'));
   const [googleUser, setGoogleUser] = useState(() => {
     const saved = localStorage.getItem('sovereign_google_user');
