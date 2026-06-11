@@ -126,7 +126,7 @@ const Sidebar = ({
 
       {/* App logo mark */}
       {!isCollapsed && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 6, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingLeft: 6, marginBottom: 20, height: 28, visibility: 'hidden' }}>
           <div style={{
             width: 28, height: 28, borderRadius: 9,
             background: 'linear-gradient(135deg, #404040, #252525)',
