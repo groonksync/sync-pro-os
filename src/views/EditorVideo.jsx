@@ -3,7 +3,7 @@ import {
   Plus, Users, Video, PlayCircle, ArrowLeft, MessageSquare, Save, FileText, Eraser,
   Hash, DollarSign, FolderOpen, ExternalLink, Quote, X, Trash2, Search, Mail,
   Instagram, Youtube, Globe, CreditCard, Phone, Camera, Filter, MoreVertical,
-  Calendar, CheckCircle2, Clock, User as UserIcon, Tag, Play, Pause, RotateCcw,
+  Calendar, CheckCircle2, Clock, Tag, Play, Pause, RotateCcw,
   Layers, ListChecks, History, Timer, Scissors, Music, Palette, Share2, Activity,
   Calculator as CalcIcon, RefreshCw, AlertCircle, Check, Link, Target, ChevronRight,
   Zap, Copy, Smartphone, Monitor, Info, HardDrive, Megaphone,
@@ -383,51 +383,28 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     <div className="flex flex-col h-screen w-full overflow-hidden font-sans"
       style={{ backgroundColor: t.bg, color: t.text }}>
       
-      {/* HEADER NAV */}
-      {!['session', 'agency-editor'].includes(viewState) && (
-        <nav className="h-16 flex items-center justify-between px-6 relative z-50"
+      {/* HEADER NAV - only shown on main hub views, not inside sessions/profiles */}
+      {['dashboard', 'client-list', 'agency-hub'].includes(viewState) && (
+        <nav className="h-14 flex items-center px-6 relative z-50 gap-1"
           style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
-           <div className="flex items-center gap-8">
-              <div>
-                 <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Mesa de Trabajo</h2>
-                 <p style={{ fontSize: '0.7rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>Control de Producción & Hub de Negocios</p>
-              </div>
-              <div className="flex rounded-xl p-0.5 gap-1 bg-zinc-950/20" style={{ border: 'none' }}>
-                  <button onClick={() => setViewState('dashboard')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                    style={{
-                      backgroundColor: viewState === 'dashboard' ? '#141414' : 'transparent',
-                      border: 'none',
-                      color: viewState === 'dashboard' ? t.accent : t.textDim,
-                    }}>Dashboard</button>
-                  <button onClick={() => setViewState('client-list')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                    style={{
-                      backgroundColor: viewState.includes('client') || viewState === 'session' ? '#141414' : 'transparent',
-                      border: 'none',
-                      color: viewState.includes('client') || viewState === 'session' ? t.accent : t.textDim,
-                    }}>Clientes</button>
-                  <button onClick={() => setViewState('agency-hub')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                    style={{
-                      backgroundColor: viewState.includes('agency') ? '#141414' : 'transparent',
-                      border: 'none',
-                      color: viewState.includes('agency') ? t.accent : t.textDim,
-                    }}>Agencia Pro</button>
-                  <button onClick={() => setViewState('project-engine')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                    style={{
-                      backgroundColor: viewState === 'project-engine' ? '#141414' : 'transparent',
-                      border: 'none',
-                      color: viewState === 'project-engine' ? t.accent : t.textDim,
-                    }}>Proyectos de Edición</button>
-              </div>
-           </div>
-           <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-950/20" style={{ border: 'none' }}>
-                 <div className="w-1.5 h-1.5 rounded-xl animate-pulse" style={{ backgroundColor: t.accent }}></div>
-                 <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.accent }}>System Online</span>
-              </div>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-zinc-950/20" style={{ border: 'none' }}>
-                <UserIcon size={16} color={t.textDim}/>
-              </div>
-           </div>
+            <button onClick={() => setViewState('dashboard')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+              style={{
+                backgroundColor: viewState === 'dashboard' ? t.panel : 'transparent',
+                border: viewState === 'dashboard' ? `1px solid ${t.border}` : '1px solid transparent',
+                color: viewState === 'dashboard' ? t.accent : t.textDim,
+              }}>Dashboard</button>
+            <button onClick={() => setViewState('client-list')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+              style={{
+                backgroundColor: viewState === 'client-list' ? t.panel : 'transparent',
+                border: viewState === 'client-list' ? `1px solid ${t.border}` : '1px solid transparent',
+                color: viewState === 'client-list' ? t.accent : t.textDim,
+              }}>Clientes</button>
+            <button onClick={() => setViewState('agency-hub')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+              style={{
+                backgroundColor: viewState === 'agency-hub' ? t.panel : 'transparent',
+                border: viewState === 'agency-hub' ? `1px solid ${t.border}` : '1px solid transparent',
+                color: viewState === 'agency-hub' ? t.accent : t.textDim,
+              }}>Agencia Pro</button>
         </nav>
       )}
 
@@ -438,7 +415,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 {[
                   { label: 'Clientes Nexus', val: clients.length, subtitle: 'Activos en directorio', icon: Users, tab: 'client-list' },
                   { label: 'Marcas Agencia', val: agencyClients.length, subtitle: 'Empresas Pro', icon: Building2, tab: 'agency-hub' },
-                  { label: 'Proyectos de Edición', val: JSON.parse(localStorage.getItem('inefable_proyectos_edicion') || '[]').length, subtitle: 'Mesa de producción', icon: Briefcase, tab: 'project-engine' },
+                  { label: 'Estrategias Agencia', val: strategies.length, subtitle: 'Roadmaps creados', icon: Target, tab: 'agency-hub' },
                   { label: 'Sesiones Totales', val: meetingsList.length, subtitle: 'Reuniones de trabajo', icon: Video, tab: 'client-list' }
                 ].map((s, i) => (
                   <div key={i} onClick={() => setViewState(s.tab)} className="flex items-center justify-between p-5 cursor-pointer transition-all hover:scale-[1.02]"
