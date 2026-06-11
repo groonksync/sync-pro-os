@@ -534,38 +534,50 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 </div>
              </header>
 
-             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-2">
-                {uniqueClients.map(cl => (
-                  <div key={cl.id} className="p-5 flex flex-col items-center justify-center group relative overflow-hidden aspect-square cursor-pointer transition-all duration-300 rounded-2xl hover:bg-white/[0.04]"
-                    style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px solid ${t.border}` }}>
-                     
-                     <div onClick={() => openClientProfile(cl)} className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden mb-4" style={{ border: `1px solid ${t.border}` }}>
-                        {cl.foto_url ? (
-                          <img src={cl.foto_url} alt={cl.nombre} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-xl font-bold" style={{ color: t.textDim }}>{cl.nombre.charAt(0)}</span>
-                        )}
-                     </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-2">
+                 {uniqueClients.map(cl => (
+                   <div key={cl.id} onClick={() => openClientProfile(cl)} className="p-5 flex flex-col justify-between group relative overflow-hidden transition-all duration-300 rounded-2xl hover:bg-white/[0.04] cursor-pointer"
+                     style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px solid ${t.border}`, minHeight: 140 }}>
+                      
+                      {/* Header */}
+                      <div className="flex items-center justify-between w-full mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-white/[0.02]" style={{ border: `1px solid ${t.border}` }}>
+                             {cl.foto_url ? (
+                               <img src={cl.foto_url} alt={cl.nombre} className="w-full h-full object-cover" />
+                             ) : (
+                               <span className="text-xs font-bold" style={{ color: t.textDim }}>{cl.nombre.charAt(0)}</span>
+                             )}
+                          </div>
+                          <div>
+                            <h4 className="text-[11px] font-black uppercase tracking-wider text-white truncate max-w-[120px]">{cl.nombre}</h4>
+                            <p className="text-[7px] font-mono text-neutral-500">{cl.empresa || 'Independiente'}</p>
+                          </div>
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          ACTIVO
+                        </span>
+                      </div>
 
-                     <p onClick={() => openClientProfile(cl)} className="text-xs font-black uppercase tracking-wider truncate w-full text-center mb-1 text-white">{cl.nombre}</p>
-                     <p onClick={() => openClientProfile(cl)} className="text-[7px] font-bold uppercase tracking-widest mb-3" style={{ color: t.textDim }}>{cl.empresa || 'Independiente'}</p>
-                     
-                     <div onClick={() => openClientProfile(cl)} className="flex flex-col items-center gap-0.5 mb-2">
-                        <span className="text-[7px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>{cl.nacionalidad || 'Global'}</span>
-                        <span className="text-[7px] font-mono" style={{ color: t.textDim }}>{cl.telefono || 'Sin Teléfono'}</span>
-                     </div>
+                      {/* Body details (2 columns) */}
+                      <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
+                        <div>
+                          <span className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500 block">Nacionalidad</span>
+                          <span className="text-[10px] font-bold text-neutral-300 block mt-1">{cl.nacionalidad || 'Global'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500 block">Teléfono</span>
+                          <span className="text-[10px] font-mono text-neutral-300 block mt-1 truncate">{cl.telefono || 'Sin Teléfono'}</span>
+                        </div>
+                      </div>
 
-                     <div onClick={() => openClientProfile(cl)} className="mt-2 w-full pt-3 flex items-center justify-between opacity-50 group-hover:opacity-100 transition-all" style={{ borderTop: `1px solid ${t.border}` }}>
-                        <span className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>Enlace</span>
-                        <ChevronRight size={10} color={t.accent}/>
-                     </div>
-
-                     <button onClick={(e) => handleDeleteClient(cl, e)} className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500/10 text-neutral-500 hover:text-rose-400" title="Eliminar Cliente">
-                        <Trash2 size={12}/>
-                     </button>
-                  </div>
-                ))}
-             </div>
+                      {/* Delete button */}
+                      <button onClick={(e) => { e.stopPropagation(); handleDeleteClient(cl, e); }} className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500/10 text-neutral-500 hover:text-rose-400" title="Eliminar Cliente">
+                         <Trash2 size={11}/>
+                      </button>
+                   </div>
+                 ))}
+              </div>
         </div>
        )}
 
@@ -589,32 +601,53 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
              </button>
            </header>
 
-           <div className="space-y-2.5 pt-2">
-              {filteredMeetings.map(m => (
-                <div key={m.id} className="group/session flex items-center justify-between p-4 cursor-pointer transition-all duration-300 rounded-xl hover:bg-white/[0.04]"
-                  style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px solid ${t.border}` }}>
-                  <div onClick={() => openMeeting(m)} className="flex-1 flex items-center gap-4">
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors bg-white/[0.02] group-hover/session:bg-white/[0.05]" style={{ border: `1px solid ${t.border}` }}>
-                      <FileVideo size={16} color={t.accent}/>
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-black uppercase tracking-wider text-white group-hover/session:text-emerald-400 transition-colors">{m.session_title}</h4>
-                      <p className="text-[7.5px] font-mono text-neutral-400 mt-0.5">{m.fecha}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button onClick={(e) => handleDeleteMeeting(m, e)} className="p-2 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all" title="Eliminar Sesión">
-                      <Trash2 size={13}/>
-                    </button>
-                  </div>
-                </div>
-              ))}
-              {filteredMeetings.length === 0 && (
-                <div className="text-center py-10 rounded-xl" style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px dashed ${t.border}` }}>
-                  <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin sesiones registradas. Comienza un nuevo flujo.</p>
-                </div>
-              )}
-            </div>
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-2">
+             {filteredMeetings.map(m => (
+               <div key={m.id} onClick={() => openMeeting(m)} className="p-5 flex flex-col justify-between group/session relative overflow-hidden transition-all duration-300 rounded-2xl hover:bg-white/[0.04] cursor-pointer"
+                 style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px solid ${t.border}`, minHeight: 140 }}>
+                 
+                 {/* Header */}
+                 <div className="flex items-center justify-between w-full mb-4">
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white/[0.02]" style={{ border: `1px solid ${t.border}` }}>
+                       <FileVideo size={14} color={t.accent}/>
+                     </div>
+                     <div>
+                       <h4 className="text-[11px] font-black uppercase tracking-wider text-white truncate max-w-[150px]">{m.session_title}</h4>
+                       <p className="text-[7px] font-mono text-neutral-500">Sesión de Trabajo</p>
+                     </div>
+                   </div>
+                   <span className="px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                     RECIENTE
+                   </span>
+                 </div>
+
+                 {/* Body details (2 columns) */}
+                 <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/5">
+                   <div>
+                     <span className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500 block">Fecha Creación</span>
+                     <span className="text-[10px] font-mono text-neutral-300 block mt-1">{m.fecha}</span>
+                   </div>
+                   <div>
+                     <span className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500 block">Última Modificación</span>
+                     <span className="text-[10px] font-mono text-neutral-300 block mt-1">Reciente</span>
+                   </div>
+                 </div>
+
+                 {/* Delete button */}
+                 <button onClick={(e) => { e.stopPropagation(); handleDeleteMeeting(m, e); }} 
+                   className="absolute top-2 right-2 p-1.5 rounded-lg opacity-0 group-hover/session:opacity-100 transition-all hover:bg-rose-500/10 text-neutral-500 hover:text-rose-400" 
+                   title="Eliminar Sesión">
+                   <Trash2 size={11}/>
+                 </button>
+               </div>
+             ))}
+             {filteredMeetings.length === 0 && (
+               <div className="col-span-full text-center py-10 rounded-xl" style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px dashed ${t.border}` }}>
+                 <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin sesiones registradas. Comienza un nuevo flujo.</p>
+               </div>
+             )}
+           </div>
         </div>
        )}
 
