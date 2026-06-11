@@ -64,7 +64,7 @@ const LoginScreen = ({ onLogin, loading }) => (
 );
 
 const AppContent = () => {
-  const { user, loading, signInWithGoogle } = useAuth();
+  const { session, user, loading, signInWithGoogle } = useAuth();
 
   const [activeTab, setActiveTab] = useState('resumen');
   const [meetingsList, setMeetingsList] = useState([]);
@@ -75,6 +75,28 @@ const AppContent = () => {
     const saved = localStorage.getItem('sovereign_google_user');
     return saved ? JSON.parse(saved) : null;
   });
+
+  // Capturar automáticamente el token de Google del proveedor desde la sesión de Supabase
+  useEffect(() => {
+    if (session) {
+      if (session.provider_token) {
+        setGoogleToken(session.provider_token);
+      }
+      if (session.user?.user_metadata) {
+        setGoogleUser({
+          name: session.user.user_metadata.full_name || session.user.user_metadata.name || session.user.email,
+          email: session.user.email,
+          picture: session.user.user_metadata.avatar_url || session.user.user_metadata.picture || '',
+        });
+      }
+    } else {
+      if (!loading) {
+        setGoogleToken(null);
+        setGoogleUser(null);
+      }
+    }
+  }, [session, loading]);
+
 
   // NOTA: El refresh de token Google OAuth requiere un backend con refresh_token.
   // Sin un endpoint /api/refresh-token, el token expira en ~1 hora.
@@ -305,14 +327,15 @@ const AppContent = () => {
             setData={setData} 
             settings={appSettings}
             isDark={isDarkMode}
+            token={googleToken}
             preSelectedId={selectedPrestamoId} 
             onClearSelection={() => setSelectedPrestamoId(null)}
           />
         );
         case 'notificaciones': return <Notifications data={data} servicios={servicios} onNavigate={setActiveTab} isDark={isDarkMode} />;
-        case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} initialFilterText={egresosSearch} />;
+        case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} initialFilterText={egresosSearch} token={googleToken} />;
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} initialSearch={inventarioSearch} />;
-        case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} />;
+        case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} token={googleToken} />;
         case 'flujo-trabajo': return <FlujoTrabajo settings={appSettings} isDark={isDarkMode} />;
         case 'conversor-imagenes': return <ConversorWebP settings={appSettings} isDark={isDarkMode} />;
         case 'boveda': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;

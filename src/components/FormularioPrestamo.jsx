@@ -281,7 +281,7 @@ const getHandler = useCallback((field) => {
         pagos: form.pagos || [],
         tipo_prestamo: form.tipo_prestamo || 'otorgado'
       };
-
+ 
       let saveError;
       let newRecordData;
       if (initialData?.id) {
@@ -295,10 +295,11 @@ const getHandler = useCallback((field) => {
             datos_previos: initialData,
           }]);
         }
+        newRecordData = { id: initialData.id, ...payload };
       } else {
         const { error, data } = await supabase.from('prestamos').insert([payload]).select();
         saveError = error;
-        newRecordData = data;
+        if (data?.[0]) newRecordData = data[0];
         if (!error && data?.[0]) {
           await supabase.from('prestamos_historial').insert([{
             prestamo_id: data[0].id,
@@ -316,10 +317,12 @@ const getHandler = useCallback((field) => {
           if (initialData?.id) {
             const { error: retryErr } = await supabase.from('prestamos').update(fallbackPayload).eq('id', initialData.id);
             if (retryErr) throw retryErr;
+            newRecordData = { id: initialData.id, ...fallbackPayload };
           } else {
             const { error: retryErr, data } = await supabase.from('prestamos').insert([fallbackPayload]).select();
             if (retryErr) throw retryErr;
             if (data?.[0]) {
+              newRecordData = data[0];
               await supabase.from('prestamos_historial').insert([{
                 prestamo_id: data[0].id,
                 accion: 'CREADO',
@@ -332,7 +335,7 @@ const getHandler = useCallback((field) => {
         }
       }
 
-      onSave?.();
+      onSave?.(newRecordData);
     } catch (err) {
       setErrors(prev => ({ ...prev, submit: err.message }));
     } finally {

@@ -239,3 +239,44 @@ export const updateInvoiceInDrive = async (token, driveFileId, invoice) => {
   return await saveInvoiceToDrive(token, invoice);
 };
 
+// ─── CONTROL PDF — DRIVE HIERARCHY HELPERS ───────────────────────────────────
+
+export const getControlPdfSubfolder = async (token, subfolderName) => {
+  const masterFolderId = await findOrCreateFolder(token, 'control PDF', 'root');
+  return await findOrCreateFolder(token, subfolderName, masterFolderId);
+};
+
+// Uploads a PDF blob directly to Google Drive in the specified subfolder
+export const uploadPdfToDrive = async (token, pdfBlob, fileName, subfolderName) => {
+  const folderId = await getControlPdfSubfolder(token, subfolderName);
+  const metadata = { name: fileName, parents: [folderId], mimeType: 'application/pdf' };
+  const formData = new FormData();
+  formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  formData.append('file', pdfBlob);
+  const res = await axios.post(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+    formData,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+};
+
+// ─── GOOGLE CALENDAR EXTRA CRUD HELPERS ──────────────────────────────────────
+
+export const updateCalendarEvent = async (token, eventId, eventData, calendarId = 'primary') => {
+  const response = await axios.patch(
+    `${CALENDAR_API_URL}/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`,
+    eventData,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return response.data;
+};
+
+export const deleteCalendarEvent = async (token, eventId, calendarId = 'primary') => {
+  await axios.delete(
+    `${CALENDAR_API_URL}/calendars/${encodeURIComponent(calendarId)}/events/${eventId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+};
+
+

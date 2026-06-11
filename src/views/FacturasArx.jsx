@@ -8,7 +8,8 @@ import {
 import { useTheme } from '../lib/theme';
 import {
   saveInvoiceToDrive, loadInvoicesFromDrive,
-  deleteInvoiceFromDrive, updateInvoiceInDrive
+  deleteInvoiceFromDrive, updateInvoiceInDrive,
+  uploadPdfToDrive
 } from '../lib/googleApi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -505,6 +506,17 @@ export default function FacturasArx({ token, isDark = true, clients = [] }) {
         await saveInvoiceToDrive(token, form);
         showToast('Factura guardada en Drive ✓');
       }
+
+      // NUEVO: Generar PDF y subirlo a Drive (control PDF/Marketing)
+      try {
+        const pdfDoc = generatePDF(form, false);
+        const pdfBlob = pdfDoc.output('blob');
+        const pdfName = `${form.numero}.pdf`;
+        await uploadPdfToDrive(token, pdfBlob, pdfName, 'Marketing');
+      } catch (pdfErr) {
+        console.error("Error al subir el PDF de la factura a Drive:", pdfErr);
+      }
+
       await loadInvoices();
       setView('list');
       setForm(emptyInvoice());

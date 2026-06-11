@@ -6,9 +6,71 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
+import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '../lib/googleApi';
 
-const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
+const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
   const t = useTheme(isDark);
+  const [syncToCalendar, setSyncToCalendar] = useState(true);
+
+  // Auxiliares de Google Calendar
+  const parseGoogleEventId = (desc) => {
+    if (!desc) return null;
+    const match = desc.match(/\[google_event_id:\s*([^\]]+)\]/);
+    return match ? match[1].trim() : null;
+  };
+
+  const serializeGoogleEventId = (desc, eventId) => {
+    const clean = desc ? desc.replace(/\[google_event_id:\s*[^\]]+\]/, '').trim() : '';
+    if (!eventId) return clean;
+    return `${clean}\n\n[google_event_id: ${eventId}]`.trim();
+  };
+
+  const buildEventData = (recordatorio, subtareas) => {
+    const isCompleted = recordatorio.estado === 'Completado';
+    const icon = isCompleted ? '✅ [COMPLETADO]' : `🔔 [${recordatorio.prioridad}]`;
+    const summary = `${icon} Recordatorio: ${recordatorio.titulo}`;
+    
+    let descLines = [];
+    descLines.push(`--- RECORDATORIO DE TAREA ---`);
+    descLines.push(`Asunto: ${recordatorio.titulo}`);
+    if (recordatorio.descripcion) {
+      const cleanDesc = recordatorio.descripcion.replace(/\[google_event_id:\s*[^\]]+\]/, '').trim();
+      if (cleanDesc) descLines.push(`Detalles: ${cleanDesc}`);
+    }
+    descLines.push(`Prioridad: ${recordatorio.prioridad}`);
+    descLines.push(`Categoría: ${recordatorio.categoria}`);
+    if (parseFloat(recordatorio.monto) > 0) {
+      descLines.push(`Monto Estimado: ${recordatorio.monto} BOB`);
+    }
+    if (recordatorio.nombre_contacto) {
+      descLines.push(`Persona Relacionada: ${recordatorio.nombre_contacto}`);
+    }
+    if (subtareas && subtareas.length > 0) {
+      descLines.push(`\nPasos / Checklist:`);
+      subtareas.forEach(st => {
+        descLines.push(`[${st.completado ? 'x' : ' '}] ${st.texto}`);
+      });
+    }
+    
+    let startDateStr = recordatorio.fecha;
+    let endDateStr;
+    if (recordatorio.fecha_fin) {
+      const next = new Date(recordatorio.fecha_fin);
+      next.setDate(next.getDate() + 1);
+      endDateStr = next.toISOString().split('T')[0];
+    } else {
+      const next = new Date(recordatorio.fecha);
+      next.setDate(next.getDate() + 1);
+      endDateStr = next.toISOString().split('T')[0];
+    }
+    
+    return {
+      summary,
+      description: descLines.join('\n'),
+      start: { date: startDateStr },
+      end: { date: endDateStr }
+    };
+  };
   const [recordatorios, setRecordatorios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('Todos');
@@ -67,6 +129,20 @@ const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
       st.id === subtareaId ? { ...st, completado: !st.completado } : st
     );
     try {
+      // Sincronizar calendario
+      const r = recordatorios.find(item => item.id === recordatorioId);
+      if (r && token) {
+        const eventId = parseGoogleEventId(r.descripcion);
+        if (eventId) {
+          try {
+            const eventData = buildEventData(r, updated);
+            await updateCalendarEvent(token, eventId, eventData);
+          } catch (calErr) {
+            console.error("Error updating Calendar event subtasks:", calErr);
+          }
+        }
+      }
+
       const { error } = await supabase
         .from('recordatorios')
         .update({ subtareas: updated })
@@ -79,10 +155,28 @@ const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
   const handleCreate = async () => {
     if (!nuevoRecordatorio.titulo) return;
     try {
+      let desc = nuevoRecordatorio.descripcion;
+      let eventId = null;
+
+      if (token && syncToCalendar && nuevoRecordatorio.fecha) {
+        try {
+          const eventData = buildEventData({
+            ...nuevoRecordatorio,
+            estado: 'Pendiente'
+          }, subtareasTemp);
+          const res = await createCalendarEvent(token, eventData);
+          eventId = res.id;
+          desc = serializeGoogleEventId(desc, eventId);
+        } catch (calErr) {
+          console.error("Error creating Calendar event for reminder:", calErr);
+        }
+      }
+
       const { error } = await supabase
         .from('recordatorios')
         .insert([{
           ...nuevoRecordatorio,
+          descripcion: desc,
           subtareas: subtareasTemp,
           estado: 'Pendiente',
           monto: parseFloat(nuevoRecordatorio.monto) || 0,
@@ -101,6 +195,20 @@ const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
   const toggleEstado = async (id, estadoActual) => {
     const nuevoEstado = estadoActual === 'Completado' ? 'Pendiente' : 'Completado';
     try {
+      const r = recordatorios.find(item => item.id === id);
+      if (r && token) {
+        const eventId = parseGoogleEventId(r.descripcion);
+        if (eventId) {
+          try {
+            const updatedItem = { ...r, estado: nuevoEstado };
+            const eventData = buildEventData(updatedItem, r.subtareas);
+            await updateCalendarEvent(token, eventId, eventData);
+          } catch (calErr) {
+            console.error("Error updating Calendar event state:", calErr);
+          }
+        }
+      }
+
       await supabase.from('recordatorios').update({ estado: nuevoEstado }).eq('id', id);
       fetchRecordatorios();
     } catch (e) { console.error(e); }
@@ -110,6 +218,16 @@ const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
     try {
       const item = recordatorios.find(r => r.id === id);
       if (item) {
+        if (token) {
+          const eventId = parseGoogleEventId(item.descripcion);
+          if (eventId) {
+            try {
+              await deleteCalendarEvent(token, eventId);
+            } catch (calErr) {
+              console.error("Error deleting Calendar event:", calErr);
+            }
+          }
+        }
         await supabase.from('papelera').insert([{
           tipo_dato: 'recordatorio',
           nombre_item: item.titulo,
@@ -382,6 +500,20 @@ const Recordatorios = ({ settings, isDark, initialSearch = '' }) => {
                   </select>
                 </div>
               </div>
+
+              {token && (
+                <div style={{ paddingTop: '8px', paddingLeft: '4px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '11px', color: t.text }}>
+                    <input
+                      type="checkbox"
+                      checked={syncToCalendar}
+                      onChange={e => setSyncToCalendar(e.target.checked)}
+                      style={{ width: '14px', height: '14px', accentColor: t.accent }}
+                    />
+                    <span>Sincronizar esta tarea con Google Calendar</span>
+                  </label>
+                </div>
+              )}
 
               <div className="pt-3 flex gap-3">
                  <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3.5 font-black uppercase text-[9px] tracking-widest transition-all" style={{ color: t.textDim }}>Cancelar</button>

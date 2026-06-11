@@ -10,8 +10,348 @@ import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
 import FormularioPrestamo from '../components/FormularioPrestamo';
 import ErrorBoundary from '../components/ErrorBoundary';
-import { useAmortizacion, useAmortizacionGlobal, generarCronograma, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
+import { useAmortizacion, useAmortizacionGlobal, generarCronograma, generarCronogramaDiario, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { uploadPdfToDrive, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getCalendarList } from '../lib/googleApi';
+
+// ─── AUXILIARES DE PARSEO Y SERIALIZACIÓN DE EVENTOS CALENDAR ────────────────
+const parseCalendarEvents = (notasText) => {
+  if (!notasText) return {};
+  const match = notasText.match(/\[google_calendar_events:\s*({.*?})\]/);
+  if (match) {
+    try {
+      return JSON.parse(match[1]);
+    } catch (e) {
+      return {};
+    }
+  }
+  return {};
+};
+
+const serializeCalendarEvents = (notasText, eventMap) => {
+  const cleanNotas = notasText ? notasText.replace(/\[google_calendar_events:\s*({.*?})\]/, '').trim() : '';
+  return `${cleanNotas}\n\n[google_calendar_events: ${JSON.stringify(eventMap)}]`.trim();
+};
+
+const syncLoanToGoogleCalendar = async (prestamo, token) => {
+  if (!token || !prestamo?.id) return null;
+  
+  try {
+    const existingEvents = parseCalendarEvents(prestamo.notas);
+    const updatedEvents = { ...existingEvents };
+    const isDiario = prestamo.tipo_pago === 'diario';
+    
+    if (isDiario) {
+      const capitalNum = parseFloat(prestamo.capital) || 0;
+      const tasaInteres = parseFloat(prestamo.interes) || 0;
+      const meses = parseInt(prestamo.plazo_meses) || 1;
+      const totalDias = meses * 30;
+      const interesTotal = capitalNum * (tasaInteres / 100) * meses;
+      const capitalDiario = capitalNum / totalDias;
+      const interesDiario = interesTotal / totalDias;
+      const cuotaDiaria = capitalDiario + interesDiario;
+      
+      const eventKey = 'daily_recurrence';
+      const eventId = existingEvents[eventKey];
+      
+      const eventData = {
+        summary: `💸 Cobro Diario: ${Math.round(cuotaDiaria)} ${prestamo.moneda} — ${prestamo.nombre}`,
+        description: `--- DETALLE DE COBRO DIARIO ---\nCliente: ${prestamo.nombre}\nCI: ${prestamo.ci || '---'}\nTeléfono: ${prestamo.telefono || '---'}\nCapital Invertido: ${prestamo.capital} ${prestamo.moneda}\nInterés mensual: ${prestamo.interes}%\nCuota diaria: ${cuotaDiaria.toFixed(2)} ${prestamo.moneda} (Capital: ${capitalDiario.toFixed(2)} + Interés: ${interesDiario.toFixed(2)})\nDuración: ${totalDias} días\nInicio: ${prestamo.inicio}\nFin: ${prestamo.fin}\n---`,
+        start: { date: prestamo.inicio },
+        end: { date: new Date(new Date(prestamo.inicio).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] },
+        recurrence: [`RRULE:FREQ=DAILY;COUNT=${totalDias}`]
+      };
+      
+      if (eventId) {
+        try {
+          await updateCalendarEvent(token, eventId, eventData);
+        } catch (err) {
+          const res = await createCalendarEvent(token, eventData);
+          updatedEvents[eventKey] = res.id;
+        }
+      } else {
+        const res = await createCalendarEvent(token, eventData);
+        updatedEvents[eventKey] = res.id;
+      }
+    } else {
+      // Para préstamos mensuales, generamos el cronograma
+      // Importamos generarCronograma localmente
+      const cuotas = generarCronograma(prestamo);
+      
+      for (const cuota of cuotas) {
+        const eventId = existingEvents[cuota.key];
+        const startDateStr = cuota.fechaVencimiento;
+        const nextDay = new Date(new Date(startDateStr).getTime() + 24 * 60 * 60 * 1000);
+        const endDateStr = nextDay.toISOString().split('T')[0];
+        
+        const isPaid = (prestamo.pagos || []).includes(cuota.key);
+        const statusLabel = isPaid ? 'PAGADO' : cuota.estado === 'vencido' ? 'VENCIDO' : 'PTE';
+        const iconPrefix = isPaid ? '✅' : '💸';
+        
+        const eventData = {
+          summary: `${iconPrefix} [${statusLabel}] Interés: ${cuota.interes} ${prestamo.moneda} — ${prestamo.nombre}`,
+          description: `--- DETALLE DE COBRO DE CUOTA ---\nCliente: ${prestamo.nombre}\nCI: ${prestamo.ci || '---'}\nTeléfono: ${prestamo.telefono || '---'}\nCapital original: ${prestamo.capital} ${prestamo.moneda}\nTasa de interés: ${prestamo.interes}%\nCuota correspondiente: ${cuota.label}\nMonto a cobrar: ${cuota.interes} ${prestamo.moneda}\nMora acumulada: ${cuota.mora || 0} ${prestamo.moneda}\nTotal a cobrar: ${cuota.total + (cuota.mora || 0)} ${prestamo.moneda}\nEstado del pago: ${statusLabel}\n---`,
+          start: { date: startDateStr },
+          end: { date: endDateStr }
+        };
+        
+        if (eventId) {
+          try {
+            await updateCalendarEvent(token, eventId, eventData);
+          } catch (err) {
+            const res = await createCalendarEvent(token, eventData);
+            updatedEvents[cuota.key] = res.id;
+          }
+        } else {
+          const res = await createCalendarEvent(token, eventData);
+          updatedEvents[cuota.key] = res.id;
+        }
+      }
+    }
+    
+    const newNotas = serializeCalendarEvents(prestamo.notas, updatedEvents);
+    const { error } = await supabase.from('prestamos').update({ notas: newNotas }).eq('id', prestamo.id);
+    if (error) console.error('Error saving calendar metadata to loan:', error);
+    
+    return newNotas;
+  } catch (err) {
+    console.error('Error in syncLoanToGoogleCalendar:', err);
+    return null;
+  }
+};
+
+const generateReciboPDF = (recibo, prestamo, isDark = false) => {
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, M = 20;
+  
+  // Colores
+  const BG = isDark ? '#0d0d0f' : '#ffffff';
+  const TEXT_MAIN = isDark ? '#f8fafc' : '#0f172a';
+  const TEXT_MID = isDark ? '#94a3b8' : '#475569';
+  const TEXT_DIM = isDark ? '#64748b' : '#94a3b8';
+  const ACCENT = '#10b981'; // Green accent for success / paid
+  const BORDER = isDark ? '#1e293b' : '#e2e8f0';
+  const PANEL = isDark ? '#151518' : '#f8fafc';
+  const TABLE_HEADER_BG = isDark ? '#1e293b' : '#f1f5f9';
+
+  // Background
+  pdf.setFillColor(BG);
+  pdf.rect(0, 0, 210, 297, 'F');
+
+  let y = M;
+
+  // ── HEADER ──
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(22);
+  pdf.setTextColor(ACCENT);
+  pdf.text('RECIBO DE PAGO', M, y);
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT_DIM);
+  pdf.text('COMPROBANTE OFICIAL', W - M, y, { align: 'right' });
+  
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.setTextColor(TEXT_MAIN);
+  pdf.text(recibo.numero || 'REC-XXXXXX', W - M, y + 6, { align: 'right' });
+
+  y += 8;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8.5);
+  pdf.setTextColor(TEXT_MID);
+  pdf.text('INEFABLE FINANCIAL SYSTEM', M, y);
+  
+  y += 12;
+
+  // Divider
+  pdf.setDrawColor(BORDER);
+  pdf.setLineWidth(0.4);
+  pdf.line(M, y, W - M, y);
+  y += 10;
+
+  // ── DATOS GENERALES (2 Columns) ──
+  const col2 = W / 2 + 5;
+
+  // Column 1: CLIENTE
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT_DIM);
+  pdf.text('PAGADOR / DEUDOR', M, y);
+
+  y += 5;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(11);
+  pdf.setTextColor(TEXT_MAIN);
+  pdf.text(recibo.prestamistaName || prestamo?.nombre || '---', M, y);
+
+  y += 5;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8.5);
+  pdf.setTextColor(TEXT_MID);
+  if (prestamo?.ci) pdf.text(`CI: ${prestamo.ci}`, M, y);
+  y += 4.5;
+  if (prestamo?.telefono) pdf.text(`Tel: ${prestamo.telefono}`, M, y);
+
+  // Column 2: EMISIÓN & DETALLES
+  let yCol2 = y - 14.5;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT_DIM);
+  pdf.text('FECHA DE PAGO', col2, yCol2);
+
+  yCol2 += 5;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(10);
+  pdf.setTextColor(TEXT_MAIN);
+  pdf.text(safeFormatDate(recibo.fechaEmision, { year: 'numeric', month: 'long', day: 'numeric' }), col2, yCol2);
+
+  yCol2 += 5;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT_DIM);
+  pdf.text('MÉTODO DE PAGO', col2, yCol2);
+
+  yCol2 += 5;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(9.5);
+  pdf.setTextColor(ACCENT);
+  pdf.text(recibo.metodo?.toUpperCase() || 'EFECTIVO', col2, yCol2);
+
+  y = Math.max(y, yCol2) + 12;
+
+  // ── CONTRATO REFERENCIA PANEL ──
+  pdf.setFillColor(PANEL);
+  pdf.setDrawColor(BORDER);
+  pdf.setLineWidth(0.2);
+  pdf.roundedRect(M, y, W - 2*M, 20, 2, 2, 'FD');
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT_DIM);
+  pdf.text('REFERENCIA DEL CONTRATO', M + 5, y + 6);
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(9);
+  pdf.setTextColor(TEXT_MAIN);
+  const capitalStr = prestamo ? `${parseFloat(prestamo.capital).toLocaleString()} ${prestamo.moneda}` : '---';
+  const interesStr = prestamo ? `${prestamo.interes}% mensual` : '---';
+  pdf.text(`Préstamo de ${capitalStr} al ${interesStr}`, M + 5, y + 13);
+  pdf.text(`Fecha Inicio: ${safeFormatDate(prestamo?.inicio)} | Fin: ${safeFormatDate(prestamo?.fin)}`, W - M - 5, y + 13, { align: 'right' });
+
+  y += 28;
+
+  // ── CONCEPTO DE PAGO ──
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT_DIM);
+  pdf.text('CONCEPTO', M, y);
+  
+  y += 5;
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(10);
+  pdf.setTextColor(TEXT_MAIN);
+  pdf.text(recibo.concepto || 'Pago de Cuota', M, y);
+
+  y += 10;
+
+  // ── DESGLOSE TABLE ──
+  const moneda = prestamo?.moneda || 'BOB';
+  const rows = [];
+  if (parseFloat(recibo.montoInteres) > 0) {
+    rows.push(['Pago de Intereses', `${parseFloat(recibo.montoInteres).toLocaleString()} ${moneda}`]);
+  }
+  if (parseFloat(recibo.montoMora) > 0) {
+    rows.push(['Cargos por Mora', `${parseFloat(recibo.montoMora).toLocaleString()} ${moneda}`]);
+  }
+  if (parseFloat(recibo.montoCapital) > 0) {
+    rows.push(['Amortización de Capital', `${parseFloat(recibo.montoCapital).toLocaleString()} ${moneda}`]);
+  }
+  if (parseFloat(recibo.montoAjustes) > 0) {
+    rows.push(['Ajustes / Descuentos', `-${parseFloat(recibo.montoAjustes).toLocaleString()} ${moneda}`]);
+  }
+
+  const totalCalculado = (parseFloat(recibo.montoInteres) || 0) + 
+                         (parseFloat(recibo.montoMora) || 0) + 
+                         (parseFloat(recibo.montoCapital) || 0) - 
+                         (parseFloat(recibo.montoAjustes) || 0);
+
+  autoTable(pdf, {
+    startY: y,
+    margin: { left: M, right: M },
+    head: [['Descripción de Conceptos', 'Monto']],
+    body: rows,
+    theme: 'plain',
+    headStyles: {
+      fillColor: TABLE_HEADER_BG,
+      textColor: TEXT_MAIN,
+      fontStyle: 'bold',
+      fontSize: 9,
+      halign: 'left'
+    },
+    bodyStyles: {
+      textColor: TEXT_MID,
+      fontSize: 9.5,
+      halign: 'left',
+    },
+    columnStyles: {
+      1: { halign: 'right', fontStyle: 'bold', textColor: TEXT_MAIN }
+    },
+    styles: {
+      lineColor: BORDER,
+      lineWidth: 0.1,
+    }
+  });
+
+  y = pdf.lastAutoTable.finalY + 12;
+
+  // Total Box
+  pdf.setFillColor(PANEL);
+  pdf.roundedRect(W - M - 70, y, 70, 16, 2, 2, 'F');
+  
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8.5);
+  pdf.setTextColor(TEXT_MID);
+  pdf.text('TOTAL RECIBIDO', W - M - 65, y + 6);
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(13);
+  pdf.setTextColor(ACCENT);
+  pdf.text(`${totalCalculado.toLocaleString()} ${moneda}`, W - M - 5, y + 11.5, { align: 'right' });
+
+  y += 32;
+
+  // Watermark "PAGADO"
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(40);
+  pdf.setTextColor(isDark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.06)');
+  pdf.text('PAGADO', W / 2, y - 8, { align: 'center', angle: 12 });
+
+  // Signature lines
+  const sigW = 50;
+  pdf.setDrawColor(BORDER);
+  pdf.setLineWidth(0.3);
+  
+  pdf.line(M, y, M + sigW, y);
+  pdf.line(W - M - sigW, y, W - M, y);
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(TEXT_DIM);
+  pdf.text('FIRMA CLIENTE', M + sigW / 2, y + 5, { align: 'center' });
+  pdf.text('FIRMA ACREEDOR', W - M - sigW / 2, y + 5, { align: 'center' });
+
+  // Small note
+  y += 15;
+  pdf.setFont('helvetica', 'italic');
+  pdf.setFontSize(7.5);
+  pdf.setTextColor(TEXT_DIM);
+  pdf.text('Este recibo constituye una constancia legal de pago del monto y conceptos indicados.', W / 2, y, { align: 'center' });
+
+  return pdf;
+};
 
 // ─── SAFE DATE FORMATTING HELPERS ────────────────────────────
 const safeFormatDate = (dateVal, options = { day: '2-digit', month: 'short', year: 'numeric' }, fallback = '---') => {
@@ -222,7 +562,7 @@ const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
 };
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────
-const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSelection }) => {
+const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onClearSelection }) => {
   const t = useTheme(isDark);
   const [prestamoView, setPrestamoView] = useState('list'); 
   const [filtroTipo, setFiltroTipo] = useState('otorgado'); // 'otorgado' | 'recibido' 
@@ -234,7 +574,57 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
   const [editPrestamo, setEditPrestamo] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const isMobile = settings?.isMobileMode;
+  
+  // Estados para Emisión de Recibos
+  const [reciboForm, setReciboForm] = useState({
+    prestamistaKey: '',
+    contratoId: '',
+    cuotaKey: '',
+    numero: '',
+    fechaEmision: new Date().toISOString().split('T')[0],
+    concepto: '',
+    montoInteres: 0,
+    montoCapital: 0,
+    montoMora: 0,
+    montoAjustes: 0,
+    estado: 'Pagado',
+    metodo: 'Efectivo',
+    notas: '',
+  });
+  const [reciboDarkMode, setReciboDarkMode] = useState(false);
+  const [syncingCalendar, setSyncingCalendar] = useState(false);
+  const [uploadingDrive, setUploadingDrive] = useState(false);
+  const [registrarPagoDb, setRegistrarPagoDb] = useState(true);
+
   const { cuotas: ledgerCuotas, resumen: ledgerResumen, proyeccion: ledgerProyeccion } = useAmortizacion(activePrestamo);
+
+  const uniqueDebtores = useMemo(() => {
+    if (!data?.prestamos) return [];
+    const names = new Set();
+    const list = [];
+    data.prestamos.forEach(p => {
+      if (p.nombre && !names.has(p.nombre.trim())) {
+        names.add(p.nombre.trim());
+        list.push(p);
+      }
+    });
+    return list;
+  }, [data?.prestamos]);
+
+  const debtorContracts = useMemo(() => {
+    if (!reciboForm.prestamistaKey || !data?.prestamos) return [];
+    return data.prestamos.filter(p => p.nombre?.trim().toLowerCase() === reciboForm.prestamistaKey.trim().toLowerCase());
+  }, [reciboForm.prestamistaKey, data?.prestamos]);
+
+  const selectedContract = useMemo(() => {
+    if (!reciboForm.contratoId || !data?.prestamos) return null;
+    return data.prestamos.find(p => p.id === reciboForm.contratoId);
+  }, [reciboForm.contratoId, data?.prestamos]);
+
+  const contractCuotas = useMemo(() => {
+    if (!selectedContract) return [];
+    return selectedContract.tipo_pago === 'diario' ? generarCronogramaDiario(selectedContract) : generarCronograma(selectedContract);
+  }, [selectedContract]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type, key: Date.now() });
@@ -282,7 +672,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
     setShowForm(true);
   };
 
-  const handleFormSave = async () => {
+  const handleFormSave = async (savedRecord) => {
     setShowForm(false);
     setEditPrestamo(null);
     if (setData) {
@@ -290,6 +680,19 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
       if (refreshed) setData(prev => ({ ...prev, prestamos: refreshed }));
     }
     showToast('✅ Préstamo guardado correctamente');
+
+    if (token && savedRecord) {
+      try {
+        const newNotas = await syncLoanToGoogleCalendar(savedRecord, token);
+        if (newNotas && setData) {
+          const { data: refreshed } = await supabase.from('prestamos').select('*');
+          if (refreshed) setData(prev => ({ ...prev, prestamos: refreshed }));
+        }
+        showToast('📅 Sincronizado con Google Calendar ✓');
+      } catch (err) {
+        console.error('Error auto-syncing calendar:', err);
+      }
+    }
   };
 
   const handleDeleteRequest = (p, e) => {
@@ -299,6 +702,20 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
 
   const handleDeleteConfirm = async (target) => {
     try {
+      // Eliminar eventos de Google Calendar asociados
+      if (token && target?.notas) {
+        const events = parseCalendarEvents(target.notas);
+        for (const eventId of Object.values(events)) {
+          if (eventId) {
+            try {
+              await deleteCalendarEvent(token, eventId);
+            } catch (err) {
+              console.error('Error deleting calendar event:', err);
+            }
+          }
+        }
+      }
+
       const trashEntry = {
         tipo: 'prestamo',
         datos_originales: target,
@@ -584,6 +1001,37 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => {
+                    setReciboForm({
+                      prestamistaKey: '',
+                      contratoId: '',
+                      cuotaKey: '',
+                      numero: `REC-${Date.now().toString().slice(-6)}`,
+                      fechaEmision: new Date().toISOString().split('T')[0],
+                      concepto: '',
+                      montoInteres: 0,
+                      montoCapital: 0,
+                      montoMora: 0,
+                      montoAjustes: 0,
+                      estado: 'Pagado',
+                      metodo: 'Efectivo',
+                      notas: '',
+                    });
+                    setPrestamoView('recibos');
+                  }}
+                  style={{
+                    backgroundColor: 'transparent', color: t.text, border: `1px solid ${t.border}`,
+                    borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
+                    fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
+                  }}
+                  onMouseEnter={e => e.target.style.backgroundColor = t.hover}
+                  onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
+                >
+                  <Printer size={16} /> Emitir Recibo
+                </button>
                 <button 
                   onClick={() => {
                     setEditPrestamo({
@@ -1139,7 +1587,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               )}
             </div>
           </div>
-        ) : (
+        ) : prestamoView === 'detail' ? (
           <div className="animate-in slide-in-from-right-8 duration-500">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px', cursor: 'pointer' }}
               onClick={closePrestamo}>
@@ -1289,6 +1737,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                           <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés</th>
                           <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Cuota Mensual</th>
                           <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Estado</th>
+                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1354,6 +1803,38 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                                     <Clock size={12} /> Pendiente
                                   </span>
                                 )}
+                              </td>
+                              <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReciboForm({
+                                      prestamistaKey: activePrestamo.nombre,
+                                      contratoId: activePrestamo.id,
+                                      cuotaKey: c.key,
+                                      numero: `REC-${Date.now().toString().slice(-6)}`,
+                                      fechaEmision: new Date().toISOString().split('T')[0],
+                                      concepto: `Pago de Cuota ${c.label} — ${activePrestamo.nombre}`,
+                                      montoInteres: c.interes || 0,
+                                      montoCapital: activePrestamo.tipo_pago === 'diario' ? (c.capital || 0) : 0,
+                                      montoMora: c.mora || 0,
+                                      montoAjustes: 0,
+                                      estado: 'Pagado',
+                                      metodo: 'Efectivo',
+                                      notas: '',
+                                    });
+                                    setPrestamoView('recibos');
+                                  }}
+                                  style={{
+                                    padding: '6px 10px', borderRadius: '8px', border: 'none',
+                                    backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
+                                    fontSize: '10px', fontWeight: 600
+                                  }}
+                                  title="Emitir Recibo"
+                                >
+                                  <Printer size={12} /> Recibo
+                                </button>
                               </td>
                             </tr>
                           );
@@ -1596,7 +2077,547 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
               </div>
             </div>
           </div>
-        )}
+        ) : prestamoView === 'recibos' ? (
+          <div className="animate-in slide-in-from-right-8 duration-500 max-w-6xl mx-auto">
+            {/* Header / Volver */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', cursor: 'pointer' }}
+              onClick={() => {
+                if (activePrestamo) {
+                  setPrestamoView('detail');
+                } else if (selectedPrestamistaName) {
+                  setPrestamoView('contratos');
+                } else {
+                  setPrestamoView('list');
+                }
+              }}>
+              <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ArrowLeft size={14} /> Volver
+              </span>
+            </div>
+
+            <header style={{ marginBottom: '32px' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+                Emisión de Recibo de Pago
+              </h2>
+              <p style={{ fontSize: '0.8rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
+                Genera comprobantes de pago en PDF, regístralos en la cuenta corriente y súbelos a Drive
+              </p>
+            </header>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* COLUMNA IZQUIERDA: FORMULARIO (7 cols) */}
+              <div className="lg:col-span-7 space-y-6">
+                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }} className="space-y-6">
+                  {/* SELECTORES EN FILA */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Selector de Deudor */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        1. Cliente / Deudor
+                      </label>
+                      <select
+                        value={reciboForm.prestamistaKey}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setReciboForm(prev => ({
+                            ...prev,
+                            prestamistaKey: val,
+                            contratoId: '',
+                            cuotaKey: '',
+                            montoInteres: 0,
+                            montoMora: 0,
+                            montoCapital: 0,
+                            concepto: ''
+                          }));
+                        }}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none' }}
+                      >
+                        <option value="">-- Seleccionar --</option>
+                        {uniqueDebtores.map(p => (
+                          <option key={p.id} value={p.nombre}>{p.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Selector de Contrato */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        2. Contrato
+                      </label>
+                      <select
+                        value={reciboForm.contratoId}
+                        disabled={!reciboForm.prestamistaKey}
+                        onChange={e => {
+                          const val = e.target.value;
+                          setReciboForm(prev => ({
+                            ...prev,
+                            contratoId: val,
+                            cuotaKey: '',
+                            montoInteres: 0,
+                            montoMora: 0,
+                            montoCapital: 0,
+                            concepto: ''
+                          }));
+                        }}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none', opacity: reciboForm.prestamistaKey ? 1 : 0.5 }}
+                      >
+                        <option value="">-- Seleccionar --</option>
+                        {debtorContracts.map((c, idx) => (
+                          <option key={c.id} value={c.id}>Contrato #{idx + 1} ({c.capital} {c.moneda})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Selector de Cuota */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        3. Cuota
+                      </label>
+                      <select
+                        value={reciboForm.cuotaKey}
+                        disabled={!reciboForm.contratoId}
+                        onChange={e => {
+                          const val = e.target.value;
+                          const selectedCuota = contractCuotas.find(c => c.key === val);
+                          if (selectedCuota) {
+                            setReciboForm(prev => ({
+                              ...prev,
+                              cuotaKey: val,
+                              montoInteres: selectedCuota.interes || 0,
+                              montoMora: selectedCuota.mora || 0,
+                              montoCapital: selectedContract?.tipo_pago === 'diario' ? (selectedCuota.capital || 0) : 0,
+                              concepto: `Pago de Cuota ${selectedCuota.label} — ${reciboForm.prestamistaKey}`
+                            }));
+                          } else {
+                            setReciboForm(prev => ({
+                              ...prev,
+                              cuotaKey: '',
+                              montoInteres: 0,
+                              montoMora: 0,
+                              montoCapital: 0,
+                              concepto: ''
+                            }));
+                          }
+                        }}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none', opacity: reciboForm.contratoId ? 1 : 0.5 }}
+                      >
+                        <option value="">-- Seleccionar --</option>
+                        {contractCuotas.map(c => {
+                          const isPaid = selectedContract?.pagos?.includes(c.key);
+                          return (
+                            <option key={c.key} value={c.key}>
+                              {c.label} ({c.fechaVencimiento}) {isPaid ? ' [PAGADO]' : ' [PENDIENTE]'}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Número de Recibo */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        Nro. Recibo (Editable)
+                      </label>
+                      <input
+                        type="text"
+                        value={reciboForm.numero}
+                        onChange={e => setReciboForm(prev => ({ ...prev, numero: e.target.value }))}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none' }}
+                      />
+                    </div>
+
+                    {/* Fecha de Emisión */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        Fecha de Recibo
+                      </label>
+                      <input
+                        type="date"
+                        value={reciboForm.fechaEmision}
+                        onChange={e => setReciboForm(prev => ({ ...prev, fechaEmision: e.target.value }))}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Concepto */}
+                  <div>
+                    <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                      Concepto
+                    </label>
+                    <input
+                      type="text"
+                      value={reciboForm.concepto}
+                      onChange={e => setReciboForm(prev => ({ ...prev, concepto: e.target.value }))}
+                      placeholder="Ej: Pago de Cuota 1 de interés"
+                      style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none' }}
+                    />
+                  </div>
+
+                  {/* DESGLOSE EN REJILLA */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {/* Interés */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        Monto Interés ({selectedContract?.moneda || 'BOB'})
+                      </label>
+                      <input
+                        type="number"
+                        value={reciboForm.montoInteres}
+                        onChange={e => setReciboForm(prev => ({ ...prev, montoInteres: parseFloat(e.target.value) || 0 }))}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.accent, borderRadius: '12px', outline: 'none', fontWeight: 600 }}
+                      />
+                    </div>
+
+                    {/* Mora */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        Cargos Mora
+                      </label>
+                      <input
+                        type="number"
+                        value={reciboForm.montoMora}
+                        onChange={e => setReciboForm(prev => ({ ...prev, montoMora: parseFloat(e.target.value) || 0 }))}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: '#ef4444', borderRadius: '12px', outline: 'none', fontWeight: 600 }}
+                      />
+                    </div>
+
+                    {/* Capital */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        Amort. Capital
+                      </label>
+                      <input
+                        type="number"
+                        value={reciboForm.montoCapital}
+                        onChange={e => setReciboForm(prev => ({ ...prev, montoCapital: parseFloat(e.target.value) || 0 }))}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none', fontWeight: 600 }}
+                      />
+                    </div>
+
+                    {/* Ajustes */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        Descuentos
+                      </label>
+                      <input
+                        type="number"
+                        value={reciboForm.montoAjustes}
+                        onChange={e => setReciboForm(prev => ({ ...prev, montoAjustes: parseFloat(e.target.value) || 0 }))}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.textDim, borderRadius: '12px', outline: 'none', fontWeight: 600 }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Método de pago */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        Método de Pago
+                      </label>
+                      <select
+                        value={reciboForm.metodo}
+                        onChange={e => setReciboForm(prev => ({ ...prev, metodo: e.target.value }))}
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none' }}
+                      >
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Transferencia">Transferencia Bancaria</option>
+                        <option value="Depósito">Depósito</option>
+                        <option value="Qr">QR Simple</option>
+                        <option value="Otro">Otro</option>
+                      </select>
+                    </div>
+
+                    {/* Notas */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>
+                        Notas / Observaciones
+                      </label>
+                      <input
+                        type="text"
+                        value={reciboForm.notes}
+                        onChange={e => setReciboForm(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder="Ej: Pago realizado por transferencia del Banco Unión"
+                        style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* CHECKBOXES DE GUARDADO */}
+                  <div style={{ paddingTop: '16px', borderTop: `1px solid ${t.border}` }} className="space-y-3">
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '12px', color: t.text }}>
+                      <input
+                        type="checkbox"
+                        checked={registrarPagoDb}
+                        onChange={e => setRegistrarPagoDb(e.target.checked)}
+                        style={{ width: '16px', height: '16px', accentColor: t.accent }}
+                      />
+                      <span>Registrar pago en la cuenta corriente del contrato (Supabase)</span>
+                    </label>
+                    
+                    {registrarPagoDb && token && (
+                      <div style={{ paddingLeft: '26px' }} className="flex items-center gap-2 text-[10px] text-emerald-400 font-medium">
+                        <CheckCircle2 size={12} />
+                        <span>Se actualizará automáticamente el evento en Google Calendar a ✅ [PAGADO]</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ACCIONES */}
+                  <div style={{ display: 'flex', gap: '12px', paddingTop: '12px' }}>
+                    <button
+                      onClick={() => {
+                        if (activePrestamo) {
+                          setPrestamoView('detail');
+                        } else {
+                          setPrestamoView('list');
+                        }
+                      }}
+                      style={{ flex: 1, padding: '14px', borderRadius: '12px', backgroundColor: 'transparent', border: `1px solid ${t.border}`, color: t.text, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}
+                    >
+                      Cancelar
+                    </button>
+                    
+                    <button
+                      disabled={!reciboForm.prestamistaKey || !reciboForm.contratoId || loading || syncingCalendar || uploadingDrive}
+                      onClick={async () => {
+                        setLoading(true);
+                        try {
+                          const doc = generateReciboPDF(reciboForm, selectedContract, reciboDarkMode);
+                          const pdfBlob = doc.output('blob');
+                          const fileName = `${reciboForm.numero}_${selectedContract?.nombre || 'Cliente'}.pdf`;
+
+                          // Subir a Drive
+                          setUploadingDrive(true);
+                          try {
+                            await uploadPdfToDrive(token, pdfBlob, fileName, 'Préstamos');
+                            showToast('📄 Recibo PDF subido a Drive ✓');
+                          } catch (err) {
+                            console.error('Error uploading receipt to Drive:', err);
+                            showToast('Error al subir PDF a Drive', 'error');
+                          } finally {
+                            setUploadingDrive(false);
+                          }
+
+                          // Descargar localmente
+                          doc.save(fileName);
+
+                          // Registrar Pago en la DB
+                          if (registrarPagoDb && reciboForm.cuotaKey && selectedContract) {
+                            const currentPagos = Array.isArray(selectedContract.pagos) ? selectedContract.pagos : [];
+                            if (!currentPagos.includes(reciboForm.cuotaKey)) {
+                              const newPagos = [...currentPagos, reciboForm.cuotaKey];
+                              const updatedContract = { ...selectedContract, pagos: newPagos };
+
+                              const { error } = await supabase.from('prestamos').update({ pagos: newPagos }).eq('id', selectedContract.id);
+                              if (error) throw error;
+
+                              if (setData && data?.prestamos) {
+                                const updatedList = data.prestamos.map(p => p.id === selectedContract.id ? updatedContract : p);
+                                setData(prev => ({ ...prev, prestamos: updatedList }));
+                              }
+
+                              // Sincronizar Calendario
+                              if (token) {
+                                setSyncingCalendar(true);
+                                try {
+                                  await syncLoanToGoogleCalendar(updatedContract, token);
+                                } finally {
+                                  setSyncingCalendar(false);
+                                }
+                              }
+                            }
+                          }
+
+                          showToast('✅ Recibo emitido y registrado con éxito');
+                          if (activePrestamo) {
+                            const refreshed = data.prestamos.find(p => p.id === selectedContract.id);
+                            if (refreshed) {
+                              setActivePrestamo({
+                                ...refreshed,
+                                pagos: registrarPagoDb ? [...(refreshed.pagos || []), reciboForm.cuotaKey] : (refreshed.pagos || [])
+                              });
+                            }
+                            setPrestamoView('detail');
+                          } else {
+                            setPrestamoView('list');
+                          }
+                        } catch (err) {
+                          alert('Error al emitir recibo: ' + err.message);
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                      style={{
+                        flex: 2, padding: '14px', borderRadius: '12px',
+                        backgroundColor: (!reciboForm.prestamistaKey || !reciboForm.contratoId) ? t.border : t.accent,
+                        color: (!reciboForm.prestamistaKey || !reciboForm.contratoId) ? t.textDim : '#000000',
+                        fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer', border: 'none',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                      }}
+                    >
+                      {(loading || syncingCalendar || uploadingDrive) ? (
+                        <>
+                          <RefreshCw size={14} className="animate-spin" /> Procesando...
+                        </>
+                      ) : (
+                        <>
+                          <Printer size={14} /> Emitir y Descargar Recibo
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* COLUMNA DERECHA: LIVE PREVIEW (5 cols) */}
+              <div className="lg:col-span-5 space-y-4">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>
+                    Previsualización en Vivo
+                  </span>
+                  
+                  {/* Claro / Oscuro toggle */}
+                  <button
+                    onClick={() => setReciboDarkMode(!reciboDarkMode)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px',
+                      borderRadius: '8px', border: `1px solid ${t.border}`, backgroundColor: t.panel,
+                      color: t.text, fontSize: '10px', fontWeight: 600, cursor: 'pointer'
+                    }}
+                  >
+                    {reciboDarkMode ? <Sun size={12} /> : <Moon size={12} />}
+                    {reciboDarkMode ? 'Modo Claro' : 'Modo Oscuro'} (PDF)
+                  </button>
+                </div>
+
+                {/* VISTA PREVIA DEL RECIBO */}
+                <div
+                  style={{
+                    backgroundColor: reciboDarkMode ? '#0d0d0f' : '#ffffff',
+                    color: reciboDarkMode ? '#f8fafc' : '#0f172a',
+                    border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`,
+                    borderRadius: '16px',
+                    padding: '24px',
+                    boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.3)',
+                    fontFamily: 'sans-serif',
+                    minHeight: '480px',
+                    position: 'relative'
+                  }}
+                >
+                  {/* WATERMARK */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%) rotate(-15deg)',
+                      fontSize: '64px',
+                      fontWeight: 900,
+                      color: reciboDarkMode ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.05)',
+                      pointerEvents: 'none',
+                      userSelect: 'none'
+                    }}
+                  >
+                    PAGADO
+                  </div>
+
+                  {/* LOGO & NRO */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#10b981' }}>RECIBO DE PAGO</h4>
+                      <span style={{ fontSize: '8px', color: reciboDarkMode ? '#94a3b8' : '#475569', letterSpacing: '0.05em' }}>INEFABLE FINANCIAL SYSTEM</span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '7px', color: reciboDarkMode ? '#64748b' : '#94a3b8', display: 'block' }}>COMPROBANTE OFICIAL</span>
+                      <strong style={{ fontSize: '11px', fontFamily: 'monospace' }}>{reciboForm.numero || 'REC-XXXXXX'}</strong>
+                    </div>
+                  </div>
+
+                  <hr style={{ border: 'none', borderTop: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, margin: '14px 0' }} />
+
+                  {/* DOS COLUMNAS DE DATOS */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '10px' }}>
+                    <div>
+                      <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>PAGADOR / DEUDOR</span>
+                      <strong style={{ fontSize: '11px' }}>{reciboForm.prestamistaKey || '---'}</strong>
+                      {selectedContract?.ci && <span style={{ display: 'block', marginTop: '2px', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>CI: {selectedContract.ci}</span>}
+                    </div>
+                    <div>
+                      <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>FECHA Y MÉTODO</span>
+                      <strong>{safeFormatDate(reciboForm.fechaEmision, { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
+                      <span style={{ display: 'block', marginTop: '2px', color: '#10b981', fontWeight: 700 }}>{reciboForm.metodo.toUpperCase()}</span>
+                    </div>
+                  </div>
+
+                  {/* CONCEPTO */}
+                  <div style={{ padding: '10px 12px', backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc', borderRadius: '8px', marginBottom: '20px', border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
+                    <span style={{ display: 'block', fontSize: '7px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>CONCEPTO GENERAL</span>
+                    <span style={{ fontSize: '10px', fontWeight: 700 }}>{reciboForm.concepto || 'Pago de Cuota'}</span>
+                  </div>
+
+                  {/* DESGLOSE TABLE */}
+                  <div style={{ fontSize: '10px', marginBottom: '20px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', paddingBottom: '6px', borderBottom: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, fontWeight: 700, color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
+                      <span>Descripción</span>
+                      <span style={{ textAlign: 'right' }}>Monto</span>
+                    </div>
+                    
+                    <div style={{ minHeight: '80px', display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '6px' }}>
+                      {parseFloat(reciboForm.montoInteres) > 0 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
+                          <span>Pago de Intereses</span>
+                          <span style={{ textAlign: 'right', fontFamily: 'monospace' }}>{parseFloat(reciboForm.montoInteres).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                        </div>
+                      )}
+                      {parseFloat(reciboForm.montoMora) > 0 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', color: '#ef4444' }}>
+                          <span>Cargos por Mora</span>
+                          <span style={{ textAlign: 'right', fontFamily: 'monospace' }}>+{parseFloat(reciboForm.montoMora).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                        </div>
+                      )}
+                      {parseFloat(reciboForm.montoCapital) > 0 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
+                          <span>Amortización de Capital</span>
+                          <span style={{ textAlign: 'right', fontFamily: 'monospace' }}>{parseFloat(reciboForm.montoCapital).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                        </div>
+                      )}
+                      {parseFloat(reciboForm.montoAjustes) > 0 && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', color: reciboDarkMode ? '#94a3b8' : '#64748b' }}>
+                          <span>Descuentos / Ajustes</span>
+                          <span style={{ textAlign: 'right', fontFamily: 'monospace' }}>-{parseFloat(reciboForm.montoAjustes).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '10px', borderTop: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
+                      <div style={{ textAlign: 'right', padding: '8px 14px', backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', display: 'block', fontWeight: 600 }}>TOTAL RECIBIDO</span>
+                        <strong style={{ fontSize: '14px', color: '#10b981', fontFamily: 'monospace' }}>
+                          {((parseFloat(reciboForm.montoInteres) || 0) + (parseFloat(reciboForm.montoMora) || 0) + (parseFloat(reciboForm.montoCapital) || 0) - (parseFloat(reciboForm.montoAjustes) || 0)).toLocaleString()} {selectedContract?.moneda || 'BOB'}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* FIRMAS */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginTop: '48px', textAlign: 'center', fontSize: '8px', color: reciboDarkMode ? '#64748b' : '#94a3b8' }}>
+                    <div>
+                      <div style={{ borderBottom: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, height: '24px' }}></div>
+                      <span style={{ display: 'block', marginTop: '4px' }}>FIRMA CLIENTE</span>
+                    </div>
+                    <div>
+                      <div style={{ borderBottom: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, height: '24px' }}></div>
+                      <span style={{ display: 'block', marginTop: '4px' }}>FIRMA ACREEDOR</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
       </div>
     </>
   );

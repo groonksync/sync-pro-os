@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
+import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '../lib/googleApi';
 import { generarCronograma, generarCronogramaDiario } from '../hooks/useAmortizacion';
 
 // Categorías para gastos individuales
@@ -38,8 +39,100 @@ const SERVICIO_CATEGORIAS = [
 const catGastoConfig = Object.fromEntries(GASTO_CATEGORIAS.map(c => [c.label, c]));
 const catServicioConfig = Object.fromEntries(SERVICIO_CATEGORIAS.map(c => [c.label, c]));
 
-const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, isDark = true, initialFilterText = '' }) => {
+const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, isDark = true, initialFilterText = '', token }) => {
   const t = useTheme(isDark);
+
+  // Auxiliares de Google Calendar
+  const parseGoogleEventId = (text) => {
+    if (!text) return null;
+    const match = text.match(/\[google_event_id:\s*([^\]]+)\]/);
+    return match ? match[1].trim() : null;
+  };
+
+  const serializeGoogleEventId = (text, eventId) => {
+    const clean = text ? text.replace(/\[google_event_id:\s*[^\]]+\]/, '').trim() : '';
+    if (!eventId) return clean;
+    return `${clean}\n\n[google_event_id: ${eventId}]`.trim();
+  };
+
+  const syncExpenseToCalendar = async (expense, token) => {
+    if (!token || !expense) return null;
+    try {
+      const existingEventId = parseGoogleEventId(expense.notas);
+      const eventData = {
+        summary: `❌ Egreso: ${expense.descripcion} — ${expense.monto} BOB`,
+        description: `--- EGRESO PROGRAMADO ---\nConcepto: ${expense.descripcion}\nMonto: ${expense.monto} BOB\nCategoría: ${expense.categoria}\nNotas: ${expense.notas ? expense.notas.replace(/\[google_event_id:\s*[^\]]+\]/, '').trim() : '---'}`,
+        start: { date: expense.fecha },
+        end: { date: new Date(new Date(expense.fecha).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0] }
+      };
+      
+      if (existingEventId) {
+        try {
+          await updateCalendarEvent(token, existingEventId, eventData);
+          return existingEventId;
+        } catch (err) {
+          console.warn("Could not update event, creating new one:", err);
+          const res = await createCalendarEvent(token, eventData);
+          return res.id;
+        }
+      } else {
+        const res = await createCalendarEvent(token, eventData);
+        return res.id;
+      }
+    } catch (err) {
+      console.error("Error syncing expense to calendar:", err);
+      return null;
+    }
+  };
+
+  const syncServiceToCalendar = async (servicio, token) => {
+    if (!token || !servicio) return null;
+    try {
+      const existingEventId = parseGoogleEventId(servicio.notas);
+      
+      const summary = `💳 Pago Servicio: ${servicio.nombre} — ${servicio.monto} BOB`;
+      const description = `--- PAGO DE SERVICIO / SUSCRIPCIÓN ---\nServicio: ${servicio.nombre}\nMonto: ${servicio.monto} BOB\nCategoría: ${servicio.categoria || 'Streaming'}\nMétodo de Pago: ${servicio.metodo || 'Tarjeta'}\nRecurrencia: ${servicio.tipo || 'Mensual'}\nNotas: ${servicio.notas ? servicio.notas.replace(/\[google_event_id:\s*[^\]]+\]/, '').trim() : '---'}`;
+      
+      const startDate = servicio.fecha_pago;
+      const nextDay = new Date(new Date(startDate).getTime() + 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      const recurrenceRule = [];
+      if (servicio.tipo === 'Mensual') {
+        recurrenceRule.push('RRULE:FREQ=MONTHLY');
+      } else if (servicio.tipo === 'Anual') {
+        recurrenceRule.push('RRULE:FREQ=YEARLY');
+      } else if (servicio.tipo === 'Semanal') {
+        recurrenceRule.push('RRULE:FREQ=WEEKLY');
+      }
+      
+      const eventData = {
+        summary,
+        description,
+        start: { date: startDate },
+        end: { date: nextDay },
+      };
+      if (recurrenceRule.length > 0) {
+        eventData.recurrence = recurrenceRule;
+      }
+      
+      if (existingEventId) {
+        try {
+          await updateCalendarEvent(token, existingEventId, eventData);
+          return existingEventId;
+        } catch (err) {
+          console.warn("Could not update service event, creating new one:", err);
+          const res = await createCalendarEvent(token, eventData);
+          return res.id;
+        }
+      } else {
+        const res = await createCalendarEvent(token, eventData);
+        return res.id;
+      }
+    } catch (err) {
+      console.error("Error syncing service to calendar:", err);
+      return null;
+    }
+  };
   const egresos = data.egresos || [];
   const ventas  = data.ventas  || [];
   const prestamosList = data.prestamos || [];
@@ -419,18 +512,30 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     };
 
     try {
-      const { error } = await supabase.from('egresos').upsert(payload);
+      let savedPayload = { ...payload };
+      if (token) {
+        try {
+          const eventId = await syncExpenseToCalendar(payload, token);
+          if (eventId) {
+            savedPayload.notas = serializeGoogleEventId(payload.notas || '', eventId);
+          }
+        } catch (calErr) {
+          console.error("Error syncing expense to calendar:", calErr);
+        }
+      }
+
+      const { error } = await supabase.from('egresos').upsert(savedPayload);
       if (error) throw error;
       
       if (editingExpense) {
         setData(prev => ({
           ...prev,
-          egresos: prev.egresos.map(item => item.id === editingExpense.id ? payload : item)
+          egresos: prev.egresos.map(item => item.id === editingExpense.id ? savedPayload : item)
         }));
       } else {
         setData(prev => ({
           ...prev,
-          egresos: [payload, ...prev.egresos]
+          egresos: [savedPayload, ...prev.egresos]
         }));
       }
 
@@ -540,6 +645,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     try {
       const item = egresos.find(e => e.id === id);
       if (item) {
+        if (token) {
+          const eventId = parseGoogleEventId(item.notas);
+          if (eventId) {
+            try {
+              await deleteCalendarEvent(token, eventId);
+            } catch (calErr) {
+              console.error("Error deleting calendar event:", calErr);
+            }
+          }
+        }
         await supabase.from('papelera').insert([{
           tipo_dato: 'egreso',
           nombre_item: item.descripcion,
@@ -620,12 +735,28 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     };
 
     try {
-      let { error } = await supabase.from('servicios').upsert(payload);
+      let savedPayload = { ...payload };
+      if (token) {
+        try {
+          const eventId = await syncServiceToCalendar(payload, token);
+          if (eventId) {
+            savedPayload.notas = serializeGoogleEventId(payload.notas || '', eventId);
+          }
+        } catch (calErr) {
+          console.error("Error syncing service to calendar:", calErr);
+        }
+      }
+
+      let { error } = await supabase.from('servicios').upsert(savedPayload);
       if (error) {
         // Fallback robusto por si no existe la columna categoria
         if (error.message && (error.message.toLowerCase().includes("categoria") || error.message.toLowerCase().includes("column"))) {
-          const { categoria, ...fallbackPayload } = payload;
+          const { categoria, ...fallbackPayload } = savedPayload;
           fallbackPayload.notas = `[Categoría: ${serviceForm.categoria}] ${(serviceForm.notas || '').trim()}`.trim() || null;
+          if (savedPayload.notas && savedPayload.notas.includes('[google_event_id:')) {
+            const eventId = parseGoogleEventId(savedPayload.notas);
+            fallbackPayload.notas = serializeGoogleEventId(fallbackPayload.notas, eventId);
+          }
           const retry = await supabase.from('servicios').upsert(fallbackPayload);
           if (retry.error) throw retry.error;
         } else {
@@ -650,6 +781,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     try {
       const item = servicios.find(s => s.id === id);
       if (item) {
+        if (token) {
+          const eventId = parseGoogleEventId(item.notas);
+          if (eventId) {
+            try {
+              await deleteCalendarEvent(token, eventId);
+            } catch (calErr) {
+              console.error("Error deleting calendar event:", calErr);
+            }
+          }
+        }
         await supabase.from('papelera').insert([{
           tipo_dato: 'servicio',
           nombre_item: item.nombre,
