@@ -147,7 +147,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     if (!newClient.nombre) return;
     setLoading(true);
     try {
-      const { error } = await supabase.from('clientes_editor').insert([{ 
+      const payload = { 
         nombre: newClient.nombre, 
         email: newClient.email, 
         empresa: newClient.empresa, 
@@ -155,8 +155,19 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
         telefono: newClient.telefono,
         nacionalidad: newClient.nacionalidad,
         foto_url: newClient.foto
-      }]);
-      if (error) throw error;
+      };
+      const { error } = await supabase.from('clientes_editor').insert([payload]);
+      
+      if (error) {
+        if (error.message && error.message.includes('nacionalidad')) {
+          const { nacionalidad, ...fallbackPayload } = payload;
+          const { error: retryError } = await supabase.from('clientes_editor').insert([fallbackPayload]);
+          if (retryError) throw retryError;
+          alert("Cliente guardado con éxito (sin nacionalidad). Por favor ejecuta la consulta SQL en el panel de Supabase para agregar la columna.");
+        } else {
+          throw error;
+        }
+      }
       await fetchClients();
       setIsClientModalOpen(false);
       setNewClient({ nombre: '', email: '', pais: '', empresa: '', status: 'Activo', telefono: '', nacionalidad: '', foto: '' });
