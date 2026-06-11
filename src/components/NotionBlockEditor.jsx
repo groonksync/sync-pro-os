@@ -1297,24 +1297,23 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'desplegable':
       return (
-        <div className="w-full flex flex-col pl-1 border border-white/10 p-2 bg-transparent">
+        <div className="w-full flex flex-col pl-1 p-2 bg-transparent">
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => onChange(index, block.contenido, block.extra, block.isOpen ? 'closed' : 'open')}
+              onClick={() => onChange(index, block.contenido, block.extra, block.desc === 'open' ? 'closed' : 'open')}
               className="p-0.5 rounded hover:bg-white/5 text-neutral-500"
             >
               {block.desc === 'open' ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </button>
-            {renderTextInput('text-xs', 'font-bold text-neutral-200', 'Toggle Title')}
+            {renderTextInput('text-xs font-bold text-neutral-200', 'font-bold', '')}
           </div>
           {block.desc === 'open' && (
-            <div className="pl-6 pr-2 py-1 mt-1 border-l border-white/10">
-              <textarea
+            <div className="pl-6 pr-2 py-1 mt-1 border-l border-white/5 w-full">
+              <NotionBlockEditor
                 value={block.extra || ''}
-                onChange={e => onChange(index, block.contenido, e.target.value)}
-                placeholder="Contenido colapsado..."
-                className="w-full bg-transparent border-none outline-none text-[11px] text-neutral-400 resize-none font-mono py-1"
-                rows={3}
+                onChange={(newVal) => onChange(index, block.contenido, newVal, block.desc)}
+                isDark={isDark}
+                settings={settings}
               />
             </div>
           )}
