@@ -789,74 +789,55 @@ const PublicCatalog = () => {
         gap: isMobile ? 12 : 0,
         backgroundColor: t.panel
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h1 style={{ fontSize: isMobile ? 18 : 24, fontWeight: 900, letterSpacing: '-0.03em', textTransform: 'uppercase', margin: 0 }}>
-              Catálogo
-            </h1>
-            <span style={{ fontSize: 8, fontWeight: 900, color: t.accent, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-              Productos Disponibles
-            </span>
+        {isMobile && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
+            {/* Theme Toggle for Mobile */}
+            <button
+              onClick={() => setIsDark(!isDark)}
+              style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.textDim }}
+            >
+              {isDark ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
+            {/* Cart for Mobile */}
+            <button 
+              onClick={() => setIsCartOpen(true)}
+              style={{ position: 'relative', width: 36, height: 36, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.accent }}
+            >
+              <ShoppingCart size={14} />
+              {cartCount > 0 && (
+                <span className="animate-bounce" style={{ position: 'absolute', top: -3, right: -3, backgroundColor: '#ef4444', color: '#fff', fontSize: 8, fontWeight: 900, borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {cartCount}
+                </span>
+              )}
+            </button>
           </div>
-          {isMobile && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {/* Theme Toggle for Mobile */}
-              <button
-                onClick={() => setIsDark(!isDark)}
-                style={{ width: 36, height: 36, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.textDim }}
-              >
-                {isDark ? <Sun size={14} /> : <Moon size={14} />}
-              </button>
-              {/* Cart for Mobile */}
-              <button 
-                onClick={() => setIsCartOpen(true)}
-                style={{ position: 'relative', width: 36, height: 36, borderRadius: '50%', backgroundColor: t.inputBg, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: t.accent }}
-              >
-                <ShoppingCart size={14} />
-                {cartCount > 0 && (
-                  <span className="animate-bounce" style={{ position: 'absolute', top: -3, right: -3, backgroundColor: '#ef4444', color: '#fff', fontSize: 8, fontWeight: 900, borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-            </div>
-          )}
-        </div>
+        )}
 
         {/* Search Input Centralized */}
         <div 
           className="catalog-search-container"
           style={{ 
             position: 'relative', 
-            width: isMobile ? '100%' : '40%', 
-            minWidth: isMobile ? 'auto' : 260 
+            width: isMobile ? '100%' : '50%', 
+            minWidth: isMobile ? 'auto' : 320,
+            display: 'flex',
+            alignItems: 'center'
           }}
         >
-          <Search size={14} style={{ position: 'absolute', left: 16, color: t.textDim }} />
+          <Search size={16} style={{ position: 'absolute', left: 16, color: t.textDim, pointerEvents: 'none', zIndex: 10 }} />
           <input 
             type="text" 
             placeholder="Buscar por nombre, SKU, marca..." 
-            className="unstyled-input"
+            className="catalog-search-input-field"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            style={{ 
-              width: '100%', 
-              backgroundColor: 'transparent', 
-              border: 'none', 
-              borderRadius: 30, 
-              padding: isMobile ? '10px 16px 10px 40px' : '12px 20px 12px 44px', 
-              fontSize: 11, 
-              outline: 'none', 
-              color: t.text,
-              boxShadow: 'none'
-            }} 
           />
           {searchTerm && (
             <button 
               onClick={() => setSearchTerm('')}
-              style={{ position: 'absolute', right: 16, background: 'none', border: 'none', color: t.textDim, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+              style={{ position: 'absolute', right: 16, background: 'none', border: 'none', color: t.textDim, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}
             >
-              <X size={12} />
+              <X size={14} />
             </button>
           )}
         </div>

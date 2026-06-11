@@ -620,5 +620,30 @@ textarea.unstyled-input {
   scrollbar-width: none !important;
 }
 
+/* Specific Search Input field overrides */
+input.catalog-search-input-field,
+.light-mode input.catalog-search-input-field {
+  background-color: transparent !important;
+  background: transparent !important;
+  border: none !important;
+  border-width: 0 !important;
+  box-shadow: none !important;
+  padding: 12px 20px 12px 44px !important;
+  border-radius: 9999px !important;
+  outline: none !important;
+  height: 48px !important;
+  color: inherit !important;
+  font-family: inherit !important;
+  width: 100% !important;
+}
+
+@media (max-width: 767px) {
+  input.catalog-search-input-field,
+  .light-mode input.catalog-search-input-field {
+    padding: 10px 16px 10px 40px !important;
+    height: 40px !important;
+  }
+}
+
 
 
