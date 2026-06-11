@@ -1184,6 +1184,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       <FileSignature size={14} color={t.textDim} />
                       <input type="text" value={activePrestamo?.ci || ''}
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})}
+                        className="unstyled-input"
                         style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', minWidth: 0, color: t.text, fontSize: '11px', lineHeight: 1.2, padding: 0, height: 'auto' }} placeholder="Cédula de Identidad" />
                     </div>
                     {/* WhatsApp — misma altura y estilo que el select */}
@@ -1191,6 +1192,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       <Smartphone size={14} color={t.textDim} />
                       <input type="text" value={activePrestamo.telefono}
                         onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
+                        className="unstyled-input"
                         style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', minWidth: 0, color: t.text, fontSize: '11px', lineHeight: 1.2, padding: 0, height: 'auto' }} placeholder="WhatsApp" />
                     </div>
                     <select value={activePrestamo.estado}
