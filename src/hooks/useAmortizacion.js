@@ -73,8 +73,8 @@ function generarCronograma(prestamo) {
     let diasAtraso = 0;
     let estado = 'pendiente';
 
-    const isPagado = pagosArr.includes(key);
-    const isReservado = pagosArr.includes(`${key}_reservado`);
+    const isPagado = pagosArr.includes(key) || pagosArr.includes(`${key}_ocultado`) || pagosArr.includes(`${key}_reservado_ocultado`);
+    const isReservado = pagosArr.includes(`${key}_reservado`) || pagosArr.includes(`${key}_reservado_ocultado`);
     if (isPagado) {
       estado = 'pagado';
     } else if (isReservado) {
@@ -137,7 +137,7 @@ function generarCronogramaDiario(prestamo) {
     capitalAcumulado += capitalDiario;
 
     let estado = 'pendiente';
-    const isPagado = pagosArr.includes(key);
+    const isPagado = pagosArr.includes(key) || pagosArr.includes(`${key}_ocultado`);
     if (isPagado) {
       estado = 'pagado';
     } else if (fechaActual < hoy) {

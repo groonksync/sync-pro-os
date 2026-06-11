@@ -86,7 +86,7 @@ const syncLoanToGoogleCalendar = async (prestamo, token) => {
         const nextDay = new Date(new Date(startDateStr).getTime() + 24 * 60 * 60 * 1000);
         const endDateStr = nextDay.toISOString().split('T')[0];
         
-        const isPaid = (prestamo.pagos || []).includes(cuota.key);
+        const isPaid = isCuotaPaid(prestamo.pagos, cuota.key);
         const statusLabel = isPaid ? 'PAGADO' : cuota.estado === 'vencido' ? 'VENCIDO' : 'PTE';
         const iconPrefix = isPaid ? '✅' : '💸';
         
@@ -559,6 +559,16 @@ const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
   );
 };
 
+const isCuotaPaid = (pagos, cuotaKey) => {
+  const arr = Array.isArray(pagos) ? pagos : [];
+  return arr.some(p => p === cuotaKey || p === `${cuotaKey}_reservado` || p === `${cuotaKey}_ocultado` || p === `${cuotaKey}_reservado_ocultado`);
+};
+
+const isCuotaReserved = (pagos, cuotaKey) => {
+  const arr = Array.isArray(pagos) ? pagos : [];
+  return arr.some(p => p === `${cuotaKey}_reservado` || p === `${cuotaKey}_reservado_ocultado`);
+};
+
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────
 const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onClearSelection }) => {
   const t = useTheme(isDark);
@@ -664,6 +674,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
       const cuotas = prestamo.tipo_pago === 'diario' ? generarCronogramaDiario(prestamo) : generarCronograma(prestamo);
       const pagosList = Array.isArray(prestamo.pagos) ? prestamo.pagos : [];
       pagosList.forEach(pagoKey => {
+        if (pagoKey.includes('_ocultado')) return;
         const cleanKey = pagoKey.replace('_reservado', '');
         const cuota = cuotas.find(c => c.key === cleanKey);
         const isReserved = pagoKey.includes('_reservado');
@@ -689,13 +700,13 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
   }, [data?.prestamos]);
 
   const handleDeleteReceipt = async (prestamoId, cuotaKey) => {
-    if (!window.confirm('¿Está seguro de que desea eliminar este recibo/pago? La cuota volverá a estado pendiente.')) return;
+    if (!window.confirm('¿Está seguro de que desea eliminar este documento de recibo? El pago del cliente seguirá registrado en el sistema, pero el comprobante se ocultará de esta lista.')) return;
     try {
       setLoading(true);
       const prestamo = data.prestamos.find(p => p.id === prestamoId);
       if (!prestamo) return;
       const currentPagos = Array.isArray(prestamo.pagos) ? prestamo.pagos : [];
-      const newPagos = currentPagos.filter(k => k !== cuotaKey);
+      const newPagos = currentPagos.map(k => k === cuotaKey ? `${k}_ocultado` : k);
       
       const { error } = await supabase.from('prestamos').update({ pagos: newPagos }).eq('id', prestamoId);
       if (error) throw error;
@@ -709,9 +720,9 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
         setActivePrestamo(prev => ({ ...prev, pagos: newPagos }));
       }
 
-      showToast('🗑️ Recibo/Pago eliminado con éxito');
+      showToast('🗑️ Documento de recibo eliminado con éxito');
     } catch (err) {
-      alert('Error al eliminar recibo: ' + err.message);
+      alert('Error al ocultar recibo: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -896,16 +907,20 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
     if (esRecibido) {
       const mesReservado = `${mes}_reservado`;
       let newPagos;
-      if (current.includes(mes)) {
-        newPagos = current.filter(m => m !== mes && m !== mesReservado);
-      } else if (current.includes(mesReservado)) {
-        newPagos = [...current.filter(m => m !== mesReservado), mes];
+      const hasPaid = current.some(m => m === mes || m === `${mes}_ocultado`);
+      const hasReserved = current.some(m => m === mesReservado || m === `${mes}_reservado_ocultado`);
+      
+      if (hasPaid) {
+        newPagos = current.filter(m => !m.startsWith(mes));
+      } else if (hasReserved) {
+        newPagos = [...current.filter(m => !m.startsWith(mes)), mes];
       } else {
         newPagos = [...current, mesReservado];
       }
       setActivePrestamo({ ...activePrestamo, pagos: newPagos });
     } else {
-      const newPagos = current.includes(mes) ? current.filter(m => m !== mes) : [...current, mes];
+      const hasPaid = current.some(m => m.startsWith(mes));
+      const newPagos = hasPaid ? current.filter(m => !m.startsWith(mes)) : [...current, mes];
       setActivePrestamo({ ...activePrestamo, pagos: newPagos });
     }
   };
@@ -1851,8 +1866,8 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                       </thead>
                       <tbody>
                         {ledgerCuotas.map((c) => {
-                          const isPaid = (activePrestamo.pagos || []).includes(c.key);
-                          const isReserved = (activePrestamo.pagos || []).includes(`${c.key}_reservado`);
+                          const isPaid = isCuotaPaid(activePrestamo.pagos, c.key);
+                          const isReserved = isCuotaReserved(activePrestamo.pagos, c.key);
                           return (
                             <tr key={c.key} onClick={() => togglePago(c.key)}
                               style={{
@@ -2333,7 +2348,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                         >
                           <option value="">-- Seleccionar --</option>
                           {contractCuotas.map(c => {
-                            const isPaid = (selectedContract?.pagos || []).includes(c.key);
+                            const isPaid = isCuotaPaid(selectedContract?.pagos, c.key);
                             return (
                               <option key={c.key} value={c.key} disabled={isPaid}>
                                 {c.label} {isPaid ? '(PAGADA)' : `(${c.total.toLocaleString()} ${selectedContract?.moneda})`}
@@ -2530,7 +2545,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                             // Registrar Pago en la DB
                             if (registrarPagoDb && reciboForm.cuotaKey && selectedContract) {
                               const currentPagos = Array.isArray(selectedContract.pagos) ? selectedContract.pagos : [];
-                              if (!currentPagos.includes(reciboForm.cuotaKey)) {
+                              if (!isCuotaPaid(currentPagos, reciboForm.cuotaKey)) {
                                 const newPagos = [...currentPagos, reciboForm.cuotaKey];
                                 const updatedContract = { ...selectedContract, pagos: newPagos };
 
