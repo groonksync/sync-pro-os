@@ -4,7 +4,7 @@ import {
   Minus, ChevronRight, FileText, AlertCircle, Quote, Table, Code, Link, 
   Image, Video, Music, File, Bookmark, Grid, Trello, Image as GalleryIcon, 
   AlignJustify, Calendar, Plus, Trash2, ArrowUp, ArrowDown, Settings, Check, X,
-  ExternalLink, ChevronDown, Sparkles
+  ExternalLink, ChevronDown, Sparkles, Tag
 } from 'lucide-react';
 import { getTheme, useTheme } from '../lib/theme';
 import { aiService } from '../services/aiService';
@@ -14,45 +14,16 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
   const [blocks, setBlocks] = useState([]);
   const [activeBlockIndex, setActiveBlockIndex] = useState(null);
   const [slashMenu, setSlashMenu] = useState({ visible: false, query: '', index: 0, blockId: null });
-  const [activeSubpage, setActiveSubpage] = useState(null);
   
   // AI Assistant States
   const [aiActiveBlockIndex, setAiActiveBlockIndex] = useState(null);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
+  // Nested Subpage Dialog State
+  const [activePageModal, setActivePageModal] = useState(null); // { blockIndex, pageId }
+
   const blockRefs = useRef({});
-
-  const handleSubpageChange = (blockIdx, itemIdx, updatedItem) => {
-    const newBlocks = [...blocks];
-    const block = newBlocks[blockIdx];
-    if (block.tipo === 'vista-galeria') {
-      block.contenido[itemIdx] = updatedItem;
-    }
-    triggerChange(newBlocks);
-    setActiveSubpage(prev => prev ? { ...prev, item: updatedItem } : null);
-  };
-
-  const openSubpage = (blockIndex, itemIndex, item) => {
-    setActiveSubpage({ blockIndex, itemIndex, item });
-  };
-
-  const handleCanvasClick = (e) => {
-    if (e.target === e.currentTarget) {
-      if (blocks.length > 0) {
-        const lastIdx = blocks.length - 1;
-        const lastBlock = blocks[lastIdx];
-        if (lastBlock.tipo === 'texto' && lastBlock.contenido === '') {
-          const lastInput = blockRefs.current[lastIdx];
-          if (lastInput) lastInput.focus();
-          return;
-        }
-        insertBlock(lastIdx, 'texto', '');
-      } else {
-        insertBlock(-1, 'texto', '');
-      }
-    }
-  };
 
   // Parse markdown input to blocks when value changes
   useEffect(() => {
@@ -70,6 +41,37 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
     setBlocks(newBlocks);
     if (onChange) {
       onChange(serializeBlocksToMarkdown(newBlocks));
+    }
+  };
+
+  const updateNestedPage = (blockIndex, pageId, updatedFields) => {
+    const newBlocks = [...blocks];
+    const targetBlock = newBlocks[blockIndex];
+    if (targetBlock && targetBlock.contenido) {
+      let pages = [];
+      if (Array.isArray(targetBlock.contenido)) {
+        pages = targetBlock.contenido.map(item => ({
+          id: item.id,
+          title: item.title,
+          img: item.img || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400',
+          desc: item.desc || '',
+          created: item.created || '10 de junio de 2026 23:05',
+          tags: item.tags || 'Vacío',
+          content: item.content || ''
+        }));
+      } else {
+        pages = targetBlock.contenido.pages || [];
+      }
+      const pageIndex = pages.findIndex(p => p.id === pageId);
+      if (pageIndex !== -1) {
+        pages[pageIndex] = { ...pages[pageIndex], ...updatedFields };
+        if (Array.isArray(targetBlock.contenido)) {
+          targetBlock.contenido = pages;
+        } else {
+          targetBlock.contenido = { ...targetBlock.contenido, pages };
+        }
+        triggerChange(newBlocks);
+      }
     }
   };
 
@@ -374,16 +376,18 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
       if (slashMenu.visible) return;
       e.preventDefault();
       
-      // If pressing Enter on empty list item, clear it to standard text
-      if (['checklist', 'lista-vinetas', 'lista-numerada'].includes(block.tipo) && value === '') {
+      const isList = ['lista-vinetas', 'lista-numerada', 'checklist'].includes(block.tipo);
+      if (isList && value.trim() === '') {
+        // Si está vacío, resetear tipo de bloque a texto normal
         const newBlocks = [...blocks];
         newBlocks[index] = { ...block, tipo: 'texto', extra: null, desc: null };
         triggerChange(newBlocks);
-        return;
+      } else if (isList) {
+        // Mantener e insertar el mismo tipo de lista abajo
+        insertBlock(index, block.tipo, '');
+      } else {
+        insertBlock(index, 'texto', '');
       }
-      
-      const nextType = ['checklist', 'lista-vinetas', 'lista-numerada'].includes(block.tipo) ? block.tipo : 'texto';
-      insertBlock(index, nextType, '');
     } 
     else if (e.key === ' ' && value === '') {
       // Space key on empty text block triggers AI input bar
@@ -580,10 +584,13 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
       };
     }
     if (type === 'vista-galeria') {
-      return [
-        { id: 'g1', title: 'Miniatura A - Estilo Alto Contraste', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400', desc: 'Miniatura para YouTube' },
-        { id: 'g2', title: 'Paleta de Color Ref', img: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400', desc: 'LUT de color cálido cinemático' }
-      ];
+      return {
+        title: 'Nueva base de datos',
+        pages: [
+          { id: 'g1', title: 'nota 1', created: '10 de junio de 2026 23:05', tags: 'Vacío', content: '' },
+          { id: 'g2', title: 'nota 2', created: '10 de junio de 2026 23:05', tags: 'Vacío', content: '' }
+        ]
+      };
     }
     if (type === 'vista-lista') {
       return [
@@ -600,6 +607,21 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
       ];
     }
     return {};
+  };
+
+  const handleCanvasClick = (e) => {
+    if (e.target === e.currentTarget || e.target.classList.contains('notion-block-editor-canvas') || (e.target.tagName === 'DIV' && e.target.className.includes('mx-auto'))) {
+      const lastIdx = blocks.length - 1;
+      if (lastIdx >= 0) {
+        const lastBlock = blocks[lastIdx];
+        if (lastBlock && (lastBlock.contenido || '').trim() !== '') {
+          insertBlock(lastIdx, 'texto', '');
+        } else {
+          const lastInput = blockRefs.current[lastIdx];
+          if (lastInput) lastInput.focus();
+        }
+      }
+    }
   };
 
   return (
@@ -706,7 +728,7 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
                     </div>
                   </div>
                 ) : (
-                  renderBlockContent(block, index, handleBlockChange, blockRefs, handleKeyDown, handleKeyUp, setActiveBlockIndex, activeBlockIndex, t, openSubpage)
+                  renderBlockContent(block, index, handleBlockChange, blockRefs, handleKeyDown, handleKeyUp, setActiveBlockIndex, activeBlockIndex, t, (pageId) => setActivePageModal({ blockIndex: index, pageId }))
                 )}
               </div>
             </div>
@@ -778,100 +800,113 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
         </div>
       )}
 
-      {/* DB Subpage / Nested Canvas Modal Overlay */}
-      {activeSubpage && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-[850px] h-[90vh] bg-[#0b0f19] border border-white/10 rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* Top Toolbar */}
-            <div className="px-6 py-3 border-b border-white/10 flex justify-between items-center bg-[#0d1222]/80">
-              <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                <FileText size={14} className="text-neutral-400" />
-                <span>Página de Base de Datos</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveSubpage(null)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white transition-all"
-                  title="Cerrar y Guardar"
+      {/* MODAL PARA NUEVAS PÁGINAS DENTRO DE VISTA DE GALERÍA */}
+      {activePageModal && (() => {
+        const { blockIndex, pageId } = activePageModal;
+        const block = blocks[blockIndex];
+        if (!block || !block.contenido) return null;
+        let pages = [];
+        if (Array.isArray(block.contenido)) {
+          pages = block.contenido;
+        } else {
+          pages = block.contenido.pages || [];
+        }
+        const page = pages.find(p => p.id === pageId);
+        if (!page) return null;
+
+        return (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="w-full max-w-[800px] h-[90vh] bg-[#0b0f19] border border-white/10 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative select-text">
+              {/* Toolbar */}
+              <div className="px-4 py-2.5 border-b border-white/10 flex justify-between items-center bg-zinc-950/40">
+                <button 
+                  onClick={() => setActivePageModal(null)}
+                  className="p-1 rounded hover:bg-white/10 text-neutral-400 hover:text-white transition-all flex items-center gap-1.5"
+                  title="Cerrar"
                 >
-                  <X size={16} />
+                  <X size={14} />
+                  <span className="text-[9px] font-bold uppercase tracking-wider">Cerrar</span>
                 </button>
-              </div>
-            </div>
-            
-            {/* Page Properties / Content Container */}
-            <div className="flex-1 overflow-y-auto p-8 space-y-6 mac-scrollbar">
-              {/* Title Input */}
-              <input
-                type="text"
-                value={activeSubpage.item.title || ''}
-                onChange={e => {
-                  const updated = { ...activeSubpage.item, title: e.target.value };
-                  handleSubpageChange(activeSubpage.blockIndex, activeSubpage.itemIndex, updated);
-                }}
-                className="w-full bg-transparent border-0 outline-none text-2xl font-bold text-white placeholder-neutral-700"
-                placeholder="Nueva página"
-              />
-
-              {/* Properties Grid */}
-              <div className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-3 text-xs border-b border-white/5 pb-6">
-                <div className="text-neutral-500 font-medium">Creado</div>
-                <div className="text-neutral-300 font-medium flex items-center gap-1.5">
-                  <span className="opacity-90">{activeSubpage.item.date || 'Sin fecha'}</span>
-                </div>
-
-                <div className="text-neutral-500 font-medium">Etiquetas</div>
-                <div>
-                  <input
-                    type="text"
-                    value={activeSubpage.item.desc || ''}
-                    onChange={e => {
-                      const updated = { ...activeSubpage.item, desc: e.target.value };
-                      handleSubpageChange(activeSubpage.blockIndex, activeSubpage.itemIndex, updated);
-                    }}
-                    className="bg-transparent border-0 outline-none text-neutral-300 font-medium w-full placeholder-neutral-700"
-                    placeholder="Vacío"
-                  />
+                <div className="flex items-center gap-3">
+                  <button className="text-[10px] font-bold text-neutral-400 hover:text-white px-2 py-0.5 rounded border border-white/10 bg-transparent flex items-center gap-1">
+                    <span>Compartir</span>
+                    <ChevronDown size={10} />
+                  </button>
+                  <button className="p-1 rounded hover:bg-white/10 text-neutral-400 hover:text-white transition-all"><Link size={12} /></button>
+                  <button className="p-1 rounded hover:bg-white/10 text-neutral-400 hover:text-white transition-all">★</button>
+                  <span className="text-neutral-600">|</span>
+                  <button className="text-[10px] font-bold text-neutral-400 hover:text-white">•••</button>
                 </div>
               </div>
 
-              {/* Comments Mock section */}
-              <div className="text-xs border-b border-white/5 pb-4">
-                <div className="text-neutral-500 font-medium mb-2">Comentarios</div>
+              {/* Contenido de la Página */}
+              <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6 mac-scrollbar">
+                {/* Título de la Página */}
                 <input
                   type="text"
-                  placeholder="Agregar un comentario..."
-                  className="w-full bg-transparent border-0 outline-none text-neutral-400 placeholder-neutral-700 py-1"
+                  value={page.title || ''}
+                  onChange={e => updateNestedPage(blockIndex, pageId, { title: e.target.value })}
+                  placeholder="Nueva página"
+                  className="text-3xl font-bold bg-transparent border-0 outline-none text-white w-full placeholder-neutral-700 font-sans"
                 />
-              </div>
 
-              {/* Nested NotionBlockEditor Canvas */}
-              <div className="pt-2 min-h-[300px]">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-4 select-none">
-                  Contenido de la página
+                {/* Propiedades */}
+                <div className="flex flex-col gap-2.5 text-[11px] text-neutral-400 border-b border-white/5 pb-4 max-w-[400px]">
+                  <div className="grid grid-cols-3 gap-2 items-center">
+                    <div className="flex items-center gap-1.5 text-neutral-500 font-bold uppercase tracking-wider text-[9px]"><Calendar size={11} /> Creado</div>
+                    <div className="col-span-2 text-neutral-300 font-medium">{page.created || '10 de junio de 2026 23:05'}</div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 items-center">
+                    <div className="flex items-center gap-1.5 text-neutral-500 font-bold uppercase tracking-wider text-[9px]"><Tag size={11} /> Etiquetas</div>
+                    <div className="col-span-2">
+                      <input
+                        type="text"
+                        value={page.tags || ''}
+                        onChange={e => updateNestedPage(blockIndex, pageId, { tags: e.target.value })}
+                        placeholder="Vacío"
+                        className="bg-transparent border-0 outline-none text-neutral-300 w-full placeholder-neutral-600 py-0.5"
+                      />
+                    </div>
+                  </div>
+                  <button className="text-[9px] font-bold text-neutral-500 hover:text-neutral-300 flex items-center gap-1 mt-1.5">
+                    <Plus size={10} /> Add a property
+                  </button>
                 </div>
-                <div className="border border-white/5 rounded-xl p-4 min-h-[250px] bg-transparent">
-                  <NotionBlockEditor
+
+                {/* Comentarios */}
+                <div className="flex flex-col gap-2 border-b border-white/5 pb-4">
+                  <div className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Comentarios</div>
+                  <div className="flex items-center gap-2 bg-transparent border border-white/10 rounded-lg px-3 py-1.5">
+                    <span className="text-[10px] text-neutral-500 font-bold">C</span>
+                    <input 
+                      type="text" 
+                      placeholder="Agregar un comentario..." 
+                      className="bg-transparent border-0 outline-none text-[10px] text-neutral-300 flex-1 placeholder-neutral-700"
+                    />
+                  </div>
+                </div>
+
+                {/* Lienzo Interior Recursivo */}
+                <div className="flex-1 mt-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-2">Lienzo de la página</p>
+                  <NotionBlockEditor 
+                    value={page.content || ''} 
+                    onChange={(newVal) => updateNestedPage(blockIndex, pageId, { content: newVal })}
                     isDark={isDark}
-                    value={activeSubpage.item.content || ''}
-                    onChange={newContent => {
-                      const updated = { ...activeSubpage.item, content: newContent };
-                      handleSubpageChange(activeSubpage.blockIndex, activeSubpage.itemIndex, updated);
-                    }}
                     settings={settings}
                   />
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
 
 // Render block content inline
-function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, onFocus, activeBlockIndex, t, openSubpage) {
+function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, onFocus, activeBlockIndex, t, onOpenPage) {
   const isSelected = activeBlockIndex === index;
   
   const baseInputStyle = {
@@ -921,52 +956,43 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'cita':
       return (
-        <div className="w-full flex items-stretch pl-4 border-l-2 border-amber-500/60 py-1 bg-transparent">
+        <div className="w-full flex items-stretch pl-4 border-l-2 border-amber-500/60 bg-amber-500/[0.02] py-1">
           {renderTextInput('text-xs', 'font-medium italic text-amber-200/90', 'Escribe una cita...', { fontStyle: 'italic' })}
         </div>
       );
 
     case 'lista-vinetas':
       return (
-        <div className="flex items-start w-full gap-2.5 pl-1.5">
-          <div className="text-neutral-500 select-none text-xs shrink-0 w-3 text-right pt-[1px]">•</div>
-          {renderTextInput('text-xs', 'font-normal text-neutral-200 placeholder-neutral-500', 'Lista')}
+        <div className="flex items-start w-full gap-2 pl-2">
+          <div className="text-neutral-500 select-none pt-1">•</div>
+          {renderTextInput('text-xs', 'font-normal', 'Elemento de lista')}
         </div>
       );
 
-    case 'lista-numerada': {
-      let itemNumber = 1;
-      for (let i = index - 1; i >= 0; i--) {
-        if (blocks[i] && blocks[i].tipo === 'lista-numerada') {
-          itemNumber++;
-        } else {
-          break;
-        }
-      }
+    case 'lista-numerada':
       return (
-        <div className="flex items-start w-full gap-2.5 pl-1.5">
-          <div className="text-neutral-500 select-none text-xs font-bold shrink-0 w-3 text-right pt-[1px]">{itemNumber}.</div>
-          {renderTextInput('text-xs', 'font-normal text-neutral-200 placeholder-neutral-500', 'Lista')}
+        <div className="flex items-start w-full gap-2 pl-2">
+          <div className="text-neutral-500 select-none pt-0.5 text-xs font-bold">{index + 1}.</div>
+          {renderTextInput('text-xs', 'font-normal', 'Elemento numerado')}
         </div>
       );
-    }
 
     case 'checklist':
       return (
-        <div className="flex items-start w-full gap-2.5 pl-1">
+        <div className="flex items-center w-full gap-3 pl-1">
           <button
             onClick={() => {
               const nextStatus = block.extra === 'pendiente' ? 'proceso' : block.extra === 'proceso' ? 'completado' : 'pendiente';
               onChange(index, block.contenido, nextStatus);
             }}
-            className="w-4 h-4 rounded-sm flex items-center justify-center border transition-all duration-200 mt-1 shrink-0"
+            className="w-4 h-4 rounded flex items-center justify-center border transition-all duration-200"
             style={{ 
-              borderColor: block.extra === 'completado' ? '#10b981' : block.extra === 'proceso' ? '#eab308' : 'rgba(255,255,255,0.4)',
-              backgroundColor: 'transparent',
+              borderColor: block.extra === 'completado' ? '#10b981' : block.extra === 'proceso' ? '#eab308' : 'rgba(255,255,255,0.2)',
+              backgroundColor: block.extra === 'completado' ? 'rgba(16,185,129,0.1)' : block.extra === 'proceso' ? 'rgba(234,179,8,0.1)' : 'transparent',
               color: block.extra === 'completado' ? '#10b981' : block.extra === 'proceso' ? '#eab308' : 'transparent'
             }}
           >
-            {block.extra === 'completado' && <Check size={11} strokeWidth={3} />}
+            {block.extra === 'completado' && <Check size={10} strokeWidth={3} />}
             {block.extra === 'proceso' && <span className="text-[9px] font-black leading-none">/</span>}
           </button>
           
@@ -978,8 +1004,8 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
             onKeyDown={e => onKeyDown(e, index, block)}
             onKeyUp={e => onKeyUp(e, index, block)}
             onFocus={() => onFocus(index)}
-            placeholder="Tarea"
-            className={`text-xs font-normal w-full text-neutral-200 placeholder-neutral-500 transition-all duration-150 ${block.extra === 'completado' ? 'line-through text-neutral-500' : ''}`}
+            placeholder="Tarea..."
+            className={`text-xs font-medium w-full text-neutral-300 placeholder-neutral-700 transition-all duration-150 ${block.extra === 'completado' ? 'line-through text-neutral-500' : ''}`}
             style={baseInputStyle}
           />
         </div>
@@ -987,10 +1013,10 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'desplegable':
       return (
-        <div className="w-full flex flex-col pl-1 border border-white/10 rounded-lg p-2 bg-transparent">
+        <div className="w-full flex flex-col pl-1 border border-white/10 p-2 bg-transparent">
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => onChange(index, block.contenido, block.extra, block.desc === 'open' ? 'closed' : 'open')}
+              onClick={() => onChange(index, block.contenido, block.extra, block.isOpen ? 'closed' : 'open')}
               className="p-0.5 rounded hover:bg-white/5 text-neutral-500"
             >
               {block.desc === 'open' ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -998,7 +1024,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
             {renderTextInput('text-xs', 'font-bold text-neutral-200', 'Toggle Title')}
           </div>
           {block.desc === 'open' && (
-            <div className="pl-6 pr-2 py-1 mt-1 border-l border-white/10 bg-transparent">
+            <div className="pl-6 pr-2 py-1 mt-1 border-l border-white/10">
               <textarea
                 value={block.extra || ''}
                 onChange={e => onChange(index, block.contenido, e.target.value)}
@@ -1013,7 +1039,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'destacado':
       return (
-        <div className="w-full flex gap-3 p-3 rounded-xl border border-white/10 bg-transparent items-start">
+        <div className="w-full flex gap-3 p-3 border border-white/10 bg-transparent items-start">
           <input 
             type="text" 
             value={block.extra || '💡'} 
@@ -1028,7 +1054,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'visor':
       return (
-        <div className="w-full flex flex-col rounded-lg border border-white/10 bg-transparent overflow-hidden">
+        <div className="w-full flex flex-col border border-white/10 bg-transparent overflow-hidden">
           <div className="px-3 py-1 border-b border-white/10 bg-transparent flex justify-between items-center text-[9px] font-black uppercase text-neutral-500 tracking-wider">
             <select
               value={block.extra || 'javascript'}
@@ -1055,7 +1081,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'tabla':
       return (
-        <div className="w-full overflow-x-auto border border-white/10 rounded-lg bg-transparent p-1">
+        <div className="w-full overflow-x-auto border border-white/10 bg-transparent p-1">
           <table className="w-full text-left border-collapse text-[10px]">
             <thead>
               <tr className="border-b border-white/10 bg-transparent">
@@ -1136,7 +1162,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
     case 'audio':
     case 'archivo':
       return (
-        <div className="w-full flex flex-col p-3 rounded-xl border border-white/10 bg-transparent">
+        <div className="w-full flex flex-col p-3 border border-white/10 bg-transparent">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               {block.tipo === 'imagen' && <Image size={14} className="text-neutral-400" />}
@@ -1160,18 +1186,18 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
               type="text"
               value={block.contenido || ''}
               onChange={e => onChange(index, e.target.value, block.extra)}
-              className="flex-1 px-3 py-1.5 rounded bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
+              className="flex-1 px-3 py-1.5 bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
               placeholder="Introduce la URL del archivo de medios..."
             />
           </div>
           
           {block.contenido && block.contenido.startsWith('http') && (
-            <div className="mt-3 rounded overflow-hidden max-w-[full] flex justify-center bg-transparent border border-white/10 p-2">
-              {block.tipo === 'imagen' && <img src={block.contenido} alt={block.extra} className="max-h-[250px] object-contain rounded" />}
-              {block.tipo === 'video' && <video src={block.contenido} controls className="max-h-[250px] rounded w-full" />}
+            <div className="mt-3 overflow-hidden max-w-[full] flex justify-center bg-transparent border border-white/10 p-2">
+              {block.tipo === 'imagen' && <img src={block.contenido} alt={block.extra} className="max-h-[250px] object-contain" />}
+              {block.tipo === 'video' && <video src={block.contenido} controls className="max-h-[250px] w-full" />}
               {block.tipo === 'audio' && <audio src={block.contenido} controls className="w-full py-2" />}
               {block.tipo === 'archivo' && (
-                <a href={block.contenido} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-neutral-400 text-[10px] font-bold py-2 hover:underline">
+                <a href={block.contenido} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-blue-400 text-[10px] font-bold py-2 hover:underline">
                   <File size={16} /> Descargar Archivo ({block.extra || 'Link'})
                 </a>
               )}
@@ -1182,7 +1208,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'marcador-web':
       return (
-        <div className="w-full flex flex-col p-3 rounded-xl border border-white/10 bg-transparent">
+        <div className="w-full flex flex-col p-3 border border-white/10 bg-transparent">
           <div className="flex items-center gap-2 mb-2">
             <Bookmark size={14} className="text-neutral-400" />
             <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Marcador Web</span>
@@ -1192,26 +1218,26 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
               type="text"
               value={block.contenido || ''}
               onChange={e => onChange(index, e.target.value, block.extra, block.desc)}
-              className="w-full px-3 py-1.5 rounded bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
+              className="w-full px-3 py-1.5 bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
               placeholder="URL de Enlace..."
             />
             <input
               type="text"
               value={block.extra || ''}
               onChange={e => onChange(index, block.contenido, e.target.value, block.desc)}
-              className="w-full px-3 py-1.5 rounded bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
+              className="w-full px-3 py-1.5 bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
               placeholder="Título del Marcador..."
             />
             <input
               type="text"
               value={block.desc || ''}
               onChange={e => onChange(index, block.contenido, block.extra, e.target.value)}
-              className="w-full px-3 py-1.5 rounded bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
+              className="w-full px-3 py-1.5 bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
               placeholder="Breve descripción..."
             />
           </div>
           {block.contenido && (
-            <a href={block.contenido} target="_blank" rel="noreferrer" className="mt-2 flex items-center justify-between p-2 rounded bg-transparent hover:bg-white/[0.03] border border-white/10 text-[10px] text-neutral-300 font-bold transition-all">
+            <a href={block.contenido} target="_blank" rel="noreferrer" className="mt-2 flex items-center justify-between p-2 bg-transparent hover:bg-white/[0.02] border border-white/10 text-[10px] text-neutral-300 font-bold transition-all">
               <span className="truncate flex-1 pr-4">{block.extra || block.contenido}</span>
               <ExternalLink size={12} className="text-neutral-500 shrink-0" />
             </a>
@@ -1222,7 +1248,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
     case 'enlace-pagina':
     case 'pagina':
       return (
-        <div className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-transparent hover:bg-white/[0.02] transition-all cursor-pointer">
+        <div className="w-full flex items-center gap-3 p-3 border border-white/10 bg-transparent hover:bg-white/[0.02] transition-all cursor-pointer">
           <FileText size={16} className="text-neutral-400 shrink-0" />
           <div className="flex-1 min-w-0">
             <input
@@ -1360,85 +1386,110 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
         </div>
       );
 
-    case 'vista-galeria':
+    case 'vista-galeria': {
+      const isLegacyArray = Array.isArray(block.contenido);
+      const dbTitle = isLegacyArray ? 'Nueva base de datos' : (block.contenido.title || 'Nueva base de datos');
+      const pages = isLegacyArray ? block.contenido.map(item => ({
+        id: item.id || ('page-' + Math.random().toString(36).substr(2, 5)),
+        title: item.title || 'nota 1',
+        img: item.img || '',
+        desc: item.desc || '',
+        created: '10 de junio de 2026 23:05',
+        tags: 'Vacío',
+        content: ''
+      })) : (block.contenido.pages || []);
+
+      const handleAddPage = () => {
+        const newPage = {
+          id: 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+          title: `nota ${pages.length + 1}`,
+          created: '10 de junio de 2026 23:05',
+          tags: 'Vacío',
+          content: ''
+        };
+        const newPages = [...pages, newPage];
+        if (isLegacyArray) {
+          onChange(index, newPages);
+        } else {
+          onChange(index, { ...block.contenido, pages: newPages });
+        }
+      };
+
       return (
-        <div className="w-full flex flex-col border-t border-b border-white/10">
-          <div className="py-2 flex justify-between items-center border-b border-white/10">
+        <div className="w-full flex flex-col border-t border-b border-white/10 pb-4">
+          <div className="py-2.5 flex justify-between items-center border-b border-white/10 mb-4">
             <div className="flex items-center gap-2">
-              <GalleryIcon size={13} className="text-neutral-400" />
-              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Galería</span>
+              <input
+                type="text"
+                value={dbTitle}
+                onChange={e => {
+                  if (isLegacyArray) {
+                    onChange(index, { title: e.target.value, pages: pages });
+                  } else {
+                    onChange(index, { ...block.contenido, title: e.target.value });
+                  }
+                }}
+                className="bg-transparent border-0 outline-none text-[11px] font-bold text-white uppercase tracking-wider placeholder-neutral-600 font-sans"
+                placeholder="Nueva base de datos"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleAddPage}
+                className="text-[9px] font-bold px-3 py-1 rounded bg-[#0070f3] hover:bg-[#0060df] text-white transition-all uppercase tracking-wider flex items-center gap-1"
+              >
+                Nuevo <ChevronDown size={10} />
+              </button>
             </div>
           </div>
-          <div className="py-3 grid grid-cols-2 gap-3">
-            {block.contenido.map?.((item, iIdx) => (
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {pages.map(item => (
               <div 
                 key={item.id} 
-                className="border border-white/10 bg-transparent flex flex-col cursor-pointer hover:border-white/20 transition-all"
-                onClick={(e) => {
-                  if (e.target.tagName === 'INPUT') return;
-                  if (openSubpage) openSubpage(index, iIdx, item);
-                }}
+                onClick={() => onOpenPage && onOpenPage(item.id)}
+                className="border border-white/10 hover:border-white/20 bg-transparent flex flex-col justify-between h-32 p-3.5 cursor-pointer transition-all select-none relative group"
               >
-                <div className="h-28 bg-neutral-900 overflow-hidden relative group">
-                  <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                  <input
-                    type="text"
-                    value={item.img}
-                    onChange={e => {
-                      const newContent = [...block.contenido];
-                      newContent[iIdx].img = e.target.value;
-                      onChange(index, newContent);
-                    }}
-                    className="absolute bottom-2 left-2 right-2 px-2 py-1 bg-black/80 rounded border border-white/10 text-[7px] outline-none text-neutral-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    placeholder="URL de Imagen..."
-                  />
+                {/* Empty area for subpage body preview visual */}
+                <div className="flex-1 flex items-start text-neutral-600 pt-1">
+                  <FileText size={20} className="stroke-[1.5]" />
                 </div>
-                <div className="p-2 flex flex-col gap-1">
-                  <input
-                    type="text"
-                    value={item.title}
-                    onChange={e => {
-                      const newContent = [...block.contenido];
-                      newContent[iIdx].title = e.target.value;
-                      onChange(index, newContent);
-                    }}
-                    className="bg-transparent border-0 outline-none font-bold text-[10px] text-white w-full uppercase tracking-wider"
-                  />
-                  <input
-                    type="text"
-                    value={item.desc}
-                    onChange={e => {
-                      const newContent = [...block.contenido];
-                      newContent[iIdx].desc = e.target.value;
-                      onChange(index, newContent);
-                    }}
-                    className="bg-transparent border-0 outline-none text-[8px] text-neutral-500 w-full"
-                  />
+                {/* Note title bar at the bottom */}
+                <div className="border-t border-white/5 pt-2 flex items-center gap-2">
+                  <FileText size={10} className="text-neutral-500" />
+                  <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-wide truncate">{item.title}</span>
                 </div>
+                {/* Delete option on hover */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const filtered = pages.filter(p => p.id !== item.id);
+                    if (isLegacyArray) {
+                      onChange(index, filtered);
+                    } else {
+                      onChange(index, { ...block.contenido, pages: filtered });
+                    }
+                  }}
+                  className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 text-neutral-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                  title="Eliminar página"
+                >
+                  <Trash2 size={10} />
+                </button>
               </div>
             ))}
+
+            {/* Nueva página button card layout */}
+            <button 
+              onClick={handleAddPage}
+              className="border border-white/10 hover:border-white/20 border-dashed bg-transparent flex items-center justify-center gap-2 h-32 text-neutral-500 hover:text-neutral-300 transition-all text-[10px] font-bold uppercase tracking-wider"
+            >
+              <Plus size={12} /> Nueva página
+            </button>
           </div>
-          <button
-            onClick={() => {
-              const newContent = [...(block.contenido || [])];
-              const newItem = {
-                id: 'subpage-' + Date.now(),
-                title: 'Nueva página',
-                img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400',
-                desc: 'Vacío',
-                date: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-                content: ''
-              };
-              newContent.push(newItem);
-              onChange(index, newContent);
-              if (openSubpage) openSubpage(index, newContent.length - 1, newItem);
-            }}
-            className="w-full mt-2 py-2 border border-dashed border-white/10 hover:bg-white/[0.02] transition-all rounded text-[9px] font-bold uppercase tracking-wider text-neutral-400 flex items-center justify-center gap-1.5"
-          >
-            <Plus size={10} /> Nueva página
-          </button>
         </div>
       );
+    }
 
     case 'vista-lista':
       return (
