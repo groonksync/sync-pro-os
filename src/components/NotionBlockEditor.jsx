@@ -14,6 +14,7 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
   const [blocks, setBlocks] = useState([]);
   const [activeBlockIndex, setActiveBlockIndex] = useState(null);
   const [slashMenu, setSlashMenu] = useState({ visible: false, query: '', index: 0, blockId: null });
+  const [activeSubpage, setActiveSubpage] = useState(null);
   
   // AI Assistant States
   const [aiActiveBlockIndex, setAiActiveBlockIndex] = useState(null);
@@ -21,6 +22,37 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
   const [aiLoading, setAiLoading] = useState(false);
 
   const blockRefs = useRef({});
+
+  const handleSubpageChange = (blockIdx, itemIdx, updatedItem) => {
+    const newBlocks = [...blocks];
+    const block = newBlocks[blockIdx];
+    if (block.tipo === 'vista-galeria') {
+      block.contenido[itemIdx] = updatedItem;
+    }
+    triggerChange(newBlocks);
+    setActiveSubpage(prev => prev ? { ...prev, item: updatedItem } : null);
+  };
+
+  const openSubpage = (blockIndex, itemIndex, item) => {
+    setActiveSubpage({ blockIndex, itemIndex, item });
+  };
+
+  const handleCanvasClick = (e) => {
+    if (e.target === e.currentTarget) {
+      if (blocks.length > 0) {
+        const lastIdx = blocks.length - 1;
+        const lastBlock = blocks[lastIdx];
+        if (lastBlock.tipo === 'texto' && lastBlock.contenido === '') {
+          const lastInput = blockRefs.current[lastIdx];
+          if (lastInput) lastInput.focus();
+          return;
+        }
+        insertBlock(lastIdx, 'texto', '');
+      } else {
+        insertBlock(-1, 'texto', '');
+      }
+    }
+  };
 
   // Parse markdown input to blocks when value changes
   useEffect(() => {
@@ -341,7 +373,17 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
     if (e.key === 'Enter') {
       if (slashMenu.visible) return;
       e.preventDefault();
-      insertBlock(index, 'texto', '');
+      
+      // If pressing Enter on empty list item, clear it to standard text
+      if (['checklist', 'lista-vinetas', 'lista-numerada'].includes(block.tipo) && value === '') {
+        const newBlocks = [...blocks];
+        newBlocks[index] = { ...block, tipo: 'texto', extra: null, desc: null };
+        triggerChange(newBlocks);
+        return;
+      }
+      
+      const nextType = ['checklist', 'lista-vinetas', 'lista-numerada'].includes(block.tipo) ? block.tipo : 'texto';
+      insertBlock(index, nextType, '');
     } 
     else if (e.key === ' ' && value === '') {
       // Space key on empty text block triggers AI input bar
@@ -564,6 +606,7 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
     <div 
       className="w-full flex-1 flex flex-col p-6 min-h-[500px] select-text relative select-none notion-block-editor-canvas"
       onKeyDown={handleSlashMenuKeyDown}
+      onClick={handleCanvasClick}
     >
       <style>{`
         .notion-block-editor-canvas input[type="text"] {
@@ -663,7 +706,7 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
                     </div>
                   </div>
                 ) : (
-                  renderBlockContent(block, index, handleBlockChange, blockRefs, handleKeyDown, handleKeyUp, setActiveBlockIndex, activeBlockIndex, t)
+                  renderBlockContent(block, index, handleBlockChange, blockRefs, handleKeyDown, handleKeyUp, setActiveBlockIndex, activeBlockIndex, t, openSubpage)
                 )}
               </div>
             </div>
@@ -734,12 +777,101 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
           </div>
         </div>
       )}
+
+      {/* DB Subpage / Nested Canvas Modal Overlay */}
+      {activeSubpage && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-[850px] h-[90vh] bg-[#0b0f19] border border-white/10 rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* Top Toolbar */}
+            <div className="px-6 py-3 border-b border-white/10 flex justify-between items-center bg-[#0d1222]/80">
+              <div className="flex items-center gap-2 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
+                <FileText size={14} className="text-neutral-400" />
+                <span>Página de Base de Datos</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setActiveSubpage(null)}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-neutral-400 hover:text-white transition-all"
+                  title="Cerrar y Guardar"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+            
+            {/* Page Properties / Content Container */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-6 mac-scrollbar">
+              {/* Title Input */}
+              <input
+                type="text"
+                value={activeSubpage.item.title || ''}
+                onChange={e => {
+                  const updated = { ...activeSubpage.item, title: e.target.value };
+                  handleSubpageChange(activeSubpage.blockIndex, activeSubpage.itemIndex, updated);
+                }}
+                className="w-full bg-transparent border-0 outline-none text-2xl font-bold text-white placeholder-neutral-700"
+                placeholder="Nueva página"
+              />
+
+              {/* Properties Grid */}
+              <div className="grid grid-cols-[120px_1fr] gap-x-4 gap-y-3 text-xs border-b border-white/5 pb-6">
+                <div className="text-neutral-500 font-medium">Creado</div>
+                <div className="text-neutral-300 font-medium flex items-center gap-1.5">
+                  <span className="opacity-90">{activeSubpage.item.date || 'Sin fecha'}</span>
+                </div>
+
+                <div className="text-neutral-500 font-medium">Etiquetas</div>
+                <div>
+                  <input
+                    type="text"
+                    value={activeSubpage.item.desc || ''}
+                    onChange={e => {
+                      const updated = { ...activeSubpage.item, desc: e.target.value };
+                      handleSubpageChange(activeSubpage.blockIndex, activeSubpage.itemIndex, updated);
+                    }}
+                    className="bg-transparent border-0 outline-none text-neutral-300 font-medium w-full placeholder-neutral-700"
+                    placeholder="Vacío"
+                  />
+                </div>
+              </div>
+
+              {/* Comments Mock section */}
+              <div className="text-xs border-b border-white/5 pb-4">
+                <div className="text-neutral-500 font-medium mb-2">Comentarios</div>
+                <input
+                  type="text"
+                  placeholder="Agregar un comentario..."
+                  className="w-full bg-transparent border-0 outline-none text-neutral-400 placeholder-neutral-700 py-1"
+                />
+              </div>
+
+              {/* Nested NotionBlockEditor Canvas */}
+              <div className="pt-2 min-h-[300px]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-4 select-none">
+                  Contenido de la página
+                </div>
+                <div className="border border-white/5 rounded-xl p-4 min-h-[250px] bg-transparent">
+                  <NotionBlockEditor
+                    isDark={isDark}
+                    value={activeSubpage.item.content || ''}
+                    onChange={newContent => {
+                      const updated = { ...activeSubpage.item, content: newContent };
+                      handleSubpageChange(activeSubpage.blockIndex, activeSubpage.itemIndex, updated);
+                    }}
+                    settings={settings}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 // Render block content inline
-function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, onFocus, activeBlockIndex, t) {
+function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, onFocus, activeBlockIndex, t, openSubpage) {
   const isSelected = activeBlockIndex === index;
   
   const baseInputStyle = {
@@ -789,7 +921,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'cita':
       return (
-        <div className="w-full flex items-stretch pl-4 border-l-2 border-amber-500/60 bg-amber-500/[0.02] py-1">
+        <div className="w-full flex items-stretch pl-4 border-l-2 border-amber-500/60 py-1 bg-transparent">
           {renderTextInput('text-xs', 'font-medium italic text-amber-200/90', 'Escribe una cita...', { fontStyle: 'italic' })}
         </div>
       );
@@ -812,20 +944,20 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'checklist':
       return (
-        <div className="flex items-center w-full gap-3 pl-1">
+        <div className="flex items-start w-full gap-2.5 pl-1">
           <button
             onClick={() => {
               const nextStatus = block.extra === 'pendiente' ? 'proceso' : block.extra === 'proceso' ? 'completado' : 'pendiente';
               onChange(index, block.contenido, nextStatus);
             }}
-            className="w-4 h-4 rounded flex items-center justify-center border transition-all duration-200"
+            className="w-4 h-4 rounded-sm flex items-center justify-center border transition-all duration-200 mt-1 shrink-0"
             style={{ 
-              borderColor: block.extra === 'completado' ? '#10b981' : block.extra === 'proceso' ? '#eab308' : 'rgba(255,255,255,0.2)',
-              backgroundColor: block.extra === 'completado' ? 'rgba(16,185,129,0.1)' : block.extra === 'proceso' ? 'rgba(234,179,8,0.1)' : 'transparent',
+              borderColor: block.extra === 'completado' ? '#10b981' : block.extra === 'proceso' ? '#eab308' : 'rgba(255,255,255,0.4)',
+              backgroundColor: 'transparent',
               color: block.extra === 'completado' ? '#10b981' : block.extra === 'proceso' ? '#eab308' : 'transparent'
             }}
           >
-            {block.extra === 'completado' && <Check size={10} strokeWidth={3} />}
+            {block.extra === 'completado' && <Check size={11} strokeWidth={3} />}
             {block.extra === 'proceso' && <span className="text-[9px] font-black leading-none">/</span>}
           </button>
           
@@ -837,8 +969,8 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
             onKeyDown={e => onKeyDown(e, index, block)}
             onKeyUp={e => onKeyUp(e, index, block)}
             onFocus={() => onFocus(index)}
-            placeholder="Tarea..."
-            className={`text-xs font-medium w-full text-neutral-300 placeholder-neutral-700 transition-all duration-150 ${block.extra === 'completado' ? 'line-through text-neutral-500' : ''}`}
+            placeholder="Tarea"
+            className={`text-xs font-normal w-full text-neutral-200 placeholder-neutral-500 transition-all duration-150 ${block.extra === 'completado' ? 'line-through text-neutral-500' : ''}`}
             style={baseInputStyle}
           />
         </div>
@@ -846,10 +978,10 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'desplegable':
       return (
-        <div className="w-full flex flex-col pl-1 border border-white/5 rounded-lg p-2 bg-white/[0.01]">
+        <div className="w-full flex flex-col pl-1 border border-white/10 rounded-lg p-2 bg-transparent">
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => onChange(index, block.contenido, block.extra, block.isOpen ? 'closed' : 'open')}
+              onClick={() => onChange(index, block.contenido, block.extra, block.desc === 'open' ? 'closed' : 'open')}
               className="p-0.5 rounded hover:bg-white/5 text-neutral-500"
             >
               {block.desc === 'open' ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -857,7 +989,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
             {renderTextInput('text-xs', 'font-bold text-neutral-200', 'Toggle Title')}
           </div>
           {block.desc === 'open' && (
-            <div className="pl-6 pr-2 py-1 mt-1 border-l border-white/5">
+            <div className="pl-6 pr-2 py-1 mt-1 border-l border-white/10 bg-transparent">
               <textarea
                 value={block.extra || ''}
                 onChange={e => onChange(index, block.contenido, e.target.value)}
@@ -872,7 +1004,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'destacado':
       return (
-        <div className="w-full flex gap-3 p-3 rounded-xl border border-blue-500/10 bg-blue-500/[0.02] items-start">
+        <div className="w-full flex gap-3 p-3 rounded-xl border border-white/10 bg-transparent items-start">
           <input 
             type="text" 
             value={block.extra || '💡'} 
@@ -887,8 +1019,8 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'visor':
       return (
-        <div className="w-full flex flex-col rounded-lg border border-white/10 bg-[#0d0d0e] overflow-hidden">
-          <div className="px-3 py-1 border-b border-white/5 bg-white/[0.02] flex justify-between items-center text-[9px] font-black uppercase text-neutral-500 tracking-wider">
+        <div className="w-full flex flex-col rounded-lg border border-white/10 bg-transparent overflow-hidden">
+          <div className="px-3 py-1 border-b border-white/10 bg-transparent flex justify-between items-center text-[9px] font-black uppercase text-neutral-500 tracking-wider">
             <select
               value={block.extra || 'javascript'}
               onChange={e => onChange(index, block.contenido, e.target.value)}
@@ -914,10 +1046,10 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'tabla':
       return (
-        <div className="w-full overflow-x-auto border border-white/10 rounded-lg bg-white/[0.01] p-1">
+        <div className="w-full overflow-x-auto border border-white/10 rounded-lg bg-transparent p-1">
           <table className="w-full text-left border-collapse text-[10px]">
             <thead>
-              <tr className="border-b border-white/10 bg-white/[0.02]">
+              <tr className="border-b border-white/10 bg-transparent">
                 {block.contenido.map((col, cIdx) => (
                   <th key={cIdx} className="p-2 border-r border-white/10">
                     <input
@@ -948,9 +1080,9 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
             </thead>
             <tbody>
               {block.extra.map((row, rIdx) => (
-                <tr key={row.id} className="border-b border-white/5 hover:bg-white/[0.01] transition-colors">
+                <tr key={row.id} className="border-b border-white/10 hover:bg-white/[0.01] transition-colors">
                   {row.celdas.map((cell, cIdx) => (
-                    <td key={cIdx} className="p-1 border-r border-white/5">
+                    <td key={cIdx} className="p-1 border-r border-white/10">
                       <input
                         type="text"
                         value={cell}
@@ -983,7 +1115,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
               const newRows = [...block.extra, { id: 'row-' + Date.now(), celdas: block.contenido.map(() => '') }];
               onChange(index, block.contenido, newRows);
             }}
-            className="w-full py-1.5 border-t border-dashed border-white/5 hover:bg-white/[0.01] flex items-center justify-center gap-1.5 text-neutral-500 hover:text-neutral-300 text-[9px] font-black uppercase tracking-wider mt-1 transition-all"
+            className="w-full py-1.5 border-t border-dashed border-white/10 hover:bg-white/[0.01] flex items-center justify-center gap-1.5 text-neutral-500 hover:text-neutral-300 text-[9px] font-black uppercase tracking-wider mt-1 transition-all"
           >
             <Plus size={10} /> Añadir Fila
           </button>
@@ -995,14 +1127,14 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
     case 'audio':
     case 'archivo':
       return (
-        <div className="w-full flex flex-col p-3 rounded-xl border border-white/10 bg-white/[0.02]">
+        <div className="w-full flex flex-col p-3 rounded-xl border border-white/10 bg-transparent">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
-              {block.tipo === 'imagen' && <Image size={14} className="text-blue-400" />}
-              {block.tipo === 'video' && <Video size={14} className="text-emerald-400" />}
-              {block.tipo === 'audio' && <Music size={14} className="text-purple-400" />}
-              {block.tipo === 'archivo' && <File size={14} className="text-yellow-400" />}
-              <span className="text-[9px] font-black uppercase tracking-wider text-white">
+              {block.tipo === 'imagen' && <Image size={14} className="text-neutral-400" />}
+              {block.tipo === 'video' && <Video size={14} className="text-neutral-400" />}
+              {block.tipo === 'audio' && <Music size={14} className="text-neutral-400" />}
+              {block.tipo === 'archivo' && <File size={14} className="text-neutral-400" />}
+              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">
                 Bloque de {block.tipo === 'imagen' ? 'Imagen' : block.tipo === 'video' ? 'Video' : block.tipo === 'audio' ? 'Audio' : 'Archivo'}
               </span>
             </div>
@@ -1019,18 +1151,18 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
               type="text"
               value={block.contenido || ''}
               onChange={e => onChange(index, e.target.value, block.extra)}
-              className="flex-1 px-3 py-1.5 rounded bg-black/40 border border-white/5 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
+              className="flex-1 px-3 py-1.5 rounded bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
               placeholder="Introduce la URL del archivo de medios..."
             />
           </div>
           
           {block.contenido && block.contenido.startsWith('http') && (
-            <div className="mt-3 rounded overflow-hidden max-w-[full] flex justify-center bg-black/20 border border-white/5 p-2">
+            <div className="mt-3 rounded overflow-hidden max-w-[full] flex justify-center bg-transparent border border-white/10 p-2">
               {block.tipo === 'imagen' && <img src={block.contenido} alt={block.extra} className="max-h-[250px] object-contain rounded" />}
               {block.tipo === 'video' && <video src={block.contenido} controls className="max-h-[250px] rounded w-full" />}
               {block.tipo === 'audio' && <audio src={block.contenido} controls className="w-full py-2" />}
               {block.tipo === 'archivo' && (
-                <a href={block.contenido} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-yellow-400 text-[10px] font-bold py-2 hover:underline">
+                <a href={block.contenido} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-neutral-400 text-[10px] font-bold py-2 hover:underline">
                   <File size={16} /> Descargar Archivo ({block.extra || 'Link'})
                 </a>
               )}
@@ -1041,36 +1173,36 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'marcador-web':
       return (
-        <div className="w-full flex flex-col p-3 rounded-xl border border-white/10 bg-white/[0.02]">
+        <div className="w-full flex flex-col p-3 rounded-xl border border-white/10 bg-transparent">
           <div className="flex items-center gap-2 mb-2">
-            <Bookmark size={14} className="text-orange-400" />
-            <span className="text-[9px] font-black uppercase tracking-wider text-white">Marcador Web</span>
+            <Bookmark size={14} className="text-neutral-400" />
+            <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Marcador Web</span>
           </div>
           <div className="flex flex-col gap-2">
             <input
               type="text"
               value={block.contenido || ''}
               onChange={e => onChange(index, e.target.value, block.extra, block.desc)}
-              className="w-full px-3 py-1.5 rounded bg-black/40 border border-white/5 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
+              className="w-full px-3 py-1.5 rounded bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
               placeholder="URL de Enlace..."
             />
             <input
               type="text"
               value={block.extra || ''}
               onChange={e => onChange(index, block.contenido, e.target.value, block.desc)}
-              className="w-full px-3 py-1.5 rounded bg-black/40 border border-white/5 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
+              className="w-full px-3 py-1.5 rounded bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
               placeholder="Título del Marcador..."
             />
             <input
               type="text"
               value={block.desc || ''}
               onChange={e => onChange(index, block.contenido, block.extra, e.target.value)}
-              className="w-full px-3 py-1.5 rounded bg-black/40 border border-white/5 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
+              className="w-full px-3 py-1.5 rounded bg-transparent border border-white/10 text-[10px] outline-none text-neutral-300 placeholder-neutral-700"
               placeholder="Breve descripción..."
             />
           </div>
           {block.contenido && (
-            <a href={block.contenido} target="_blank" rel="noreferrer" className="mt-2 flex items-center justify-between p-2 rounded bg-white/[0.01] hover:bg-white/[0.03] border border-white/5 text-[10px] text-neutral-300 font-bold transition-all">
+            <a href={block.contenido} target="_blank" rel="noreferrer" className="mt-2 flex items-center justify-between p-2 rounded bg-transparent hover:bg-white/[0.03] border border-white/10 text-[10px] text-neutral-300 font-bold transition-all">
               <span className="truncate flex-1 pr-4">{block.extra || block.contenido}</span>
               <ExternalLink size={12} className="text-neutral-500 shrink-0" />
             </a>
@@ -1081,8 +1213,8 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
     case 'enlace-pagina':
     case 'pagina':
       return (
-        <div className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.04] transition-all cursor-pointer">
-          <FileText size={16} className="text-indigo-400 shrink-0" />
+        <div className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-transparent hover:bg-white/[0.02] transition-all cursor-pointer">
+          <FileText size={16} className="text-neutral-400 shrink-0" />
           <div className="flex-1 min-w-0">
             <input
               type="text"
@@ -1230,7 +1362,14 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
           </div>
           <div className="py-3 grid grid-cols-2 gap-3">
             {block.contenido.map?.((item, iIdx) => (
-              <div key={item.id} className="border border-white/10 bg-transparent flex flex-col">
+              <div 
+                key={item.id} 
+                className="border border-white/10 bg-transparent flex flex-col cursor-pointer hover:border-white/20 transition-all"
+                onClick={(e) => {
+                  if (e.target.tagName === 'INPUT') return;
+                  if (openSubpage) openSubpage(index, iIdx, item);
+                }}
+              >
                 <div className="h-28 bg-neutral-900 overflow-hidden relative group">
                   <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                   <input
@@ -1270,6 +1409,25 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
               </div>
             ))}
           </div>
+          <button
+            onClick={() => {
+              const newContent = [...(block.contenido || [])];
+              const newItem = {
+                id: 'subpage-' + Date.now(),
+                title: 'Nueva página',
+                img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400',
+                desc: 'Vacío',
+                date: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                content: ''
+              };
+              newContent.push(newItem);
+              onChange(index, newContent);
+              if (openSubpage) openSubpage(index, newContent.length - 1, newItem);
+            }}
+            className="w-full mt-2 py-2 border border-dashed border-white/10 hover:bg-white/[0.02] transition-all rounded text-[9px] font-bold uppercase tracking-wider text-neutral-400 flex items-center justify-center gap-1.5"
+          >
+            <Plus size={10} /> Nueva página
+          </button>
         </div>
       );
 
