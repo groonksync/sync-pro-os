@@ -928,19 +928,28 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'lista-vinetas':
       return (
-        <div className="flex items-start w-full gap-2 pl-2">
-          <div className="text-neutral-500 select-none pt-1">•</div>
-          {renderTextInput('text-xs', 'font-normal', 'Elemento de lista')}
+        <div className="flex items-start w-full gap-2.5 pl-1.5">
+          <div className="text-neutral-500 select-none text-xs shrink-0 w-3 text-right pt-[1px]">•</div>
+          {renderTextInput('text-xs', 'font-normal text-neutral-200 placeholder-neutral-500', 'Lista')}
         </div>
       );
 
-    case 'lista-numerada':
+    case 'lista-numerada': {
+      let itemNumber = 1;
+      for (let i = index - 1; i >= 0; i--) {
+        if (blocks[i] && blocks[i].tipo === 'lista-numerada') {
+          itemNumber++;
+        } else {
+          break;
+        }
+      }
       return (
-        <div className="flex items-start w-full gap-2 pl-2">
-          <div className="text-neutral-500 select-none pt-0.5 text-xs font-bold">{index + 1}.</div>
-          {renderTextInput('text-xs', 'font-normal', 'Elemento numerado')}
+        <div className="flex items-start w-full gap-2.5 pl-1.5">
+          <div className="text-neutral-500 select-none text-xs font-bold shrink-0 w-3 text-right pt-[1px]">{itemNumber}.</div>
+          {renderTextInput('text-xs', 'font-normal text-neutral-200 placeholder-neutral-500', 'Lista')}
         </div>
       );
+    }
 
     case 'checklist':
       return (
