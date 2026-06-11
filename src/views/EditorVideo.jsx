@@ -385,49 +385,49 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
       
       {/* HEADER NAV */}
       <nav className="h-16 flex items-center justify-between px-6 relative z-50"
-        style={{ backgroundColor: t.panel, borderBottom: `1px solid ${t.border}` }}>
+        style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
          <div className="flex items-center gap-8">
             <div>
                <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Mesa de Trabajo</h2>
                <p style={{ fontSize: '0.7rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>Control de Producción & Hub de Negocios</p>
             </div>
-            <div className="flex rounded-xl p-0.5" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
+            <div className="flex rounded-xl p-0.5 gap-1 bg-zinc-950/20" style={{ border: 'none' }}>
                 <button onClick={() => setViewState('dashboard')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
                     backgroundColor: viewState === 'dashboard' ? '#141414' : 'transparent',
-                    border: viewState === 'dashboard' ? `1px solid ${t.accent}` : '1px solid transparent',
+                    border: 'none',
                     color: viewState === 'dashboard' ? t.accent : t.textDim,
                   }}>Dashboard</button>
                 <button onClick={() => setViewState('client-list')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
                     backgroundColor: viewState.includes('client') || viewState === 'session' ? '#141414' : 'transparent',
-                    border: viewState.includes('client') || viewState === 'session' ? `1px solid ${t.accent}` : '1px solid transparent',
+                    border: 'none',
                     color: viewState.includes('client') || viewState === 'session' ? t.accent : t.textDim,
                   }}>Clientes</button>
                 <button onClick={() => setViewState('agency-hub')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
                     backgroundColor: viewState.includes('agency') ? '#141414' : 'transparent',
-                    border: viewState.includes('agency') ? `1px solid ${t.accent}` : '1px solid transparent',
+                    border: 'none',
                     color: viewState.includes('agency') ? t.accent : t.textDim,
                   }}>Agencia Pro</button>
                 <button onClick={() => setViewState('project-engine')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
                   style={{
                     backgroundColor: viewState === 'project-engine' ? '#141414' : 'transparent',
-                    border: viewState === 'project-engine' ? `1px solid ${t.accent}` : '1px solid transparent',
+                    border: 'none',
                     color: viewState === 'project-engine' ? t.accent : t.textDim,
                   }}>Proyectos de Edición</button>
             </div>
          </div>
          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-950/20" style={{ border: 'none' }}>
                <div className="w-1.5 h-1.5 rounded-xl animate-pulse" style={{ backgroundColor: t.accent }}></div>
                <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.accent }}>System Online</span>
             </div>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-zinc-950/20" style={{ border: 'none' }}>
               <UserIcon size={16} color={t.textDim}/>
             </div>
          </div>
-       </nav>
+      </nav>
 
        {/* WORK DESK DASHBOARD */}
        {viewState === 'dashboard' && (
@@ -582,7 +582,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
              </div>
              <button onClick={createMeeting} className="px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all"
-               style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
+               style={{ backgroundColor: 'transparent', border: `1px solid ${t.accent}`, color: t.accent }}>
                <Video size={14}/> Iniciar Sesión
              </button>
            </header>
@@ -776,9 +776,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {/* AGENCY STRATEGY EDITOR */}
        {viewState === 'agency-editor' && activeStrategy && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-400">
-           <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.panel, borderBottom: `1px solid ${t.border}` }}>
+           <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
              <div className="flex items-center gap-3">
-               <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+               <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
                  <ArrowLeft size={16} color={t.textDim}/>
                </button>
                <div>
@@ -798,9 +798,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {/* SESSIONS / MEETING EDITOR */}
        {viewState === 'session' && activeMeeting && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-400">
-          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: t.panel, borderBottom: `1px solid ${t.border}` }}>
+          <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: 'transparent', border: 'none' }}>
             <div className="flex items-center gap-3">
-              <button onClick={saveMeeting} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+              <button onClick={saveMeeting} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
                 <ArrowLeft size={16} color={t.textDim}/>
               </button>
               <div>

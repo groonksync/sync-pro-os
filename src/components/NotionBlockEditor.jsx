@@ -135,6 +135,90 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
 
   const blockRefs = useRef({});
 
+  // Undo/Redo Stacks and logic
+  const undoStackRef = useRef([]);
+  const redoStackRef = useRef([]);
+  const blocksRef = useRef(blocks);
+  const lastPushTimeRef = useRef(0);
+  const lastActiveBlockRef = useRef(null);
+
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
+
+  const pushToUndo = (oldBlocks, currentActiveIndex) => {
+    const now = Date.now();
+    redoStackRef.current = [];
+
+    const timeDiff = now - lastPushTimeRef.current;
+    const sameBlock = currentActiveIndex === lastActiveBlockRef.current;
+    
+    if (sameBlock && timeDiff < 1500 && undoStackRef.current.length > 0) {
+      lastPushTimeRef.current = now;
+      return;
+    }
+
+    const cloned = JSON.parse(JSON.stringify(oldBlocks));
+    undoStackRef.current.push(cloned);
+    
+    if (undoStackRef.current.length > 100) {
+      undoStackRef.current.shift();
+    }
+
+    lastPushTimeRef.current = now;
+    lastActiveBlockRef.current = currentActiveIndex;
+  };
+
+  const performUndo = () => {
+    if (undoStackRef.current.length === 0) return;
+    
+    const currentCloned = JSON.parse(JSON.stringify(blocksRef.current));
+    redoStackRef.current.push(currentCloned);
+
+    const previous = undoStackRef.current.pop();
+    
+    setBlocks(previous);
+    if (onChange) {
+      onChange(serializeBlocksToMarkdown(previous));
+    }
+  };
+
+  const performRedo = () => {
+    if (redoStackRef.current.length === 0) return;
+
+    const next = redoStackRef.current.pop();
+
+    const currentCloned = JSON.parse(JSON.stringify(blocksRef.current));
+    undoStackRef.current.push(currentCloned);
+
+    setBlocks(next);
+    if (onChange) {
+      onChange(serializeBlocksToMarkdown(next));
+    }
+  };
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      const isCmdOrCtrl = e.metaKey || e.ctrlKey;
+      if (isCmdOrCtrl) {
+        if (e.key.toLowerCase() === 'z') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            performRedo();
+          } else {
+            performUndo();
+          }
+        } else if (e.key.toLowerCase() === 'y') {
+          e.preventDefault();
+          performRedo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
+
   // Parse markdown input to blocks when value changes
   useEffect(() => {
     if (value !== undefined) {
@@ -148,6 +232,7 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
 
   // Trigger change handler
   const triggerChange = (newBlocks) => {
+    pushToUndo(blocks, activeBlockIndex);
     setBlocks(newBlocks);
     if (onChange) {
       onChange(serializeBlocksToMarkdown(newBlocks));
