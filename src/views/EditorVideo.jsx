@@ -384,50 +384,52 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
       style={{ backgroundColor: t.bg, color: t.text }}>
       
       {/* HEADER NAV */}
-      <nav className="h-16 flex items-center justify-between px-6 relative z-50"
-        style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
-         <div className="flex items-center gap-8">
-            <div>
-               <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Mesa de Trabajo</h2>
-               <p style={{ fontSize: '0.7rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>Control de Producción & Hub de Negocios</p>
-            </div>
-            <div className="flex rounded-xl p-0.5 gap-1 bg-zinc-950/20" style={{ border: 'none' }}>
-                <button onClick={() => setViewState('dashboard')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                  style={{
-                    backgroundColor: viewState === 'dashboard' ? '#141414' : 'transparent',
-                    border: 'none',
-                    color: viewState === 'dashboard' ? t.accent : t.textDim,
-                  }}>Dashboard</button>
-                <button onClick={() => setViewState('client-list')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                  style={{
-                    backgroundColor: viewState.includes('client') || viewState === 'session' ? '#141414' : 'transparent',
-                    border: 'none',
-                    color: viewState.includes('client') || viewState === 'session' ? t.accent : t.textDim,
-                  }}>Clientes</button>
-                <button onClick={() => setViewState('agency-hub')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                  style={{
-                    backgroundColor: viewState.includes('agency') ? '#141414' : 'transparent',
-                    border: 'none',
-                    color: viewState.includes('agency') ? t.accent : t.textDim,
-                  }}>Agencia Pro</button>
-                <button onClick={() => setViewState('project-engine')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                  style={{
-                    backgroundColor: viewState === 'project-engine' ? '#141414' : 'transparent',
-                    border: 'none',
-                    color: viewState === 'project-engine' ? t.accent : t.textDim,
-                  }}>Proyectos de Edición</button>
-            </div>
-         </div>
-         <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-950/20" style={{ border: 'none' }}>
-               <div className="w-1.5 h-1.5 rounded-xl animate-pulse" style={{ backgroundColor: t.accent }}></div>
-               <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.accent }}>System Online</span>
-            </div>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-zinc-950/20" style={{ border: 'none' }}>
-              <UserIcon size={16} color={t.textDim}/>
-            </div>
-         </div>
-      </nav>
+      {!['session', 'agency-editor'].includes(viewState) && (
+        <nav className="h-16 flex items-center justify-between px-6 relative z-50"
+          style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
+           <div className="flex items-center gap-8">
+              <div>
+                 <h2 style={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.02em', margin: 0 }}>Mesa de Trabajo</h2>
+                 <p style={{ fontSize: '0.7rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>Control de Producción & Hub de Negocios</p>
+              </div>
+              <div className="flex rounded-xl p-0.5 gap-1 bg-zinc-950/20" style={{ border: 'none' }}>
+                  <button onClick={() => setViewState('dashboard')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                    style={{
+                      backgroundColor: viewState === 'dashboard' ? '#141414' : 'transparent',
+                      border: 'none',
+                      color: viewState === 'dashboard' ? t.accent : t.textDim,
+                    }}>Dashboard</button>
+                  <button onClick={() => setViewState('client-list')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                    style={{
+                      backgroundColor: viewState.includes('client') || viewState === 'session' ? '#141414' : 'transparent',
+                      border: 'none',
+                      color: viewState.includes('client') || viewState === 'session' ? t.accent : t.textDim,
+                    }}>Clientes</button>
+                  <button onClick={() => setViewState('agency-hub')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                    style={{
+                      backgroundColor: viewState.includes('agency') ? '#141414' : 'transparent',
+                      border: 'none',
+                      color: viewState.includes('agency') ? t.accent : t.textDim,
+                    }}>Agencia Pro</button>
+                  <button onClick={() => setViewState('project-engine')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                    style={{
+                      backgroundColor: viewState === 'project-engine' ? '#141414' : 'transparent',
+                      border: 'none',
+                      color: viewState === 'project-engine' ? t.accent : t.textDim,
+                    }}>Proyectos de Edición</button>
+              </div>
+           </div>
+           <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-950/20" style={{ border: 'none' }}>
+                 <div className="w-1.5 h-1.5 rounded-xl animate-pulse" style={{ backgroundColor: t.accent }}></div>
+                 <span className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.accent }}>System Online</span>
+              </div>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden bg-zinc-950/20" style={{ border: 'none' }}>
+                <UserIcon size={16} color={t.textDim}/>
+              </div>
+           </div>
+        </nav>
+      )}
 
        {/* WORK DESK DASHBOARD */}
        {viewState === 'dashboard' && (
@@ -523,10 +525,10 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                    <div className="relative">
                       <input type="text" value={clientSearch} onChange={e=>setClientSearch(e.target.value)} placeholder="FILTRAR..."
                         className="rounded-lg py-2.5 pl-4 pr-5 text-[9px] font-black uppercase tracking-widest outline-none w-56 transition-all"
-                        style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
+                        style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}`, color: t.text }} />
                    </div>
                    <button onClick={() => setIsClientModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
-                     style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
+                     style={{ backgroundColor: 'transparent', border: `1px solid ${t.accent}`, color: t.accent }}>
                       <Plus size={14} strokeWidth={2}/> Añadir Registro
                    </button>
                 </div>
@@ -534,8 +536,8 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
 
              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 pt-2">
                 {uniqueClients.map(cl => (
-                  <div key={cl.id} className="p-5 flex flex-col items-center justify-center group relative overflow-hidden aspect-square cursor-pointer transition-all hover:bg-white/2"
-                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12 }}>
+                  <div key={cl.id} className="p-5 flex flex-col items-center justify-center group relative overflow-hidden aspect-square cursor-pointer transition-all duration-300 rounded-2xl hover:bg-white/[0.04]"
+                    style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px solid ${t.border}` }}>
                      
                      <div onClick={() => openClientProfile(cl)} className="w-16 h-16 rounded-full flex items-center justify-center overflow-hidden mb-4" style={{ border: `1px solid ${t.border}` }}>
                         {cl.foto_url ? (
@@ -587,36 +589,32 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
              </button>
            </header>
 
-           <div className="space-y-3 pt-2">
-             {filteredMeetings.map(m => (
-               <div key={m.id} className="flex items-center justify-between p-4 cursor-pointer transition-all hover:bg-white/2"
-                 style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12 }}>
-                 <div onClick={() => openMeeting(m)} className="flex-1 flex items-center gap-4">
-                   <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
-                     <FileVideo size={18} color={t.accent}/>
-                   </div>
-                   <div>
-                     <h4 className="text-sm font-black uppercase tracking-wider text-white">{m.session_title}</h4>
-                     <p className="text-[8px] font-mono text-neutral-400">{m.fecha}</p>
-                   </div>
-                 </div>
-                 <div className="flex items-center gap-4">
-                   <div className="text-right">
-                     <p className="text-[7px] font-bold uppercase mb-0.5" style={{ color: t.textDim }}>Tiempo Registrado</p>
-                     <p className="text-sm font-bold font-mono text-white">{formatTime(m.total_time)}</p>
-                   </div>
-                   <button onClick={(e) => handleDeleteMeeting(m, e)} className="p-2 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all" title="Eliminar Sesión">
-                     <Trash2 size={13}/>
-                   </button>
-                 </div>
-               </div>
-             ))}
-             {filteredMeetings.length === 0 && (
-               <div className="text-center py-10 rounded-lg" style={{ backgroundColor: t.panel, border: `1px dashed ${t.border}` }}>
-                 <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin sesiones registradas. Comienza un nuevo flujo.</p>
-               </div>
-             )}
-           </div>
+           <div className="space-y-2.5 pt-2">
+              {filteredMeetings.map(m => (
+                <div key={m.id} className="group/session flex items-center justify-between p-4 cursor-pointer transition-all duration-300 rounded-xl hover:bg-white/[0.04]"
+                  style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px solid ${t.border}` }}>
+                  <div onClick={() => openMeeting(m)} className="flex-1 flex items-center gap-4">
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors bg-white/[0.02] group-hover/session:bg-white/[0.05]" style={{ border: `1px solid ${t.border}` }}>
+                      <FileVideo size={16} color={t.accent}/>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-white group-hover/session:text-emerald-400 transition-colors">{m.session_title}</h4>
+                      <p className="text-[7.5px] font-mono text-neutral-400 mt-0.5">{m.fecha}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={(e) => handleDeleteMeeting(m, e)} className="p-2 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all" title="Eliminar Sesión">
+                      <Trash2 size={13}/>
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {filteredMeetings.length === 0 && (
+                <div className="text-center py-10 rounded-xl" style={{ backgroundColor: 'rgba(20, 20, 20, 0.4)', border: `1px dashed ${t.border}` }}>
+                  <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>Sin sesiones registradas. Comienza un nuevo flujo.</p>
+                </div>
+              )}
+            </div>
         </div>
        )}
 
