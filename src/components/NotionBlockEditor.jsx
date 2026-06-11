@@ -602,7 +602,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
     if (type === 'vista-calendario') {
       return [
         { id: 'cal1', title: 'Sesión Edit 1', date: '2026-06-12', label: 'Video' },
-        { id: 'cal2', title: 'Entrega Draft 1', date: '2026-06-15', label: 'Revisión' },
         { id: 'cal3', title: 'Feedback Final', date: '2026-06-18', label: 'Aprobación' }
       ];
     }
@@ -620,18 +619,22 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
           const lastInput = blockRefs.current[lastIdx];
           if (lastInput) lastInput.focus();
         }
+      } else {
+        setBlocks([{ id: 'blk-init-' + Date.now(), tipo: 'texto', contenido: '' }]);
       }
     }
   };
 
   return (
     <div 
-      className="w-full flex-1 flex flex-col p-6 min-h-[500px] select-text relative select-none notion-block-editor-canvas"
+      className="w-full flex-1 flex flex-col p-6 min-h-[500px] select-text relative notion-block-editor-canvas notion-block-editor-wrapper cursor-text"
       onKeyDown={handleSlashMenuKeyDown}
       onClick={handleCanvasClick}
     >
       <style>{`
-        .notion-block-editor-canvas input[type="text"] {
+        .notion-block-editor-wrapper input[type="text"],
+        .notion-block-editor-canvas input[type="text"],
+        .notion-block-editor-modal input[type="text"] {
           background-color: transparent !important;
           border: none !important;
           border-radius: 0 !important;
@@ -639,9 +642,12 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
           box-shadow: none !important;
           outline: none !important;
         }
-        .notion-block-editor-canvas input[type="text"]:focus {
+        .notion-block-editor-wrapper input[type="text"]:focus,
+        .notion-block-editor-canvas input[type="text"]:focus,
+        .notion-block-editor-modal input[type="text"]:focus {
           border: none !important;
           box-shadow: none !important;
+          outline: none !important;
         }
       `}</style>
       <div className="w-full max-w-[900px] mx-auto flex flex-col gap-2 pb-24">
@@ -652,10 +658,10 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
             <div 
               key={block.id} 
               className="group flex items-start gap-2 w-full relative transition-all duration-150 rounded px-1.5 py-0.5"
-              style={{ backgroundColor: activeBlockIndex === index ? 'rgba(255,255,255,0.02)' : 'transparent' }}
+              style={{ backgroundColor: 'transparent' }}
             >
               {/* Left-hand actions bar: Add block (+) and Option handle (::) */}
-              <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all duration-200 z-30">
+              <div className="absolute -left-10 top-1.5 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all duration-200 z-30">
                 <button 
                   onClick={() => insertBlock(index, 'texto', '')}
                   className="w-4 h-4 rounded hover:bg-white/10 flex items-center justify-center text-neutral-500 hover:text-white"
@@ -680,20 +686,20 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
                   </button>
                   {/* Tooltip Note matching visual prompt */}
                   <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover/tooltip:flex flex-col items-center pointer-events-none z-[1050]">
-                    <div className="bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-[8px] leading-normal text-neutral-400 w-[140px] shadow-2xl">
+                    <div className="bg-[#141414] border border-white/10 rounded-lg px-2.5 py-1.5 text-[8px] leading-normal text-neutral-400 w-[140px] shadow-2xl">
                       <div><strong className="text-white font-black">Arrastra</strong> para mover</div>
                       <div className="text-neutral-500 mt-0.5"><strong className="text-white font-black">Haz clic</strong> o pulsa <strong className="text-white font-black">⌘/</strong> para abrir el menú.</div>
                     </div>
-                    <div className="w-1.5 h-1.5 bg-[#0b0f19] border-r border-b border-white/10 rotate-45 -mt-1" />
+                    <div className="w-1.5 h-1.5 bg-[#141414] border-r border-b border-white/10 rotate-45 -mt-1" />
                   </div>
                 </div>
               </div>
-
+ 
               {/* Dynamic render block contents or AI bar input */}
               <div className="flex-1 flex items-start gap-2.5 w-full">
                 {isAIActive ? (
                   <div className="w-full flex flex-col gap-2 rounded-xl border border-purple-500/20 bg-purple-500/[0.02] shadow-lg animate-in slide-in-from-top duration-200">
-                    <div className="flex items-center gap-3 bg-zinc-950/60 border border-white/5 rounded-xl px-3 py-1.5">
+                    <div className="flex items-center gap-3 bg-[#141414] border border-white/5 rounded-xl px-3 py-1.5">
                       <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-neutral-400">
                         <Sparkles size={11} className="text-purple-400" />
                       </div>
@@ -816,9 +822,9 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
 
         return (
           <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-[800px] h-[90vh] bg-[#0b0f19] border border-white/10 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative select-text">
+            <div className="w-full max-w-[800px] h-[90vh] bg-[#141414] border border-white/10 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative select-text notion-block-editor-modal">
               {/* Toolbar */}
-              <div className="px-4 py-2.5 border-b border-white/10 flex justify-between items-center bg-zinc-950/40">
+              <div className="px-4 py-2.5 border-b border-white/10 flex justify-between items-center bg-[#141414]">
                 <button 
                   onClick={() => setActivePageModal(null)}
                   className="p-1 rounded hover:bg-white/10 text-neutral-400 hover:text-white transition-all flex items-center gap-1.5"
