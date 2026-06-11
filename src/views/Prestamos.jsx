@@ -144,32 +144,21 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
 
   // ── HEADER ──
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(18);
+  pdf.setFontSize(22);
   pdf.setTextColor(ACCENT);
-  pdf.text('RECIBO DE PAGO DE INTERESES', M, y);
+  pdf.text('RECIBO DE PAGO', M, y);
 
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   pdf.setTextColor(TEXT_DIM);
-  pdf.text('COMPROBANTE OFICIAL', W - M - 45, y - 4);
+  pdf.text('COMPROBANTE OFICIAL', W - M, y, { align: 'right' });
   
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(11);
   pdf.setTextColor(TEXT_MAIN);
-  pdf.text(recibo.numero || 'REC-XXXXXX', W - M - 45, y + 2);
+  pdf.text(recibo.numero || 'REC-XXXXXX', W - M, y + 6, { align: 'right' });
 
-  // Timbre de PAGADO en la parte superior derecha
-  pdf.setDrawColor(ACCENT);
-  pdf.setLineWidth(0.6);
-  pdf.setFillColor(isDark ? '#064e3b' : '#ecfdf5');
-  pdf.roundedRect(W - M - 40, M - 5, 40, 11, 1.5, 1.5, 'FD');
-
-  pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
-  pdf.setTextColor(ACCENT);
-  pdf.text('PAGADO', W - M - 20, M + 2.2, { align: 'center' });
-
-  y += 18;
+  y += 20;
 
   // Divider
   pdf.setDrawColor(BORDER);
@@ -192,25 +181,16 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   pdf.setTextColor(TEXT_MAIN);
   pdf.text(recibo.prestamistaName || prestamo?.nombre || '---', M, y);
 
-  // CI/NIT condicional: si no está definido en el préstamo, no se dibuja ni deja espacio
-  if (prestamo?.ci && prestamo.ci.trim() !== '') {
-    y += 5;
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8.5);
-    pdf.setTextColor(TEXT_MID);
-    pdf.text(`CI/NIT: ${prestamo.ci}`, M, y);
-  }
-  
-  if (prestamo?.telefono) {
-    y += 5;
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8.5);
-    pdf.setTextColor(TEXT_MID);
-    pdf.text(`Tel: ${prestamo.telefono}`, M, y);
-  }
+  y += 5;
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8.5);
+  pdf.setTextColor(TEXT_MID);
+  if (prestamo?.ci) pdf.text(`CI: ${prestamo.ci}`, M, y);
+  y += 4.5;
+  if (prestamo?.telefono) pdf.text(`Tel: ${prestamo.telefono}`, M, y);
 
   // Column 2: EMISIÓN & DETALLES
-  let yCol2 = y - (prestamo?.ci && prestamo.ci.trim() !== '' ? 15 : 10) - (prestamo?.telefono ? 5 : 0) + 5;
+  let yCol2 = y - 14.5;
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
   pdf.setTextColor(TEXT_DIM);
@@ -261,7 +241,7 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(8);
   pdf.setTextColor(TEXT_DIM);
-  pdf.text('CONCEPTO ACTUAL', M, y);
+  pdf.text('CONCEPTO', M, y);
   
   y += 5;
   pdf.setFont('helvetica', 'bold');
@@ -274,15 +254,8 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   // ── DESGLOSE TABLE ──
   const moneda = prestamo?.moneda || 'BOB';
   const rows = [];
-  
-  // Capital Invertido primero
-  if (prestamo?.capital) {
-    rows.push(['Capital Invertido (Base del Préstamo)', `${parseFloat(prestamo.capital).toLocaleString()} ${moneda}`]);
-  }
-
-  // Conceptos actuales
   if (parseFloat(recibo.montoInteres) > 0) {
-    rows.push(['Pago de Intereses (Cuota Actual)', `${parseFloat(recibo.montoInteres).toLocaleString()} ${moneda}`]);
+    rows.push(['Pago de Intereses', `${parseFloat(recibo.montoInteres).toLocaleString()} ${moneda}`]);
   }
   if (parseFloat(recibo.montoMora) > 0) {
     rows.push(['Cargos por Mora', `${parseFloat(recibo.montoMora).toLocaleString()} ${moneda}`]);
@@ -326,7 +299,7 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
     }
   });
 
-  y = (pdf.lastAutoTable && pdf.lastAutoTable.finalY) ? pdf.lastAutoTable.finalY + 10 : y + 25;
+  y = (pdf.lastAutoTable && pdf.lastAutoTable.finalY) ? pdf.lastAutoTable.finalY + 12 : y + 30;
 
   // Total Box
   pdf.setFillColor(PANEL);
@@ -342,48 +315,17 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   pdf.setTextColor(ACCENT);
   pdf.text(`${totalCalculado.toLocaleString()} ${moneda}`, W - M - 5, y + 11.5, { align: 'right' });
 
-  // ── HISTORIAL DE PAGOS A LA FECHA ──
-  if (prestamo) {
-    const contractCuotas = prestamo.tipo_pago === 'diario' ? generarCronogramaDiario(prestamo) : generarCronograma(prestamo);
-    const currentIdx = contractCuotas.findIndex(c => c.key === recibo.cuotaKey);
-    const targetCuotas = currentIdx !== -1 ? contractCuotas.slice(0, currentIdx + 1) : contractCuotas;
-    const paidCount = targetCuotas.filter(c => c.pagado || c.key === recibo.cuotaKey).length;
-    
-    y += 24;
-    pdf.setFillColor(PANEL);
-    pdf.setDrawColor(BORDER);
-    pdf.setLineWidth(0.2);
-    pdf.roundedRect(M, y, W - 2*M, 26, 2, 2, 'FD');
+  y += 32;
 
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(8.5);
-    pdf.setTextColor(TEXT_MAIN);
-    pdf.text('RESUMEN DE PAGOS Y ESTADO A LA FECHA', M + 5, y + 6);
-
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
-    pdf.setTextColor(TEXT_MID);
-    pdf.text(`Cuotas Canceladas: ${paidCount} de ${contractCuotas.length}`, M + 5, y + 13);
-    
-    const pagadosList = targetCuotas
-      .filter(c => c.pagado || c.key === recibo.cuotaKey)
-      .map(c => c.label.replace(' ', ''))
-      .join(', ');
-    pdf.text(`Historial de cuotas: ${pagadosList || 'Ninguna'}`, M + 5, y + 19);
-
-    // Saldo restante
-    let saldoRestante = 0;
-    if (prestamo.tipo_pago === 'diario') {
-      const last = targetCuotas[targetCuotas.length - 1];
-      saldoRestante = last ? last.capitalRestante : parseFloat(prestamo.capital);
-    } else {
-      saldoRestante = parseFloat(prestamo.capital) - (targetCuotas.filter(c => c.pagado || c.key === recibo.cuotaKey).reduce((s, c) => s + (c.capital || 0), 0));
-    }
-    pdf.text(`Saldo Capital Restante: ${saldoRestante.toLocaleString()} ${moneda}`, W - M - 5, y + 13, { align: 'right' });
-    y += 10;
+  // Watermark "PAGADO"
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(40);
+  if (isDark) {
+    pdf.setTextColor(16, 45, 30);
+  } else {
+    pdf.setTextColor(220, 245, 230);
   }
-
-  y += 24;
+  pdf.text('PAGADO', W / 2, y - 8, { align: 'center', angle: 12 });
 
   // Signature lines
   const sigW = 50;
@@ -399,16 +341,13 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   pdf.text('FIRMA CLIENTE', M + sigW / 2, y + 5, { align: 'center' });
   pdf.text('FIRMA ACREEDOR', W - M - sigW / 2, y + 5, { align: 'center' });
 
-  // Address and note
+  // Small note
   y += 15;
   pdf.setFont('helvetica', 'italic');
   pdf.setFontSize(7.5);
   pdf.setTextColor(TEXT_DIM);
   pdf.text('Este recibo constituye una constancia legal de pago del monto y conceptos indicados.', W / 2, y, { align: 'center' });
-  
-  y += 4.5;
-  pdf.setFont('helvetica', 'normal');
-  pdf.text('5to anillo y Radial 13, B/Alto Olivo, calle carrasco, N12', W / 2, y, { align: 'center' });
+
   return pdf;
 };
 
@@ -2242,6 +2181,29 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                     <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
                       {getNextMonthDateFormatted(activePrestamo.inicio)}
                     </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : prestamoView === 'recibos' ? (
+          <div className="animate-in slide-in-from-right-8 duration-500 max-w-6xl mx-auto">
+            {/* Header / Volver */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', cursor: 'pointer' }}
+              onClick={() => {
+                if (activePrestamo) {
+                  setPrestamoView('detail');
+                } else if (selectedPrestamistaName) {
+                  setPrestamoView('contratos');
+                } else {
+                  setPrestamoView('list');
+                }
+              }}>
+              <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <ArrowLeft size={14} /> Volver
+              </span>
+            </div>
+
             <header style={{ marginBottom: '24px' }}>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
                 Emisión de Recibo de Pago
@@ -2977,29 +2939,6 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                 </div>
               </div>
             )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : prestamoView === 'recibos' ? (
-          <div className="animate-in slide-in-from-right-8 duration-500 max-w-6xl mx-auto">
-            {/* Header / Volver */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', cursor: 'pointer' }}
-              onClick={() => {
-                if (activePrestamo) {
-                  setPrestamoView('detail');
-                } else if (selectedPrestamistaName) {
-                  setPrestamoView('contratos');
-                } else {
-                  setPrestamoView('list');
-                }
-              }}>
-              <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ArrowLeft size={14} /> Volver
-              </span>
-            </div>
-            {/* Logic removed to prevent double rendering as per previous structure */}
           </div>
         ) : null}
       </div>
