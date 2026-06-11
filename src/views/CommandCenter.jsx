@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Wallet, Package, BarChart3, CalendarDays, RefreshCw,
   Bell, CheckSquare, Video, Cloud, ShieldCheck, FileText,
@@ -154,6 +154,38 @@ const MODULE_WIDGETS = [
 // Mapa de íconos para los diálogos de categoría
 const DIALOG_ICONS = {
   CheckCircle, Clock, AlertTriangle, XCircle,
+};
+
+// ─── COUNT-UP ANIMATED NUMBER ─────────────────────────────────────────────────
+const CountUp = ({ value = 0, decimals = 0, suffix = '', style = {}, duration = 900 }) => {
+  const [display, setDisplay] = useState(0);
+  const prevValue = useRef(0);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const start = prevValue.current;
+    const end = Number(value) || 0;
+    prevValue.current = end;
+    if (start === end) { setDisplay(end); return; }
+    const startTime = performance.now();
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // Ease out quint
+      const eased = 1 - Math.pow(1 - progress, 5);
+      const current = start + (end - start) * eased;
+      setDisplay(current);
+      if (progress < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value, duration]);
+
+  const fmt = display.toLocaleString('es', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+  return <span style={style}>{fmt}{suffix}</span>;
 };
 
 // ============================================================
@@ -523,7 +555,7 @@ const CommandCenter = ({
 
   // ─── Render ─────────────────────────────────────────────────
   return (
-    <div className="animate-in fade-in duration-500 w-full pb-24">
+    <div className="animate-fadeIn w-full pb-24">
       
       {/* ─── TOAST ─────────────────────────────────────────── */}
       {toastMsg && (
@@ -548,10 +580,10 @@ const CommandCenter = ({
         flexWrap: 'wrap', gap: '12px',
       }}>
         <div>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: t.text, letterSpacing: '-0.03em', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
             Centro de Control
           </h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>
+          <p style={{ fontSize: 10, color: t.textDim, marginTop: 3, fontWeight: 500, letterSpacing: '0.02em' }}>
             Panel de monitoreo y control unificado
           </p>
         </div>
@@ -605,110 +637,95 @@ const CommandCenter = ({
       {/* ══════════════════════════════════════════════════════
           FILA 1: KPIs PRINCIPALES (4 tarjetas)
           ══════════════════════════════════════════════════════ */}
-      <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'}`} style={{ marginBottom: '20px' }}>
+      <section className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'}`} style={{ marginBottom: '20px' }}>
         
         {/* KPI 1: Capital / Ingresos */}
-        <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.accent}15` }}>
-              <Wallet size={16} color={t.accent} />
+        <div className="animate-countUp stagger-1" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.accent}12` }}>
+              <Wallet size={15} color={t.accent} />
             </div>
-            <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 10px', borderRadius: '10px', backgroundColor: `${t.accent}15`, color: t.accent }}>
+            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: `${t.accent}10`, color: t.accent }}>
               Capital
             </span>
           </div>
-          <p style={{ fontSize: '9px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Activos en Calle</p>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', marginTop: '2px', margin: 0 }}>
-            {totalCapital.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: t.textDim }}>BS</span>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Activos en Calle</p>
+          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
+            <CountUp value={totalCapital} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
           </h3>
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', color: t.textDim, margin: 0 }}>Rend./Mes</p>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: t.success, margin: 0 }}>+{totalInteresMensual.toLocaleString()} BS</p>
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Rend./Mes</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: t.success, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>+<CountUp value={totalInteresMensual} /> BS</p>
           </div>
         </div>
 
         {/* KPI 2: Inventario */}
-        <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${stockBajo.length > 0 ? '#ef4444' : t.accent}15` }}>
-              <Package size={16} color={stockBajo.length > 0 ? '#ef4444' : t.accent} />
+        <div className="animate-countUp stagger-2" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${stockBajo.length > 0 ? '#ef4444' : t.accent}12` }}>
+              <Package size={15} color={stockBajo.length > 0 ? '#ef4444' : t.accent} />
             </div>
-            <span style={{
-              fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
-              padding: '4px 10px', borderRadius: '10px',
-              backgroundColor: stockBajo.length > 0 ? 'rgba(239, 68, 68, 0.10)' : `${t.accent}15`,
-              color: stockBajo.length > 0 ? '#ef4444' : t.accent,
-            }}>
+            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: stockBajo.length > 0 ? 'rgba(239,68,68,0.1)' : `${t.accent}10`, color: stockBajo.length > 0 ? '#ef4444' : t.accent }}>
               {stockBajo.length > 0 ? `${stockBajo.length} Stock Bajo` : 'Inventario'}
             </span>
           </div>
-          <p style={{ fontSize: '9px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Valor Almacén</p>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', marginTop: '2px', margin: 0 }}>
-            {valorInventario.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: t.textDim }}>BS</span>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Valor Almacén</p>
+          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
+            <CountUp value={valorInventario} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
           </h3>
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', color: t.textDim, margin: 0 }}>Artículos</p>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>{listaProductos.length} items</p>
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Artículos</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: t.text, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}><CountUp value={listaProductos.length} /> items</p>
           </div>
         </div>
 
         {/* KPI 3: Balance Mensual */}
-        <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${balanceMensual >= 0 ? '#22c55e' : '#ef4444'}15` }}>
-              <BarChart3 size={16} color={balanceMensual >= 0 ? '#22c55e' : '#ef4444'} />
+        <div className="animate-countUp stagger-3" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${balanceMensual >= 0 ? '#22c55e' : '#ef4444'}12` }}>
+              <BarChart3 size={15} color={balanceMensual >= 0 ? '#22c55e' : '#ef4444'} />
             </div>
-            <span style={{
-              fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
-              padding: '4px 10px', borderRadius: '10px',
-              backgroundColor: balanceMensual >= 0 ? 'rgba(34, 197, 94, 0.10)' : 'rgba(239, 68, 68, 0.10)',
-              color: balanceMensual >= 0 ? '#22c55e' : '#ef4444',
-            }}>
+            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: balanceMensual >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: balanceMensual >= 0 ? '#22c55e' : '#ef4444' }}>
               Balance
             </span>
           </div>
-          <p style={{ fontSize: '9px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Este Mes</p>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', marginTop: '2px', margin: 0 }}>
-            {balanceMensual >= 0 ? '+' : ''}{balanceMensual.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: t.textDim }}>BS</span>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Este Mes</p>
+          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
+            {balanceMensual >= 0 ? '+' : '-'}<CountUp value={Math.abs(balanceMensual)} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
           </h3>
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', color: t.textDim, margin: 0 }}>Ingresos</p>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: t.success, margin: 0 }}>+{ingresosMes.toLocaleString()} BS</p>
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Ingresos</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: t.success, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>+<CountUp value={ingresosMes} /> BS</p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px' }}>
-            <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', color: t.textDim, margin: 0 }}>Egresos</p>
-            <p style={{ fontSize: '11px', fontWeight: 600, color: t.danger, margin: 0 }}>-{egresosMes.toLocaleString()} BS</p>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Egresos</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: t.danger, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>-<CountUp value={egresosMes} /> BS</p>
           </div>
         </div>
 
         {/* KPI 4: Cobros Pendientes */}
-        <div style={{ padding: '20px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent}15` }}>
-              <CalendarDays size={16} color={categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent} />
+        <div className="animate-countUp stagger-4" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent}12` }}>
+              <CalendarDays size={15} color={categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent} />
             </div>
-            <span style={{
-              fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
-              padding: '4px 10px', borderRadius: '10px',
-              backgroundColor: categorias.totales.totalPorCobrar > 0 ? 'rgba(234, 179, 8, 0.10)' : `${t.accent}15`,
-              color: categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent,
-            }}>
+            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: categorias.totales.totalPorCobrar > 0 ? 'rgba(234,179,8,0.1)' : `${t.accent}10`, color: categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent }}>
               {categorias.totales.totalPorCobrar > 0 ? `${categorias.totales.totalPorCobrar} Pendientes` : 'Al Día'}
             </span>
           </div>
-          <p style={{ fontSize: '9px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>Por Cobrar</p>
-          <h3 style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', marginTop: '2px', margin: 0 }}>
-            {categorias.totales.totalPendiente.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 500, color: t.textDim }}>BS</span>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Por Cobrar</p>
+          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
+            <CountUp value={categorias.totales.totalPendiente} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
           </h3>
-          <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: `1px solid ${t.border}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-              <span style={{ fontSize: '8px', color: t.textDim }}>Al Día</span>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: '#22c55e' }}>{categorias.totales.alDia}</span>
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Al Día</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', fontFamily: "'JetBrains Mono', monospace" }}><CountUp value={categorias.totales.alDia} /></span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '8px', color: t.textDim }}>Críticos</span>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: categorias.totales.deudorCritico > 0 ? '#ef4444' : t.textDim }}>
-                {categorias.totales.deudorCritico}
+              <span style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Críticos</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: categorias.totales.deudorCritico > 0 ? '#ef4444' : t.textDim, fontFamily: "'JetBrains Mono', monospace" }}>
+                <CountUp value={categorias.totales.deudorCritico} />
               </span>
             </div>
           </div>
@@ -762,7 +779,7 @@ const CommandCenter = ({
                 <CalendarDays size={20} />
               </div>
               <div>
-                <h3 style={{ fontSize: '14px', fontWeight: 700, color: t.text, margin: 0 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
                   Cobros — {periodosDisponibles.find(p => p.key === periodoMes)?.label || periodoMes}
                 </h3>
                 <p style={{
@@ -851,7 +868,7 @@ const CommandCenter = ({
                               {p.nombre?.charAt(0) || '?'}
                             </div>
                             <div>
-                              <p style={{ fontSize: '12px', fontWeight: 600, color: t.text, margin: 0 }}>
+                              <p style={{ fontSize: 12, fontWeight: 700, color: t.text, margin: 0, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
                                 {p.nombre || 'Sin nombre'}
                               </p>
                               <p style={{ fontSize: '9px', color: t.textDim, margin: '2px 0 0' }}>
@@ -896,7 +913,7 @@ const CommandCenter = ({
                           </p>
                         </td>
                         <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                          <p style={{ fontSize: '11px', fontWeight: 600, color: '#22c55e', margin: 0, fontFamily: 'monospace' }}>
+                          <p style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>
                             +{(parseFloat(p.capital) * (parseFloat(p.interes) / 100) || 0).toLocaleString()}
                           </p>
                         </td>
@@ -943,7 +960,7 @@ const CommandCenter = ({
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
               <Bell size={16} color={t.warning} />
-              <h3 style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0 }}>
+              <h3 style={{ fontSize: 12, fontWeight: 700, color: t.text, margin: 0, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
                 Notificaciones
               </h3>
               <span style={{
