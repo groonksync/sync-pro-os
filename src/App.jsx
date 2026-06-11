@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Sidebar from './components/Sidebar';
 import CommandCenter from './views/CommandCenter';
 import EditorVideo from './views/EditorVideo';
+import ProjectEngineView from './views/ProjectEngineView';
 import Prestamos from './views/Prestamos';
 import Notifications from './views/Notifications';
 import MisEgresos from './views/MisEgresos';
@@ -297,6 +298,7 @@ const AppContent = () => {
           />
         );
         case 'editor': return <EditorVideo meetingsList={meetingsList} setMeetingsList={setMeetingsList} settings={appSettings} isDark={isDarkMode} token={googleToken} />;
+        case 'proyectos-edicion': return <ProjectEngineView isDark={isDarkMode} />;
         case 'prestamos': return (
           <Prestamos 
             data={data} 
