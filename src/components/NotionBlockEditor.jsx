@@ -562,9 +562,23 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
 
   return (
     <div 
-      className="w-full flex-1 flex flex-col p-6 min-h-[500px] select-text relative select-none"
+      className="w-full flex-1 flex flex-col p-6 min-h-[500px] select-text relative select-none notion-block-editor-canvas"
       onKeyDown={handleSlashMenuKeyDown}
     >
+      <style>{`
+        .notion-block-editor-canvas input[type="text"] {
+          background-color: transparent !important;
+          border: none !important;
+          border-radius: 0 !important;
+          padding: 4px 0 !important;
+          box-shadow: none !important;
+          outline: none !important;
+        }
+        .notion-block-editor-canvas input[type="text"]:focus {
+          border: none !important;
+          box-shadow: none !important;
+        }
+      `}</style>
       <div className="w-full max-w-[900px] mx-auto flex flex-col gap-2 pb-24">
         {blocks.map((block, index) => {
           const isAIActive = aiActiveBlockIndex === index;
