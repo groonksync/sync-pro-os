@@ -19,6 +19,7 @@ import GoogleTasks from '../components/GoogleTasks';
 import { aiService } from '../services/aiService';
 import { getTheme, useTheme } from '../lib/theme';
 import NotionBlockEditor from '../components/NotionBlockEditor';
+import FacturasArx from './FacturasArx';
 
 
 const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark = true, token }) => {
@@ -384,27 +385,23 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
       style={{ backgroundColor: t.bg, color: t.text }}>
       
       {/* HEADER NAV - only shown on main hub views, not inside sessions/profiles */}
-      {['dashboard', 'client-list', 'agency-hub'].includes(viewState) && (
+      {['dashboard', 'client-list', 'agency-hub', 'facturas'].includes(viewState) && (
         <nav className="h-14 flex items-center px-6 relative z-50 gap-1"
           style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
-            <button onClick={() => setViewState('dashboard')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-              style={{
-                backgroundColor: viewState === 'dashboard' ? t.panel : 'transparent',
-                border: viewState === 'dashboard' ? `1px solid ${t.border}` : '1px solid transparent',
-                color: viewState === 'dashboard' ? t.accent : t.textDim,
-              }}>Dashboard</button>
-            <button onClick={() => setViewState('client-list')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-              style={{
-                backgroundColor: viewState === 'client-list' ? t.panel : 'transparent',
-                border: viewState === 'client-list' ? `1px solid ${t.border}` : '1px solid transparent',
-                color: viewState === 'client-list' ? t.accent : t.textDim,
-              }}>Clientes</button>
-            <button onClick={() => setViewState('agency-hub')} className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-              style={{
-                backgroundColor: viewState === 'agency-hub' ? t.panel : 'transparent',
-                border: viewState === 'agency-hub' ? `1px solid ${t.border}` : '1px solid transparent',
-                color: viewState === 'agency-hub' ? t.accent : t.textDim,
-              }}>Agencia Pro</button>
+            {[
+              { id: 'dashboard', label: 'Dashboard' },
+              { id: 'client-list', label: 'Clientes' },
+              { id: 'agency-hub', label: 'Agencia Pro' },
+              { id: 'facturas', label: 'Facturas' },
+            ].map(tab => (
+              <button key={tab.id} onClick={() => setViewState(tab.id)}
+                className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                style={{
+                  backgroundColor: viewState === tab.id ? t.panel : 'transparent',
+                  border: viewState === tab.id ? `1px solid ${t.border}` : '1px solid transparent',
+                  color: viewState === tab.id ? t.accent : t.textDim,
+                }}>{tab.label}</button>
+            ))}
         </nav>
       )}
 
@@ -916,6 +913,13 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
               </div>
             </div>
           </div>
+       )}
+
+       {/* FACTURAS ARX */}
+       {viewState === 'facturas' && (
+         <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+           <FacturasArx token={token} isDark={isDark} clients={clients} />
+         </div>
        )}
 
     </div>

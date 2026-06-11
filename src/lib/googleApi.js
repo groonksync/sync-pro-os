@@ -155,3 +155,87 @@ export const createGoogleTask = async (token, title, notes = '') => {
   });
   return response.data;
 };
+
+// ─── AGENCIA ARX — INVOICE DRIVE HELPERS ─────────────────────────────────────
+
+const ARX_FOLDER_NAME = 'Agencia Arx';
+const ARX_INVOICES_SUBFOLDER = 'Facturas';
+
+// Finds or creates a folder by name inside a parent
+const findOrCreateFolder = async (token, name, parentId = 'root') => {
+  const searchRes = await axios.get(`${DRIVE_API_URL}/files`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: {
+      q: `name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`,
+      fields: 'files(id, name)',
+    },
+  });
+  if (searchRes.data.files.length > 0) return searchRes.data.files[0].id;
+  const createRes = await axios.post(`${DRIVE_API_URL}/files`, {
+    name,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: [parentId],
+  }, { headers: { Authorization: `Bearer ${token}` } });
+  return createRes.data.id;
+};
+
+// Returns the ID of the Facturas folder (creates if needed)
+export const getArxInvoicesFolder = async (token) => {
+  const arxFolderId = await findOrCreateFolder(token, ARX_FOLDER_NAME, 'root');
+  return await findOrCreateFolder(token, ARX_INVOICES_SUBFOLDER, arxFolderId);
+};
+
+// Saves an invoice object as JSON to Drive; returns the created file metadata
+export const saveInvoiceToDrive = async (token, invoice) => {
+  const folderId = await getArxInvoicesFolder(token);
+  const fileName = `${invoice.numero}.json`;
+  const content = JSON.stringify(invoice, null, 2);
+  const blob = new Blob([content], { type: 'application/json' });
+  const metadata = { name: fileName, parents: [folderId], mimeType: 'application/json' };
+  const formData = new FormData();
+  formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+  formData.append('file', blob);
+  const res = await axios.post(
+    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+    formData,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  return res.data;
+};
+
+// Loads all invoices from the Facturas folder
+export const loadInvoicesFromDrive = async (token) => {
+  const folderId = await getArxInvoicesFolder(token);
+  const res = await axios.get(`${DRIVE_API_URL}/files`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: {
+      q: `'${folderId}' in parents and mimeType='application/json' and trashed=false`,
+      fields: 'files(id, name, modifiedTime)',
+      orderBy: 'modifiedTime desc',
+    },
+  });
+  const files = res.data.files || [];
+  const invoices = await Promise.all(files.map(async (f) => {
+    try {
+      const content = await axios.get(`${DRIVE_API_URL}/files/${f.id}?alt=media`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { ...content.data, _driveFileId: f.id };
+    } catch { return null; }
+  }));
+  return invoices.filter(Boolean);
+};
+
+// Deletes an invoice from Drive by Drive file ID
+export const deleteInvoiceFromDrive = async (token, driveFileId) => {
+  await axios.delete(`${DRIVE_API_URL}/files/${driveFileId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
+
+// Updates an existing invoice in Drive (delete + re-upload)
+export const updateInvoiceInDrive = async (token, driveFileId, invoice) => {
+  await deleteInvoiceFromDrive(token, driveFileId);
+  return await saveInvoiceToDrive(token, invoice);
+};
+
