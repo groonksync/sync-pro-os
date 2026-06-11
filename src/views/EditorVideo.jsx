@@ -941,21 +941,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
             <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-              <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.panel }}>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H1</button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H2</button>
-                <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Bold size={12}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Italic size={12}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-1.5 py-0.5 text-xs font-black" style={{ color: t.textDim, textDecoration: 'underline' }}>U</button>
-                <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><List size={12}/></button>
-                <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Table2 size={12}/></button>
-              </div>
-              <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true}
-                className="flex-1 p-5 text-sm leading-relaxed outline-none mac-scrollbar overflow-y-auto"
-                style={{ color: t.text }}
-                dangerouslySetInnerHTML={{ __html: activeMeeting.contenido }} />
+              {/* Contenedor vacío según requerimiento */}
             </div>
             <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
               <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
