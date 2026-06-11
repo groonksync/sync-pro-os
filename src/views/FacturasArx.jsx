@@ -97,11 +97,11 @@ const generatePDF = (invoice, darkMode = false) => {
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   pdf.setTextColor(TEXT_DIM);
-  pdf.text('FACTURA', W - M, y - 4, { align: 'right' });
+  pdf.text('FACTURA', W - M, y, { align: 'right' });
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(11);
   pdf.setTextColor(TEXT_MAIN);
-  pdf.text(invoice.numero, W - M, y + 2, { align: 'right' });
+  pdf.text(invoice.numero, W - M, y + 5, { align: 'right' });
 
   y += 6;
   pdf.setFont('helvetica', 'normal');
@@ -109,17 +109,17 @@ const generatePDF = (invoice, darkMode = false) => {
   pdf.setTextColor(TEXT_MID);
   pdf.text('Agencia de Contenido Digital', M, y);
 
-  // Estado badge
+  // Estado badge (positioned below the invoice number)
   const eColor = invoice.estado === 'pagado' ? '#10b981' : invoice.estado === 'cancelado' ? '#ef4444' : '#f59e0b';
   pdf.setFillColor(eColor);
-  const badgeW = 28, badgeH = 7;
-  pdf.roundedRect(W - M - badgeW, y - 6, badgeW, badgeH, 2, 2, 'F');
+  const badgeW = 24, badgeH = 5;
+  pdf.roundedRect(W - M - badgeW, y + 1, badgeW, badgeH, 1.5, 1.5, 'F');
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(7);
+  pdf.setFontSize(6.5);
   pdf.setTextColor('#ffffff');
-  pdf.text(invoice.estado.toUpperCase(), W - M - badgeW / 2, y - 1, { align: 'center' });
+  pdf.text(invoice.estado.toUpperCase(), W - M - badgeW / 2, y + 4.5, { align: 'center' });
 
-  y += 10;
+  y += 12;
 
   // Divider
   pdf.setDrawColor(RULE);

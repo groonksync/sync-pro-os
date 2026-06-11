@@ -1091,42 +1091,45 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
       {/* ── VISTA EXTRA: INGRESOS & GANANCIAS ───────────────────────────────────── */}
       {activeTab === 'ganancias' && (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+        <div className="space-y-6 max-w-[1400px] mx-auto w-full px-6 animate-in fade-in duration-500">
           
           {/* Fila superior: KPIs de Ganancias */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* KPI 1: Ingresos Totales Periodo */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
+            <div className="p-5 rounded-2xl border flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.01]" 
+              style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Ingresos Totales (Período)</span>
                 <TrendingUp size={14} className="text-emerald-400" />
               </div>
               <div>
-                <p className="text-2xl font-light text-emerald-400 tracking-tight">{formatCurrency(totalIngresosMes)}</p>
+                <p className="text-2xl font-light text-emerald-400 tracking-tight font-mono">{formatCurrency(totalIngresosMes)}</p>
                 <p className="text-[9px] text-neutral-500 mt-1 font-bold">Intereses + Ventas + Freelance</p>
               </div>
             </div>
 
             {/* KPI 2: Egresos Totales Periodo */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
+            <div className="p-5 rounded-2xl border flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.01]" 
+              style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Egresos Totales (Período)</span>
                 <TrendingDown size={14} className="text-rose-400" />
               </div>
               <div>
-                <p className="text-2xl font-light text-rose-400 tracking-tight">{formatCurrency(totalEgresosMes)}</p>
+                <p className="text-2xl font-light text-rose-400 tracking-tight font-mono">{formatCurrency(totalEgresosMes)}</p>
                 <p className="text-[9px] text-neutral-500 mt-1 font-bold">Gastos + Suscripciones</p>
               </div>
             </div>
 
             {/* KPI 3: Margen Neto Consolidado */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
+            <div className="p-5 rounded-2xl border flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.01]" 
+              style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Balance Neto Consolidado</span>
                 {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
               </div>
               <div>
-                <p className={`text-2xl font-semibold tracking-tight ${gananciaNetaMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                <p className={`text-2xl font-semibold tracking-tight font-mono ${gananciaNetaMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {gananciaNetaMes >= 0 ? '+' : ''}{formatCurrency(gananciaNetaMes)}
                 </p>
                 <p className="text-[9px] text-neutral-500 mt-1 font-bold">{gananciaNetaMes >= 0 ? 'Superávit Financiero' : 'Déficit en el Periodo'}</p>
@@ -1134,15 +1137,15 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* KPI 4: Registrar Ganancia Manual */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02] cursor-pointer" 
-                 style={{ backgroundColor: t.panel }} onClick={() => setShowIncomeForm(true)}>
+            <div className="p-5 rounded-2xl border flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.01] cursor-pointer" 
+              style={{ backgroundColor: t.panel, borderColor: t.border }} onClick={() => setShowIncomeForm(true)}>
               <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
                 <span>Acción Rápida</span>
                 <Plus size={14} className="text-neutral-400" />
               </div>
               <div>
                 <button className="w-full py-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-white text-[9px] font-black uppercase tracking-widest transition-all">
-                  + Registrar Ingreso Manual
+                  + Registrar Ingreso
                 </button>
                 <p className="text-[9px] text-neutral-500 mt-2 font-bold text-center">Añadir trabajo freelance, ventas, etc.</p>
               </div>
@@ -1153,106 +1156,104 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
             {/* Columna Izquierda Panel 1: Préstamos (Intereses Cobrados) */}
-            <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.bg }}>
+            <div className="p-6 rounded-3xl border flex flex-col gap-4" style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Préstamos (Intereses Cobrados)</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Préstamos (Intereses Cobrados)</h3>
                 <p className="text-[10px] text-neutral-400">Rendimiento e intereses cobrados en el mes seleccionado</p>
               </div>
 
-              <div className="flex flex-col gap-3 min-h-[200px]">
+              <div className="flex flex-col gap-3 min-h-[220px]">
                 {prestamosAcreditadosMes.length > 0 ? (
                   prestamosAcreditadosMes.map(p => {
                     const interes = (parseFloat(p.capital) || 0) * ((parseFloat(p.interes) || 0) / 100);
                     return (
-                      <div key={p.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
+                      <div key={p.id} className="p-3.5 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
                         <div>
-                          <p className="font-bold text-white">{p.nombre}</p>
-                          <p className="text-[9px] text-neutral-500 mt-0.5">Capital: {parseFloat(p.capital).toLocaleString()} BOB | Tasa: {p.interes}%</p>
+                          <p className="font-bold text-white uppercase">{p.nombre}</p>
+                          <p className="text-[8px] text-neutral-500 font-mono mt-0.5">Capital: {parseFloat(p.capital).toLocaleString()} BOB • Tasa: {p.interes}%</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-black text-emerald-400">+{formatCurrency(interes)}</p>
-                          <p className="text-[8px] text-neutral-500 uppercase font-black">Interés Cobrado</p>
+                          <p className="font-black text-emerald-400 font-mono">+{formatCurrency(interes)}</p>
+                          <p className="text-[7.5px] text-neutral-500 uppercase font-black">Interés Cobrado</p>
                         </div>
                       </div>
                     );
                   })
                 ) : (
                   <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
-                    <p className="text-[10px] uppercase font-black tracking-wider mb-1">Sin Intereses Cobrados</p>
-                    <p className="text-[9px]">Registra los pagos mensuales en la pestaña de Préstamos para verlos aquí.</p>
+                    <p className="text-[9px] uppercase font-black tracking-widest mb-1">Sin Intereses Cobrados</p>
+                    <p className="text-[8.5px]">Registra los cobros en Préstamos para verlos aquí.</p>
                   </div>
                 )}
               </div>
-              <div className="bg-black/20 p-3 rounded-xl border border-white/5 text-[10px] font-bold flex justify-between uppercase text-neutral-400">
+              <div className="bg-black/20 p-3.5 rounded-xl border border-white/5 text-[9px] font-black flex justify-between uppercase text-neutral-400">
                 <span>Total Intereses Recibidos:</span>
-                <span className="text-emerald-400">{formatCurrency(prestamosInteresMes)}</span>
+                <span className="text-emerald-400 font-mono">{formatCurrency(prestamosInteresMes)}</span>
               </div>
             </div>
 
             {/* Columna Derecha Panel 2: Ventas del Catálogo */}
-            <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.bg }}>
+            <div className="p-6 rounded-3xl border flex flex-col gap-4" style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Ventas del Catálogo (WhatsApp)</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Ventas del Catálogo (WhatsApp)</h3>
                 <p className="text-[10px] text-neutral-400">Ventas procesadas y aprobadas en este periodo</p>
               </div>
 
-              <div className="flex flex-col gap-3 min-h-[200px]">
+              <div className="flex flex-col gap-3 min-h-[220px]">
                 {ventasCatalogoMes.length > 0 ? (
                   ventasCatalogoMes.map(v => {
                     const cost = parseFloat(v.metadata?.cart?.reduce((sum, item) => sum + (parseFloat(item.precio_costo || 0) * (parseInt(item.quantity) || 1)), 0) || v.metadata?.precio_costo || 0);
                     const profit = (parseFloat(v.monto) || 0) - cost;
                     return (
-                      <div key={v.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 text-xs">
+                      <div key={v.id} className="p-3.5 rounded-xl border border-white/5 bg-zinc-950/20 text-xs">
                         <div className="flex justify-between items-start mb-2">
                           <div>
-                            <p className="font-bold text-white">{v.producto}</p>
-                            <p className="text-[9px] text-neutral-500 mt-0.5">Fecha: {v.fecha} | Plataforma: {v.plataforma}</p>
+                            <p className="font-bold text-white uppercase">{v.producto}</p>
+                            <p className="text-[8px] text-neutral-500 font-mono mt-0.5">Fecha: {v.fecha} • Plataforma: {v.plataforma}</p>
                           </div>
-                          <div className="text-right">
-                            <span className="text-[8px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-black uppercase">Aprobada</span>
-                          </div>
+                          <span className="text-[7.5px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-black uppercase border border-emerald-500/20">Aprobada</span>
                         </div>
-                        <div className="flex justify-between items-center text-[10px] bg-black/20 p-2 rounded-lg border border-white/5">
+                        <div className="flex justify-between items-center text-[9px] bg-black/20 p-2.5 rounded-lg border border-white/5 font-mono">
                           <span className="text-neutral-400">Venta: {formatCurrency(v.monto)}</span>
                           <span className="text-neutral-500">|</span>
                           <span className="text-neutral-400">Costo: {formatCurrency(cost)}</span>
                           <span className="text-neutral-500">|</span>
-                          <span className="font-bold text-emerald-400">Utilidad: {formatCurrency(profit)}</span>
+                          <span className="font-bold text-emerald-400">Neto: {formatCurrency(profit)}</span>
                         </div>
                       </div>
                     );
                   })
                 ) : (
                   <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
-                    <p className="text-[10px] uppercase font-black tracking-wider mb-1">Sin Ventas de Catálogo</p>
-                    <p className="text-[9px]">Las ventas aprobadas del catálogo de WhatsApp se listarán aquí.</p>
+                    <p className="text-[9px] uppercase font-black tracking-widest mb-1">Sin Ventas de Catálogo</p>
+                    <p className="text-[8.5px]">Las ventas del catálogo de WhatsApp aparecerán aquí.</p>
                   </div>
                 )}
               </div>
-              <div className="bg-black/20 p-3 rounded-xl border border-white/5 text-[10px] font-bold flex justify-between uppercase text-neutral-400">
+              <div className="bg-black/20 p-3.5 rounded-xl border border-white/5 text-[9px] font-black flex justify-between uppercase text-neutral-400">
                 <span>Utilidad Total de Ventas:</span>
-                <span className="text-emerald-400">{formatCurrency(utilidadVentasCatalogoMes)}</span>
+                <span className="text-emerald-400 font-mono">{formatCurrency(utilidadVentasCatalogoMes)}</span>
               </div>
             </div>
 
             {/* Fila 2 - Panel 3: Trabajos de Edición de Video / Freelance */}
-            <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.bg }}>
+            <div className="p-6 rounded-3xl border flex flex-col gap-4" style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Trabajos de Edición & Freelance</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Edición & Freelance</h3>
                 <p className="text-[10px] text-neutral-400">Ingresos directos por sesiones de edición de video</p>
               </div>
 
-              <div className="flex flex-col gap-3 min-h-[200px]">
+              <div className="flex flex-col gap-3 min-h-[220px]">
                 {ventasVideoMes.length > 0 ? (
                   ventasVideoMes.map(v => (
-                    <div key={v.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
+                    <div key={v.id} className="p-3.5 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
                       <div>
-                        <p className="font-bold text-white">{v.producto}</p>
-                        <p className="text-[9px] text-neutral-500 mt-0.5">Fecha: {v.fecha} | Notas: {v.notas || 'Sin notas'}</p>
+                        <p className="font-bold text-white uppercase">{v.producto}</p>
+                        <p className="text-[8px] text-neutral-500 font-mono mt-0.5">Fecha: {v.fecha} • {v.notas || 'Sin notas'}</p>
                       </div>
                       <div className="text-right flex items-center gap-3">
-                        <span className="font-black text-emerald-400">+{formatCurrency(v.monto)}</span>
-                        <button onClick={() => handleDeleteIncome(v.id)} className="text-rose-500 hover:text-rose-400 p-1" title="Eliminar">
+                        <span className="font-black text-emerald-400 font-mono">+{formatCurrency(v.monto)}</span>
+                        <button onClick={() => handleDeleteIncome(v.id)} className="text-rose-500 hover:text-rose-400 p-1 transition-colors" title="Eliminar">
                           <Trash2 size={12} />
                         </button>
                       </div>
@@ -1260,39 +1261,39 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   ))
                 ) : (
                   <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
-                    <p className="text-[10px] uppercase font-black tracking-wider mb-1">Sin Trabajos de Edición</p>
-                    <p className="text-[9px]">Registra precios en el Editor de Video o agrégalos de forma manual.</p>
+                    <p className="text-[9px] uppercase font-black tracking-widest mb-1">Sin Trabajos de Edición</p>
+                    <p className="text-[8.5px]">Los precios registrados del Editor de Video se listarán aquí.</p>
                   </div>
                 )}
               </div>
-              <div className="bg-black/20 p-3 rounded-xl border border-white/5 text-[10px] font-bold flex justify-between uppercase text-neutral-400">
+              <div className="bg-black/20 p-3.5 rounded-xl border border-white/5 text-[9px] font-black flex justify-between uppercase text-neutral-400">
                 <span>Total Edición & Freelance:</span>
-                <span className="text-emerald-400">{formatCurrency(totalVideoMes)}</span>
+                <span className="text-emerald-400 font-mono">{formatCurrency(totalVideoMes)}</span>
               </div>
             </div>
 
             {/* Fila 2 - Panel 4: Otras Ganancias Manuales */}
-            <div className="p-6 rounded-3xl border border-white/5 flex flex-col gap-4" style={{ backgroundColor: t.bg }}>
+            <div className="p-6 rounded-3xl border flex flex-col gap-4" style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Otras Ganancias / Registros Manuales</h3>
-                <p className="text-[10px] text-neutral-400">Otros ingresos registrados de forma directa</p>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Otros Ingresos Manuales</h3>
+                <p className="text-[10px] text-neutral-400">Otros ingresos registrados directamente</p>
               </div>
 
-              <div className="flex flex-col gap-3 min-h-[200px]">
+              <div className="flex flex-col gap-3 min-h-[220px]">
                 {ventasOtrasMes.length > 0 ? (
                   ventasOtrasMes.map(v => {
                     const cost = parseFloat(v.metadata?.precio_costo || 0);
                     const netIncome = (parseFloat(v.monto) || 0) - cost;
                     return (
-                      <div key={v.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
+                      <div key={v.id} className="p-3.5 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
                         <div>
-                          <p className="font-bold text-white">{v.producto}</p>
-                          <p className="text-[9px] text-neutral-500 mt-0.5">Fecha: {v.fecha} | Categoría: {v.categoria} | Plataforma: {v.plataforma}</p>
-                          {cost > 0 && <p className="text-[8px] text-neutral-500 mt-0.5">Monto: {formatCurrency(v.monto)} | Costo: {formatCurrency(cost)}</p>}
+                          <p className="font-bold text-white uppercase">{v.producto}</p>
+                          <p className="text-[8px] text-neutral-500 font-mono mt-0.5">{v.fecha} • {v.categoria}</p>
+                          {cost > 0 && <p className="text-[7.5px] text-neutral-500 mt-0.5 font-mono">Bruto: {formatCurrency(v.monto)} • Costo: {formatCurrency(cost)}</p>}
                         </div>
                         <div className="text-right flex items-center gap-3">
-                          <span className="font-black text-emerald-400">+{formatCurrency(netIncome)}</span>
-                          <button onClick={() => handleDeleteIncome(v.id)} className="text-rose-500 hover:text-rose-400 p-1" title="Eliminar">
+                          <span className="font-black text-emerald-400 font-mono">+{formatCurrency(netIncome)}</span>
+                          <button onClick={() => handleDeleteIncome(v.id)} className="text-rose-500 hover:text-rose-400 p-1 transition-colors" title="Eliminar">
                             <Trash2 size={12} />
                           </button>
                         </div>
@@ -1301,14 +1302,14 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   })
                 ) : (
                   <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
-                    <p className="text-[10px] uppercase font-black tracking-wider mb-1">Sin Otros Ingresos</p>
-                    <p className="text-[9px]">Usa el botón de arriba para registrar otros ingresos.</p>
+                    <p className="text-[9px] uppercase font-black tracking-widest mb-1">Sin Otros Ingresos</p>
+                    <p className="text-[8.5px]">Usa el botón superior para añadir otros ingresos.</p>
                   </div>
                 )}
               </div>
-              <div className="bg-black/20 p-3 rounded-xl border border-white/5 text-[10px] font-bold flex justify-between uppercase text-neutral-400">
+              <div className="bg-black/20 p-3.5 rounded-xl border border-white/5 text-[9px] font-black flex justify-between uppercase text-neutral-400">
                 <span>Total Otros Ingresos:</span>
-                <span className="text-emerald-400">{formatCurrency(totalOtrasMes)}</span>
+                <span className="text-emerald-400 font-mono">{formatCurrency(totalOtrasMes)}</span>
               </div>
             </div>
 
@@ -1319,10 +1320,11 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
       {/* ── VISTA 2: LISTADO DE GASTOS ─────────────────────────────────────────── */}
       {activeTab === 'transacciones' && (
-        <div className="flex flex-col gap-5 animate-in fade-in duration-500">
+        <div className="space-y-6 max-w-[1400px] mx-auto w-full px-6 animate-in fade-in duration-500">
           
-          {/* Controles de Búsqueda y Filtrado Sin Sombras */}
-          <div className="p-4 rounded-2xl border border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between" style={{ backgroundColor: t.bg }}>
+          {/* Controles de Búsqueda y Filtrado */}
+          <div className="p-4 rounded-2xl border flex flex-col md:flex-row gap-4 items-center justify-between" 
+            style={{ backgroundColor: t.panel, borderColor: t.border }}>
             <div className="flex flex-wrap gap-3 items-center w-full md:w-auto">
               
               {/* Buscador */}
@@ -1341,7 +1343,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 <select
                   value={filterCategory}
                   onChange={e => setFilterCategory(e.target.value)}
-                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20"
+                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 cursor-pointer focus:border-white/20 transition-all"
                 >
                   <option value="Todas">Todas las Categorías</option>
                   {GASTO_CATEGORIAS.map(c => <option key={c.label} value={c.label}>{c.label}</option>)}
@@ -1354,14 +1356,14 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   type="date"
                   value={filterStartDate}
                   onChange={e => setFilterStartDate(e.target.value)}
-                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 focus:border-white/20"
+                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 focus:border-white/20 transition-all cursor-pointer"
                 />
                 <span>a</span>
                 <input
                   type="date"
                   value={filterEndDate}
                   onChange={e => setFilterEndDate(e.target.value)}
-                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 focus:border-white/20"
+                  className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 focus:border-white/20 transition-all cursor-pointer"
                 />
               </div>
 
@@ -1380,15 +1382,15 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             {/* Registrar Egreso */}
             <button
               onClick={handleOpenNewExpense}
-              className="w-full md:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95"
-              style={{ backgroundColor: t.accent, color: '#000' }}
+              className="w-full md:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 text-black font-bold"
+              style={{ backgroundColor: t.accent }}
             >
               <Plus size={14} strokeWidth={3} /> Registrar Gasto
             </button>
           </div>
 
-          {/* Tabla de Egresos Sin Sombras */}
-          <div className="rounded-2xl border border-white/5 overflow-hidden" style={{ backgroundColor: t.bg }}>
+          {/* Tabla de Egresos Premium */}
+          <div className="rounded-2xl border overflow-hidden" style={{ backgroundColor: t.panel, borderColor: t.border }}>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -1411,12 +1413,12 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                           className="border-b border-white/5 hover:bg-white/1 transition-all group"
                         >
                           <td className="px-5 py-4">
-                            <p className="text-xs font-semibold text-white">{e.descripcion}</p>
-                            {e.notes && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {e.notes}</p>}
-                            {e.notas && !e.notes && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {e.notas}</p>}
+                            <p className="text-xs font-semibold text-white uppercase">{e.descripcion}</p>
+                            {e.notes && <p className="text-[9px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {e.notes}</p>}
+                            {e.notas && !e.notes && <p className="text-[9px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {e.notas}</p>}
                           </td>
                           <td className="px-5 py-4">
-                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-white/5 bg-white/2" style={{ color: cat.color }}>
+                            <span className="inline-flex items-center gap-1.5 text-[9px] font-bold px-2 py-0.5 rounded-lg border border-white/5 bg-white/2" style={{ color: cat.color }}>
                               <Icon size={10} />
                               {e.categoria}
                             </span>
@@ -1446,7 +1448,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                     })
                   ) : (
                     <tr>
-                      <td colSpan="5" className="px-5 py-12 text-center text-xs text-neutral-500 italic">
+                      <td colSpan="5" className="px-5 py-12 text-center text-[10px] font-black uppercase tracking-widest text-neutral-500 italic">
                         No se encontraron registros de gastos.
                       </td>
                     </tr>
@@ -1461,109 +1463,101 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
       {/* ── VISTA 3: SUSCRIPCIONES Y SERVICIOS ──────────────────────────────────── */}
       {activeTab === 'suscripciones' && (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+        <div className="space-y-6 max-w-[1400px] mx-auto w-full px-6 animate-in fade-in duration-500">
           
-          {/* Cabecera Pestaña Sin Sombras */}
-          <div className="flex items-center justify-between p-4 rounded-2xl border border-white/5" style={{ backgroundColor: t.bg }}>
+          {/* Cabecera Pestaña */}
+          <div className="flex items-center justify-between p-4 rounded-2xl border" style={{ backgroundColor: t.panel, borderColor: t.border }}>
             <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Suscripciones Activas</h3>
+              <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Suscripciones Activas</h3>
               <p className="text-[10px] text-neutral-400">Gastos recurrentes y servicios fijos registrados ({servicios.length} activos)</p>
             </div>
             <button
               onClick={handleOpenNewService}
-              className="px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95"
-              style={{ backgroundColor: t.accent, color: '#000' }}
+              className="px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 text-black font-bold"
+              style={{ backgroundColor: t.accent }}
             >
               <Plus size={14} strokeWidth={3} /> Registrar Suscripción
             </button>
           </div>
 
-          {/* Tabla de Suscripciones y Servicios Sin Sombras */}
-          <div className="rounded-2xl border border-white/5 overflow-hidden" style={{ backgroundColor: t.bg }}>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/5 bg-white/2">
-                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Nombre / Soporte</th>
-                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Categoría</th>
-                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Próximo Pago</th>
-                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400">Periodo</th>
-                    <th className="px-5 py-4 text-[9px] font-black uppercase tracking-widest text-neutral-400 text-right">Costo Mensual</th>
-                    <th className="px-5 py-4 w-24 text-center">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {servicios.length > 0 ? (
-                    servicios.map(s => {
-                      // Desempaquetar categoria y notas de fallback
-                      let catName = s.categoria || 'Streaming';
-                      let cleanNotas = s.notas || '';
-                      if (s.notas && s.notas.startsWith('[Categoría:')) {
-                        const match = s.notas.match(/^\[Categoría:\s*([^\]]+)\]\s*(.*)/);
-                        if (match) {
-                          catName = match[1];
-                          cleanNotas = match[2];
-                        }
-                      }
-                      const sCat = catServicioConfig[catName] || catServicioConfig['Otro'];
-                      const SIcon = sCat.icon;
-                      const hasExpired = s.fecha_pago && new Date(s.fecha_pago) < new Date();
-                      return (
-                        <tr 
-                          key={s.id}
-                          className="border-b border-white/5 hover:bg-white/1 transition-all group"
-                        >
-                          <td className="px-5 py-4">
-                            <p className="text-xs font-semibold text-white">{s.nombre}</p>
-                            {s.contacto && <p className="text-[10px] text-neutral-500 mt-1 max-w-md flex items-center gap-1.5"><Mail size={10} /> {s.contacto}</p>}
-                            {cleanNotas && <p className="text-[10px] text-neutral-500 mt-1 max-w-md italic flex items-center gap-1.5"><FileText size={10} /> {cleanNotas}</p>}
-                          </td>
-                          <td className="px-5 py-4">
-                            <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-lg border border-white/5 bg-white/2" style={{ color: sCat.color }}>
-                              <SIcon size={10} />
-                              {catName}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 font-mono text-[10px] text-neutral-400">
-                            <span className={hasExpired ? 'text-rose-400 font-bold animate-pulse' : 'text-neutral-200'}>
-                              {s.fecha_pago || 'N/A'}
-                            </span>
-                          </td>
-                          <td className="px-5 py-4 text-[10px] text-neutral-300">
-                            <span className="capitalize">{s.tipo || 'Mensual'}</span>
-                          </td>
-                          <td className="px-5 py-4 text-right font-mono text-xs font-black text-rose-400">
-                            -{formatCurrency(s.monto)}
-                          </td>
-                          <td className="px-5 py-4 text-center">
-                            <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => handleOpenEditService(s)}
-                                className="p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-all"
-                              >
-                                <Edit3 size={13} />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteService(s.id)}
-                                className="p-2 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="px-5 py-12 text-center text-xs text-neutral-500 italic">
-                        No se encontraron suscripciones activas.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+          {/* Grid de Suscripciones Premium */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {servicios.map(s => {
+              let catName = s.categoria || 'Streaming';
+              let cleanNotas = s.notas || '';
+              if (s.notas && s.notas.startsWith('[Categoría:')) {
+                const match = s.notas.match(/^\[Categoría:\s*([^\]]+)\]\s*(.*)/);
+                if (match) {
+                  catName = match[1];
+                  cleanNotas = match[2];
+                }
+              }
+              const sCat = catServicioConfig[catName] || catServicioConfig['Otro'];
+              const SIcon = sCat.icon;
+              const hasExpired = s.fecha_pago && new Date(s.fecha_pago) < new Date();
+              const PaymentIcon = getMetodoIcon(s.metodo);
+              
+              return (
+                <div key={s.id} className="p-5 flex flex-col justify-between group relative overflow-hidden transition-all duration-300 rounded-2xl hover:bg-white/[0.02] cursor-pointer"
+                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, minHeight: 160 }}>
+                  
+                  {/* Top: Icon and Status Badge */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-white/[0.02]" style={{ border: `1px solid ${t.border}`, color: sCat.color }}>
+                        <SIcon size={14} />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-[11px] font-black uppercase tracking-wider text-white truncate max-w-[110px]">{s.nombre}</h4>
+                        <span className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500 block">{catName}</span>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[7.5px] font-black uppercase tracking-widest ${hasExpired ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
+                      {hasExpired ? 'Vencido' : 'Al Día'}
+                    </span>
+                  </div>
+
+                  {/* Mid details */}
+                  <div className="space-y-1.5 pt-2.5 border-t border-white/5 text-[9px] font-mono">
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-500 uppercase font-black">Próximo Pago</span>
+                      <span className={`font-bold ${hasExpired ? 'text-rose-400' : 'text-neutral-300'}`}>{s.fecha_pago || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-500 uppercase font-black">Frecuencia</span>
+                      <span className="text-neutral-300 uppercase font-bold">{s.tipo || 'Mensual'}</span>
+                    </div>
+                    {s.contacto && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-neutral-500 uppercase font-black font-sans">Soporte</span>
+                        <span className="text-neutral-300 truncate max-w-[100px] font-sans">{s.contacto}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bottom details: price and action buttons */}
+                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-white/5">
+                    <div className="flex items-center gap-1.5 text-rose-400 font-mono font-black">
+                      <PaymentIcon size={12} className="text-neutral-500" />
+                      <span>-{formatCurrency(s.monto)}</span>
+                    </div>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleOpenEditService(s)} className="p-1.5 rounded-lg text-neutral-400 hover:text-white hover:bg-white/5 transition-all" title="Editar">
+                        <Edit3 size={11} />
+                      </button>
+                      <button onClick={() => handleDeleteService(s.id)} className="p-1.5 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all" title="Dar de baja">
+                        <Trash2 size={11} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            {servicios.length === 0 && (
+              <div className="col-span-full text-center py-10 rounded-xl" style={{ border: `1px dashed ${t.border}`, backgroundColor: t.panel }}>
+                <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>No se encontraron suscripciones activas.</p>
+              </div>
+            )}
           </div>
 
         </div>
