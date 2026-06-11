@@ -1104,37 +1104,36 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'vista-tabla':
       return (
-        <div className="w-full flex flex-col border border-white/10 rounded-xl bg-black/30 overflow-hidden">
-          <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+        <div className="w-full flex flex-col border-t border-b border-white/10 overflow-hidden">
+          <div className="py-2 flex justify-between items-center border-b border-white/10">
             <div className="flex items-center gap-2">
-              <Grid size={14} className="text-indigo-400" />
-              <span className="text-[9px] font-black uppercase tracking-wider text-white">Vista de Tabla (Database)</span>
+              <Grid size={13} className="text-neutral-400" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Tabla</span>
             </div>
-            <Sparkles size={12} className="text-neutral-600 animate-pulse" />
           </div>
-          <div className="p-2 overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-[10px]">
               <thead>
                 <tr className="border-b border-white/10">
                   {block.contenido.columns?.map((col, cIdx) => (
-                    <th key={cIdx} className="p-2 border-r border-white/5 font-extrabold uppercase text-neutral-400 tracking-wider text-[8px]">{col}</th>
+                    <th key={cIdx} className="p-2 border-r border-white/10 font-bold uppercase text-neutral-400 tracking-wider text-[8px]">{col}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {block.contenido.rows?.map((row, rIdx) => (
-                  <tr key={row.id} className="border-b border-white/5 hover:bg-white/[0.01]">
+                  <tr key={row.id} className="border-b border-white/10 hover:bg-white/[0.02]">
                     {row.values.map((val, cIdx) => (
-                      <td key={cIdx} className="p-2 border-r border-white/5">
+                      <td key={cIdx} className="p-2 border-r border-white/10">
                         <input
-                          type="text"
-                          value={val}
-                          onChange={e => {
-                            const newContent = { ...block.contenido };
-                            newContent.rows[rIdx].values[cIdx] = e.target.value;
-                            onChange(index, newContent);
-                          }}
-                          className="bg-transparent border-0 outline-none w-full text-neutral-300"
+                           type="text"
+                           value={val}
+                           onChange={e => {
+                             const newContent = { ...block.contenido };
+                             newContent.rows[rIdx].values[cIdx] = e.target.value;
+                             onChange(index, newContent);
+                           }}
+                           className="bg-transparent border-0 outline-none w-full text-neutral-300"
                         />
                       </td>
                     ))}
@@ -1148,26 +1147,26 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'vista-tablero':
       return (
-        <div className="w-full flex flex-col border border-white/10 rounded-xl bg-black/30 overflow-hidden">
-          <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+        <div className="w-full flex flex-col border-t border-b border-white/10">
+          <div className="py-2 flex justify-between items-center border-b border-white/10">
             <div className="flex items-center gap-2">
-              <Trello size={14} className="text-yellow-400" />
-              <span className="text-[9px] font-black uppercase tracking-wider text-white">Vista de Tablero (Kanban)</span>
+              <Trello size={13} className="text-neutral-400" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Tablero</span>
             </div>
           </div>
-          <div className="p-3 grid grid-cols-3 gap-3">
+          <div className="py-3 grid grid-cols-3 gap-3">
             {block.contenido.columns?.map((col, cIdx) => {
               const colCards = block.contenido.cards?.filter(c => c.col === col) || [];
               return (
-                <div key={cIdx} className="flex flex-col gap-2 p-2 rounded-lg bg-white/[0.01] border border-white/5 min-h-[150px]">
-                  <div className="text-[9px] font-black uppercase tracking-wider text-neutral-400 pb-1 border-b border-white/5 mb-1 flex items-center justify-between">
+                <div key={cIdx} className="flex flex-col gap-2 min-h-[150px]">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 pb-1 border-b border-white/10 mb-1 flex items-center justify-between">
                     <span>{col}</span>
                     <span className="text-[8px] bg-white/5 px-1 rounded text-neutral-500 font-bold">{colCards.length}</span>
                   </div>
                   {colCards.map(card => (
                     <div 
                       key={card.id} 
-                      className="p-2.5 rounded-lg border border-white/10 bg-[#0d0d0e] hover:border-white/20 transition-all flex flex-col gap-1 cursor-pointer select-none"
+                      className="p-2 border border-white/10 bg-transparent hover:border-white/20 transition-all flex flex-col gap-1 cursor-pointer select-none"
                     >
                       <input
                         type="text"
@@ -1192,7 +1191,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
                         className="bg-transparent border-0 outline-none text-[8px] text-neutral-500 w-full"
                         placeholder="Descripción..."
                       />
-                      <div className="flex gap-1 mt-1.5 border-t border-white/5 pt-1.5">
+                      <div className="flex gap-1 mt-1 border-t border-white/10 pt-1">
                         {block.contenido.columns.map(destCol => {
                           if (destCol === col) return null;
                           return (
@@ -1204,7 +1203,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
                                 if (target) target.col = destCol;
                                 onChange(index, newContent);
                               }}
-                              className="text-[7px] font-black uppercase px-1 py-0.5 rounded border border-white/5 bg-white/5 text-neutral-500 hover:text-white"
+                              className="text-[7px] font-bold uppercase px-1 py-0.5 rounded border border-white/10 bg-transparent text-neutral-500 hover:text-white"
                             >
                               ir a {destCol.split(' ')[0]}
                             </button>
@@ -1222,16 +1221,16 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'vista-galeria':
       return (
-        <div className="w-full flex flex-col border border-white/10 rounded-xl bg-black/30 overflow-hidden">
-          <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+        <div className="w-full flex flex-col border-t border-b border-white/10">
+          <div className="py-2 flex justify-between items-center border-b border-white/10">
             <div className="flex items-center gap-2">
-              <GalleryIcon size={14} className="text-emerald-400" />
-              <span className="text-[9px] font-black uppercase tracking-wider text-white">Vista de Galería</span>
+              <GalleryIcon size={13} className="text-neutral-400" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Galería</span>
             </div>
           </div>
-          <div className="p-3 grid grid-cols-2 gap-3">
+          <div className="py-3 grid grid-cols-2 gap-3">
             {block.contenido.map?.((item, iIdx) => (
-              <div key={item.id} className="rounded-xl overflow-hidden border border-white/10 bg-[#0d0d0e] flex flex-col">
+              <div key={item.id} className="border border-white/10 bg-transparent flex flex-col">
                 <div className="h-28 bg-neutral-900 overflow-hidden relative group">
                   <img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                   <input
@@ -1246,7 +1245,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
                     placeholder="URL de Imagen..."
                   />
                 </div>
-                <div className="p-3 flex flex-col gap-1">
+                <div className="p-2 flex flex-col gap-1">
                   <input
                     type="text"
                     value={item.title}
@@ -1255,7 +1254,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
                       newContent[iIdx].title = e.target.value;
                       onChange(index, newContent);
                     }}
-                    className="bg-transparent border-0 outline-none font-extrabold text-[10px] text-white w-full uppercase tracking-wider"
+                    className="bg-transparent border-0 outline-none font-bold text-[10px] text-white w-full uppercase tracking-wider"
                   />
                   <input
                     type="text"
@@ -1276,16 +1275,16 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'vista-lista':
       return (
-        <div className="w-full flex flex-col border border-white/10 rounded-xl bg-black/30 overflow-hidden">
-          <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+        <div className="w-full flex flex-col border-t border-b border-white/10">
+          <div className="py-2 flex justify-between items-center border-b border-white/10">
             <div className="flex items-center gap-2">
-              <AlignJustify size={14} className="text-purple-400" />
-              <span className="text-[9px] font-black uppercase tracking-wider text-white">Vista de Lista (Resumen)</span>
+              <AlignJustify size={13} className="text-neutral-400" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Lista</span>
             </div>
           </div>
-          <div className="p-2 flex flex-col gap-1.5">
+          <div className="py-2 flex flex-col">
             {block.contenido.map?.((item, iIdx) => (
-              <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg border border-white/5 bg-[#0d0d0e] hover:border-white/10 transition-colors">
+              <div key={item.id} className="flex items-center justify-between py-2 border-b border-white/10 hover:bg-white/[0.01] transition-colors">
                 <input
                   type="text"
                   value={item.title}
@@ -1298,7 +1297,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
                 />
                 <div className="flex gap-1 shrink-0">
                   {item.tags?.map((tag, tIdx) => (
-                    <span key={tIdx} className="text-[7px] font-black uppercase px-1.5 py-0.5 rounded border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">
+                    <span key={tIdx} className="text-[7px] font-bold uppercase px-1.5 py-0.5 rounded border border-white/10 bg-transparent text-neutral-400">
                       {tag}
                     </span>
                   ))}
@@ -1311,29 +1310,29 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'vista-calendario':
       return (
-        <div className="w-full flex flex-col border border-white/10 rounded-xl bg-black/30 overflow-hidden">
-          <div className="px-4 py-2 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
+        <div className="w-full flex flex-col border-t border-b border-white/10">
+          <div className="py-2 flex justify-between items-center border-b border-white/10">
             <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-wider text-white">Vista de Calendario</span>
+              <Calendar size={13} className="text-neutral-400" />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Calendario</span>
             </div>
             <span className="text-[8px] text-neutral-400 font-bold uppercase">junio 2026</span>
           </div>
-          <div className="p-2 grid grid-cols-7 gap-1 border-b border-white/5 text-center text-[7px] font-black uppercase tracking-widest text-neutral-500 bg-white/[0.01]">
+          <div className="grid grid-cols-7 gap-0 border-b border-white/10 text-center text-[7px] font-bold uppercase tracking-widest text-neutral-500 py-1.5">
             <div>lun</div><div>mar</div><div>mié</div><div>jue</div><div>vie</div><div>sáb</div><div>dom</div>
           </div>
-          <div className="p-2 grid grid-cols-7 gap-1 min-h-[180px]">
+          <div className="grid grid-cols-7 gap-0">
             {Array.from({ length: 14 }).map((_, cIdx) => {
               const dayNum = cIdx + 8;
               const dateStr = `2026-06-${dayNum < 10 ? '0' + dayNum : dayNum}`;
               const dayEvents = block.contenido.filter?.(e => e.date === dateStr) || [];
               
               return (
-                <div key={cIdx} className="border border-white/5 rounded p-1.5 min-h-[45px] bg-[#0d0d0e] flex flex-col gap-1 justify-between">
+                <div key={cIdx} className="border-r border-b border-white/10 p-1 min-h-[45px] bg-transparent flex flex-col gap-1 justify-between">
                   <div className="text-[8px] font-bold text-neutral-500">{dayNum}</div>
                   <div className="flex flex-col gap-0.5">
                     {dayEvents.map(ev => (
-                      <div key={ev.id} className="text-[6px] font-black uppercase tracking-wide px-1 py-0.5 rounded truncate border border-rose-500/20 bg-rose-500/10 text-rose-400">
+                      <div key={ev.id} className="text-[6px] font-bold uppercase tracking-wide px-1 py-0.5 rounded truncate border border-white/10 bg-transparent text-neutral-400">
                         {ev.title}
                       </div>
                     ))}
