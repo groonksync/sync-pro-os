@@ -216,7 +216,11 @@ ipcMain.handle('create-folder-structure', async (event, { rootPath, cliente, pro
     const safeCliente = cliente ? cliente.replace(/\s+/g, '_') : '';
     const safeProyecto = (proyecto || 'PROYECTO').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_áéíóúÁÉÍÓÚüÜñÑ-]/g, '');
     
-    const folderName = `${today.replace(/-/g, '')}_${safeProyecto}`;
+    const formatDateShort = (dateStr) => {
+      const [y, m, d] = dateStr.split('-');
+      return `${d}-${m}-${y.slice(-2)}`;
+    };
+    const folderName = `${safeProyecto}_${formatDateShort(today)}`;
 
     let basePath = rootPath;
     if (safeCliente) {
