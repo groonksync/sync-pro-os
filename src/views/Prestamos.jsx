@@ -13,6 +13,31 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { useAmortizacion, useAmortizacionGlobal, generarCronograma, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
 
+// ─── SAFE DATE FORMATTING HELPERS ────────────────────────────
+const safeFormatDate = (dateVal, options = { day: '2-digit', month: 'short', year: 'numeric' }, fallback = '---') => {
+  if (!dateVal) return fallback;
+  try {
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return fallback;
+    return d.toLocaleDateString('es-ES', options);
+  } catch (e) {
+    return fallback;
+  }
+};
+
+const getNextMonthDateFormatted = (dateStr) => {
+  if (!dateStr) return 'N/A';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'N/A';
+    d.setMonth(d.getMonth() + 1);
+    if (isNaN(d.getTime())) return 'N/A';
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+  } catch (e) {
+    return 'N/A';
+  }
+};
+
 // ─── ESTILOS TOAST ───────────────────────────────────────────
 const toastStyles = {
   success: { bg: 'rgba(78, 201, 176, 0.10)', border: 'rgba(78, 201, 176, 0.30)', icon: CheckCircle2, color: '#4ec9b0' },
@@ -1019,9 +1044,9 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                           </td>
                           <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                             <span style={{ fontSize: '10px', fontWeight: 500, color: t.textMuted }}>
-                              {p.inicio ? new Date(p.inicio).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
+                              {safeFormatDate(p.inicio)}
                               {' → '}
-                              {p.fin ? new Date(p.fin).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }) : '---'}
+                              {safeFormatDate(p.fin)}
                             </span>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
@@ -1150,7 +1175,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                       placeholder="Nombre del Cliente"
                     />
                     <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 400, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      Contrato: {new Date(activePrestamo?.inicio || activePrestamo?.created_at || Date.now()).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      Contrato: {safeFormatDate(activePrestamo?.inicio || activePrestamo?.created_at || Date.now(), { year: 'numeric', month: 'long', day: 'numeric' })}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
@@ -1562,7 +1587,7 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                   <div style={{ paddingTop: '12px', borderTop: `1px solid ${t.border}` }}>
                     <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, marginBottom: '4px' }}>Primer Cobro</p>
                     <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
-                      {activePrestamo.inicio ? new Date(new Date(activePrestamo.inicio).setMonth(new Date(activePrestamo.inicio).getMonth() + 1)).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A'}
+                      {getNextMonthDateFormatted(activePrestamo.inicio)}
                     </p>
                   </div>
                 </div>
