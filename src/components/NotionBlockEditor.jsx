@@ -7,25 +7,31 @@ import {
   ExternalLink, ChevronDown, Sparkles
 } from 'lucide-react';
 import { getTheme, useTheme } from '../lib/theme';
+import { aiService } from '../services/aiService';
 
-export default function NotionBlockEditor({ value = '', onChange, isDark = true }) {
+export default function NotionBlockEditor({ value = '', onChange, isDark = true, settings = {}, title = '' }) {
   const t = useTheme(isDark);
   const [blocks, setBlocks] = useState([]);
   const [activeBlockIndex, setActiveBlockIndex] = useState(null);
   const [slashMenu, setSlashMenu] = useState({ visible: false, query: '', index: 0, blockId: null });
+  
+  // AI Assistant States
+  const [aiActiveBlockIndex, setAiActiveBlockIndex] = useState(null);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+
   const blockRefs = useRef({});
 
-  // Parse markdown input to blocks when value changes (only if blocks is empty or has changed externally)
+  // Parse markdown input to blocks when value changes
   useEffect(() => {
     if (value !== undefined) {
       const parsed = parseMarkdownToBlocks(value);
-      // Only set if different to prevent cursor jumps
       const currentMd = serializeBlocksToMarkdown(blocks);
       if (value !== currentMd || blocks.length === 0) {
         setBlocks(parsed);
       }
     }
-  }, [value]);
+  }, [value, title]);
 
   // Trigger change handler
   const triggerChange = (newBlocks) => {
@@ -37,186 +43,199 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
 
   // --- PARSER MD -> BLOCOS ---
   const parseMarkdownToBlocks = (md) => {
+    let parsedBlocks = [];
+    
     if (!md || md.trim() === '') {
-      return [{ id: 'blk-init-' + Date.now(), tipo: 'texto', contenido: '' }];
-    }
+      parsedBlocks = [{ id: 'blk-init-' + Date.now(), tipo: 'texto', contenido: '' }];
+    } else {
+      const lines = md.split('\n');
+      let currentTable = null;
+      let currentTextBlock = [];
 
-    const lines = md.split('\n');
-    const parsedBlocks = [];
-    let currentTable = null;
-    let currentTextBlock = [];
+      const flushTextBlock = () => {
+        if (currentTextBlock.length > 0) {
+          currentTextBlock.forEach((line) => {
+            const trimmed = line.trim();
+            
+            // Custom tag parsers
+            if (trimmed.startsWith('<!-- NOTION_DB_VIEW:')) {
+              const match = trimmed.match(/<!-- NOTION_DB_VIEW:(\w+):(.*?) -->/);
+              if (match) {
+                const type = match[1];
+                try {
+                  const data = JSON.parse(match[2]);
+                  parsedBlocks.push({
+                    id: 'blk-db-' + Math.random().toString(36).substr(2, 9),
+                    tipo: `vista-${type}`,
+                    contenido: data
+                  });
+                  return;
+                } catch (e) { console.error('Error parsing db view json', e); }
+              }
+            }
 
-    const flushTextBlock = () => {
-      if (currentTextBlock.length > 0) {
-        currentTextBlock.forEach((line) => {
-          const trimmed = line.trim();
-          
-          // Custom tag parsers
-          if (trimmed.startsWith('<!-- NOTION_DB_VIEW:')) {
-            const match = trimmed.match(/<!-- NOTION_DB_VIEW:(\w+):(.*?) -->/);
-            if (match) {
-              const type = match[1];
-              try {
-                const data = JSON.parse(match[2]);
+            if (trimmed.startsWith('<details><summary>') && trimmed.endsWith('</details>')) {
+              const match = trimmed.match(/<details><summary>(.*?)<\/summary>(.*?)<\/details>/);
+              if (match) {
                 parsedBlocks.push({
-                  id: 'blk-db-' + Math.random().toString(36).substr(2, 9),
-                  tipo: `vista-${type}`,
-                  contenido: data
+                  id: 'blk-toggle-' + Math.random().toString(36).substr(2, 9),
+                  tipo: 'desplegable',
+                  contenido: match[1],
+                  extra: match[2]
                 });
                 return;
-              } catch (e) { console.error('Error parsing db view json', e); }
+              }
             }
-          }
 
-          if (trimmed.startsWith('<details><summary>') && trimmed.endsWith('</details>')) {
-            const match = trimmed.match(/<details><summary>(.*?)<\/summary>(.*?)<\/details>/);
-            if (match) {
+            if (trimmed.startsWith('<div class="notion-callout"') && trimmed.endsWith('</div>')) {
+              const emojiMatch = trimmed.match(/data-emoji="(.*?)"/);
+              const contentMatch = trimmed.match(/>(.*?)<\/div>/);
               parsedBlocks.push({
-                id: 'blk-toggle-' + Math.random().toString(36).substr(2, 9),
-                tipo: 'desplegable',
-                contenido: match[1],
-                extra: match[2]
+                id: 'blk-callout-' + Math.random().toString(36).substr(2, 9),
+                tipo: 'destacado',
+                contenido: contentMatch ? contentMatch[1] : '',
+                extra: emojiMatch ? emojiMatch[1] : '💡'
               });
               return;
             }
-          }
 
-          if (trimmed.startsWith('<div class="notion-callout"') && trimmed.endsWith('</div>')) {
-            const emojiMatch = trimmed.match(/data-emoji="(.*?)"/);
-            const contentMatch = trimmed.match(/>(.*?)<\/div>/);
-            parsedBlocks.push({
-              id: 'blk-callout-' + Math.random().toString(36).substr(2, 9),
-              tipo: 'destacado',
-              contenido: contentMatch ? contentMatch[1] : '',
-              extra: emojiMatch ? emojiMatch[1] : '💡'
-            });
-            return;
-          }
-
-          // Native headers
-          if (trimmed.startsWith('# ')) {
-            parsedBlocks.push({ id: 'blk-h1-' + Math.random().toString(36).substr(2, 9), tipo: 'h1', contenido: trimmed.replace('# ', '') });
-          } else if (trimmed.startsWith('## ')) {
-            parsedBlocks.push({ id: 'blk-h2-' + Math.random().toString(36).substr(2, 9), tipo: 'h2', contenido: trimmed.replace('## ', '') });
-          } else if (trimmed.startsWith('### ')) {
-            parsedBlocks.push({ id: 'blk-h3-' + Math.random().toString(36).substr(2, 9), tipo: 'h3', contenido: trimmed.replace('### ', '') });
-          } else if (trimmed.startsWith('#### ')) {
-            parsedBlocks.push({ id: 'blk-h4-' + Math.random().toString(36).substr(2, 9), tipo: 'h4', contenido: trimmed.replace('#### ', '') });
-          } 
-          // Divider
-          else if (trimmed === '---') {
-            parsedBlocks.push({ id: 'blk-div-' + Math.random().toString(36).substr(2, 9), tipo: 'divisor', contenido: '' });
-          }
-          // Checklist (todo) with 3 states
-          else if (trimmed.match(/^\s*[-*]\s+\[([ xX/])\]\s*(.*)$/)) {
-            const m = trimmed.match(/^\s*[-*]\s+\[([ xX/])\]\s*(.*)$/);
-            const statusChar = m[1];
-            const text = m[2];
-            let status = 'pendiente';
-            if (statusChar === '/') status = 'proceso';
-            else if (statusChar.toLowerCase() === 'x') status = 'completado';
-            parsedBlocks.push({
-              id: 'blk-check-' + Math.random().toString(36).substr(2, 9),
-              tipo: 'checklist',
-              contenido: text,
-              extra: status
-            });
-          }
-          // Bullet list
-          else if (trimmed.match(/^\s*[-*]\s+(.*)$/)) {
-            const m = trimmed.match(/^\s*[-*]\s+(.*)$/);
-            parsedBlocks.push({ id: 'blk-bullet-' + Math.random().toString(36).substr(2, 9), tipo: 'lista-vinetas', contenido: m[1] });
-          }
-          // Numbered list
-          else if (trimmed.match(/^\s*\d+\.\s+(.*)$/)) {
-            const m = trimmed.match(/^\s*\d+\.\s+(.*)$/);
-            parsedBlocks.push({ id: 'blk-num-' + Math.random().toString(36).substr(2, 9), tipo: 'lista-numerada', contenido: m[1] });
-          }
-          // Quote
-          else if (trimmed.startsWith('> ')) {
-            parsedBlocks.push({ id: 'blk-quote-' + Math.random().toString(36).substr(2, 9), tipo: 'cita', contenido: trimmed.replace('> ', '') });
-          }
-          // Code/Visor block
-          else if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
-            const m = trimmed.match(/^```(\w*)\s*([\s\S]*?)\s*```$/);
-            parsedBlocks.push({
-              id: 'blk-code-' + Math.random().toString(36).substr(2, 9),
-              tipo: 'visor',
-              contenido: m ? m[2] : '',
-              extra: m ? m[1] : 'javascript'
-            });
-          }
-          // Images
-          else if (trimmed.startsWith('![') && trimmed.includes('](') && trimmed.endsWith(')')) {
-            const altMatch = trimmed.match(/!\[(.*?)\]\((.*?)\)/);
-            let url = altMatch ? altMatch[2] : '';
-            let cap = altMatch ? altMatch[1] : 'Imagen';
-            
-            // Sub-types of media links
-            if (cap.startsWith('video:')) {
-              parsedBlocks.push({ id: 'blk-vid-' + Math.random().toString(36).substr(2, 9), tipo: 'video', contenido: url, extra: cap.replace('video:', '') });
-            } else if (cap.startsWith('audio:')) {
-              parsedBlocks.push({ id: 'blk-aud-' + Math.random().toString(36).substr(2, 9), tipo: 'audio', contenido: url, extra: cap.replace('audio:', '') });
-            } else if (cap.startsWith('file:')) {
-              parsedBlocks.push({ id: 'blk-file-' + Math.random().toString(36).substr(2, 9), tipo: 'archivo', contenido: url, extra: cap.replace('file:', '') });
-            } else if (cap.startsWith('bookmark:')) {
-              const parts = cap.replace('bookmark:', '').split('|');
-              parsedBlocks.push({ id: 'blk-bm-' + Math.random().toString(36).substr(2, 9), tipo: 'marcador-web', contenido: url, extra: parts[0], desc: parts[1] || '' });
-            } else if (cap.startsWith('page-link:')) {
-              parsedBlocks.push({ id: 'blk-pl-' + Math.random().toString(36).substr(2, 9), tipo: 'enlace-pagina', contenido: url, extra: cap.replace('page-link:', '') });
-            } else if (cap.startsWith('page:')) {
-              parsedBlocks.push({ id: 'blk-p-' + Math.random().toString(36).substr(2, 9), tipo: 'pagina', contenido: url, extra: cap.replace('page:', '') });
-            } else {
-              parsedBlocks.push({ id: 'blk-img-' + Math.random().toString(36).substr(2, 9), tipo: 'imagen', contenido: url, extra: cap });
+            // Native headers
+            if (trimmed.startsWith('# ')) {
+              parsedBlocks.push({ id: 'blk-h1-' + Math.random().toString(36).substr(2, 9), tipo: 'h1', contenido: trimmed.replace('# ', '') });
+            } else if (trimmed.startsWith('## ')) {
+              parsedBlocks.push({ id: 'blk-h2-' + Math.random().toString(36).substr(2, 9), tipo: 'h2', contenido: trimmed.replace('## ', '') });
+            } else if (trimmed.startsWith('### ')) {
+              parsedBlocks.push({ id: 'blk-h3-' + Math.random().toString(36).substr(2, 9), tipo: 'h3', contenido: trimmed.replace('### ', '') });
+            } else if (trimmed.startsWith('#### ')) {
+              parsedBlocks.push({ id: 'blk-h4-' + Math.random().toString(36).substr(2, 9), tipo: 'h4', contenido: trimmed.replace('#### ', '') });
+            } 
+            // Divider
+            else if (trimmed === '---') {
+              parsedBlocks.push({ id: 'blk-div-' + Math.random().toString(36).substr(2, 9), tipo: 'divisor', contenido: '' });
             }
-          }
-          // Default text paragraph
-          else {
-            parsedBlocks.push({ id: 'blk-txt-' + Math.random().toString(36).substr(2, 9), tipo: 'texto', contenido: line });
-          }
-        });
-        currentTextBlock = [];
-      }
-    };
-
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const isTableLine = line.trim().startsWith('|');
-
-      if (isTableLine) {
-        flushTextBlock();
-        if (!currentTable) {
-          currentTable = [];
-        }
-        currentTable.push(line);
-      } else {
-        if (currentTable) {
-          // Flush table block
-          const headerLine = currentTable[0];
-          const dataLines = currentTable.slice(2);
-          const parseRow = (l) => l.split('|').map(s => s.trim()).filter((s, idx, arr) => idx > 0 && idx < arr.length - 1);
-          const columnas = parseRow(headerLine);
-          const filas = dataLines.map((l, rIdx) => ({
-            id: 'row-' + rIdx + '-' + Math.random().toString(36).substr(2, 5),
-            celdas: parseRow(l)
-          }));
-          parsedBlocks.push({
-            id: 'blk-tbl-' + Math.random().toString(36).substr(2, 9),
-            tipo: 'tabla',
-            contenido: columnas.length > 0 ? columnas : ['Columna 1', 'Columna 2'],
-            extra: filas.length > 0 ? filas : [{ id: 'row-1', celdas: ['', ''] }]
+            // Checklist (todo) with 3 states
+            else if (trimmed.match(/^\s*[-*]\s+\[([ xX/])\]\s*(.*)$/)) {
+              const m = trimmed.match(/^\s*[-*]\s+\[([ xX/])\]\s*(.*)$/);
+              const statusChar = m[1];
+              const text = m[2];
+              let status = 'pendiente';
+              if (statusChar === '/') status = 'proceso';
+              else if (statusChar.toLowerCase() === 'x') status = 'completado';
+              parsedBlocks.push({
+                id: 'blk-check-' + Math.random().toString(36).substr(2, 9),
+                tipo: 'checklist',
+                contenido: text,
+                extra: status
+              });
+            }
+            // Bullet list
+            else if (trimmed.match(/^\s*[-*]\s+(.*)$/)) {
+              const m = trimmed.match(/^\s*[-*]\s+(.*)$/);
+              parsedBlocks.push({ id: 'blk-bullet-' + Math.random().toString(36).substr(2, 9), tipo: 'lista-vinetas', contenido: m[1] });
+            }
+            // Numbered list
+            else if (trimmed.match(/^\s*\d+\.\s+(.*)$/)) {
+              const m = trimmed.match(/^\s*\d+\.\s+(.*)$/);
+              parsedBlocks.push({ id: 'blk-num-' + Math.random().toString(36).substr(2, 9), tipo: 'lista-numerada', contenido: m[1] });
+            }
+            // Quote
+            else if (trimmed.startsWith('> ')) {
+              parsedBlocks.push({ id: 'blk-quote-' + Math.random().toString(36).substr(2, 9), tipo: 'cita', contenido: trimmed.replace('> ', '') });
+            }
+            // Code/Visor block
+            else if (trimmed.startsWith('```') && trimmed.endsWith('```')) {
+              const m = trimmed.match(/^```(\w*)\s*([\s\S]*?)\s*```$/);
+              parsedBlocks.push({
+                id: 'blk-code-' + Math.random().toString(36).substr(2, 9),
+                tipo: 'visor',
+                contenido: m ? m[2] : '',
+                extra: m ? m[1] : 'javascript'
+              });
+            }
+            // Images
+            else if (trimmed.startsWith('![') && trimmed.includes('](') && trimmed.endsWith(')')) {
+              const altMatch = trimmed.match(/!\[(.*?)\]\((.*?)\)/);
+              let url = altMatch ? altMatch[2] : '';
+              let cap = altMatch ? altMatch[1] : 'Imagen';
+              
+              if (cap.startsWith('video:')) {
+                parsedBlocks.push({ id: 'blk-vid-' + Math.random().toString(36).substr(2, 9), tipo: 'video', contenido: url, extra: cap.replace('video:', '') });
+              } else if (cap.startsWith('audio:')) {
+                parsedBlocks.push({ id: 'blk-aud-' + Math.random().toString(36).substr(2, 9), tipo: 'audio', contenido: url, extra: cap.replace('audio:', '') });
+              } else if (cap.startsWith('file:')) {
+                parsedBlocks.push({ id: 'blk-file-' + Math.random().toString(36).substr(2, 9), tipo: 'archivo', contenido: url, extra: cap.replace('file:', '') });
+              } else if (cap.startsWith('bookmark:')) {
+                const parts = cap.replace('bookmark:', '').split('|');
+                parsedBlocks.push({ id: 'blk-bm-' + Math.random().toString(36).substr(2, 9), tipo: 'marcador-web', contenido: url, extra: parts[0], desc: parts[1] || '' });
+              } else if (cap.startsWith('page-link:')) {
+                parsedBlocks.push({ id: 'blk-pl-' + Math.random().toString(36).substr(2, 9), tipo: 'enlace-pagina', contenido: url, extra: cap.replace('page-link:', '') });
+              } else if (cap.startsWith('page:')) {
+                parsedBlocks.push({ id: 'blk-p-' + Math.random().toString(36).substr(2, 9), tipo: 'pagina', contenido: url, extra: cap.replace('page:', '') });
+              } else {
+                parsedBlocks.push({ id: 'blk-img-' + Math.random().toString(36).substr(2, 9), tipo: 'imagen', contenido: url, extra: cap });
+              }
+            }
+            // Default text paragraph
+            else {
+              parsedBlocks.push({ id: 'blk-txt-' + Math.random().toString(36).substr(2, 9), tipo: 'texto', contenido: line });
+            }
           });
-          currentTable = null;
+          currentTextBlock = [];
         }
-        currentTextBlock.push(line);
+      };
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const isTableLine = line.trim().startsWith('|');
+
+        if (isTableLine) {
+          flushTextBlock();
+          if (!currentTable) {
+            currentTable = [];
+          }
+          currentTable.push(line);
+        } else {
+          if (currentTable) {
+            const headerLine = currentTable[0];
+            const dataLines = currentTable.slice(2);
+            const parseRow = (l) => l.split('|').map(s => s.trim()).filter((s, idx, arr) => idx > 0 && idx < arr.length - 1);
+            const columnas = parseRow(headerLine);
+            const filas = dataLines.map((l, rIdx) => ({
+              id: 'row-' + rIdx + '-' + Math.random().toString(36).substr(2, 5),
+              celdas: parseRow(l)
+            }));
+            parsedBlocks.push({
+              id: 'blk-tbl-' + Math.random().toString(36).substr(2, 9),
+              tipo: 'tabla',
+              contenido: columnas.length > 0 ? columnas : ['Columna 1', 'Columna 2'],
+              extra: filas.length > 0 ? filas : [{ id: 'row-1', celdas: ['', ''] }]
+            });
+            currentTable = null;
+          }
+          currentTextBlock.push(line);
+        }
+      }
+
+      flushTextBlock();
+    }
+
+    // Prepend Dynamic H1 Title if provided and not already matching
+    if (title) {
+      const firstBlock = parsedBlocks[0];
+      if (!firstBlock || firstBlock.tipo !== 'h1' || firstBlock.contenido !== title) {
+        // Remove duplicate automatic H1 if it was just named slightly different, or insert at top
+        if (firstBlock && firstBlock.tipo === 'h1' && firstBlock.id === 'blk-title-h1') {
+          firstBlock.contenido = title;
+        } else {
+          parsedBlocks.unshift({ id: 'blk-title-h1', tipo: 'h1', contenido: title });
+        }
       }
     }
 
-    flushTextBlock();
     return parsedBlocks;
   };
 
-  // --- SERIALIZER BLOCOS -> MD ---
+  // --- SERIALIZER ---
   const serializeBlocksToMarkdown = (blocksList) => {
     return blocksList.map((block) => {
       if (!block) return '';
@@ -265,7 +284,7 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     }).join('\n');
   };
 
-  // --- EVENT HANDLERS ---
+  // --- HANDLERS ---
   const handleBlockChange = (index, value, extra = null, desc = null) => {
     const newBlocks = [...blocks];
     newBlocks[index].contenido = value;
@@ -278,7 +297,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     const newBlocks = [...blocks];
     let newBlock = { id: 'blk-' + tipo + '-' + Date.now(), tipo, contenido: content };
     
-    // Add defaults for structured types
     if (tipo === 'checklist') newBlock.extra = 'pendiente';
     if (tipo === 'desplegable') newBlock.extra = 'Contenido colapsado...';
     if (tipo === 'destacado') newBlock.extra = '💡';
@@ -294,7 +312,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     newBlocks.splice(index + 1, 0, newBlock);
     triggerChange(newBlocks);
     
-    // Move focus to new block after render
     setTimeout(() => {
       const nextInput = blockRefs.current[index + 1];
       if (nextInput) nextInput.focus();
@@ -303,7 +320,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
 
   const removeBlock = (index) => {
     if (blocks.length === 1) {
-      // Don't remove last block, just make it normal text
       const newBlocks = [...blocks];
       newBlocks[0] = { id: 'blk-txt-' + Date.now(), tipo: 'texto', contenido: '' };
       triggerChange(newBlocks);
@@ -312,7 +328,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     const newBlocks = blocks.filter((_, idx) => idx !== index);
     triggerChange(newBlocks);
     
-    // Move focus to previous block
     setTimeout(() => {
       const prevIdx = Math.max(0, index - 1);
       const prevInput = blockRefs.current[prevIdx];
@@ -320,20 +335,21 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     }, 50);
   };
 
-  // Navigation using keyboard
   const handleKeyDown = (e, index, block) => {
     const value = block.contenido || '';
     
     if (e.key === 'Enter') {
-      if (slashMenu.visible) return; // Allow menu to consume Enter
-      
+      if (slashMenu.visible) return;
       e.preventDefault();
       insertBlock(index, 'texto', '');
     } 
-    
+    else if (e.key === ' ' && value === '') {
+      // Space key on empty text block triggers AI input bar
+      e.preventDefault();
+      setAiActiveBlockIndex(index);
+    }
     else if (e.key === 'Backspace' && value === '') {
       e.preventDefault();
-      // If it is a special block type, convert it back to standard text first
       if (block.tipo !== 'texto') {
         const newBlocks = [...blocks];
         newBlocks[index] = { ...block, tipo: 'texto', extra: null, desc: null };
@@ -342,13 +358,11 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
         removeBlock(index);
       }
     } 
-    
     else if (e.key === 'ArrowUp') {
       e.preventDefault();
       const prevInput = blockRefs.current[index - 1];
       if (prevInput) prevInput.focus();
     } 
-    
     else if (e.key === 'ArrowDown') {
       e.preventDefault();
       const nextInput = blockRefs.current[index + 1];
@@ -356,29 +370,21 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     }
   };
 
-  // Slash commands trigger
   const handleKeyUp = (e, index, block) => {
     const value = block.contenido || '';
     
-    // Detect slash key
     if (e.key === '/') {
-      const selection = window.getSelection();
-      const textNode = selection.anchorNode;
-      if (textNode) {
-        // Simple trigger if block ends with slash or contains it
-        setSlashMenu({
-          visible: true,
-          query: '',
-          index: 0,
-          blockId: block.id,
-          blockIndex: index
-        });
-      }
+      setSlashMenu({
+        visible: true,
+        query: '',
+        index: 0,
+        blockId: block.id,
+        blockIndex: index
+      });
     } else if (slashMenu.visible) {
       if (e.key === 'Escape') {
         setSlashMenu({ ...slashMenu, visible: false });
       } else {
-        // Update search query based on text after the last '/'
         const slashIdx = value.lastIndexOf('/');
         if (slashIdx !== -1) {
           const query = value.substr(slashIdx + 1);
@@ -390,7 +396,36 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     }
   };
 
-  // --- FLOATING MENU TOOLS LIST ---
+  const handleAISubmit = async (index) => {
+    if (!aiPrompt.trim()) return;
+    setAiLoading(true);
+    try {
+      const systemPrompt = `
+        Actúas como un asistente de edición de video inteligente de élite integrado en un lienzo interactivo tipo Notion.
+        Genera contenido estructurado en Markdown puro para responder a la solicitud del usuario de manera profesional.
+        
+        REGLAS DE FORMATO:
+        1. Utiliza encabezados de Markdown (##, ###, ####) para estructurar secciones de tomas, ideas, guión o copy.
+        2. Puedes crear tablas de Markdown, checklists (- [ ] para pendiente, - [/] para en proceso, - [x] para completado), listas de viñetas, bloques de código, divisores, etc.
+        3. Escribe directamente el guión, copy, tabla o contenido solicitado en el lienzo sin introducciones ni saludos explicativos innecesarios.
+      `;
+      
+      const response = await aiService.askRaw(systemPrompt, aiPrompt, settings);
+      const aiBlocks = parseMarkdownToBlocks(response);
+      
+      const newBlocks = [...blocks];
+      newBlocks.splice(index, 1, ...aiBlocks);
+      
+      triggerChange(newBlocks);
+      setAiActiveBlockIndex(null);
+      setAiPrompt('');
+    } catch (e) {
+      alert('Error de IA: ' + e.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const allTools = [
     { id: 'texto', name: 'Texto', desc: 'Escribe con texto normal', icon: Type, cat: 'Bloques básicos' },
     { id: 'h1', name: 'Encabezado 1', desc: 'Título de sección grande', icon: Heading1, cat: 'Bloques básicos' },
@@ -428,13 +463,11 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
   const applySlashCommand = (toolId) => {
     const index = slashMenu.blockIndex;
     const block = blocks[index];
-    const cleanText = (block.contenido || '').replace(/\/[^/]*$/, ''); // Remove slash query
+    const cleanText = (block.contenido || '').replace(/\/[^/]*$/, '');
 
-    // Replace the block type or transform it
     const newBlocks = [...blocks];
     let newBlock = { ...block, tipo: toolId, contenido: cleanText };
 
-    // Initial setups for specific types
     if (toolId === 'checklist') newBlock.extra = 'pendiente';
     if (toolId === 'desplegable') newBlock.extra = 'Contenido colapsado...';
     if (toolId === 'destacado') newBlock.extra = '💡';
@@ -451,7 +484,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     triggerChange(newBlocks);
     setSlashMenu({ ...slashMenu, visible: false });
 
-    // Refocus
     setTimeout(() => {
       const input = blockRefs.current[index];
       if (input) input.focus();
@@ -484,7 +516,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
     }
   };
 
-  // Mock initial database states for tables, board kanban, calendars
   const getMockDatabaseData = (type) => {
     if (type === 'vista-tabla') {
       return {
@@ -534,9 +565,9 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
       className="w-full flex-1 flex flex-col p-6 min-h-[500px] select-text relative select-none"
       onKeyDown={handleSlashMenuKeyDown}
     >
-      <div className="w-full max-w-[900px] mx-auto flex flex-col gap-1.5 pb-24">
+      <div className="w-full max-w-[900px] mx-auto flex flex-col gap-2 pb-24">
         {blocks.map((block, index) => {
-          const Icon = allTools.find(t => t.id === block.tipo)?.icon || Type;
+          const isAIActive = aiActiveBlockIndex === index;
           
           return (
             <div 
@@ -544,8 +575,8 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
               className="group flex items-start gap-2 w-full relative transition-all duration-150 rounded px-1.5 py-0.5"
               style={{ backgroundColor: activeBlockIndex === index ? 'rgba(255,255,255,0.02)' : 'transparent' }}
             >
-              {/* Left-hand actions bar for block options */}
-              <div className="absolute -left-7 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all duration-200 z-10">
+              {/* Left-hand actions bar: Add block (+) and Option handle (::) */}
+              <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all duration-200 z-30">
                 <button 
                   onClick={() => insertBlock(index, 'texto', '')}
                   className="w-4 h-4 rounded hover:bg-white/10 flex items-center justify-center text-neutral-500 hover:text-white"
@@ -553,18 +584,73 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
                 >
                   <Plus size={10} />
                 </button>
-                <button 
-                  onClick={() => removeBlock(index)}
-                  className="w-4 h-4 rounded hover:bg-white/10 flex items-center justify-center text-neutral-500 hover:text-red-400"
-                  title="Eliminar bloque"
-                >
-                  <Trash2 size={10} />
-                </button>
+                
+                {/* Drag handle and Tooltip popup */}
+                <div className="relative group/tooltip">
+                  <button 
+                    className="w-4 h-4 rounded hover:bg-white/10 flex items-center justify-center text-neutral-500 hover:text-white cursor-grab"
+                  >
+                    <div className="grid grid-cols-2 gap-0.5 w-2">
+                      <div className="w-0.5 h-0.5 bg-current rounded-full" />
+                      <div className="w-0.5 h-0.5 bg-current rounded-full" />
+                      <div className="w-0.5 h-0.5 bg-current rounded-full" />
+                      <div className="w-0.5 h-0.5 bg-current rounded-full" />
+                      <div className="w-0.5 h-0.5 bg-current rounded-full" />
+                      <div className="w-0.5 h-0.5 bg-current rounded-full" />
+                    </div>
+                  </button>
+                  {/* Tooltip Note matching visual prompt */}
+                  <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover/tooltip:flex flex-col items-center pointer-events-none z-[1050]">
+                    <div className="bg-[#0b0f19] border border-white/10 rounded-lg px-2.5 py-1.5 text-[8px] leading-normal text-neutral-400 w-[140px] shadow-2xl">
+                      <div><strong className="text-white font-black">Arrastra</strong> para mover</div>
+                      <div className="text-neutral-500 mt-0.5"><strong className="text-white font-black">Haz clic</strong> o pulsa <strong className="text-white font-black">⌘/</strong> para abrir el menú.</div>
+                    </div>
+                    <div className="w-1.5 h-1.5 bg-[#0b0f19] border-r border-b border-white/10 rotate-45 -mt-1" />
+                  </div>
+                </div>
               </div>
 
-              {/* Dynamic render block types */}
+              {/* Dynamic render block contents or AI bar input */}
               <div className="flex-1 flex items-start gap-2.5 w-full">
-                {renderBlockContent(block, index, handleBlockChange, blockRefs, handleKeyDown, handleKeyUp, setActiveBlockIndex, activeBlockIndex, t)}
+                {isAIActive ? (
+                  <div className="w-full flex flex-col gap-2 rounded-xl border border-purple-500/20 bg-purple-500/[0.02] shadow-lg animate-in slide-in-from-top duration-200">
+                    <div className="flex items-center gap-3 bg-zinc-950/60 border border-white/5 rounded-xl px-3 py-1.5">
+                      <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center text-neutral-400">
+                        <Sparkles size={11} className="text-purple-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={aiPrompt}
+                        onChange={e => setAiPrompt(e.target.value)}
+                        onKeyDown={async e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            await handleAISubmit(index);
+                          } else if (e.key === 'Escape') {
+                            setAiActiveBlockIndex(null);
+                            setAiPrompt('');
+                          }
+                        }}
+                        placeholder="Editar con IA (@ para usar una habilidad)"
+                        className="flex-1 bg-transparent border-0 outline-none text-xs text-neutral-200 placeholder-neutral-600"
+                        autoFocus
+                      />
+                      <button 
+                        onClick={() => handleAISubmit(index)}
+                        disabled={aiLoading}
+                        className="w-5 h-5 rounded-lg bg-purple-600 hover:bg-purple-500 flex items-center justify-center text-white transition-colors"
+                      >
+                        {aiLoading ? (
+                          <div className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <ArrowUp size={10} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  renderBlockContent(block, index, handleBlockChange, blockRefs, handleKeyDown, handleKeyUp, setActiveBlockIndex, activeBlockIndex, t)
+                )}
               </div>
             </div>
           );
@@ -579,7 +665,7 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
             backgroundColor: 'rgba(20, 20, 22, 0.95)', 
             borderColor: 'rgba(255,255,255,0.08)',
             boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
-            left: '100px', // Fallback or dynamic position relative to caret could go here
+            left: '100px',
             top: `${Math.min(500, (slashMenu.blockIndex || 0) * 32 + 80)}px`
           }}
         >
@@ -587,7 +673,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
             {slashMenu.query ? `Buscando "${slashMenu.query}"` : 'Sugerencias'}
           </div>
           <div className="flex-1 overflow-y-auto py-1.5 mac-scrollbar max-h-[280px]">
-            {/* Group tools by category */}
             {['Sugerencias', 'Bloques básicos', 'Multimedia', 'Bases de datos', 'Bloques avanzados'].map((cat) => {
               const catTools = filteredTools.filter(t => t.cat === cat);
               if (catTools.length === 0) return null;
@@ -639,7 +724,7 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true 
   );
 }
 
-// Render the detailed elements for each block type inline
+// Render block content inline
 function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, onFocus, activeBlockIndex, t) {
   const isSelected = activeBlockIndex === index;
   
@@ -654,7 +739,6 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
     lineHeight: '1.6'
   };
 
-  // Helper text-input block wrapper
   const renderTextInput = (fontSizeClass, fontWeightClass, placeholderText, extraStyle = {}) => {
     return (
       <input
@@ -715,7 +799,6 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
     case 'checklist':
       return (
         <div className="flex items-center w-full gap-3 pl-1">
-          {/* Custom three-state check button */}
           <button
             onClick={() => {
               const nextStatus = block.extra === 'pendiente' ? 'proceso' : block.extra === 'proceso' ? 'completado' : 'pendiente';
@@ -927,9 +1010,8 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
             />
           </div>
           
-          {/* Real pre-render elements if URL is set */}
           {block.contenido && block.contenido.startsWith('http') && (
-            <div className="mt-3 rounded overflow-hidden max-w-full flex justify-center bg-black/20 border border-white/5 p-2">
+            <div className="mt-3 rounded overflow-hidden max-w-[full] flex justify-center bg-black/20 border border-white/5 p-2">
               {block.tipo === 'imagen' && <img src={block.contenido} alt={block.extra} className="max-h-[250px] object-contain rounded" />}
               {block.tipo === 'video' && <video src={block.contenido} controls className="max-h-[250px] rounded w-full" />}
               {block.tipo === 'audio' && <audio src={block.contenido} controls className="w-full py-2" />}
@@ -1006,7 +1088,6 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
         </div>
       );
 
-    // DATABASE VIEWS RENDERERS
     case 'vista-tabla':
       return (
         <div className="w-full flex flex-col border border-white/10 rounded-xl bg-black/30 overflow-hidden">
@@ -1059,7 +1140,6 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
               <Trello size={14} className="text-yellow-400" />
               <span className="text-[9px] font-black uppercase tracking-wider text-white">Vista de Tablero (Kanban)</span>
             </div>
-            <span className="text-[7px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded font-black tracking-widest uppercase">db board</span>
           </div>
           <div className="p-3 grid grid-cols-3 gap-3">
             {block.contenido.columns?.map((col, cIdx) => {
@@ -1098,7 +1178,6 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
                         className="bg-transparent border-0 outline-none text-[8px] text-neutral-500 w-full"
                         placeholder="Descripción..."
                       />
-                      {/* Simple move trigger column */}
                       <div className="flex gap-1 mt-1.5 border-t border-white/5 pt-1.5">
                         {block.contenido.columns.map(destCol => {
                           if (destCol === col) return null;
@@ -1230,7 +1309,6 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
             <div>lun</div><div>mar</div><div>mié</div><div>jue</div><div>vie</div><div>sáb</div><div>dom</div>
           </div>
           <div className="p-2 grid grid-cols-7 gap-1 min-h-[180px]">
-            {/* Simple month visualization with 14 dummy cells starting from Monday June 8th to June 21st */}
             {Array.from({ length: 14 }).map((_, cIdx) => {
               const dayNum = cIdx + 8;
               const dateStr = `2026-06-${dayNum < 10 ? '0' + dayNum : dayNum}`;

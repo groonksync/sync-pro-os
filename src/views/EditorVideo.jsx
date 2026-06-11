@@ -788,8 +788,8 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
              </div>
            </header>
            <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-             <div className="flex-1 rounded-lg overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <NotionBlockEditor value={editorContent} onChange={setEditorContent} isDark={isDark} />
+             <div className="flex-1 overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: 'transparent', border: 'none' }}>
+               <NotionBlockEditor value={editorContent} onChange={setEditorContent} isDark={isDark} settings={settings} title={activeStrategy.titulo_estrategia} />
              </div>
            </div>
         </div>
@@ -810,8 +810,8 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
             </div>
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-            <div className="flex-1 rounded-lg overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-              <NotionBlockEditor value={editorContent} onChange={setEditorContent} isDark={isDark} />
+            <div className="flex-1 overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: 'transparent', border: 'none' }}>
+              <NotionBlockEditor value={editorContent} onChange={setEditorContent} isDark={isDark} settings={settings} title={activeMeeting.session_title} />
             </div>
           </div>
         </div>
