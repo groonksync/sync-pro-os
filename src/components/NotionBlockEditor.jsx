@@ -1254,6 +1254,6 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
       );
 
     default:
-      return renderTextInput('text-xs', 'font-normal', 'Escribe aquí tu texto o usa / para insertar comandos...');
+      return renderTextInput('text-xs', 'font-normal', 'Presiona "Espacio" para activar la IA o escribe "/" para mostrar los comandos');
   }
 }

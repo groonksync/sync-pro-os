@@ -786,21 +786,6 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                  <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{selectedCompany?.nombre_empresa}</p>
                </div>
              </div>
-             <div className="flex items-center gap-3">
-               <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
-                 {formatTime(time)}
-                 <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
-                   {isTimerRunning ? <Pause size={10}/> : <Play size={10}/>}
-                 </button>
-                 <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-6 h-6 rounded flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
-                   <RotateCcw size={10} color={t.textDim}/>
-                 </button>
-               </div>
-               <button onClick={saveStrategy} className="px-4 py-2 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 transition-all"
-                 style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
-                 <Save size={12}/> Guardar
-               </button>
-             </div>
            </header>
            <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
              <div className="flex-1 rounded-lg overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
@@ -822,21 +807,6 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 <h3 className="text-xs font-black uppercase text-white">{activeMeeting.session_title}</h3>
                 <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{activeClient?.nombre}</p>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-mono font-bold" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
-                {formatTime(time)}
-                <button onClick={() => setIsTimerRunning(!isTimerRunning)} className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
-                  {isTimerRunning ? <Pause size={10}/> : <Play size={10}/>}
-                </button>
-                <button onClick={() => { setTime(0); setIsTimerRunning(false); }} className="w-6 h-6 rounded flex items-center justify-center" style={{ border: `1px solid ${t.border}` }}>
-                  <RotateCcw size={10} color={t.textDim}/>
-                </button>
-              </div>
-              <button onClick={saveMeeting} className="px-4 py-2 text-[9px] font-black rounded-lg uppercase tracking-wider flex items-center gap-1.5 transition-all"
-                style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
-                <Save size={12}/> Guardar
-              </button>
             </div>
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
