@@ -12,7 +12,7 @@ import FormularioPrestamo from '../components/FormularioPrestamo';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useAmortizacion, useAmortizacionGlobal, generarCronograma, generarCronogramaDiario, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { uploadPdfToDrive, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getCalendarList } from '../lib/googleApi';
 

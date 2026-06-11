@@ -1,4 +1,4 @@
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
 
 export function generarComprobantePDF({ prestamo, cuotaInfo, tipo = 'mensual' }) {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
