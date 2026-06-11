@@ -147,7 +147,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     if (!newClient.nombre) return;
     setLoading(true);
     try {
-      const payload = { 
+      let payload = { 
         nombre: newClient.nombre, 
         email: newClient.email, 
         empresa: newClient.empresa, 
@@ -156,22 +156,39 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
         nacionalidad: newClient.nacionalidad,
         foto_url: newClient.foto
       };
-      const { error } = await supabase.from('clientes_editor').insert([payload]);
       
-      if (error) {
-        if (error.message && error.message.includes('nacionalidad')) {
-          const { nacionalidad, ...fallbackPayload } = payload;
-          const { error: retryError } = await supabase.from('clientes_editor').insert([fallbackPayload]);
-          if (retryError) throw retryError;
-          alert("Cliente guardado con éxito (sin nacionalidad). Por favor ejecuta la consulta SQL en el panel de Supabase para agregar la columna.");
+      let success = false;
+      let attempts = 0;
+      let currentPayload = { ...payload };
+      
+      while (!success && attempts < 12) {
+        attempts++;
+        const { error } = await supabase.from('clientes_editor').insert([currentPayload]);
+        if (!error) {
+          success = true;
+          break;
+        }
+        
+        // Match error format: Could not find the 'status' column of 'clientes_editor' in the schema cache
+        const match = error.message && error.message.match(/Could not find the '([^']+)' column/);
+        if (match && match[1]) {
+          const missingColumn = match[1];
+          delete currentPayload[missingColumn];
         } else {
           throw error;
         }
       }
+      
+      if (!success) {
+        throw new Error("No se pudo insertar el cliente tras varios reintentos de compatibilidad.");
+      }
+
       await fetchClients();
       setIsClientModalOpen(false);
       setNewClient({ nombre: '', email: '', pais: '', empresa: '', status: 'Activo', telefono: '', nacionalidad: '', foto: '' });
-    } catch (e) { alert(e.message); }
+    } catch (e) { 
+      alert("Error al registrar cliente: " + e.message); 
+    }
     setLoading(false);
   };
 
