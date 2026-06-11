@@ -1366,29 +1366,29 @@ const Prestamos = ({ data, setData, settings, isDark, preSelectedId, onClearSele
                             <td style={{ padding: '12px 14px' }}></td>
                             <td style={{ padding: '12px 14px', textAlign: 'right' }}>
                               <span style={{ fontSize: '11px', fontWeight: 700, color: t.accent }}>
-                                {ledgerResumen.interesPromedio.toLocaleString()}/mes
+                                {(ledgerResumen.interesPromedio || 0).toLocaleString()}/mes
                               </span>
                             </td>
                             <td style={{ padding: '12px 14px', textAlign: 'right' }}>
                               <span style={{ fontSize: '11px', fontWeight: 700, color: t.text }}>
-                                {ledgerResumen.totalPagado.toLocaleString()} pagado
+                                {(ledgerResumen.totalPagado || 0).toLocaleString()} pagado
                               </span>
                               <br />
                               <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>
-                                {ledgerResumen.totalPendiente.toLocaleString()} pend.
+                                {(ledgerResumen.totalPendiente || 0).toLocaleString()} pend.
                               </span>
-                              {ledgerResumen.totalMora > 0 && (
+                              {(ledgerResumen.totalMora || 0) > 0 && (
                                 <>
                                   <br />
                                   <span style={{ fontSize: '10px', fontWeight: 700, color: '#ef4444' }}>
-                                    {ledgerResumen.totalMora.toLocaleString()} en mora
+                                    {(ledgerResumen.totalMora || 0).toLocaleString()} en mora
                                   </span>
                                 </>
                               )}
                             </td>
                             <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                               <span style={{ fontSize: '9px', fontWeight: 600, color: t.textMuted }}>
-                                {ledgerResumen.cuotasPagadas}/{ledgerResumen.totalCuotas} pagadas
+                                {ledgerResumen.cuotasPagadas || 0}/{ledgerResumen.totalCuotas || 0} pagadas
                               </span>
                             </td>
                           </tr>
