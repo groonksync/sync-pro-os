@@ -757,151 +757,127 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
       {/* ── VISTA 1: DASHBOARD FINANCIERO ─────────────────────────────────────── */}
       {activeTab === 'dashboard' && (
-        <div className="flex flex-col gap-6 animate-in fade-in duration-500">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start animate-in fade-in duration-500 max-w-[1400px] mx-auto w-full px-6">
           
-          {/* Tarjetas KPI Sin Sombras */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* COLUMNA IZQUIERDA Y CENTRAL: MÉTRICAS Y PRESUPUESTOS (2/3) */}
+          <div className="lg:col-span-2 space-y-6">
             
-            {/* KPI 1: Total Gastado */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
-              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
-                <span>Gastado Total (Consolidado)</span>
-                <CreditCard size={14} className="text-neutral-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-light text-white tracking-tight">{formatCurrency(totalEgresosAllTime)}</p>
-                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Gastos + Suscripciones</p>
-              </div>
-            </div>
-
-            {/* KPI 2: Presupuesto Mensual */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
-              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
-                <span>Presupuesto Mes</span>
-                <button 
-                  onClick={handleOpenBudgetEditor} 
-                  className="p-1.5 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10 transition-all text-neutral-400 hover:text-white flex items-center justify-center"
-                  title="Ajustar Presupuesto"
-                >
-                  <Sliders size={12} />
-                </button>
-              </div>
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <p className="text-2xl font-light text-white tracking-tight">{formatBudget(monthlyBudget)}</p>
-                  <button onClick={handleOpenBudgetEditor} className="text-[8px] text-neutral-500 font-bold hover:text-white uppercase tracking-wider">Ajustar</button>
+            {/* Tarjetas KPI Superiores */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* KPI 1: Gastado Mes */}
+              <div className="p-5 rounded-2xl border flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.01]" 
+                style={{ backgroundColor: t.panel, borderColor: t.border }}>
+                <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-3">
+                  <span>Gastado en el Mes</span>
+                  <CreditCard size={14} className="text-neutral-500" />
                 </div>
-                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Límite mensual general</p>
-              </div>
-            </div>
-
-            {/* KPI 3: Ingresos del Mes */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
-              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
-                <span>Ingresos del Mes</span>
-                <TrendingUp size={14} className="text-emerald-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-light text-emerald-400 tracking-tight">{formatCurrency(totalIngresosMes)}</p>
-                <p className="text-[9px] text-neutral-500 mt-1 font-bold">De ventas digitales</p>
-              </div>
-            </div>
-
-            {/* KPI 4: Margen Neto */}
-            <div className="p-5 rounded-2xl border border-white/5 flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.02]" style={{ backgroundColor: t.panel }}>
-              <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-4">
-                <span>Margen Neto Mes</span>
-                {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
-              </div>
-              <div>
-                <p className={`text-2xl font-semibold tracking-tight ${gananciaNetaMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {gananciaNetaMes >= 0 ? '+' : ''}{formatCurrency(gananciaNetaMes)}
-                </p>
-                <p className="text-[9px] text-neutral-500 mt-1 font-bold">Balance de ganancias</p>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Segunda fila: Progreso Presupuesto General Horizontal */}
-          <div className="w-full p-6 rounded-3xl border border-white/5 flex flex-col md:flex-row items-center justify-between gap-8 transition-all" style={{ backgroundColor: t.panel }}>
-            
-            {/* Lado Izquierdo: Título y Círculo de Progreso */}
-            <div className="flex flex-col sm:flex-row items-center gap-6 flex-shrink-0">
-              <div className="relative w-28 h-28 flex items-center justify-center rounded-full border border-white/5 bg-black/10">
-                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.02)" strokeWidth="6" fill="transparent" />
-                  <circle 
-                    cx="50" 
-                    cy="50" 
-                    r="42" 
-                    stroke={getProgressColor(budgetUsagePercent)} 
-                    strokeWidth="6" 
-                    fill="transparent" 
-                    strokeDasharray={2 * Math.PI * 42}
-                    strokeDashoffset={(2 * Math.PI * 42) * (1 - budgetUsagePercent / 100)}
-                    strokeLinecap="round"
-                    style={{ transition: 'stroke-dashoffset 0.8s ease' }}
-                  />
-                </svg>
-                <div className="absolute text-center">
-                  <span className="text-2xl font-black text-white">{budgetUsagePercent}%</span>
-                  <span className="text-[7px] text-neutral-500 font-bold uppercase tracking-widest block">Consumido</span>
+                <div>
+                  <p className="text-2xl font-light text-white tracking-tight font-mono">{formatCurrency(totalEgresosMes)}</p>
+                  <p className="text-[9px] text-neutral-500 mt-1 font-bold">Gastos + Suscripciones del período</p>
                 </div>
               </div>
-              <div className="text-center sm:text-left">
-                <h3 className="text-sm font-black uppercase tracking-wider text-white">Presupuesto Mensual Consumido</h3>
-                <p className="text-[10px] text-neutral-400 mt-1 max-w-[280px]">Progreso general de tus egresos frente al límite asignado para este mes.</p>
-              </div>
-            </div>
 
-            {/* Lado Derecho: 3 Tarjetas de Métricas en Fila */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full md:w-auto flex-grow max-w-3xl">
-              
-              {/* Tarjeta 1: Total Consumido */}
-              <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col justify-between min-h-[90px]">
-                <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Total Consumido</span>
-                <p className="text-lg font-bold text-white tracking-tight mt-2">{formatCurrency(totalEgresosMes)}</p>
-                <span className="text-[8px] text-neutral-500 mt-1 font-bold">Gastos acumulados</span>
-              </div>
-
-              {/* Tarjeta 2: Presupuesto Límite */}
-              <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col justify-between min-h-[90px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Límite Establecido</span>
-                  <button onClick={handleOpenBudgetEditor} className="p-1 rounded-md border border-white/5 bg-white/5 text-neutral-400 hover:text-white transition-all">
-                    <Sliders size={10} />
+              {/* KPI 2: Presupuesto Mes */}
+              <div className="p-5 rounded-2xl border flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.01]" 
+                style={{ backgroundColor: t.panel, borderColor: t.border }}>
+                <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-3">
+                  <span>Presupuesto Mes</span>
+                  <button onClick={handleOpenBudgetEditor} className="p-1 rounded-md hover:bg-white/5 text-neutral-400 hover:text-white transition-all">
+                    <Sliders size={12} />
                   </button>
                 </div>
-                <p className="text-lg font-bold text-white tracking-tight mt-2">{formatBudget(monthlyBudget)}</p>
-                <button onClick={handleOpenBudgetEditor} className="text-[8px] text-neutral-500 hover:text-white uppercase tracking-wider font-bold text-left mt-1">Ajustar límite</button>
+                <div>
+                  <div className="flex items-baseline gap-2">
+                    <p className="text-2xl font-light text-white tracking-tight font-mono">{formatBudget(monthlyBudget)}</p>
+                  </div>
+                  <p className="text-[9px] text-neutral-500 mt-1 font-bold">Límite mensual general</p>
+                </div>
               </div>
 
-              {/* Tarjeta 3: Remanente Disponible */}
-              <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.02] flex flex-col justify-between min-h-[90px]">
-                <span className="text-[9px] font-black uppercase tracking-wider text-neutral-400">Remanente</span>
-                <p className={`text-lg font-bold tracking-tight mt-2 ${monthlyBudget - totalEgresosMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {formatCurrency(monthlyBudget - totalEgresosMes)}
-                </p>
-                <span className="text-[8px] text-neutral-500 mt-1 font-bold">Disponible para gastar</span>
+              {/* KPI 3: Ingresos Mes */}
+              <div className="p-5 rounded-2xl border flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.01]" 
+                style={{ backgroundColor: t.panel, borderColor: t.border }}>
+                <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-3">
+                  <span>Ingresos del Mes</span>
+                  <TrendingUp size={14} className="text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-light text-emerald-400 tracking-tight font-mono">{formatCurrency(totalIngresosMes)}</p>
+                  <p className="text-[9px] text-neutral-500 mt-1 font-bold">Ventas & Intereses cobrados</p>
+                </div>
               </div>
 
+              {/* KPI 4: Balance Neto */}
+              <div className="p-5 rounded-2xl border flex flex-col justify-between min-h-[110px] transition-all hover:scale-[1.01]" 
+                style={{ backgroundColor: t.panel, borderColor: t.border }}>
+                <div className="flex items-center justify-between text-neutral-400 text-[9px] font-black uppercase tracking-widest mb-3">
+                  <span>Balance Neto Mes</span>
+                  {gananciaNetaMes >= 0 ? <Sparkles size={14} className="text-emerald-400" /> : <AlertCircle size={14} className="text-rose-400" />}
+                </div>
+                <div>
+                  <p className={`text-2xl font-semibold tracking-tight font-mono ${gananciaNetaMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {gananciaNetaMes >= 0 ? '+' : ''}{formatCurrency(gananciaNetaMes)}
+                  </p>
+                  <p className="text-[9px] text-neutral-500 mt-1 font-bold">Resultado consolidado</p>
+                </div>
+              </div>
             </div>
 
-          </div>
+            {/* Presupuesto Consumido (Radial + Detalles) */}
+            <div className="p-6 rounded-3xl border flex flex-col sm:flex-row items-center justify-between gap-6 transition-all" 
+              style={{ backgroundColor: t.panel, borderColor: t.border }}>
+              <div className="flex items-center gap-6">
+                <div className="relative w-24 h-24 flex items-center justify-center rounded-full border border-white/5 bg-black/10">
+                  <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.02)" strokeWidth="6" fill="transparent" />
+                    <circle 
+                      cx="50" 
+                      cy="50" 
+                      r="42" 
+                      stroke={getProgressColor(budgetUsagePercent)} 
+                      strokeWidth="6" 
+                      fill="transparent" 
+                      strokeDasharray={2 * Math.PI * 42}
+                      strokeDashoffset={(2 * Math.PI * 42) * (1 - budgetUsagePercent / 100)}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                    />
+                  </svg>
+                  <div className="absolute text-center">
+                    <span className="text-xl font-black text-white font-mono">{budgetUsagePercent}%</span>
+                    <span className="text-[7px] text-neutral-500 font-bold uppercase tracking-widest block">Consumo</span>
+                  </div>
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm font-black uppercase tracking-wider text-white">Presupuesto Mensual</h3>
+                  <p className="text-[10px] text-neutral-400 mt-1 max-w-[280px]">Consumo general del presupuesto respecto al límite configurado para este mes.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 w-full sm:w-auto shrink-0 font-mono">
+                <div className="p-3 bg-zinc-950/20 border border-white/5 rounded-xl text-left">
+                  <span className="text-[7px] font-black uppercase tracking-wider text-neutral-500 block">Disponible</span>
+                  <span className={`text-xs font-bold ${monthlyBudget - totalEgresosMes >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {formatCurrency(monthlyBudget - totalEgresosMes)}
+                  </span>
+                </div>
+                <div className="p-3 bg-zinc-950/20 border border-white/5 rounded-xl text-left">
+                  <span className="text-[7px] font-black uppercase tracking-wider text-neutral-500 block">Consumido</span>
+                  <span className="text-xs font-bold text-neutral-300">
+                    {formatCurrency(totalEgresosMes)}
+                  </span>
+                </div>
+              </div>
+            </div>
 
-          {/* Tercera fila: Presupuestos por Categoría (Grilla) y Préstamos/Obligaciones */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            {/* Columna Izquierda: Categorías como una grilla de 2 columnas */}
-            <div className="lg:col-span-6 p-6 rounded-3xl border border-white/5 flex flex-col gap-6" style={{ backgroundColor: t.panel }}>
+            {/* Presupuestos por Categoría */}
+            <div className="p-6 rounded-3xl border flex flex-col gap-6" style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Presupuestos por Categoría</h3>
-                  <p className="text-[10px] text-neutral-400">Control de gastos específicos del mes</p>
+                  <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Límites de Categoría</h3>
+                  <p className="text-[10px] text-neutral-400">Distribución de gastos del mes</p>
                 </div>
-                <button onClick={handleOpenBudgetEditor} className="text-[9px] font-black uppercase tracking-widest rounded-lg px-3 py-1.5 transition-all border border-white/5 bg-white/5 hover:bg-white/10 hover:border-white/10 text-white flex items-center gap-1.5">
-                  <Sliders size={10} /> Configurar
+                <button onClick={handleOpenBudgetEditor} className="text-[8px] font-black uppercase tracking-widest rounded-lg px-2.5 py-1.5 transition-all border border-white/5 bg-white/5 hover:bg-white/10 text-white flex items-center gap-1">
+                  <Sliders size={10} /> Ajustar
                 </button>
               </div>
 
@@ -910,20 +886,17 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   const Icon = cat.icon;
                   const isExceeded = cat.total > cat.limit;
                   return (
-                    <div key={cat.label} className="bg-zinc-950/30 p-3 rounded-xl border border-white/5 flex flex-col gap-2">
-                      <div className="flex items-center justify-between text-[11px] font-semibold">
+                    <div key={cat.label} className="bg-zinc-950/20 p-3.5 rounded-xl border border-white/5 flex flex-col gap-2">
+                      <div className="flex items-center justify-between text-xs font-bold">
                         <span className="flex items-center gap-2" style={{ color: cat.color }}>
                           <Icon size={12} />
                           {cat.label}
                         </span>
-                        <div className="flex items-center gap-1 font-mono text-[9px]">
-                          <span className={isExceeded ? 'text-rose-400 font-bold' : 'text-white'}>
-                            {formatCurrency(cat.total)}
-                          </span>
-                        </div>
+                        <span className={`font-mono text-xs ${isExceeded ? 'text-rose-400 font-black' : 'text-neutral-200'}`}>
+                          {formatCurrency(cat.total)}
+                        </span>
                       </div>
                       
-                      {/* Bar */}
                       <div className="h-1.5 w-full bg-white/5 rounded-xl overflow-hidden">
                         <div 
                           className="h-full rounded-xl transition-all duration-700"
@@ -934,11 +907,10 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                         />
                       </div>
 
-                      {/* Info */}
                       <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-wider text-neutral-500">
-                        <span>{cat.pct}% límite: {formatBudget(cat.limit)}</span>
+                        <span>{cat.pct}% de {formatBudget(cat.limit)}</span>
                         {isExceeded && (
-                          <span className="text-rose-400 font-mono">
+                          <span className="text-rose-400 font-mono font-black">
                             +{formatCurrency(cat.total - cat.limit)}
                           </span>
                         )}
@@ -949,33 +921,31 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
             </div>
 
-            {/* Columna Derecha: Préstamos & Obligaciones (Cuentas recibidas/bancarias y otorgadas) */}
-            <div className="lg:col-span-6 p-6 rounded-3xl border border-white/5 flex flex-col gap-6" style={{ backgroundColor: t.panel }}>
+            {/* Préstamos & Obligaciones */}
+            <div className="p-6 rounded-3xl border flex flex-col gap-6" style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-1">Préstamos y Obligaciones</h3>
-                <p className="text-[10px] text-neutral-400">Control de créditos recibidos (deudas) y otorgados (activos)</p>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Préstamos y Obligaciones</h3>
+                <p className="text-[10px] text-neutral-400">Control de deudas de préstamos recibidos y cuotas activas</p>
               </div>
 
-              {/* Métricas en la parte superior */}
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-zinc-950/30 p-3 rounded-xl border border-white/5 flex flex-col">
-                  <span className="text-[8px] font-black uppercase text-neutral-400 tracking-wider">Créditos Recibidos (Deudas)</span>
+                <div className="bg-zinc-950/20 p-3 rounded-xl border border-white/5 flex flex-col">
+                  <span className="text-[7.5px] font-black uppercase text-neutral-500 tracking-wider">Créditos Recibidos</span>
                   <span className="text-sm font-bold text-rose-400 mt-1 font-mono">{formatCurrency(totalDeudaRecibida)}</span>
                   <span className="text-[7px] text-neutral-500 mt-0.5">Total capital a pagar</span>
                 </div>
-                <div className="bg-zinc-950/30 p-3 rounded-xl border border-white/5 flex flex-col">
-                  <span className="text-[8px] font-black uppercase text-neutral-400 tracking-wider">Créditos Otorgados</span>
+                <div className="bg-zinc-950/20 p-3 rounded-xl border border-white/5 flex flex-col">
+                  <span className="text-[7.5px] font-black uppercase text-neutral-500 tracking-wider">Créditos Otorgados</span>
                   <span className="text-sm font-bold text-emerald-400 mt-1 font-mono">{formatCurrency(prestamosList.filter(p => getTipoPrestamo(p) === 'otorgado').reduce((s, p) => s + (parseFloat(p.capital) || 0), 0))}</span>
                   <span className="text-[7px] text-neutral-500 mt-0.5">Capital activo prestado</span>
                 </div>
               </div>
 
-              {/* Lista scrollable de cuotas pendientes para este mes */}
-              <div className="flex flex-col gap-3 flex-grow overflow-y-auto max-h-[220px] pr-1">
-                <h4 className="text-[9px] font-black uppercase tracking-wider text-white">Cuotas del Mes ({periodoMes})</h4>
+              <div className="flex flex-col gap-3">
+                <h4 className="text-[8px] font-black uppercase tracking-widest text-neutral-400">Cuotas del Mes ({periodoMes})</h4>
                 {cuotasRecibidasMes.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-6 text-neutral-500 text-[10px] italic border border-dashed border-white/5 rounded-xl bg-black/10">
-                    Sin obligaciones de pago registradas para este periodo
+                  <div className="text-center py-6 text-neutral-500 text-[9px] uppercase tracking-widest border border-dashed border-white/5 rounded-xl bg-zinc-950/10">
+                    Sin obligaciones registradas para este período
                   </div>
                 ) : (
                   <div className="flex flex-col gap-2">
@@ -1006,18 +976,17 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                         <div 
                           key={`${prestamo.id}-${cuota.key}`}
                           onClick={() => handleToggleRecibidoPago(prestamo, cuota.key)}
-                          className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 hover:bg-zinc-950/40 transition-all flex items-center justify-between cursor-pointer"
+                          className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 hover:bg-zinc-950/30 transition-all flex items-center justify-between cursor-pointer"
                         >
                           <div className="flex flex-col gap-0.5 min-w-0">
-                            <span className="text-[11px] font-bold text-white truncate">{prestamo.nombre || 'Préstamo Bancario'}</span>
-                            <span className="text-[8px] text-neutral-400 flex items-center gap-1">
+                            <span className="text-[11px] font-bold text-white truncate">{prestamo.nombre || 'Préstamo'}</span>
+                            <span className="text-[8px] text-neutral-400">
                               Cuota: {cuota.label} • Venc. {cuota.fechaVencimiento}
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="text-right">
                               <span className="text-[11px] font-bold text-white font-mono">{formatCurrency(cuota.total)}</span>
-                              <span className="block text-[7px] text-neutral-500">Monto cuota</span>
                             </div>
                             {statusBadge}
                           </div>
@@ -1031,48 +1000,87 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
           </div>
 
-          {/* Fila 3: Estadísticas rápidas Sin Sombras */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* COLUMNA DERECHA: TIMELINE DE GASTOS Y HIGHLIGHTS (1/3) */}
+          <div className="space-y-6">
             
-            {/* Estadística 1: Mayor Gasto */}
-            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.panel }}>
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center flex-shrink-0">
-                <TrendingDown size={20} />
+            {/* Actividad Reciente de Gastos */}
+            <div className="p-6 rounded-3xl border flex flex-col gap-4" style={{ backgroundColor: t.panel, borderColor: t.border }}>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Timeline de Gastos</h3>
+                <p className="text-[10px] text-neutral-400">Últimos egresos individuales registrados</p>
               </div>
-              <div className="min-w-0">
-                <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Mayor Gasto del Mes</span>
-                {mayorGastoMes ? (
-                  <>
-                    <h5 className="text-xs font-bold text-white truncate mt-1">{mayorGastoMes.descripcion}</h5>
-                    <p className="text-[11px] font-bold text-rose-400 mt-0.5 font-mono">-{formatCurrency(mayorGastoMes.monto)}</p>
-                  </>
-                ) : (
-                  <p className="text-[10px] text-neutral-500 italic mt-1">Sin egresos registrados</p>
+
+              <div className="flex flex-col gap-3 min-h-[220px]">
+                {egresosMesFiltrado.slice(0, 6).map(e => {
+                  const cat = catGastoConfig[e.categoria] || catGastoConfig['Otro'];
+                  const Icon = cat.icon;
+                  return (
+                    <div key={e.id} className="p-3 rounded-xl border border-white/5 bg-zinc-950/20 flex justify-between items-center text-xs">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/2" 
+                          style={{ border: `1px solid ${t.border}`, color: cat.color }}>
+                          <Icon size={14} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-white uppercase truncate text-[10px]">{e.descripcion}</p>
+                          <p className="text-[7.5px] text-neutral-500 font-mono mt-0.5">{e.fecha} • {e.categoria}</p>
+                        </div>
+                      </div>
+                      <span className="font-mono text-[10px] font-black text-rose-400 shrink-0">-{formatCurrency(e.monto)}</span>
+                    </div>
+                  );
+                })}
+                {egresosMesFiltrado.length === 0 && (
+                  <div className="flex flex-col items-center justify-center text-center p-8 text-neutral-500 h-full border border-dashed border-white/5 rounded-2xl flex-1">
+                    <p className="text-[9px] uppercase font-black tracking-widest text-neutral-400">Sin egresos recientes</p>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Estadística 2: Promedio Diario */}
-            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.panel }}>
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center flex-shrink-0">
-                <Calendar size={20} />
-              </div>
+            {/* Tarjetas de Resumen & Estadísticas */}
+            <div className="p-6 rounded-3xl border flex flex-col gap-4" style={{ backgroundColor: t.panel, borderColor: t.border }}>
               <div>
-                <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Gasto Diario Promedio</span>
-                <p className="text-sm font-bold text-white mt-1 font-mono">{formatCurrency(promedioDiarioMes)} / día</p>
-                <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mt-0.5">Mes transcurrido</p>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white mb-0.5">Análisis del Período</h3>
+                <p className="text-[10px] text-neutral-400">Resumen y frecuencia operativa</p>
               </div>
-            </div>
 
-            {/* Estadística 3: Frecuencia de Gastos */}
-            <div className="p-5 rounded-2xl border border-white/5 flex items-center gap-4" style={{ backgroundColor: t.panel }}>
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-400 flex items-center justify-center flex-shrink-0">
-                <Activity size={20} />
-              </div>
-              <div>
-                <span className="text-[8px] font-black uppercase text-neutral-400 tracking-widest block">Transacciones del Mes</span>
-                <p className="text-sm font-bold text-white mt-1">{egresosMesFiltrado.length} operaciones</p>
-                <p className="text-[8px] text-neutral-500 font-bold uppercase tracking-wider mt-0.5">En el periodo actual</p>
+              <div className="space-y-3 font-mono">
+                {/* Mayor Gasto */}
+                <div className="p-3.5 rounded-xl border border-white/5 bg-zinc-950/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <TrendingDown size={14} className="text-rose-400" />
+                    <div>
+                      <span className="text-[7.5px] font-black uppercase text-neutral-500 block">Mayor Gasto</span>
+                      <span className="text-[10px] font-bold text-neutral-300 block truncate max-w-[120px]">{mayorGastoMes ? mayorGastoMes.descripcion : 'N/A'}</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black text-rose-400">{mayorGastoMes ? formatCurrency(mayorGastoMes.monto) : '0.00'}</span>
+                </div>
+
+                {/* Gasto Diario */}
+                <div className="p-3.5 rounded-xl border border-white/5 bg-zinc-950/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Calendar size={14} className="text-amber-500" />
+                    <div>
+                      <span className="text-[7.5px] font-black uppercase text-neutral-500 block">Gasto Diario Promedio</span>
+                      <span className="text-[10px] font-bold text-neutral-300 block">Promedio</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black text-neutral-300">{formatCurrency(promedioDiarioMes)}</span>
+                </div>
+
+                {/* Transacciones */}
+                <div className="p-3.5 rounded-xl border border-white/5 bg-zinc-950/20 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Activity size={14} className="text-violet-400" />
+                    <div>
+                      <span className="text-[7.5px] font-black uppercase text-neutral-500 block">Frecuencia</span>
+                      <span className="text-[10px] font-bold text-neutral-300 block">Gastos Registrados</span>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-black text-neutral-300">{egresosMesFiltrado.length} ops</span>
+                </div>
               </div>
             </div>
 

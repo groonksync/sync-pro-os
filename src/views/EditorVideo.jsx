@@ -386,23 +386,25 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
       
       {/* HEADER NAV - only shown on main hub views, not inside sessions/profiles */}
       {['dashboard', 'client-list', 'agency-hub', 'facturas'].includes(viewState) && (
-        <nav className="h-14 flex items-center px-6 relative z-50 gap-1"
-          style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
-            {[
-              { id: 'dashboard', label: 'Dashboard' },
-              { id: 'client-list', label: 'Clientes' },
-              { id: 'agency-hub', label: 'Agencia Pro' },
-              { id: 'facturas', label: 'Facturas' },
-            ].map(tab => (
-              <button key={tab.id} onClick={() => setViewState(tab.id)}
-                className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
-                style={{
-                  backgroundColor: viewState === tab.id ? t.panel : 'transparent',
-                  border: viewState === tab.id ? `1px solid ${t.border}` : '1px solid transparent',
-                  color: viewState === tab.id ? t.accent : t.textDim,
-                }}>{tab.label}</button>
-            ))}
-        </nav>
+        <div className="w-full shrink-0">
+          <nav className="h-14 flex items-center px-6 relative z-50 gap-1 max-w-[1400px] mx-auto w-full"
+            style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
+              {[
+                { id: 'dashboard', label: 'Dashboard' },
+                { id: 'client-list', label: 'Clientes' },
+                { id: 'agency-hub', label: 'Agencia Pro' },
+                { id: 'facturas', label: 'Facturas' },
+              ].map(tab => (
+                <button key={tab.id} onClick={() => setViewState(tab.id)}
+                  className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                  style={{
+                    backgroundColor: viewState === tab.id ? t.panel : 'transparent',
+                    border: viewState === tab.id ? `1px solid ${t.border}` : '1px solid transparent',
+                    color: viewState === tab.id ? t.accent : t.textDim,
+                  }}>{tab.label}</button>
+              ))}
+          </nav>
+        </div>
       )}
 
        {/* WORK DESK DASHBOARD */}
