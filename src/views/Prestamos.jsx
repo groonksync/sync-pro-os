@@ -13,7 +13,7 @@ import ErrorBoundary from '../components/ErrorBoundary';
 import { useAmortizacion, useAmortizacionGlobal, generarCronograma, generarCronogramaDiario, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 import { uploadPdfToDrive, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getCalendarList } from '../lib/googleApi';
 
 // ─── AUXILIARES DE PARSEO Y SERIALIZACIÓN DE EVENTOS CALENDAR ────────────────
@@ -272,7 +272,7 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
                          (parseFloat(recibo.montoCapital) || 0) - 
                          (parseFloat(recibo.montoAjustes) || 0);
 
-  autoTable(pdf, {
+  pdf.autoTable({
     startY: y,
     margin: { left: M, right: M },
     head: [['Descripción de Conceptos', 'Monto']],

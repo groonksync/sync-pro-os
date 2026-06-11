@@ -12,7 +12,7 @@ import {
   uploadPdfToDrive
 } from '../lib/googleApi';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import 'jspdf-autotable';
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -187,7 +187,7 @@ const generatePDF = (invoice, darkMode = false) => {
       ];
     });
 
-  autoTable(pdf, {
+  pdf.autoTable({
     startY: y,
     head: [['DESCRIPCIÓN', 'CANT.', 'PRECIO UNIT.', 'TOTAL']],
     body: tableData.length > 0 ? tableData : [['Sin servicios registrados', '', '', '']],
