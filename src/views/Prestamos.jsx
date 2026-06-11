@@ -12,7 +12,7 @@ import FormularioPrestamo from '../components/FormularioPrestamo';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { useAmortizacion, useAmortizacionGlobal, generarCronograma, generarCronogramaDiario, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { uploadPdfToDrive, createCalendarEvent, updateCalendarEvent, deleteCalendarEvent, getCalendarList } from '../lib/googleApi';
 
@@ -158,13 +158,7 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   pdf.setTextColor(TEXT_MAIN);
   pdf.text(recibo.numero || 'REC-XXXXXX', W - M, y + 6, { align: 'right' });
 
-  y += 8;
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8.5);
-  pdf.setTextColor(TEXT_MID);
-  pdf.text('INEFABLE FINANCIAL SYSTEM', M, y);
-  
-  y += 12;
+  y += 20;
 
   // Divider
   pdf.setDrawColor(BORDER);
@@ -305,7 +299,7 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
     }
   });
 
-  y = pdf.lastAutoTable.finalY + 12;
+  y = (pdf.lastAutoTable && pdf.lastAutoTable.finalY) ? pdf.lastAutoTable.finalY + 12 : y + 30;
 
   // Total Box
   pdf.setFillColor(PANEL);
@@ -2528,7 +2522,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                     <div>
                       <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#10b981' }}>RECIBO DE PAGO</h4>
-                      <span style={{ fontSize: '8px', color: reciboDarkMode ? '#94a3b8' : '#475569', letterSpacing: '0.05em' }}>INEFABLE FINANCIAL SYSTEM</span>
+                      <span style={{ display: 'block', height: '12px' }}></span>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: '7px', color: reciboDarkMode ? '#64748b' : '#94a3b8', display: 'block' }}>COMPROBANTE OFICIAL</span>
@@ -2548,7 +2542,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                     <div>
                       <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>FECHA Y MÉTODO</span>
                       <strong>{safeFormatDate(reciboForm.fechaEmision, { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
-                      <span style={{ display: 'block', marginTop: '2px', color: '#10b981', fontWeight: 700 }}>{reciboForm.metodo.toUpperCase()}</span>
+                      <span style={{ display: 'block', marginTop: '2px', color: '#10b981', fontWeight: 700 }}>{reciboForm.metodo?.toUpperCase() || ''}</span>
                     </div>
                   </div>
 
