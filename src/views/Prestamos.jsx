@@ -4,7 +4,7 @@ import {
   ExternalLink, User, CreditCard, ArrowRight, ShieldCheck, CalendarDays, CheckCircle2,
   Check, X, AlertCircle, Trash2, AlertTriangle, Edit3, Search, Eye, EyeOff, Clock,
   MoreHorizontal, Filter, Download, Printer, RefreshCw, TrendingUp, Percent,
-  Heart, BarChart3, PieChart, Wallet, Bookmark
+  Heart, BarChart3, PieChart, Wallet, Bookmark, Sun, Moon
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
