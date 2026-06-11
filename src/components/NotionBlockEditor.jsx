@@ -23,6 +23,116 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
   // Nested Subpage Dialog State
   const [activePageModal, setActivePageModal] = useState(null); // { blockIndex, pageId }
 
+  // Block handles menu state
+  const [blockMenu, setBlockMenu] = useState({ visible: false, query: '', index: null, x: 0, y: 0 });
+  const [showConvertMenu, setShowConvertMenu] = useState(false);
+  const [showColorMenu, setShowColorMenu] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (blockMenu.visible && !e.target.closest('.notion-block-menu-popup') && !e.target.closest('.cursor-grab') && !e.target.closest('button')) {
+        setBlockMenu({ visible: false, query: '', index: null, x: 0, y: 0 });
+        setShowConvertMenu(false);
+        setShowColorMenu(false);
+      }
+    };
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [blockMenu.visible]);
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+    const newBlocks = [...blocks];
+    const [draggedBlock] = newBlocks.splice(draggedIndex, 1);
+    newBlocks.splice(targetIndex, 0, draggedBlock);
+    triggerChange(newBlocks);
+    setDraggedIndex(null);
+  };
+
+  const duplicateBlock = (idx) => {
+    const blockToDup = blocks[idx];
+    if (!blockToDup) return;
+    const newBlocks = [...blocks];
+    newBlocks.splice(idx + 1, 0, {
+      ...blockToDup,
+      id: 'blk-dup-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+    });
+    triggerChange(newBlocks);
+    setBlockMenu({ visible: false, query: '', index: null, x: 0, y: 0 });
+  };
+
+  const deleteBlock = (idx) => {
+    const newBlocks = blocks.filter((_, i) => i !== idx);
+    if (newBlocks.length === 0) {
+      newBlocks.push({ id: 'blk-init-' + Date.now(), tipo: 'texto', contenido: '' });
+    }
+    triggerChange(newBlocks);
+    setBlockMenu({ visible: false, query: '', index: null, x: 0, y: 0 });
+  };
+
+  const moveBlock = (idx, direction) => {
+    if (direction === 'up' && idx > 0) {
+      const newBlocks = [...blocks];
+      const temp = newBlocks[idx];
+      newBlocks[idx] = newBlocks[idx - 1];
+      newBlocks[idx - 1] = temp;
+      triggerChange(newBlocks);
+    } else if (direction === 'down' && idx < blocks.length - 1) {
+      const newBlocks = [...blocks];
+      const temp = newBlocks[idx];
+      newBlocks[idx] = newBlocks[idx + 1];
+      newBlocks[idx + 1] = temp;
+      triggerChange(newBlocks);
+    }
+    setBlockMenu({ visible: false, query: '', index: null, x: 0, y: 0 });
+  };
+
+  const convertBlock = (idx, newType) => {
+    const newBlocks = [...blocks];
+    const block = newBlocks[idx];
+    if (block) {
+      block.tipo = newType;
+      if (newType === 'tabla' && !Array.isArray(block.contenido)) {
+        block.contenido = ['Columna 1', 'Columna 2'];
+        block.extra = [{ id: 'r1', celdas: ['', ''] }];
+      } else if (newType.startsWith('vista-') && (typeof block.contenido !== 'object' || Array.isArray(block.contenido))) {
+        block.contenido = getInitialMockData(newType);
+      }
+      triggerChange(newBlocks);
+    }
+    setBlockMenu({ visible: false, query: '', index: null, x: 0, y: 0 });
+    setShowConvertMenu(false);
+  };
+
+  const changeBlockColor = (idx, color) => {
+    const newBlocks = [...blocks];
+    const block = newBlocks[idx];
+    if (block) {
+      block.color = color;
+      triggerChange(newBlocks);
+    }
+    setBlockMenu({ visible: false, query: '', index: null, x: 0, y: 0 });
+    setShowColorMenu(false);
+  };
+
+  const copyBlockLink = (idx) => {
+    navigator.clipboard.writeText(`${window.location.origin}/block/${blocks[idx]?.id}`);
+    alert("¡Enlace del bloque copiado al portapapeles!");
+    setBlockMenu({ visible: false, query: '', index: null, x: 0, y: 0 });
+  };
+
   const blockRefs = useRef({});
 
   // Parse markdown input to blocks when value changes
@@ -626,11 +736,12 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
   };
 
   return (
-    <div 
-      className="w-full flex-1 flex flex-col p-6 min-h-[500px] select-text relative notion-block-editor-canvas notion-block-editor-wrapper cursor-text"
-      onKeyDown={handleSlashMenuKeyDown}
-      onClick={handleCanvasClick}
-    >
+    <div className="w-full flex-1 flex flex-row overflow-hidden select-text relative notion-block-editor-wrapper">
+      <div 
+        className={`flex-1 flex flex-col p-6 min-h-[500px] overflow-y-auto mac-scrollbar notion-block-editor-canvas cursor-text transition-all duration-300 ${activePageModal ? 'w-1/2 max-w-[50%] border-r border-white/10' : 'w-full'}`}
+        onKeyDown={handleSlashMenuKeyDown}
+        onClick={handleCanvasClick}
+      >
       <style>{`
         .notion-block-editor-wrapper input[type="text"],
         .notion-block-editor-canvas input[type="text"],
@@ -659,6 +770,10 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
               key={block.id} 
               className="group flex items-start gap-2 w-full relative transition-all duration-150 rounded px-1.5 py-0.5"
               style={{ backgroundColor: 'transparent' }}
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDrop={(e) => handleDrop(e, index)}
             >
               {/* Left-hand actions bar: Add block (+) and Option handle (::) */}
               <div className="absolute -left-10 top-1.5 opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all duration-200 z-30">
@@ -673,6 +788,17 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
                 {/* Drag handle and Tooltip popup */}
                 <div className="relative group/tooltip">
                   <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      setBlockMenu({
+                        visible: true,
+                        query: '',
+                        index: index,
+                        x: rect.left - 260,
+                        y: rect.top + window.scrollY
+                      });
+                    }}
                     className="w-4 h-4 rounded hover:bg-white/10 flex items-center justify-center text-neutral-500 hover:text-white cursor-grab"
                   >
                     <div className="grid grid-cols-2 gap-0.5 w-2">
@@ -806,7 +932,161 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
         </div>
       )}
 
-      {/* MODAL PARA NUEVAS PÁGINAS DENTRO DE VISTA DE GALERÍA */}
+      {/* RENDER THE NOTION BLOCK ACTIONS MENU POPUP (IMAGE 1) */}
+      {blockMenu.visible && (
+        <div 
+          className="absolute z-[2000] border rounded-xl shadow-2xl flex flex-col w-[240px] overflow-hidden backdrop-blur-xl animate-in scale-in duration-150 notion-block-menu-popup"
+          style={{ 
+            backgroundColor: '#141414', 
+            borderColor: 'rgba(255,255,255,0.08)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            left: `${blockMenu.x}px`,
+            top: `${blockMenu.y}px`
+          }}
+        >
+          {/* Search bar matching Image 1 */}
+          <div className="p-2 border-b border-white/5">
+            <input 
+              type="text" 
+              placeholder="Buscar acciones..." 
+              value={blockMenu.query}
+              onChange={e => setBlockMenu(prev => ({ ...prev, query: e.target.value }))}
+              className="w-full bg-[#1e1e20] border border-white/10 rounded-lg px-2.5 py-1 text-[10px] outline-none text-white focus:border-white/20"
+              autoFocus
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-1 max-h-[300px] text-[11px] text-neutral-300 font-medium select-none">
+            {/* Convert block */}
+            {!showConvertMenu && !showColorMenu && (
+              <>
+                <div className="px-2 py-0.5 text-[8px] font-bold uppercase text-neutral-600 tracking-wider">Texto</div>
+                <button 
+                  onClick={() => setShowConvertMenu(true)}
+                  className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">🔄 Convertir en</span>
+                  <ChevronRight size={10} className="text-neutral-500" />
+                </button>
+
+                <button 
+                  onClick={() => setShowColorMenu(true)}
+                  className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">🎨 Color</span>
+                  <ChevronRight size={10} className="text-neutral-500" />
+                </button>
+
+                <div className="h-[1px] bg-white/5 my-1" />
+
+                <button 
+                  onClick={() => copyBlockLink(blockMenu.index)}
+                  className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">🔗 Copiar enlace</span>
+                  <span className="text-[8px] text-neutral-500 font-mono">⌘^L</span>
+                </button>
+
+                <button 
+                  onClick={() => duplicateBlock(blockMenu.index)}
+                  className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-2">📋 Duplicar</span>
+                  <span className="text-[8px] text-neutral-500 font-mono">⌘D</span>
+                </button>
+
+                <div className="relative group/mover">
+                  <button 
+                    className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center justify-between"
+                  >
+                    <span className="flex items-center gap-2">➡️ Mover a</span>
+                    <span className="text-[8px] text-neutral-500 font-mono">⌘⇧P</span>
+                  </button>
+                  <div className="absolute left-full top-0 ml-1 bg-[#141414] border border-white/10 rounded-lg p-1 hidden group-hover/mover:flex flex-col gap-1 w-[120px]">
+                    <button onClick={() => moveBlock(blockMenu.index, 'up')} className="w-full text-left p-1 hover:bg-white/5 rounded text-[9px] font-bold uppercase">Mover Arriba</button>
+                    <button onClick={() => moveBlock(blockMenu.index, 'down')} className="w-full text-left p-1 hover:bg-white/5 rounded text-[9px] font-bold uppercase">Mover Abajo</button>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => deleteBlock(blockMenu.index)}
+                  className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center justify-between text-rose-400 hover:text-rose-300"
+                >
+                  <span className="flex items-center gap-2">🗑️ Eliminar</span>
+                  <span className="text-[8px] font-mono">Del</span>
+                </button>
+
+                <div className="h-[1px] bg-white/5 my-1" />
+
+                <button 
+                  onClick={() => {
+                    setAiActiveBlockIndex(blockMenu.index);
+                    setBlockMenu({ visible: false, query: '', index: null, x: 0, y: 0 });
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-purple-950/20 text-purple-300 flex items-center justify-between font-bold"
+                >
+                  <span className="flex items-center gap-2">✨ Pregúntale a la IA</span>
+                  <span className="text-[8px] font-mono">⌘J</span>
+                </button>
+              </>
+            )}
+
+            {/* Convert Submenu */}
+            {showConvertMenu && (
+              <div>
+                <div className="flex items-center gap-2 px-2 py-1 border-b border-white/5 mb-1">
+                  <button onClick={() => setShowConvertMenu(false)} className="text-neutral-500 hover:text-white">◀</button>
+                  <span className="text-[8px] font-bold uppercase tracking-wider text-neutral-400">Convertir a...</span>
+                </div>
+                {allTools.filter(t => t.name.toLowerCase().includes(blockMenu.query.toLowerCase())).map(t => {
+                  const ToolIcon = t.icon;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => convertBlock(blockMenu.index, t.id)}
+                      className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center gap-2"
+                    >
+                      <ToolIcon size={12} className="text-neutral-400" />
+                      <span>{t.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Color Submenu */}
+            {showColorMenu && (
+              <div>
+                <div className="flex items-center gap-2 px-2 py-1 border-b border-white/5 mb-1">
+                  <button onClick={() => setShowColorMenu(false)} className="text-neutral-500 hover:text-white">◀</button>
+                  <span className="text-[8px] font-bold uppercase tracking-wider text-neutral-400">Cambiar Color</span>
+                </div>
+                {['default', 'rojo', 'azul', 'verde', 'amarillo', 'morado', 'gris', 'naranja'].map(col => (
+                  <button
+                    key={col}
+                    onClick={() => changeBlockColor(blockMenu.index, col)}
+                    className="w-full text-left px-3 py-1.5 hover:bg-white/5 flex items-center justify-between capitalize"
+                  >
+                    <span>{col}</span>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{
+                      backgroundColor: col === 'default' ? '#fff' : 
+                                       col === 'rojo' ? '#ef4444' : 
+                                       col === 'azul' ? '#3b82f6' : 
+                                       col === 'verde' ? '#10b981' : 
+                                       col === 'amarillo' ? '#f59e0b' : 
+                                       col === 'morado' ? '#8b5cf6' : 
+                                       col === 'gris' ? '#6b7280' : '#f97316'
+                    }} />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      </div> {/* Close Canvas Column */}
+
+      {/* MODAL PARA NUEVAS PÁGINAS DENTRO DE VISTA DE GALERÍA (RENDERED SIDE-BY-SIDE SPLIT SCREEN) */}
       {activePageModal && (() => {
         const { blockIndex, pageId } = activePageModal;
         const block = blocks[blockIndex];
@@ -821,10 +1101,9 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
         if (!page) return null;
 
         return (
-          <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="w-full max-w-[800px] h-[90vh] bg-[#141414] border border-white/10 rounded-2xl flex flex-col overflow-hidden shadow-2xl relative select-text notion-block-editor-modal">
-              {/* Toolbar */}
-              <div className="px-4 py-2.5 border-b border-white/10 flex justify-between items-center bg-[#141414]">
+          <div className="w-1/2 h-full bg-[#141414] border-l border-white/10 flex flex-col overflow-hidden relative select-text notion-block-editor-modal animate-in slide-in-from-right duration-200">
+            {/* Toolbar */}
+            <div className="px-4 py-2.5 border-b border-white/10 flex justify-between items-center bg-[#141414]">
                 <button 
                   onClick={() => setActivePageModal(null)}
                   className="p-1 rounded hover:bg-white/10 text-neutral-400 hover:text-white transition-all flex items-center gap-1.5"
@@ -904,7 +1183,6 @@ export default function NotionBlockEditor({ value = '', onChange, isDark = true,
                 </div>
               </div>
             </div>
-          </div>
         );
       })()}
     </div>
