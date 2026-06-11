@@ -320,7 +320,11 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   // Watermark "PAGADO"
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(40);
-  pdf.setTextColor(isDark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.06)');
+  if (isDark) {
+    pdf.setTextColor(16, 45, 30);
+  } else {
+    pdf.setTextColor(220, 245, 230);
+  }
   pdf.text('PAGADO', W / 2, y - 8, { align: 'center', angle: 12 });
 
   // Signature lines
