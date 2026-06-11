@@ -1271,8 +1271,8 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'vista-tabla':
       return (
-        <div className="w-full flex flex-col border-t border-b border-white/10 overflow-hidden">
-          <div className="py-2 flex justify-between items-center border-b border-white/10">
+        <div className="w-full flex flex-col overflow-hidden bg-transparent">
+          <div className="py-2 flex justify-between items-center border-b border-white/5">
             <div className="flex items-center gap-2">
               <Grid size={13} className="text-neutral-400" />
               <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Tabla</span>
@@ -1281,17 +1281,17 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-[10px]">
               <thead>
-                <tr className="border-b border-white/10">
+                <tr className="border-b border-white/5">
                   {block.contenido.columns?.map((col, cIdx) => (
-                    <th key={cIdx} className="p-2 border-r border-white/10 font-bold uppercase text-neutral-400 tracking-wider text-[8px]">{col}</th>
+                    <th key={cIdx} className="p-2 border-r border-white/5 font-bold uppercase text-neutral-400 tracking-wider text-[8px]">{col}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {block.contenido.rows?.map((row, rIdx) => (
-                  <tr key={row.id} className="border-b border-white/10 hover:bg-white/[0.02]">
+                  <tr key={row.id} className="border-b border-white/5">
                     {row.values.map((val, cIdx) => (
-                      <td key={cIdx} className="p-2 border-r border-white/10">
+                      <td key={cIdx} className="p-2 border-r border-white/5">
                         <input
                            type="text"
                            value={val}
@@ -1314,8 +1314,8 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
 
     case 'vista-tablero':
       return (
-        <div className="w-full flex flex-col border-t border-b border-white/10">
-          <div className="py-2 flex justify-between items-center border-b border-white/10">
+        <div className="w-full flex flex-col bg-transparent">
+          <div className="py-2 flex justify-between items-center border-b border-white/5">
             <div className="flex items-center gap-2">
               <Trello size={13} className="text-neutral-400" />
               <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Tablero</span>
@@ -1326,14 +1326,14 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
               const colCards = block.contenido.cards?.filter(c => c.col === col) || [];
               return (
                 <div key={cIdx} className="flex flex-col gap-2 min-h-[150px]">
-                  <div className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 pb-1 border-b border-white/10 mb-1 flex items-center justify-between">
+                  <div className="text-[9px] font-bold uppercase tracking-wider text-neutral-400 pb-1 border-b border-white/5 mb-1 flex items-center justify-between">
                     <span>{col}</span>
-                    <span className="text-[8px] bg-white/5 px-1 rounded text-neutral-500 font-bold">{colCards.length}</span>
+                    <span className="text-[8px] px-1 rounded text-neutral-500 font-bold">{colCards.length}</span>
                   </div>
                   {colCards.map(card => (
                     <div 
                       key={card.id} 
-                      className="p-2 border border-white/10 bg-transparent hover:border-white/20 transition-all flex flex-col gap-1 cursor-pointer select-none"
+                      className="p-2 border border-white/5 bg-transparent flex flex-col gap-1 cursor-pointer select-none"
                     >
                       <input
                         type="text"
@@ -1358,7 +1358,7 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
                         className="bg-transparent border-0 outline-none text-[8px] text-neutral-500 w-full"
                         placeholder="Descripción..."
                       />
-                      <div className="flex gap-1 mt-1 border-t border-white/10 pt-1">
+                      <div className="flex gap-1 mt-1 border-t border-white/5 pt-1">
                         {block.contenido.columns.map(destCol => {
                           if (destCol === col) return null;
                           return (
@@ -1367,200 +1367,200 @@ function renderBlockContent(block, index, onChange, refs, onKeyDown, onKeyUp, on
                               onClick={() => {
                                 const newContent = { ...block.contenido };
                                 const target = newContent.cards.find(c => c.id === card.id);
-                                if (target) target.col = destCol;
-                                onChange(index, newContent);
-                              }}
-                              className="text-[7px] font-bold uppercase px-1 py-0.5 rounded border border-white/10 bg-transparent text-neutral-500 hover:text-white"
-                            >
-                              ir a {destCol.split(' ')[0]}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      );
-
-    case 'vista-galeria': {
-      const isLegacyArray = Array.isArray(block.contenido);
-      const dbTitle = isLegacyArray ? 'Nueva base de datos' : (block.contenido.title || 'Nueva base de datos');
-      const pages = isLegacyArray ? block.contenido.map(item => ({
-        id: item.id || ('page-' + Math.random().toString(36).substr(2, 5)),
-        title: item.title || 'nota 1',
-        img: item.img || '',
-        desc: item.desc || '',
-        created: '10 de junio de 2026 23:05',
-        tags: 'Vacío',
-        content: ''
-      })) : (block.contenido.pages || []);
-
-      const handleAddPage = () => {
-        const newPage = {
-          id: 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
-          title: `nota ${pages.length + 1}`,
-          created: '10 de junio de 2026 23:05',
-          tags: 'Vacío',
-          content: ''
-        };
-        const newPages = [...pages, newPage];
-        if (isLegacyArray) {
-          onChange(index, newPages);
-        } else {
-          onChange(index, { ...block.contenido, pages: newPages });
-        }
-      };
-
-      return (
-        <div className="w-full flex flex-col border-t border-b border-white/10 pb-4">
-          <div className="py-2.5 flex justify-between items-center border-b border-white/10 mb-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={dbTitle}
-                onChange={e => {
-                  if (isLegacyArray) {
-                    onChange(index, { title: e.target.value, pages: pages });
-                  } else {
-                    onChange(index, { ...block.contenido, title: e.target.value });
-                  }
-                }}
-                className="bg-transparent border-0 outline-none text-[11px] font-bold text-white uppercase tracking-wider placeholder-neutral-600 font-sans"
-                placeholder="Nueva base de datos"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={handleAddPage}
-                className="text-[9px] font-bold px-3 py-1 rounded bg-[#0070f3] hover:bg-[#0060df] text-white transition-all uppercase tracking-wider flex items-center gap-1"
-              >
-                Nuevo <ChevronDown size={10} />
-              </button>
-            </div>
-          </div>
-
-          {/* Cards Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {pages.map(item => (
-              <div 
-                key={item.id} 
-                onClick={() => onOpenPage && onOpenPage(item.id)}
-                className="border border-white/10 hover:border-white/20 bg-transparent flex flex-col justify-between h-32 p-3.5 cursor-pointer transition-all select-none relative group"
-              >
-                {/* Empty area for subpage body preview visual */}
-                <div className="flex-1 flex items-start text-neutral-600 pt-1">
-                  <FileText size={20} className="stroke-[1.5]" />
-                </div>
-                {/* Note title bar at the bottom */}
-                <div className="border-t border-white/5 pt-2 flex items-center gap-2">
-                  <FileText size={10} className="text-neutral-500" />
-                  <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-wide truncate">{item.title}</span>
-                </div>
-                {/* Delete option on hover */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const filtered = pages.filter(p => p.id !== item.id);
-                    if (isLegacyArray) {
-                      onChange(index, filtered);
-                    } else {
-                      onChange(index, { ...block.contenido, pages: filtered });
-                    }
-                  }}
-                  className="absolute top-2 right-2 p-1 rounded hover:bg-white/10 text-neutral-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Eliminar página"
-                >
-                  <Trash2 size={10} />
-                </button>
-              </div>
-            ))}
-
-            {/* Nueva página button card layout */}
-            <button 
-              onClick={handleAddPage}
-              className="border border-white/10 hover:border-white/20 border-dashed bg-transparent flex items-center justify-center gap-2 h-32 text-neutral-500 hover:text-neutral-300 transition-all text-[10px] font-bold uppercase tracking-wider"
-            >
-              <Plus size={12} /> Nueva página
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    case 'vista-lista':
-      return (
-        <div className="w-full flex flex-col border-t border-b border-white/10">
-          <div className="py-2 flex justify-between items-center border-b border-white/10">
-            <div className="flex items-center gap-2">
-              <AlignJustify size={13} className="text-neutral-400" />
-              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Lista</span>
-            </div>
-          </div>
-          <div className="py-2 flex flex-col">
-            {block.contenido.map?.((item, iIdx) => (
-              <div key={item.id} className="flex items-center justify-between py-2 border-b border-white/10 hover:bg-white/[0.01] transition-colors">
-                <input
-                  type="text"
-                  value={item.title}
-                  onChange={e => {
-                    const newContent = [...block.contenido];
-                    newContent[iIdx].title = e.target.value;
-                    onChange(index, newContent);
-                  }}
-                  className="bg-transparent border-0 outline-none font-bold text-[10px] text-neutral-200 flex-1 pr-4"
-                />
-                <div className="flex gap-1 shrink-0">
-                  {item.tags?.map((tag, tIdx) => (
-                    <span key={tIdx} className="text-[7px] font-bold uppercase px-1.5 py-0.5 rounded border border-white/10 bg-transparent text-neutral-400">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      );
-
-    case 'vista-calendario':
-      return (
-        <div className="w-full flex flex-col border-t border-b border-white/10">
-          <div className="py-2 flex justify-between items-center border-b border-white/10">
-            <div className="flex items-center gap-2">
-              <Calendar size={13} className="text-neutral-400" />
-              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Calendario</span>
-            </div>
-            <span className="text-[8px] text-neutral-400 font-bold uppercase">junio 2026</span>
-          </div>
-          <div className="grid grid-cols-7 gap-0 border-b border-white/10 text-center text-[7px] font-bold uppercase tracking-widest text-neutral-500 py-1.5">
-            <div>lun</div><div>mar</div><div>mié</div><div>jue</div><div>vie</div><div>sáb</div><div>dom</div>
-          </div>
-          <div className="grid grid-cols-7 gap-0">
-            {Array.from({ length: 14 }).map((_, cIdx) => {
-              const dayNum = cIdx + 8;
-              const dateStr = `2026-06-${dayNum < 10 ? '0' + dayNum : dayNum}`;
-              const dayEvents = block.contenido.filter?.(e => e.date === dateStr) || [];
-              
-              return (
-                <div key={cIdx} className="border-r border-b border-white/10 p-1 min-h-[45px] bg-transparent flex flex-col gap-1 justify-between">
-                  <div className="text-[8px] font-bold text-neutral-500">{dayNum}</div>
-                  <div className="flex flex-col gap-0.5">
-                    {dayEvents.map(ev => (
-                      <div key={ev.id} className="text-[6px] font-bold uppercase tracking-wide px-1 py-0.5 rounded truncate border border-white/10 bg-transparent text-neutral-400">
-                        {ev.title}
+                                  if (target) target.col = destCol;
+                                  onChange(index, newContent);
+                                }}
+                                className="text-[7px] font-bold uppercase px-1 py-0.5 rounded border border-white/5 bg-transparent text-neutral-500 hover:text-white"
+                              >
+                                ir a {destCol.split(' ')[0]}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     ))}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      );
+        );
+  
+      case 'vista-galeria': {
+        const isLegacyArray = Array.isArray(block.contenido);
+        const dbTitle = isLegacyArray ? 'Nueva base de datos' : (block.contenido.title || 'Nueva base de datos');
+        const pages = isLegacyArray ? block.contenido.map(item => ({
+          id: item.id || ('page-' + Math.random().toString(36).substr(2, 5)),
+          title: item.title || 'nota 1',
+          img: item.img || '',
+          desc: item.desc || '',
+          created: '10 de junio de 2026 23:05',
+          tags: 'Vacío',
+          content: ''
+        })) : (block.contenido.pages || []);
+  
+        const handleAddPage = () => {
+          const newPage = {
+            id: 'page-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+            title: `nota ${pages.length + 1}`,
+            created: '10 de junio de 2026 23:05',
+            tags: 'Vacío',
+            content: ''
+          };
+          const newPages = [...pages, newPage];
+          if (isLegacyArray) {
+            onChange(index, newPages);
+          } else {
+            onChange(index, { ...block.contenido, pages: newPages });
+          }
+        };
+  
+        return (
+          <div className="w-full flex flex-col pb-4 bg-transparent">
+            <div className="py-2.5 flex justify-between items-center border-b border-white/5 mb-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={dbTitle}
+                  onChange={e => {
+                    if (isLegacyArray) {
+                      onChange(index, { title: e.target.value, pages: pages });
+                    } else {
+                      onChange(index, { ...block.contenido, title: e.target.value });
+                    }
+                  }}
+                  className="bg-transparent border-0 outline-none text-[11px] font-bold text-white uppercase tracking-wider placeholder-neutral-600 font-sans"
+                  placeholder="Nueva base de datos"
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={handleAddPage}
+                  className="text-[9px] font-bold px-3 py-1 rounded bg-[#0070f3] hover:bg-[#0060df] text-white transition-all uppercase tracking-wider flex items-center gap-1"
+                >
+                  Nuevo <ChevronDown size={10} />
+                </button>
+              </div>
+            </div>
+  
+            {/* Cards Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {pages.map(item => (
+                <div 
+                  key={item.id} 
+                  onClick={() => onOpenPage && onOpenPage(item.id)}
+                  className="border border-white/5 bg-transparent flex flex-col justify-between h-32 p-3.5 cursor-pointer transition-all select-none relative group"
+                >
+                  {/* Empty area for subpage body preview visual */}
+                  <div className="flex-1 flex items-start text-neutral-600 pt-1">
+                    <FileText size={20} className="stroke-[1.5]" />
+                  </div>
+                  {/* Note title bar at the bottom */}
+                  <div className="border-t border-white/5 pt-2 flex items-center gap-2">
+                    <FileText size={10} className="text-neutral-500" />
+                    <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-wide truncate">{item.title}</span>
+                  </div>
+                  {/* Delete option on hover */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const filtered = pages.filter(p => p.id !== item.id);
+                      if (isLegacyArray) {
+                        onChange(index, filtered);
+                      } else {
+                        onChange(index, { ...block.contenido, pages: filtered });
+                      }
+                    }}
+                    className="absolute top-2 right-2 p-1 rounded hover:bg-white/5 text-neutral-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Eliminar página"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                </div>
+              ))}
+  
+              {/* Nueva página button card layout */}
+              <button 
+                onClick={handleAddPage}
+                className="border border-white/5 border-dashed bg-transparent flex items-center justify-center gap-2 h-32 text-neutral-500 hover:text-neutral-300 transition-all text-[10px] font-bold uppercase tracking-wider"
+              >
+                <Plus size={12} /> Nueva página
+              </button>
+            </div>
+          </div>
+        );
+      }
+  
+      case 'vista-lista':
+        return (
+          <div className="w-full flex flex-col bg-transparent">
+            <div className="py-2 flex justify-between items-center border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <AlignJustify size={13} className="text-neutral-400" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Lista</span>
+              </div>
+            </div>
+            <div className="py-2 flex flex-col">
+              {block.contenido.map?.((item, iIdx) => (
+                <div key={item.id} className="flex items-center justify-between py-2 border-b border-white/5 hover:bg-white/[0.01] transition-colors">
+                  <input
+                    type="text"
+                    value={item.title}
+                    onChange={e => {
+                      const newContent = [...block.contenido];
+                      newContent[iIdx].title = e.target.value;
+                      onChange(index, newContent);
+                    }}
+                    className="bg-transparent border-0 outline-none font-bold text-[10px] text-neutral-200 flex-1 pr-4"
+                  />
+                  <div className="flex gap-1 shrink-0">
+                    {item.tags?.map((tag, tIdx) => (
+                      <span key={tIdx} className="text-[7px] font-bold uppercase px-1.5 py-0.5 rounded border border-white/5 bg-transparent text-neutral-400">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+  
+      case 'vista-calendario':
+        return (
+          <div className="w-full flex flex-col bg-transparent">
+            <div className="py-2 flex justify-between items-center border-b border-white/5">
+              <div className="flex items-center gap-2">
+                <Calendar size={13} className="text-neutral-400" />
+                <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-400">Vista de Calendario</span>
+              </div>
+              <span className="text-[8px] text-neutral-400 font-bold uppercase">junio 2026</span>
+            </div>
+            <div className="grid grid-cols-7 gap-0 border-b border-white/5 text-center text-[7px] font-bold uppercase tracking-widest text-neutral-500 py-1.5">
+              <div>lun</div><div>mar</div><div>mié</div><div>jue</div><div>vie</div><div>sáb</div><div>dom</div>
+            </div>
+            <div className="grid grid-cols-7 gap-0">
+              {Array.from({ length: 14 }).map((_, cIdx) => {
+                const dayNum = cIdx + 8;
+                const dateStr = `2026-06-${dayNum < 10 ? '0' + dayNum : dayNum}`;
+                const dayEvents = block.contenido.filter?.(e => e.date === dateStr) || [];
+                
+                return (
+                  <div key={cIdx} className="border-r border-b border-white/5 p-1 min-h-[45px] bg-transparent flex flex-col gap-1 justify-between">
+                    <div className="text-[8px] font-bold text-neutral-500">{dayNum}</div>
+                    <div className="flex flex-col gap-0.5">
+                      {dayEvents.map(ev => (
+                        <div key={ev.id} className="text-[6px] font-bold uppercase tracking-wide px-1 py-0.5 rounded truncate border border-white/5 bg-transparent text-neutral-400">
+                          {ev.title}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
 
     default:
       return renderTextInput('text-xs', 'font-normal', 'Presiona "Espacio" para activar la IA o escribe "/" para mostrar los comandos');
