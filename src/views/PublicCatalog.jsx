@@ -139,9 +139,10 @@ const ProductCard = ({ p, t, addToCart, onOpenDetails, WHATSAPP_NUMBER, isMobile
       onClick={() => onOpenDetails(p)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      className="product-grid-card"
       style={{ 
-        backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: isMobile ? 14 : 20, padding: isMobile ? 10 : 16, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.3)', transition: 'all 0.3s', cursor: 'pointer', position: 'relative', overflow: 'hidden'
+        backgroundColor: t.panel, border: `1px solid ${t.borderLight}`, borderRadius: isMobile ? 16 : 24, padding: isMobile ? 12 : 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        cursor: 'pointer', position: 'relative', overflow: 'hidden'
       }}
     >
       <div>
@@ -771,7 +772,7 @@ const PublicCatalog = () => {
     <div 
       className={isDark ? '' : 'light-mode'}
       style={{ 
-        height: '100%', minHeight: '100vh', width: '100%', backgroundColor: t.bg, color: t.text, fontFamily: 'Outfit, sans-serif', transition: 'background-color 0.4s', overflowX: 'hidden', overflowY: 'auto',
+        height: '100%', minHeight: '100vh', width: '100%', backgroundColor: t.bg, color: t.text, fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif", transition: 'background-color 0.4s', overflowX: 'hidden', overflowY: 'auto',
         paddingBottom: isMobile ? 'calc(90px + env(safe-area-inset-bottom))' : 0
       }}
     >
@@ -823,25 +824,41 @@ const PublicCatalog = () => {
         </div>
 
         {/* Search Input Centralized */}
-        <div style={{ position: 'relative', width: isMobile ? '100%' : '40%', minWidth: isMobile ? 'auto' : 260 }}>
+        <div 
+          className="catalog-search-container"
+          style={{ 
+            position: 'relative', 
+            width: isMobile ? '100%' : '40%', 
+            minWidth: isMobile ? 'auto' : 260 
+          }}
+        >
+          <Search size={14} style={{ position: 'absolute', left: 16, color: t.textDim }} />
           <input 
             type="text" 
-            placeholder="Buscar por nombre, categoría, SKU o código..." 
-            className="catalog-search-input"
+            placeholder="Buscar por nombre, SKU, marca..." 
+            className="unstyled-input"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             style={{ 
               width: '100%', 
-              backgroundColor: isDark ? t.inputBg : '#f1f5f9', 
-              border: `1px solid ${isDark ? t.border : '#cbd5e1'}`, 
+              backgroundColor: 'transparent', 
+              border: 'none', 
               borderRadius: 30, 
-              padding: isMobile ? '10px 16px' : '12px 20px', 
+              padding: isMobile ? '10px 16px 10px 40px' : '12px 20px 12px 44px', 
               fontSize: 11, 
               outline: 'none', 
-              color: isDark ? t.text : '#0f172a', 
-              transition: 'all 0.2s' 
+              color: t.text,
+              boxShadow: 'none'
             }} 
           />
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm('')}
+              style={{ position: 'absolute', right: 16, background: 'none', border: 'none', color: t.textDim, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+            >
+              <X size={12} />
+            </button>
+          )}
         </div>
 
         {/* Controls: Cart & Theme Toggles (Desktop only) */}
@@ -893,9 +910,10 @@ const PublicCatalog = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <button 
                   onClick={() => setActiveCategory('Todos')}
+                  className={`catalog-category-btn ${activeCategory === 'Todos' ? 'active' : ''}`}
                   style={{ 
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                    backgroundColor: activeCategory === 'Todos' ? t.accentSoft : 'transparent', color: activeCategory === 'Todos' ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
+                    backgroundColor: activeCategory === 'Todos' ? t.accentSoft : 'transparent', color: activeCategory === 'Todos' ? t.accent : t.textDim, width: '100%', textAlign: 'left'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -915,9 +933,10 @@ const PublicCatalog = () => {
                     <button 
                       key={catName}
                       onClick={() => setActiveCategory(catName)}
+                      className={`catalog-category-btn ${isActive ? 'active' : ''}`}
                       style={{ 
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                        backgroundColor: isActive ? t.accentSoft : 'transparent', color: isActive ? t.accent : t.textDim, transition: 'all 0.2s', width: '100%', textAlign: 'left'
+                        backgroundColor: isActive ? t.accentSoft : 'transparent', color: isActive ? t.accent : t.textDim, width: '100%', textAlign: 'left'
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1103,6 +1122,7 @@ const PublicCatalog = () => {
                       <div
                         key={p.id}
                         onClick={() => { setSelectedProduct(p); setSelectedImageIndex(0); setMediaTab('images'); }}
+                        className="product-featured-card"
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1113,11 +1133,8 @@ const PublicCatalog = () => {
                           border: `1px solid ${t.borderLight}`,
                           minWidth: isMobile ? '220px' : '260px',
                           maxWidth: isMobile ? '220px' : '260px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                          cursor: 'pointer'
                         }}
-                        className="hover-card"
                       >
                         <div style={{ width: 64, height: 64, borderRadius: 10, backgroundColor: isDark ? t.bg : '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${t.border}`, flexShrink: 0, padding: 4 }}>
                           {prodImages.length > 0 ? (
