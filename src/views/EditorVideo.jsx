@@ -18,6 +18,8 @@ import { supabase } from '../lib/supabaseClient';
 import GoogleTasks from '../components/GoogleTasks';
 import { aiService } from '../services/aiService';
 import { getTheme, useTheme } from '../lib/theme';
+import NotionBlockEditor from '../components/NotionBlockEditor';
+
 
 const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark = true, token }) => {
   const t = useTheme(isDark);
@@ -252,7 +254,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
   const saveStrategy = async () => {
     if (!activeStrategy) return;
     try {
-      const content = editorRef.current ? editorRef.current.innerHTML : editorContent;
+      const content = editorContent;
       const metadata = {
         moneda: agencySessionCurrency,
         precio_acordado: agencySessionPrice || null,
@@ -285,6 +287,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     setSessionDriveLink(meta.drive_folder || '');
     setPriceRegistered(meta.precio_registrado || false);
     setSessionSideTab('calc');
+    setEditorContent(meeting.contenido || '');
     setViewState('session');
   };
 
@@ -303,7 +306,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
   const saveMeeting = async () => {
     if (!activeMeeting) return;
     try {
-      const content = editorRef.current ? editorRef.current.innerHTML : activeMeeting.contenido;
+      const content = editorContent;
       const metadata = {
         moneda: sessionCurrency,
         precio_acordado: sessionPrice || null,
@@ -800,111 +803,8 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
              </div>
            </header>
            <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-             <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-               <div className="px-3 py-2 flex items-center gap-1 flex-wrap" style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.panel }}>
-                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h1'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H1</button>
-                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('formatBlock', false, 'h2'); }} className="px-2 py-1 text-[8px] font-black" style={{ color: t.textDim }}>H2</button>
-                 <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
-                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('bold', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Bold size={12}/></button>
-                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('italic', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Italic size={12}/></button>
-                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('underline', false, null); }} className="px-1.5 py-0.5 text-xs font-black" style={{ color: t.textDim, textDecoration: 'underline' }}>U</button>
-                 <div className="w-px h-4 mx-1" style={{ backgroundColor: t.border }}/>
-                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertUnorderedList', false, null); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><List size={12}/></button>
-                 <button onMouseDown={e => { e.preventDefault(); document.execCommand('insertHTML', false, '<table style="border-collapse:collapse;width:100%;margin:8px 0"><tr><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td><td style="border:1px solid #444;padding:8px;color:inherit">Celda</td></tr></table><p></p>'); }} className="p-1 hover:opacity-80" style={{ color: t.textDim }}><Table2 size={12}/></button>
-               </div>
-               <div ref={editorRef} contentEditable="true" suppressContentEditableWarning={true}
-                 className="flex-1 p-5 text-sm leading-relaxed outline-none mac-scrollbar overflow-y-auto"
-                 style={{ color: t.text }}
-                 dangerouslySetInnerHTML={{ __html: activeStrategy.contenido }} />
-             </div>
-             <div className="w-[280px] flex flex-col gap-3 overflow-y-auto mac-scrollbar">
-               <div className="grid grid-cols-2 p-0.5 rounded-lg" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                 {[{ id: 'calc', label: 'Calculadora', icon: CalcIcon }, { id: 'info', label: 'Estrategia', icon: Target }].map(tab => (
-                   <button key={tab.id} onClick={() => setAgencySideTab(tab.id)}
-                     className="py-1.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all"
-                     style={{ backgroundColor: agencySideTab === tab.id ? '#141414' : 'transparent', border: agencySideTab === tab.id ? `1px solid ${t.accent}` : '1px solid transparent', color: agencySideTab === tab.id ? t.accent : t.textDim }}>
-                     <tab.icon size={10}/> {tab.label}
-                   </button>
-                 ))}
-               </div>
-               {agencySideTab === 'calc' && (
-                 <div className="flex flex-col gap-3">
-                   <div className="grid grid-cols-4 p-0.5 rounded-lg gap-1" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                     {['BOB', 'USD', 'EUR', 'BRL'].map(cur => (
-                       <button key={cur} onClick={() => setAgencySessionCurrency(cur)}
-                         className="py-1 rounded text-[7px] font-black"
-                         style={{ backgroundColor: agencySessionCurrency === cur ? '#141414' : 'transparent', border: agencySessionCurrency === cur ? `1px solid ${t.accent}` : '1px solid transparent', color: agencySessionCurrency === cur ? t.accent : t.textDim }}>
-                         {cur}
-                       </button>
-                     ))}
-                   </div>
-                   <div className="p-3 rounded-lg text-right" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: 'white' }}>
-                     <p className="text-[7px] font-black uppercase tracking-wider mb-0.5" style={{ color: t.accent }}>{agencySessionCurrency}</p>
-                     <p className="text-base font-mono font-bold">{calcDisplay}</p>
-                   </div>
-                   <div className="grid grid-cols-4 gap-1">
-                     {['C','DEL','%','/','7','8','9','*','4','5','6','-','1','2','3','+','0','.','='].map(btn => (
-                       <button key={btn} onClick={() => btn === '=' ? handleCalc('=') : handleCalc(btn)} className="h-8 rounded text-[8px] font-black transition-all"
-                         style={{ backgroundColor: t.panel, border: `1px solid ${btn === '=' ? t.accent : t.border}`, color: btn === '=' ? t.accent : t.textDim }}>
-                         {btn}
-                       </button>
-                     ))}
-                   </div>
-                   <button onClick={() => { setAgencySessionPrice(calcDisplay !== '0' ? calcDisplay : agencySessionPrice); setAgencySideTab('info'); }}
-                     className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                     style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textMuted }}>
-                     <DollarSign size={10}/> Fijar Presupuesto
-                   </button>
-                 </div>
-               )}
-               {agencySideTab === 'info' && (
-                 <div className="flex flex-col gap-3">
-                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>📅 Reunión Planificada</p>
-                     <div>
-                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Siguiente Sesión</p>
-                       <input type="date" value={agencyNextDate} onChange={e => setAgencyNextDate(e.target.value)}
-                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                     </div>
-                   </div>
-                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>🔗 Enlaces Nexus</p>
-                     <div>
-                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Link de Llamada</p>
-                       <input type="url" value={agencyMeetLink} onChange={e => setAgencyMeetLink(e.target.value)} placeholder="meet.google.com/..."
-                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                     </div>
-                     <div>
-                       <p className="text-[7px] font-bold uppercase ml-0.5 mb-1" style={{ color: t.textDim }}>Carpeta de Contenidos</p>
-                       <input type="url" value={agencyDriveLink} onChange={e => setAgencyDriveLink(e.target.value)} placeholder="drive.google.com/..."
-                         className="w-full px-2.5 py-1.5 rounded text-[10px] outline-none"
-                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                     </div>
-                   </div>
-                   <div className="p-3 rounded-lg space-y-2.5" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-                     <p className="text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>💰 Ingreso Estimado</p>
-                     <div className="flex gap-2 items-center">
-                       <span className="text-[9px] font-bold text-neutral-400">{agencySessionCurrency}</span>
-                       <input type="number" value={agencySessionPrice} onChange={e => setAgencySessionPrice(e.target.value)}
-                         placeholder="0.00" className="flex-1 px-2.5 py-1.5 rounded text-[10px] font-mono outline-none"
-                         style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }} />
-                     </div>
-                     <button onClick={() => registerSessionIncome(selectedCompany?.nombre_empresa || 'Empresa', activeStrategy.titulo_estrategia, agencySessionPrice, agencySessionCurrency, true)}
-                       disabled={!agencySessionPrice || parseFloat(agencySessionPrice) <= 0 || agencyPriceRegistered}
-                       className="w-full py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                       style={{ 
-                         backgroundColor: t.panel,
-                         border: `1px solid ${agencyPriceRegistered ? t.border : t.accent}`,
-                         color: agencyPriceRegistered ? t.textDim : t.accent,
-                         cursor: agencyPriceRegistered ? 'not-allowed' : 'pointer'
-                       }}>
-                       {agencyPriceRegistered ? 'Registrado en Ganancias' : 'Registrar Pago'}
-                     </button>
-                   </div>
-                 </div>
-               )}
+             <div className="flex-1 rounded-lg overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+               <NotionBlockEditor value={editorContent} onChange={setEditorContent} isDark={isDark} />
              </div>
            </div>
         </div>
@@ -940,8 +840,8 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
             </div>
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
-            <div className="flex-1 rounded-lg overflow-hidden flex flex-col" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
-              {/* Espacio vacío según requerimiento para futura herramienta */}
+            <div className="flex-1 rounded-lg overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+              <NotionBlockEditor value={editorContent} onChange={setEditorContent} isDark={isDark} />
             </div>
           </div>
         </div>
