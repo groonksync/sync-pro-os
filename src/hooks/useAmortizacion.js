@@ -63,6 +63,7 @@ function generarCronograma(prestamo) {
   for (let mesIndex = 0; mesIndex < maxMeses; mesIndex++) {
     const fechaVenc = getFechaVencimiento(inicio, mesIndex);
     const vencDate = new Date(fechaVenc);
+    if (isNaN(vencDate.getTime())) continue;
     const key = generarKey(vencDate.getFullYear(), vencDate.getMonth());
 
     // Stop if we've passed the end date (plus projection buffer for active)
@@ -131,6 +132,7 @@ function generarCronogramaDiario(prestamo) {
 
   for (let dia = 0; dia < totalDias; dia++) {
     const fechaActual = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + dia);
+    if (isNaN(fechaActual.getTime())) continue;
     const key = formatDate(fechaActual);
     capitalAcumulado += capitalDiario;
 
@@ -247,9 +249,10 @@ function proyectarSiguientes(prestamo, meses = 6) {
   for (let i = 1; i <= meses; i++) {
     const fechaBase = ultimoKey
       ? new Date(parseInt(ultimoKey.split('-')[0]), parseInt(ultimoKey.split('-')[1]) - 1, 1)
-      : new Date(inicio);
+      : toDate(inicio);
 
     const proyDate = new Date(fechaBase.getFullYear(), fechaBase.getMonth() + i, Math.min(fechaBase.getDate(), 28));
+    if (isNaN(proyDate.getTime())) continue;
     const key = generarKey(proyDate.getFullYear(), proyDate.getMonth());
 
     // Skip if this key already exists
