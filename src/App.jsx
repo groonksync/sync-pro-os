@@ -27,27 +27,46 @@ import { getTheme } from './lib/theme';
 const LoginScreen = ({ onLogin, loading }) => (
   <div style={{
     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-    height: '100vh', width: '100vw', backgroundColor: '#141414', color: '#d4d4d4',
-    fontFamily: 'Space Grotesk, sans-serif', gap: 24
+    height: '100vh', width: '100vw', backgroundColor: '#0A0A0C', color: '#ECECEE',
+    fontFamily: "'Geist', 'Inter', sans-serif", gap: 24,
+    backgroundImage: 'radial-gradient(ellipse at 50% 50%, rgba(60,60,70,0.08) 0%, transparent 70%)',
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-      <div style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: '#1a1a1a', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #2e2e30' }}>
-        <span style={{ fontSize: 20, fontWeight: 900, color: '#10b981' }}>I</span>
+      <div style={{
+        width: 48, height: 48, borderRadius: 14,
+        background: 'linear-gradient(135deg, #2E2E36, #1C1C22)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        border: '1px solid #33333C',
+      }}>
+        <span style={{ fontSize: 20, fontWeight: 900, color: '#C0C0C6', fontFamily: "'Space Grotesk', sans-serif" }}>I</span>
       </div>
       <div>
-        <h1 style={{ fontSize: 18, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.03em', margin: 0 }}>Inefable</h1>
-        <p style={{ fontSize: 9, color: '#707070', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>Estación de Trabajo Personal</p>
+        <h1 style={{
+          fontSize: 18, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-0.03em',
+          margin: 0, color: '#ECECEE', fontFamily: "'Space Grotesk', sans-serif",
+        }}>Inefable</h1>
+        <p style={{
+          fontSize: 9, color: '#6A6A72', textTransform: 'uppercase',
+          letterSpacing: '0.1em', margin: 0, fontFamily: "'Geist', sans-serif",
+        }}>Estación de Trabajo Personal</p>
       </div>
     </div>
-    <p style={{ fontSize: 10, color: '#9e9e9e', maxWidth: 300, textAlign: 'center', lineHeight: '1.6' }}>
+    <p style={{
+      fontSize: 11, color: '#A0A0A6', maxWidth: 300, textAlign: 'center',
+      lineHeight: '1.6', fontFamily: "'Geist', sans-serif",
+    }}>
       Inicia sesión con tu cuenta de Google para acceder a tu espacio de trabajo.
     </p>
     <button onClick={onLogin} disabled={loading} style={{
       display: 'flex', alignItems: 'center', gap: 10, padding: '12px 24px',
-      borderRadius: 12, border: '1px solid #2e2e30', backgroundColor: '#1a1a1a',
-      color: loading ? '#525252' : '#d4d4d4', cursor: loading ? 'not-allowed' : 'pointer',
-      fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', transition: 'all 0.2s'
-    }}>
+      borderRadius: 12, border: '1px solid #33333C', backgroundColor: '#18181D',
+      color: loading ? '#52525A' : '#ECECEE', cursor: loading ? 'not-allowed' : 'pointer',
+      fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
+      transition: 'all 0.2s ease', fontFamily: "'Geist', sans-serif",
+    }}
+    onMouseEnter={e => { if (!loading) { e.currentTarget.style.borderColor = '#484853'; e.currentTarget.style.backgroundColor = '#1C1C22'; }}}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = '#33333C'; e.currentTarget.style.backgroundColor = '#18181D'; }}
+    >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -56,7 +75,7 @@ const LoginScreen = ({ onLogin, loading }) => (
       </svg>
       {loading ? 'Verificando...' : 'Iniciar sesión con Google'}
     </button>
-    <p style={{ fontSize: 7, color: '#525252', textAlign: 'center', marginTop: 8 }}>
+    <p style={{ fontSize: 8, color: '#52525A', textAlign: 'center', marginTop: 8, fontFamily: "'Geist', sans-serif" }}>
       Solo los usuarios autorizados pueden acceder al panel de administración.<br/>
       El catálogo público sigue disponible sin inicio de sesión.
     </p>
@@ -148,7 +167,7 @@ const AppContent = () => {
   const [appSettings, setAppSettings] = useState(() => {
     const saved = localStorage.getItem('sovereign_settings');
     const defaults = {
-      accentColor: '#ffffff',
+      accentColor: '#C0C0C6',
       isMobileMode: false,
       interfaceDensity: 'normal',
       currencyRates: { USD: 10.50, EUR: 11.20, BRL: 2.10 },
@@ -363,8 +382,8 @@ const AppContent = () => {
     } catch (e) {
       console.error("Fallo de renderizado:", e);
       return (
-        <div className="flex flex-col items-center justify-center h-full text-center p-10 bg-black/50 rounded-[40px] border border-white/10">
-          <h3 className="text-xl font-bold text-white mb-2">Error de Visualización</h3>
+        <div className="flex flex-col items-center justify-center h-full text-center p-10" style={{ backgroundColor: 'rgba(10,10,12,0.5)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.05)' }}>
+          <h3 className="text-xl font-bold mb-2" style={{ color: '#ECECEE' }}>Error de Visualización</h3>
           <p className="text-neutral-500 mb-6 max-w-md">Hay un dato en esta sección que no se puede mostrar.</p>
           <button onClick={() => setActiveTab('resumen')} className="px-6 py-2 bg-white text-black font-bold rounded-xl uppercase text-[10px]">Volver al Inicio</button>
         </div>
@@ -408,8 +427,8 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#141414' }}>
-        <div className="animate-spin" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #2e2e30', borderTopColor: '#10b981' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#0A0A0C' }}>
+        <div className="animate-spin" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #27272E', borderTopColor: '#C0C0C6' }} />
       </div>
     );
   }
@@ -436,7 +455,7 @@ const AppContent = () => {
             <div style={{
               position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
               backgroundColor: globalTheme.bg,
-              opacity: 0.25,
+              opacity: 0.35,
             }} />
           </>
         )}
@@ -452,8 +471,8 @@ const AppContent = () => {
           sidebarBg={(() => {
             if (appSettings.sidebarColor === 'same' || !appSettings.sidebarColor) return globalTheme.bg;
             if (appSettings.sidebarColor === 'black') return '#000000';
-            if (appSettings.sidebarColor === 'lightGray') return '#2a2a2a';
-            return '#141414';
+            if (appSettings.sidebarColor === 'lightGray') return '#1A1A20';
+            return '#0A0A0C';
           })()}
           counts={{ 
             meetings: Array.isArray(meetingsList) ? meetingsList.length : 0, 

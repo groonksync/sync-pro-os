@@ -1,27 +1,32 @@
-// ─── SISTEMA DE TEMAS CON 3 MODOS + COLORES PERSONALIZADOS ──
+const GRAY_SCALE = {
+  bg:         '#0A0A0C',
+  panel:      '#111113',
+  surface:    '#16161A',
+  card:       '#18181D',
+  input:      '#1C1C24',
+  border:     '#27272E',
+  borderLight:'#33333C',
+  overlay:    'rgba(10,10,12,0.95)',
+};
 
 const MODOS = {
-  darkGray: {
-    bg: '#141414', panel: '#1a1a1a', surface: '#161616',
-    input: '#1e1e1e', border: '#2e2e30', borderLight: '#3a3a3d',
-    overlay: 'rgba(20,20,20,0.95)',
-  },
+  darkGray: { ...GRAY_SCALE },
   black: {
-    bg: '#000000', panel: '#121212', surface: '#161616',
-    input: '#1e1e1e', border: '#252528', borderLight: '#2e2e30',
+    bg: '#000000', panel: '#0A0A0C', surface: '#0F0F13',
+    input: '#16161D', border: '#222228', borderLight: '#2C2C35',
     overlay: 'rgba(0,0,0,0.95)',
   },
   lightGray: {
-    bg: '#2a2a2a', panel: '#333333', surface: '#2d2d2d',
-    input: '#383838', border: '#404040', borderLight: '#4a4a4a',
-    overlay: 'rgba(42,42,42,0.95)',
+    bg: '#1A1A20', panel: '#202026', surface: '#26262E',
+    input: '#2E2E38', border: '#383844', borderLight: '#444452',
+    overlay: 'rgba(26,26,32,0.95)',
   },
 };
 
 const LIGHT = {
-  bg: '#f0f2f5', panel: '#ffffff', surface: '#ffffff',
-  input: '#f8fafc', border: 'rgba(0,0,0,0.08)', borderLight: 'rgba(0,0,0,0.05)',
-  overlay: 'rgba(240,242,245,0.95)',
+  bg: '#F5F5F7', panel: '#FFFFFF', surface: '#FFFFFF',
+  input: '#F0F0F2', border: 'rgba(0,0,0,0.07)', borderLight: 'rgba(0,0,0,0.04)',
+  overlay: 'rgba(245,245,247,0.95)',
 };
 
 function hexToRgba(hex, alpha) {
@@ -44,7 +49,6 @@ function isHexLight(hex) {
 }
 
 export function getTheme(isDark = true, custom = {}) {
-  // Auto-leer settings de localStorage si no se especificó appearanceMode
   if (!custom.appearanceMode && typeof window !== 'undefined') {
     try {
       const raw = localStorage.getItem('sovereign_settings');
@@ -53,7 +57,7 @@ export function getTheme(isDark = true, custom = {}) {
         custom = {
           ...custom,
           appearanceMode: s.appearanceMode || s.appBackground || 'darkGray',
-          accentColor: custom.accentColor || s.accentColor || (isDark ? '#a0a0a0' : '#475569'),
+          accentColor: custom.accentColor || s.accentColor || (isDark ? '#C0C0C6' : '#475569'),
         };
       }
     } catch {}
@@ -63,34 +67,35 @@ export function getTheme(isDark = true, custom = {}) {
     ? MODOS[custom.appearanceMode] || MODOS.darkGray
     : LIGHT;
 
-  const accent = custom.accentColor || (isDark ? '#a0a0a0' : '#475569');
+  const accent = custom.accentColor || (isDark ? '#C0C0C6' : '#475569');
   const accentLight = isHexLight(accent);
   const accentHover = isDark
-    ? (accentLight ? '#888888' : '#bbbbbb')
+    ? (accentLight ? '#A0A0A6' : '#D4D4D9')
     : (accentLight ? '#334155' : '#1e293b');
 
-  const textColor = isDark ? '#d4d4d4' : '#0f172a';
-  const textMuted = isDark ? '#9e9e9e' : '#475569';
-  const textDim = isDark ? '#707070' : '#64748b';
+  const textColor = isDark ? '#ECECEE' : '#0F172A';
+  const textSecondary = isDark ? '#A0A0A6' : '#475569';
+  const textMuted = isDark ? '#6A6A72' : '#64748B';
 
   return {
     ...base,
     accent,
     accentHover,
-    accentSoft: hexToRgba(accent, isDark ? 0.07 : 0.03),
-    accentSoftHover: hexToRgba(accent, isDark ? 0.12 : 0.06),
-    accentGlow: hexToRgba(accent, isDark ? 0.10 : 0.04),
+    accentSoft: hexToRgba(accent, isDark ? 0.08 : 0.04),
+    accentSoftHover: hexToRgba(accent, isDark ? 0.14 : 0.08),
+    accentGlow: hexToRgba(accent, isDark ? 0.10 : 0.05),
     text: textColor,
+    textSecondary,
     textMuted,
-    textDim,
-    hover: hexToRgba(textColor, 0.03),
-    hoverActive: hexToRgba(textColor, 0.06),
-    glow: hexToRgba(textColor, 0.10),
-    inputBg: isDark ? 'rgba(255,255,255,0.03)' : '#ffffff',
-    danger: '#e04a4a',
-    dangerSoft: 'rgba(224,74,74,0.1)',
-    warning: '#cca700',
-    success: '#4ec9b0',
+    textDim: isDark ? '#52525A' : '#94A3B8',
+    hover: hexToRgba(textColor, 0.04),
+    hoverActive: hexToRgba(textColor, 0.08),
+    glow: hexToRgba(textColor, 0.08),
+    inputBg: isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
+    danger: '#F14C4C',
+    dangerSoft: 'rgba(241,76,76,0.1)',
+    warning: '#CCA700',
+    success: '#4EC9B0',
   };
 }
 

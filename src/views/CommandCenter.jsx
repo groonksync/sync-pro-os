@@ -580,10 +580,10 @@ const CommandCenter = ({
         flexWrap: 'wrap', gap: '12px',
       }}>
         <div>
-          <h2 className="font-display" style={{ fontSize: 20, fontWeight: 700, color: t.text, letterSpacing: '-0.03em', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: t.text, letterSpacing: '-0.03em', margin: 0, fontFamily: "'Space Grotesk', 'Geist', sans-serif" }}>
             Centro de Control
           </h2>
-          <p style={{ fontSize: 10, color: t.textDim, marginTop: 3, fontWeight: 500, letterSpacing: '0.02em' }}>
+          <p style={{ fontSize: 11, color: t.textSecondary, marginTop: 3, fontWeight: 500, letterSpacing: '-0.005em', fontFamily: "'Geist', sans-serif" }}>
             Panel de monitoreo y control unificado
           </p>
         </div>
@@ -650,7 +650,7 @@ const CommandCenter = ({
             </span>
           </div>
           <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Activos en Calle</p>
-          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
+          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', 'Geist', sans-serif" }}>
             <CountUp value={totalCapital} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
           </h3>
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

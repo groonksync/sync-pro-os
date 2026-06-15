@@ -26,7 +26,7 @@ import {
   Sun as SunIcon, Sunrise, Sunset, SwatchBook,
   SwitchCamera, Table, Tag, Target, Terminal as TerminalIcon,
   Thermometer, ThumbsUp, ToggleLeft, ToggleRight,
-  Tool, Trash, Trello, TrendingUp, Triangle,
+  Trash, Trello, TrendingUp, Triangle,
   Trophy, Truck, Tv, Twitch, Twitter, Umbrella,
 } from 'lucide-react';
 import { useSettings } from '../lib/settingsStore';

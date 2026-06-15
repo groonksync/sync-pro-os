@@ -241,14 +241,32 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
   const [activeStrategy, setActiveStrategy] = useState(null);
   const [editorContent, setEditorContent] = useState('');
 
+  const openStrategy = (s) => {
+    setActiveStrategy(s);
+    setEditorContent(s.contenido || '');
+    setTime(s.total_time || 0);
+    const meta = s.metadata || {};
+    setAgencySessionCurrency(meta.moneda || 'USD');
+    setAgencySessionPrice(meta.precio_acordado || '');
+    setAgencyMeetLink(meta.link_reunion || '');
+    setAgencyNextDate(meta.fecha_siguiente || '');
+    setAgencyDriveLink(meta.drive_folder || '');
+    setAgencyPriceRegistered(meta.precio_registrado || false);
+    setAgencySideTab('calc');
+    setViewState('agency-editor');
+  };
+
   const createStrategy = async () => {
     if (!selectedCompany) return;
     const title = prompt('Título de la Estrategia:', 'Nueva Estrategia');
     if (!title) return;
     try {
-      const { error } = await supabase.from('estrategias_agencia').insert([{ cliente_agencia_id: selectedCompany.id, titulo_estrategia: title, contenido: '', total_time: 0 }]);
+      const { data, error } = await supabase.from('estrategias_agencia').insert([{ cliente_agencia_id: selectedCompany.id, titulo_estrategia: title, contenido: '', total_time: 0 }]).select();
       if (error) throw error;
       await fetchStrategies(selectedCompany.id);
+      if (data && data[0]) {
+        openStrategy(data[0]);
+      }
     } catch (e) { alert(e.message); }
   };
 
@@ -297,10 +315,24 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
     const sTitle = prompt('Descripción:', 'Sesión de Trabajo');
     if (!sTitle) return;
     try {
-      const { error } = await supabase.from('reuniones').insert([{ cliente_id: activeClient.id, cliente: activeClient.nombre, fecha: new Date().toISOString().split('T')[0], session_title: sTitle, contenido: '', total_time: 0 }]);
+      const newMeetingObj = { 
+        cliente_id: activeClient.id, 
+        cliente: activeClient.nombre, 
+        fecha: new Date().toISOString().split('T')[0], 
+        session_title: sTitle, 
+        contenido: '', 
+        total_time: 0 
+      };
+      const { data, error } = await supabase.from('reuniones').insert([newMeetingObj]).select();
       if (error) throw error;
-      fetchClients(); 
-      setViewState('client-profile');
+      
+      const created = data && data[0] ? data[0] : { ...newMeetingObj, id: Date.now().toString() };
+      
+      if (setMeetingsList) {
+        setMeetingsList(prev => [created, ...prev]);
+      }
+      await fetchClients(); 
+      openMeeting(created);
     } catch (e) { alert(e.message); }
   };
 
@@ -322,6 +354,11 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
         metadata: metadata
       }).eq('id', activeMeeting.id);
       if (error) throw error;
+
+      if (setMeetingsList) {
+        setMeetingsList(prev => prev.map(m => m.id === activeMeeting.id ? { ...m, contenido: content, total_time: time, metadata } : m));
+      }
+
       setViewState('client-profile');
       setActiveMeeting(null);
       setIsTimerRunning(false);
@@ -746,20 +783,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
            </header>
            <div className="space-y-3 pt-2">
              {strategies.map(s => (
-                <div key={s.id} onClick={() => {
-                   setActiveStrategy(s);
-                   setEditorContent(s.contenido);
-                   setTime(s.total_time || 0);
-                   const meta = s.metadata || {};
-                   setAgencySessionCurrency(meta.moneda || 'USD');
-                   setAgencySessionPrice(meta.precio_acordado || '');
-                   setAgencyMeetLink(meta.link_reunion || '');
-                   setAgencyNextDate(meta.fecha_siguiente || '');
-                   setAgencyDriveLink(meta.drive_folder || '');
-                   setAgencyPriceRegistered(meta.precio_registrado || false);
-                   setAgencySideTab('calc');
-                   setViewState('agency-editor');
-                }}
+                <div key={s.id} onClick={() => openStrategy(s)}
                   className="flex items-center justify-between p-4 cursor-pointer transition-all hover:bg-white/2"
                   style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12 }}>
                   <div className="flex items-center gap-4">
@@ -784,16 +808,19 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
        {viewState === 'agency-editor' && activeStrategy && (
         <div className="flex flex-col h-full overflow-hidden animate-in fade-in duration-400">
            <header className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: 'transparent', borderBottom: 'none' }}>
-             <div className="flex items-center gap-3">
-               <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
-                 <ArrowLeft size={16} color={t.textDim}/>
-               </button>
-               <div>
-                 <h3 className="text-xs font-black uppercase text-white">{activeStrategy.titulo_estrategia}</h3>
-                 <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{selectedCompany?.nombre_empresa}</p>
-               </div>
-             </div>
-           </header>
+              <div className="flex items-center gap-3">
+                <button onClick={saveStrategy} className="w-8 h-8 rounded-lg flex items-center justify-center transition-all" style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}` }}>
+                  <ArrowLeft size={16} color={t.textDim}/>
+                </button>
+                <div>
+                  <h3 className="text-xs font-black uppercase text-white">{activeStrategy.titulo_estrategia}</h3>
+                  <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{selectedCompany?.nombre_empresa}</p>
+                </div>
+              </div>
+              <button onClick={saveStrategy} className="px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest text-black flex items-center gap-1.5 transition-all" style={{ backgroundColor: t.accent }}>
+                <Save size={12} /> Guardar Cambios
+              </button>
+            </header>
            <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
              <div className="flex-1 overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: 'transparent', border: 'none' }}>
                <NotionBlockEditor value={editorContent} onChange={setEditorContent} isDark={isDark} settings={settings} title={activeStrategy.titulo_estrategia} />
@@ -815,6 +842,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 <p className="text-[7px] font-black uppercase tracking-widest text-neutral-400">{activeClient?.nombre}</p>
               </div>
             </div>
+            <button onClick={saveMeeting} className="px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest text-black flex items-center gap-1.5 transition-all" style={{ backgroundColor: t.accent }}>
+              <Save size={12} /> Guardar Cambios
+            </button>
           </header>
           <div className="flex-1 flex p-3 gap-3 overflow-hidden max-w-[1600px] mx-auto w-full">
             <div className="flex-1 overflow-y-auto flex flex-col mac-scrollbar" style={{ backgroundColor: 'transparent', border: 'none' }}>
