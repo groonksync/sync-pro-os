@@ -596,6 +596,7 @@ const getCategoryIcon = (category) => {
 
 const Inventario = ({ settings = {}, isDark = true, initialSearch = '' }) => {
   const t = useTheme(isDark);
+  const isMobile = settings?.isMobileMode || window.innerWidth < 768;
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1383,7 +1384,7 @@ REGLAS DE FORMATO Y ESTILO:
             <>
               <button 
                 onClick={exportToPDF}
-                style={{ padding: '12px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
+                style={{ padding: '12px 18px', minHeight: '44px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', justifyContent: 'center' }}
                 onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
               >
@@ -1392,7 +1393,7 @@ REGLAS DE FORMATO Y ESTILO:
 
               <button 
                 onClick={openNewProduct}
-                style={{ padding: '12px 22px', backgroundColor: '#10b981', border: 'none', borderRadius: 14, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)' }}
+                style={{ padding: '12px 22px', minHeight: '44px', backgroundColor: '#10b981', border: 'none', borderRadius: 14, color: '#000', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)', justifyContent: 'center' }}
                 onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
                 onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
               >
@@ -1402,7 +1403,7 @@ REGLAS DE FORMATO Y ESTILO:
           ) : (
             <button 
               onClick={fetchPedidos}
-              style={{ padding: '12px 18px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }}
+              style={{ padding: '12px 18px', minHeight: '44px', backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s', justifyContent: 'center' }}
               onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)'}
               onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)'}
             >
@@ -1802,10 +1803,10 @@ REGLAS DE FORMATO Y ESTILO:
 
                       <td style={{ padding: '14px 20px' }}>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <button onClick={() => handleEditProduct(p)} style={{ width: 32, height: 32, borderRadius: 10, border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', color: t.text, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <button onClick={() => handleEditProduct(p)} style={{ width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, minHeight: '44px', borderRadius: 10, border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', color: t.text, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <Edit3 size={12} />
                           </button>
-                          <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id, item: p })} style={{ width: 32, height: 32, borderRadius: 10, border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
+                          <button onClick={() => setConfirmDelete({ isOpen: true, id: p.id, item: p })} style={{ width: isMobile ? 44 : 32, height: isMobile ? 44 : 32, minHeight: '44px', borderRadius: 10, border: t.isDark ? '1px solid rgba(255,255,255,0.05)' : `1px solid ${t.border}`, backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.03)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
                             <Trash2 size={12} />
                           </button>
                         </div>

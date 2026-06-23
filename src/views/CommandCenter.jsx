@@ -717,7 +717,7 @@ const CommandCenter = ({
         onClick={onClick}
         style={{
           display: 'flex', alignItems: 'center', gap: '8px',
-          padding: '8px 14px', borderRadius: '12px', cursor: 'pointer',
+          padding: '8px 14px', minHeight: '44px', borderRadius: '12px', cursor: 'pointer',
           border: `1px solid ${activo ? cfg.color : t.border}`,
           backgroundColor: activo ? `${cfg.color}15` : t.input,
           color: activo ? cfg.color : t.textDim,
@@ -784,7 +784,7 @@ const CommandCenter = ({
               value={periodoMes}
               onChange={e => setPeriodoMes(e.target.value)}
               style={{
-                padding: '8px 14px', borderRadius: '12px', border: `1px solid ${t.border}`,
+                padding: '8px 14px', minHeight: '44px', borderRadius: '12px', border: `1px solid ${t.border}`,
                 backgroundColor: t.panel, color: t.text, fontSize: '11px', fontWeight: 600,
                 cursor: 'pointer', outline: 'none',
               }}
@@ -800,7 +800,7 @@ const CommandCenter = ({
           {/* Estado IA */}
           <div style={{
             display: 'flex', alignItems: 'center', gap: '10px',
-            padding: '8px 14px', backgroundColor: t.panel,
+            padding: '8px 14px', minHeight: '44px', backgroundColor: t.panel,
             border: `1px solid ${t.border}`, borderRadius: '12px',
           }}>
             <ActiveAILogo />
@@ -834,9 +834,12 @@ const CommandCenter = ({
             <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.accent}12` }}>
               <Wallet size={15} color={t.accent} />
             </div>
-            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: `${t.accent}10`, color: t.accent }}>
-              Activo
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.accent }} />
+              <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>
+                Activo
+              </span>
+            </div>
           </div>
           <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Capital Activo en Préstamos</p>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', 'Geist', sans-serif" }}>
@@ -854,9 +857,12 @@ const CommandCenter = ({
             <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${stockBajo.length > 0 ? t.danger : t.accent}12` }}>
               <Package size={15} color={stockBajo.length > 0 ? t.danger : t.accent} />
             </div>
-            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: stockBajo.length > 0 ? `${t.danger}10` : `${t.accent}10`, color: stockBajo.length > 0 ? t.danger : t.accent }}>
-              {stockBajo.length > 0 ? `${stockBajo.length} Stock Bajo` : 'Almacén'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: stockBajo.length > 0 ? t.danger : t.accent }} />
+              <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: stockBajo.length > 0 ? t.danger : t.textDim }}>
+                {stockBajo.length > 0 ? `${stockBajo.length} Stock Bajo` : 'Almacén'}
+              </span>
+            </div>
           </div>
           <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Valor Almacén (Costo)</p>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
@@ -874,9 +880,12 @@ const CommandCenter = ({
             <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.danger}12` }}>
               <CreditCard size={15} color={t.danger} />
             </div>
-            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: `${t.danger}10`, color: t.danger }}>
-              Egresos y Servicios
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.danger }} />
+              <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>
+                Egresos y Servicios
+              </span>
+            </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 0.8fr', gap: '16px' }}>
@@ -898,7 +907,8 @@ const CommandCenter = ({
                           <td style={{ padding: '4px 6px', color: item.tipo === 'servicio_pendiente' ? t.textSecondary : t.text, fontWeight: 500 }}>
                             {item.nombre}
                             {item.tipo === 'servicio_pendiente' && (
-                              <span style={{ marginLeft: 4, padding: '1px 3px', borderRadius: 4, backgroundColor: `${t.warning}15`, color: t.warning, fontSize: '8px', fontWeight: 600 }}>
+                              <span style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: '4px', color: t.warning, fontSize: '8px', fontWeight: 600 }}>
+                                <span style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', backgroundColor: t.warning }} />
                                 PENDIENTE
                               </span>
                             )}
@@ -1094,20 +1104,18 @@ const CommandCenter = ({
                           </div>
                         </td>
                         <td style={{ padding: '12px 14px' }}>
-                          <span style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '5px',
-                            padding: '4px 10px', borderRadius: '8px',
-                            backgroundColor: `${badgeColor}15`, color: badgeColor,
-                            fontSize: '10px', fontWeight: 600,
-                          }}>
-                            {(() => {
-                              const IconComp = DIALOG_ICONS[p.dialog?.icono] || CheckCircle;
-                              return <IconComp size={11} />;
-                            })()}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 600, color: t.text }}>
+                            <span style={{
+                              display: 'inline-block',
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              backgroundColor: badgeColor,
+                            }} />
                             {p.categoria === 'AL_DIA' ? 'Al Día' :
                               p.categoria === 'PENDIENTE' ? 'Pendiente' :
                               p.categoria === 'DEUDOR_1MES' ? 'Vencido' : 'Crítico'}
-                          </span>
+                          </div>
                         </td>
                         <td style={{ padding: '12px 14px' }}>
                           <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>
@@ -1115,11 +1123,11 @@ const CommandCenter = ({
                           </p>
                           {p.mesesAtraso > 3 && (
                             <div style={{
-                              marginTop: '4px', padding: '2px 8px', borderRadius: '4px',
-                              backgroundColor: `${t.danger}15`, color: t.danger,
-                              fontSize: '8px', fontWeight: 600, display: 'inline-block',
+                              marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px',
+                              color: t.danger, fontSize: '9px', fontWeight: 600,
                             }}>
-                              ⚠ Riesgo alto
+                              <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: t.danger }} />
+                              Riesgo alto
                             </div>
                           )}
                         </td>
@@ -1136,10 +1144,11 @@ const CommandCenter = ({
                         <td style={{ padding: '12px 14px', textAlign: 'center' }}>
                           <button onClick={() => abrirModalPago(p)}
                             style={{
-                              padding: '6px 14px', borderRadius: '8px', border: 'none',
+                              padding: '10px 16px', minHeight: '44px', borderRadius: '8px', border: 'none',
                               backgroundColor: isCritico ? '#ef4444' : t.accent,
-                              color: 'white', fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+                              color: isCritico ? '#fff' : (isDark ? '#000' : '#fff'), fontSize: '11px', fontWeight: 600, cursor: 'pointer',
                               transition: 'all 0.15s',
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                             }}
                             onMouseEnter={e => e.target.style.opacity = '0.8'}
                             onMouseLeave={e => e.target.style.opacity = '1'}>
@@ -1286,14 +1295,13 @@ const CommandCenter = ({
             onClick={generarResumenIA}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 18px', borderRadius: '12px', border: 'none',
-              background: `linear-gradient(135deg, ${t.accent}, ${t.accent}cc)`,
-              color: '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
+              padding: '10px 18px', minHeight: '44px', borderRadius: '12px', border: 'none',
+              backgroundColor: t.accent,
+              color: isDark ? '#000' : '#fff', fontSize: '11px', fontWeight: 700, cursor: 'pointer',
               transition: 'all 0.2s',
-              boxShadow: `0 4px 14px ${t.accent}30`,
             }}
-            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
-            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; }}
+            onMouseEnter={e => { e.currentTarget.style.opacity = '0.9'; }}
+            onMouseLeave={e => { e.currentTarget.style.opacity = '1'; }}
           >
             <Brain size={16} />
             Resumen Ejecutivo IA
@@ -1305,7 +1313,7 @@ const CommandCenter = ({
               onClick={() => setExportMenuOpen(!exportMenuOpen)}
               style={{
                 display: 'flex', alignItems: 'center', gap: '8px',
-                padding: '10px 18px', borderRadius: '12px',
+                padding: '10px 18px', minHeight: '44px', borderRadius: '12px',
                 border: `1px solid ${t.border}`, backgroundColor: t.input,
                 color: t.text, fontSize: '11px', fontWeight: 600, cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -1354,7 +1362,7 @@ const CommandCenter = ({
             onClick={fetchAiBalance}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 18px', borderRadius: '12px',
+              padding: '10px 18px', minHeight: '44px', borderRadius: '12px',
               border: `1px solid ${t.border}`, backgroundColor: t.input,
               color: t.textDim, fontSize: '11px', fontWeight: 600, cursor: 'pointer',
               transition: 'all 0.2s',

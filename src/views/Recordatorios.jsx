@@ -10,6 +10,7 @@ import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '.
 
 const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
   const t = useTheme(isDark);
+  const isMobile = settings?.isMobileMode || window.innerWidth < 768;
   const [syncToCalendar, setSyncToCalendar] = useState(true);
 
   // Auxiliares de Google Calendar
@@ -284,8 +285,8 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all"
-          style={{ backgroundColor: t.accent, color: t.bg }}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all justify-center"
+          style={{ backgroundColor: t.accent, color: t.bg, minHeight: '44px' }}
           onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
           onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
         >
@@ -315,10 +316,11 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
         <div className="flex p-1 rounded-xl w-full md:w-auto overflow-x-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
           {['Todos', 'Tarea', 'Compra', 'Idea', 'Nota'].map(f => (
             <button key={f} onClick={() => setActiveFilter(f)}
-              className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap"
+              className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap flex items-center justify-center"
               style={{
                 backgroundColor: activeFilter === f ? t.accent : 'transparent',
                 color: activeFilter === f ? '#000000' : t.textDim,
+                minHeight: '44px',
               }}
             >{f}</button>
           ))}
@@ -559,8 +561,9 @@ const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDar
             }}>
               {r.titulo}
             </h4>
-            <div className="px-2 py-0.5 rounded-xl border text-[7px] font-black uppercase tracking-widest shrink-0 ml-2" style={{ color: pc.color, backgroundColor: pc.bg, borderColor: pc.border }}>
-              {r.prioridad}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '9px', fontWeight: 700, color: pc.color }} className="shrink-0 ml-2">
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: pc.color }} />
+              <span>{r.prioridad}</span>
             </div>
           </div>
 

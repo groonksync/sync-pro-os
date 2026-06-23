@@ -1500,6 +1500,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   value={filterStartDate}
                   onChange={e => setFilterStartDate(e.target.value)}
                   className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 focus:border-white/20 transition-all cursor-pointer"
+                  style={{ minHeight: '44px' }}
                 />
                 <span>a</span>
                 <input
@@ -1507,6 +1508,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   value={filterEndDate}
                   onChange={e => setFilterEndDate(e.target.value)}
                   className="bg-zinc-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs outline-none text-neutral-300 focus:border-white/20 transition-all cursor-pointer"
+                  style={{ minHeight: '44px' }}
                 />
               </div>
 
@@ -1515,6 +1517,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 <button
                   onClick={() => { setFilterText(''); setFilterCategory('Todas'); setFilterStartDate(''); setFilterEndDate(''); }}
                   className="text-[9px] font-black uppercase tracking-widest text-neutral-400 hover:text-white px-2 py-1 transition-all"
+                  style={{ minHeight: '44px' }}
                 >
                   Limpiar Filtros
                 </button>
@@ -1526,7 +1529,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             <button
               onClick={handleOpenNewExpense}
               className="w-full md:w-auto px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 text-black font-bold"
-              style={{ backgroundColor: t.accent }}
+              style={{ backgroundColor: t.accent, minHeight: '44px' }}
             >
               <Plus size={14} strokeWidth={3} /> Registrar Gasto
             </button>
@@ -1617,7 +1620,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             <button
               onClick={handleOpenNewService}
               className="px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all active:scale-95 text-black font-bold"
-              style={{ backgroundColor: t.accent }}
+              style={{ backgroundColor: t.accent, minHeight: '44px' }}
             >
               <Plus size={14} strokeWidth={3} /> Registrar Suscripción
             </button>
@@ -1655,9 +1658,18 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                         <span className="text-[7.5px] font-black uppercase tracking-wider text-neutral-500 block">{catName}</span>
                       </div>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-[7.5px] font-black uppercase tracking-widest ${hasExpired ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>
-                      {hasExpired ? 'Vencido' : 'Al Día'}
-                    </span>
+                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '9px', fontWeight: 700 }}>
+                      <span style={{
+                        display: 'inline-block',
+                        width: '6px',
+                        height: '6px',
+                        borderRadius: '50%',
+                        backgroundColor: hasExpired ? '#ef4444' : '#10b981',
+                      }} className={hasExpired ? 'animate-pulse' : ''} />
+                      <span style={{ color: hasExpired ? '#ef4444' : '#10b981' }}>
+                        {hasExpired ? 'VENCIDO' : 'AL DÍA'}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Mid details */}

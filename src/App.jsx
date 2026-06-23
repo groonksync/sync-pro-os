@@ -333,11 +333,23 @@ const AppContent = () => {
     window.addEventListener('settings-changed', handler);
     return () => window.removeEventListener('settings-changed', handler);
   }, []);
-
   const fetchData = async () => {
     try {
       const { data: prestamosData } = await supabase.from('prestamos').select('*');
-      if (prestamosData) setData(prev => ({ ...prev, prestamos: prestamosData }));
+      if (prestamosData) {
+        try {
+          const isValidData = prestamosData.every(p => p.id && p.capital !== undefined);
+          if (isValidData) {
+            localStorage.setItem('backup_prestamos_verificacion', JSON.stringify(prestamosData));
+            console.log("🛡️ [Seguridad] Respaldo simbólico de préstamos verificado e intacto.");
+          } else {
+            console.warn("⚠️ [Seguridad] Datos de préstamos entrantes incompletos o corruptos. No se sobrescribió el respaldo.");
+          }
+        } catch (backupErr) {
+          console.error("Fallo al crear respaldo de seguridad simbólico:", backupErr.message);
+        }
+        setData(prev => ({ ...prev, prestamos: prestamosData }));
+      }
 
       const { data: meetingsData } = await supabase.from('reuniones').select('*');
       if (meetingsData) setMeetingsList(meetingsData);

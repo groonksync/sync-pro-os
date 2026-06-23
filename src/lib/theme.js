@@ -1,12 +1,12 @@
 const GRAY_SCALE = {
-  bg:         '#0A0A0C',
-  panel:      '#111113',
-  surface:    '#16161A',
-  card:       '#18181D',
-  input:      '#1C1C24',
-  border:     '#27272E',
-  borderLight:'#33333C',
-  overlay:    'rgba(10,10,12,0.95)',
+  bg:         '#0B0B0C',
+  panel:      '#121214',
+  surface:    '#18181A',
+  card:       '#1C1C1E',
+  input:      '#242427',
+  border:     '#2D2D30',
+  borderLight:'#3A3A3E',
+  overlay:    'rgba(11,11,12,0.96)',
 };
 
 const MODOS = {
@@ -17,16 +17,16 @@ const MODOS = {
     overlay: 'rgba(0,0,0,0.95)',
   },
   lightGray: {
-    bg: '#1A1A20', panel: '#202026', surface: '#26262E',
-    input: '#2E2E38', border: '#383844', borderLight: '#444452',
-    overlay: 'rgba(26,26,32,0.95)',
+    bg: '#121214', panel: '#1C1C1E', surface: '#242427',
+    input: '#2D2D30', border: '#3A3A3E', borderLight: '#46464B',
+    overlay: 'rgba(18,18,20,0.96)',
   },
 };
 
 const LIGHT = {
-  bg: '#F5F5F7', panel: '#FFFFFF', surface: '#FFFFFF',
-  input: '#F0F0F2', border: 'rgba(0,0,0,0.07)', borderLight: 'rgba(0,0,0,0.04)',
-  overlay: 'rgba(245,245,247,0.95)',
+  bg: '#F9FAFB', panel: '#FFFFFF', surface: '#F3F4F6',
+  input: '#F9FAFB', border: '#E5E7EB', borderLight: '#F3F4F6',
+  overlay: 'rgba(255,255,255,0.96)',
 };
 
 function hexToRgba(hex, alpha) {

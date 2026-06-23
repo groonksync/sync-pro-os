@@ -24,6 +24,7 @@ import FacturasArx from './FacturasArx';
 
 const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark = true, token }) => {
   const t = useTheme(isDark);
+  const isMobile = settings?.isMobileMode || window.innerWidth < 768;
   const [viewState, setViewState] = useState('dashboard'); 
   const [activeClient, setActiveClient] = useState(null);
   const [activeMeeting, setActiveMeeting] = useState(null);
@@ -435,11 +436,12 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                 { id: 'facturas', label: 'Facturas' },
               ].map(tab => (
                 <button key={tab.id} onClick={() => setViewState(tab.id)}
-                  className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all"
+                  className="px-5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center"
                   style={{
                     backgroundColor: viewState === tab.id ? t.panel : 'transparent',
                     border: viewState === tab.id ? `1px solid ${t.border}` : '1px solid transparent',
                     color: viewState === tab.id ? t.accent : t.textDim,
+                    minHeight: '44px',
                   }}>{tab.label}</button>
               ))}
           </nav>
@@ -543,8 +545,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                         style={{ backgroundColor: 'transparent', border: `1px solid ${t.border}`, color: t.text }} />
                    </div>
                    <button onClick={() => setIsClientModalOpen(true)} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
-                     style={{ backgroundColor: 'transparent', border: `1px solid ${t.accent}`, color: t.accent }}>
-                      <Plus size={14} strokeWidth={2}/> Añadir Registro
+                     style={{ backgroundColor: t.accent, color: isDark ? '#000' : '#fff', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                   >
+                     <Plus size={12} strokeWidth={3} /> Nuevo Cliente
                    </button>
                 </div>
              </header>
@@ -611,8 +614,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
              </div>
              <button onClick={createMeeting} className="px-5 py-2.5 rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-2 transition-all"
-               style={{ backgroundColor: 'transparent', border: `1px solid ${t.accent}`, color: t.accent }}>
-               <Video size={14}/> Iniciar Sesión
+               style={{ backgroundColor: t.accent, color: isDark ? '#000' : '#fff', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+             >
+               <Plus size={12} strokeWidth={3} /> Crear Proyecto
              </button>
            </header>
 
@@ -779,8 +783,9 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
                </div>
              </div>
              <button onClick={createStrategy} className="px-5 py-2.5 rounded-lg font-black text-[9px] uppercase tracking-widest flex items-center gap-2 transition-all"
-               style={{ backgroundColor: t.panel, border: `1px solid ${t.accent}`, color: t.accent }}>
-               <Sparkles size={14}/> Crear Estrategia
+               style={{ backgroundColor: t.accent, color: isDark ? '#000' : '#fff', minHeight: '44px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+             >
+               <Plus size={12} strokeWidth={3} /> Crear Marca
              </button>
            </header>
            <div className="space-y-3 pt-2">
