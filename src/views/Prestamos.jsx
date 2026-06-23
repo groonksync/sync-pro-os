@@ -840,6 +840,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
         tipo_dato: 'prestamo',
         nombre_item: target.nombre || 'Préstamo',
         datos_originales: target,
+        item_id: target.id,
         expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       };
       const { error: trashError } = await supabase.from('papelera').insert([trashEntry]);

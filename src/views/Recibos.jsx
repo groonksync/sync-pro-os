@@ -63,6 +63,7 @@ const Recibos = ({ data, setData, isDark = true }) => {
           tipo_dato: 'recibo',
           nombre_item: `Recibo #${item.numero} - ${item.cliente}`,
           datos_originales: item,
+          item_id: id,
           borrado_el: new Date().toISOString(),
           expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         }]);

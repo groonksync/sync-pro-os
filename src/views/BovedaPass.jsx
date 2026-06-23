@@ -342,6 +342,7 @@ const BovedaPass = ({ settings, isDark }) => {
             nombre_item: `${target.sitio_web} (${target.usuario})`,
             tipo_dato: 'credencial',
             datos_originales: target,
+            item_id: id,
             expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
           });
           await supabase.from('boveda_pass').delete().eq('id', id);

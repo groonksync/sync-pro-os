@@ -277,10 +277,10 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
       {/* ===== BOTÓN FLOTANTE — DISEÑO PREMIUM MINIMAL ===== */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-8 right-8 z-[1000] flex items-center gap-3 transition-all duration-300 active:scale-95 group ${
+        className={`fixed z-[1000] bottom-auto top-[30%] right-2 md:bottom-8 md:right-8 md:top-auto md:right-8 flex items-center gap-3 transition-all duration-300 active:scale-95 group ${
           isOpen
-            ? 'px-5 py-4 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20'
-            : 'px-5 py-3.5 rounded-xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] hover:bg-white/[0.12] hover:border-white/25'
+            ? 'px-4 py-4 md:px-5 md:py-4 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20'
+            : 'px-4 py-3.5 md:px-5 md:py-3.5 rounded-xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] hover:bg-white/[0.12] hover:border-white/25'
         }`}
       >
         {isOpen ? (
@@ -290,14 +290,14 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
             <div className="relative z-10 group-hover:scale-105 transition-transform duration-200">
                <ActiveLogo />
             </div>
-            <span className="text-[10px] font-semibold text-white/70 uppercase tracking-[0.08em] relative z-10 group-hover:text-white/90 transition-colors">Agente</span>
+            <span className="hidden md:inline text-[10px] font-semibold text-white/70 uppercase tracking-[0.08em] relative z-10 group-hover:text-white/90 transition-colors">Agente</span>
           </>
         )}
       </button>
 
       {/* ===== VENTANA DE CHAT REDISEÑADA ===== */}
       {isOpen && (
-        <div className="fixed bottom-32 right-8 w-[92vw] md:w-[440px] h-[75vh] md:h-[640px] bg-[#1a1a1e]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl z-[1000] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-200 overflow-hidden">
+        <div className="fixed top-12 bottom-auto left-4 right-4 w-auto h-[75vh] md:top-auto md:bottom-32 md:right-8 md:left-auto md:w-[440px] md:h-[640px] bg-[#1a1a1e]/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl z-[1000] flex flex-col shadow-2xl animate-in fade-in zoom-in duration-200 overflow-hidden">
           
           {/* HEADER COMPACTO */}
           <header className="px-6 py-5 border-b border-white/[0.06] flex items-center justify-between shrink-0">

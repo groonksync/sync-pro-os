@@ -21,6 +21,7 @@ export async function moveToTrash(tipo, itemId, itemData) {
     tipo_dato: config.icon,
     nombre_item: String(nombreItem).substring(0, 200),
     datos_originales: itemData,
+    item_id: itemId || itemData?.id,
     borrado_el: new Date().toISOString(),
     expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   };

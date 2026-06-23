@@ -68,6 +68,7 @@ const VentasDigitales = ({ data, setData, isDark = true }) => {
           tipo_dato: 'venta',
           nombre_item: item.producto,
           datos_originales: item,
+          item_id: id,
           borrado_el: new Date().toISOString(),
           expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         }]);

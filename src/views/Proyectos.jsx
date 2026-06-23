@@ -105,6 +105,7 @@ const Proyectos = ({ proyectos, setProyectos, isDark = true }) => {
           tipo_dato: 'proyecto',
           nombre_item: item.nombre,
           datos_originales: item,
+          item_id: id,
           borrado_el: new Date().toISOString(),
           expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
         }]);

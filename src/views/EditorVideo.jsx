@@ -117,6 +117,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
         tipo_dato: 'cliente',
         nombre_item: client.nombre,
         datos_originales: client,
+        item_id: client.id,
         borrado_el: new Date().toISOString(),
         expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       }]);
@@ -135,6 +136,7 @@ const EditorVideo = ({ meetingsList = [], setMeetingsList, settings = {}, isDark
         tipo_dato: 'sesion',
         nombre_item: meeting.session_title,
         datos_originales: meeting,
+        item_id: meeting.id,
         borrado_el: new Date().toISOString(),
         expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
       }]);

@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Calendar, Wallet, Bell, Settings, CreditCard,
   Package, TrendingUp, Activity, Video, Briefcase, Cloud,
   Landmark, Trash2, ShoppingBag, PanelLeftClose, PanelLeftOpen,
-  Sun, Moon, ShieldCheck, Building2, Workflow, Image
+  Sun, Moon, ShieldCheck, Building2, Workflow, Image, Menu, X
 } from 'lucide-react';
 import { getTheme, useTheme } from '../lib/theme';
 
@@ -51,6 +51,7 @@ const Sidebar = ({
 }) => {
   const t = useTheme(isDark);
   const [tooltip, setTooltip] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleOpenCatalog = () => {
     if (window.location.protocol === 'file:') setActiveTab('catalogo');
@@ -58,51 +59,209 @@ const Sidebar = ({
   };
 
   if (settings.isMobileMode) {
-    const mobileItems = MENU_GROUPS.flatMap(g => g.items).slice(0, 5);
+    const mainMobileItems = MENU_GROUPS[0].items;
+    const allItems = [
+      ...MENU_GROUPS.flatMap(g => g.items),
+      { id: 'configuracion', label: 'Configuración', icon: Settings }
+    ];
+
     return (
-      <div className="fixed bottom-4 inset-x-4 z-[1000] animate-slideInUp">
-        <nav style={{
-          height: 64, background: t.panel, border: `1px solid ${t.border}`,
-          backdropFilter: 'blur(24px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-          borderRadius: 20,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-around',
-          padding: '0 8px', boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
-        }}>
-          {mobileItems.map(item => {
-            const active = activeTab === item.id;
-            return (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
-                style={{
-                  position: 'relative', display: 'flex', flexDirection: 'column',
-                  alignItems: 'center', justifyContent: 'center', width: 44, height: 44,
-                  borderRadius: 14, background: active ? t.accentSoft : 'transparent',
-                  border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
-                  color: active ? t.accent : t.textMuted,
-                }}>
-                <item.icon size={17} strokeWidth={active ? 2.2 : 1.8} />
-                {active && (
-                  <div style={{
-                    position: 'absolute', bottom: 4, width: 4, height: 4,
-                    borderRadius: 9999, background: t.accent, boxShadow: `0 0 6px ${t.accent}`,
-                  }} />
-                )}
-              </button>
-            );
-          })}
-          <div style={{ width: 1, height: 24, background: t.border }} />
-          <button onClick={() => setActiveTab('configuracion')}
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              width: 44, height: 44, borderRadius: 14,
-              background: activeTab === 'configuracion' ? t.accentSoft : 'transparent',
-              border: 'none', cursor: 'pointer',
-              color: activeTab === 'configuracion' ? t.accent : t.textMuted,
+      <>
+        {/* Fullscreen Overlay Menu ("Más") */}
+        {isMenuOpen && (
+          <div style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 999,
+            background: isDark ? 'rgba(10, 10, 12, 0.96)' : 'rgba(244, 244, 246, 0.96)',
+            backdropFilter: 'blur(28px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '24px 20px',
+            animation: 'fadeIn 0.2s ease-out forwards',
+            fontFamily: "'Geist', 'Inter', sans-serif",
+          }}>
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 24,
+              paddingBottom: 16,
+              borderBottom: `1px solid ${t.border}`,
             }}>
-            <Settings size={17} />
-          </button>
-        </nav>
-      </div>
+              <div>
+                <h3 style={{
+                  fontSize: 14,
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  margin: 0,
+                  color: t.text,
+                }}>
+                  Herramientas
+                </h3>
+                <p style={{
+                  fontSize: 10,
+                  color: t.textMuted,
+                  margin: '4px 0 0 0',
+                }}>
+                  Selecciona una sección
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsMenuOpen(false)}
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  background: t.hover,
+                  border: 'none',
+                  color: t.text,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Grid list of all items */}
+            <div style={{
+              flex: 1,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 12,
+              overflowY: 'auto',
+              paddingBottom: 40,
+            }} className="mac-scrollbar">
+              {allItems.map(item => {
+                const active = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setIsMenuOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      padding: '16px 8px',
+                      borderRadius: 16,
+                      background: active ? t.accentSoft : (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'),
+                      border: `1px solid ${active ? t.accent : t.border}`,
+                      color: active ? t.accent : t.textSecondary,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      textAlign: 'center',
+                    }}
+                  >
+                    <div style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: active 
+                        ? (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)')
+                        : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'),
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: active ? t.accent : t.textMuted,
+                    }}>
+                      <item.icon size={18} strokeWidth={active ? 2.2 : 1.8} />
+                    </div>
+                    <span style={{
+                      fontSize: 9,
+                      fontWeight: active ? 700 : 500,
+                      letterSpacing: '-0.01em',
+                      lineHeight: '1.2',
+                      wordBreak: 'break-word',
+                      maxHeight: 24,
+                      overflow: 'hidden',
+                    }}>
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Floating Mobile Bottom Navigation Dock */}
+        <div className="fixed bottom-4 inset-x-4 z-[998] animate-slideInUp">
+          <nav style={{
+            height: 64, background: t.panel, border: `1px solid ${t.border}`,
+            backdropFilter: 'blur(24px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
+            borderRadius: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-around',
+            padding: '0 8px', boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+          }}>
+            {/* First 4 principal items */}
+            {mainMobileItems.map(item => {
+              const active = activeTab === item.id && !isMenuOpen;
+              return (
+                <button key={item.id} onClick={() => { setActiveTab(item.id); setIsMenuOpen(false); }}
+                  style={{
+                    position: 'relative', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', width: 44, height: 44,
+                    borderRadius: 14, background: active ? t.accentSoft : 'transparent',
+                    border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
+                    color: active ? t.accent : t.textMuted,
+                  }}>
+                  <item.icon size={17} strokeWidth={active ? 2.2 : 1.8} />
+                  {active && (
+                    <div style={{
+                      position: 'absolute', bottom: 4, width: 4, height: 4,
+                      borderRadius: 9999, background: t.accent, boxShadow: `0 0 6px ${t.accent}`,
+                    }} />
+                  )}
+                </button>
+              );
+            })}
+
+            {/* "Más" Button */}
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}
+              style={{
+                position: 'relative', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', width: 44, height: 44,
+                borderRadius: 14, background: isMenuOpen ? t.accentSoft : 'transparent',
+                border: 'none', cursor: 'pointer', transition: 'all 0.2s ease',
+                color: isMenuOpen ? t.accent : t.textMuted,
+              }}>
+              {isMenuOpen ? <X size={17} strokeWidth={2.2} /> : <Menu size={17} strokeWidth={1.8} />}
+              {isMenuOpen && (
+                <div style={{
+                  position: 'absolute', bottom: 4, width: 4, height: 4,
+                  borderRadius: 9999, background: t.accent, boxShadow: `0 0 6px ${t.accent}`,
+                }} />
+              )}
+            </button>
+
+            <div style={{ width: 1, height: 24, background: t.border }} />
+
+            {/* Settings Button */}
+            <button onClick={() => { setActiveTab('configuracion'); setIsMenuOpen(false); }}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 44, height: 44, borderRadius: 14,
+                background: (activeTab === 'configuracion' && !isMenuOpen) ? t.accentSoft : 'transparent',
+                border: 'none', cursor: 'pointer',
+                color: (activeTab === 'configuracion' && !isMenuOpen) ? t.accent : t.textMuted,
+              }}>
+              <Settings size={17} />
+            </button>
+          </nav>
+        </div>
+      </>
     );
   }
 

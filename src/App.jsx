@@ -23,7 +23,7 @@ import ConversorWebP from './views/ConversorWebP';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { getTheme } from './lib/theme';
-import { Wallet, Landmark, CreditCard, Package, Settings } from 'lucide-react';
+import { Wallet, Landmark, CreditCard, Package, Settings, Menu, X } from 'lucide-react';
 
 const ConfigMissingScreen = () => {
   return (
@@ -580,6 +580,7 @@ const AppContent = () => {
 
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // EFECTO DE TEMA GLOBAL
   useEffect(() => {
@@ -674,31 +675,7 @@ const AppContent = () => {
           </div>
         </main>
         
-        {/* Responsive Mobile Bottom Navbar */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-lg flex md:hidden items-center justify-around py-3 px-2 shadow-2xl safe-bottom transition-colors duration-500"
-             style={{
-               backgroundColor: globalTheme.panel,
-               borderColor: globalTheme.border,
-             }}>
-          {[
-            { id: 'resumen', label: 'Inicio', icon: Wallet },
-            { id: 'prestamos', label: 'Préstamos', icon: Landmark },
-            { id: 'pagos', label: 'Egresos', icon: CreditCard },
-            { id: 'inventario', label: 'Stock', icon: Package },
-            { id: 'ajustes', label: 'Ajustes', icon: Settings },
-          ].map(item => {
-            const Icon = item.icon;
-            const active = activeTab === item.id;
-            return (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
-                      className={`flex flex-col items-center gap-1 transition-all ${active ? 'scale-105' : 'opacity-60'}`}
-                      style={{ color: active ? globalTheme.accent : globalTheme.textSecondary }}>
-                <Icon size={18} />
-                <span className="text-[9px] font-bold tracking-tight">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+
         
         {/* AGENTE GLOBAL FLOTANTE */}
         {activeTab !== 'ajustes' && (
