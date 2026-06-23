@@ -371,7 +371,12 @@ const AppContent = () => {
     fetchData();
     // DETECCIÓN AUTOMÁTICA DE DISPOSITIVOS MÓVILES
     const checkMobile = () => {
-      setAppSettings(prev => ({ ...prev, isMobileMode: window.innerWidth < 1024 }));
+      setAppSettings(prev => {
+        if (prev.mobileModeSource === 'manual') return prev;
+        const autoMobile = window.innerWidth < 1024;
+        if (prev.isMobileMode === autoMobile) return prev;
+        return { ...prev, isMobileMode: autoMobile };
+      });
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -624,7 +629,7 @@ const AppContent = () => {
   if (!user) return <LoginScreen onLogin={signInWithGoogle} loading={loading} />;
 
   return (
-    <div className={`flex h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
+    <div className={`flex flex-col md:flex-row h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
         style={{ backgroundColor: globalTheme.bg, color: globalTheme.text }}>
         
         {/* Background Wallpaper with extreme blur */}
@@ -670,7 +675,7 @@ const AppContent = () => {
         />
         
         <main className={`flex-1 h-full ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out pb-20 md:pb-0`}>
-          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} ${activeTab === 'ajustes' ? '' : 'max-w-[2000px] mx-auto'} transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'ajustes' ? 'px-0 py-0' : 'px-6 py-8 lg:px-16 lg:py-12')}`}>
+          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} ${activeTab === 'ajustes' ? '' : 'max-w-[2000px] mx-auto'} transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'ajustes' ? 'px-0 py-0' : 'px-4 py-4 md:px-6 md:py-8 lg:px-16 lg:py-12')}`}>
             {renderSafeContent()}
           </div>
         </main>

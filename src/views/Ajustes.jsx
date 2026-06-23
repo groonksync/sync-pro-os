@@ -369,6 +369,36 @@ export default function Ajustes({ isDark, settings: propSettings, onUpdateSettin
         </div>
       </Fila>
 
+      {/* Modo de Visualización (Móvil vs Escritorio) */}
+      <Fila label="Modo de Visualización" desc="Forzar interfaz para móvil o escritorio">
+        <div style={{ display: 'flex', gap: '6px' }}>
+          {[
+            { label: 'Automático', source: 'auto', mobile: window.innerWidth < 1024 },
+            { label: 'Smartphone', source: 'manual', mobile: true },
+            { label: 'Escritorio', source: 'manual', mobile: false }
+          ].map(opt => {
+            const isSelected = s.mobileModeSource === opt.source && (opt.source === 'auto' || s.isMobileMode === opt.mobile);
+            return (
+              <div key={opt.label} onClick={() => {
+                updateSettings({
+                  mobileModeSource: opt.source,
+                  isMobileMode: opt.mobile
+                });
+              }}
+                style={{
+                  padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px',
+                  backgroundColor: isSelected ? '#a0a0a0' : '#222',
+                  color: isSelected ? '#000' : '#d4d4d4',
+                  border: `1px solid ${isSelected ? '#a0a0a0' : '#333'}`,
+                  fontWeight: isSelected ? 600 : 400,
+                }}>
+                {opt.label}
+              </div>
+            );
+          })}
+        </div>
+      </Fila>
+
       {/* Tamaño de fuente */}
       <Fila label="Tamaño de fuente base" desc={`${s.baseFontSize}px — afecta toda la tipografía`}>
         <input type="range" min={11} max={16} value={s.baseFontSize}

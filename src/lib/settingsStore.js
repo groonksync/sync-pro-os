@@ -85,6 +85,7 @@ const DEFAULTS = {
 
   // Sistema
   isMobileMode: false,
+  mobileModeSource: 'auto', // 'auto' | 'manual'
   interfaceDensityLegacy: 'normal',
   currencyRates: { USD: 10.50, EUR: 11.20, BRL: 2.10 },
   studioName: 'Inefable Studio',

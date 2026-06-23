@@ -874,7 +874,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           </div>
           
           {/* Switcher de Pestañas */}
-          <div className="flex p-0.5 rounded-xl" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+          <div className="flex p-0.5 rounded-xl overflow-x-auto max-w-full hide-scrollbar" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
             {[
               { id: 'dashboard', label: 'Dashboard', icon: Activity },
               { id: 'ganancias', label: 'Ingresos & Ganancias', icon: TrendingUp },
