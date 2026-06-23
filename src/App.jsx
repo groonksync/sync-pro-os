@@ -21,8 +21,92 @@ import BovedaPass from './views/BovedaPass';
 import FlujoTrabajo from './views/FlujoTrabajo';
 import ConversorWebP from './views/ConversorWebP';
 import { AuthProvider, useAuth } from './hooks/useAuth';
-import { supabase } from './lib/supabaseClient';
+import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { getTheme } from './lib/theme';
+import { Wallet, Landmark, CreditCard, Package, Settings } from 'lucide-react';
+
+const ConfigMissingScreen = () => {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      height: '100vh', width: '100vw', backgroundColor: '#0A0A0C', color: '#ECECEE',
+      fontFamily: "'Geist', 'Inter', sans-serif", padding: 20,
+      backgroundImage: 'radial-gradient(ellipse at 50% 50%, rgba(220, 80, 80, 0.05) 0%, transparent 70%)',
+    }}>
+      <div style={{
+        maxWidth: 550, width: '100%', padding: '40px 30px', borderRadius: 20,
+        backgroundColor: 'rgba(20, 20, 25, 0.65)', border: '1px solid rgba(255, 100, 100, 0.15)',
+        backdropFilter: 'blur(20px)', boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
+        display: 'flex', flexDirection: 'column', gap: 20
+      }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 50, height: 50, borderRadius: 12,
+            background: 'linear-gradient(135deg, #FF453A, #FF9F0A)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 15px rgba(255, 69, 58, 0.3)'
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#0A0A0C' }}>
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <div>
+            <h1 style={{
+              fontSize: 16, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em',
+              margin: 0, color: '#ECECEE', fontFamily: "'Space Grotesk', sans-serif"
+            }}>Conexión con Supabase Pendiente</h1>
+            <p style={{
+              fontSize: 9, color: '#FF9F0A', textTransform: 'uppercase',
+              letterSpacing: '0.1em', margin: 0, fontWeight: 700
+            }}>Configuración Necesaria</p>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ height: '1px', backgroundColor: 'rgba(255, 255, 255, 0.08)' }} />
+        
+        <p style={{ fontSize: 13, color: '#A0A0A6', lineHeight: '1.6', margin: 0 }}>
+          No se han detectado las credenciales del proyecto de Supabase. Para que <strong>Inefable</strong> se inicie correctamente y se conecte a tu base de datos, debes crear un archivo de configuración de entorno.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <label style={{ fontSize: 10, color: '#6A6A72', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.05em' }}>
+            Instrucciones para configurar:
+          </label>
+          <div style={{
+            backgroundColor: 'rgba(10, 10, 12, 0.9)', border: '1px solid rgba(255,255,255,0.05)',
+            borderRadius: 12, padding: 16, display: 'flex', flexDirection: 'column', gap: 12
+          }}>
+            <p style={{ fontSize: 12, color: '#ECECEE', margin: 0 }}>
+              1. En la raíz del directorio <code>App web/</code>, crea un archivo llamado <code>.env.local</code> (o edita tu archivo <code>.env</code>).
+            </p>
+            <p style={{ fontSize: 12, color: '#ECECEE', margin: 0 }}>
+              2. Pega las siguientes variables y completa con las credenciales de tu consola de Supabase:
+            </p>
+            
+            {/* Codeblock */}
+            <pre style={{
+              margin: 0, padding: 12, backgroundColor: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.05)', borderRadius: 8,
+              fontSize: 11, color: '#FFD60A', fontFamily: "'JetBrains Mono', monospace",
+              overflowX: 'auto', lineHeight: '1.5'
+            }}>
+{`VITE_SUPABASE_URL=https://tu-proyecto.supabase.co
+VITE_SUPABASE_ANON_KEY=tu-anon-key-aqui`}
+            </pre>
+          </div>
+        </div>
+
+        <p style={{ fontSize: 10, color: '#52525A', textAlign: 'center', margin: '10px 0 0 0', lineHeight: '1.5' }}>
+          Después de crear el archivo y guardar los cambios, el servidor de desarrollo Vite detectará los cambios automáticamente o puedes reiniciar la aplicación.
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const LoginScreen = ({ onLogin, loading }) => (
   <div style={{
@@ -83,6 +167,10 @@ const LoginScreen = ({ onLogin, loading }) => (
 );
 
 const AppContent = () => {
+  if (!isSupabaseConfigured) {
+    return <ConfigMissingScreen />;
+  }
+
   const { session, user, loading, signInWithGoogle } = useAuth();
 
   const [activeTab, setActiveTab] = useState('resumen');
@@ -101,6 +189,9 @@ const AppContent = () => {
       if (session.provider_token) {
         setGoogleToken(session.provider_token);
       }
+      if (session.provider_refresh_token) {
+        localStorage.setItem('sovereign_google_refresh_token', session.provider_refresh_token);
+      }
       if (session.user?.user_metadata) {
         setGoogleUser({
           name: session.user.user_metadata.full_name || session.user.user_metadata.name || session.user.email,
@@ -112,26 +203,71 @@ const AppContent = () => {
       if (!loading) {
         setGoogleToken(null);
         setGoogleUser(null);
+        localStorage.removeItem('sovereign_google_refresh_token');
       }
     }
   }, [session, loading]);
 
-
-  // NOTA: El refresh de token Google OAuth requiere un backend con refresh_token.
-  // Sin un endpoint /api/refresh-token, el token expira en ~1 hora.
-  // Al expirar, las llamadas a Google API fallarán con 401.
-  // Considera agregar un backend proxy o usar el flujo de Google Identity Services
-  // que maneja refresh automático vía gapi.client.
-  const refreshGoogleToken = async () => {
+  const doGoogleRefresh = async (refreshToken) => {
     try {
-      // Verificar si el token actual sigue siendo válido
-      if (!googleToken) return;
-      const checkRes = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + googleToken);
-      if (!checkRes.ok) {
-        console.warn("Token de Google expirado. El usuario deberá reconectar.");
+      const refreshRes = await fetch('/api/google-refresh', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+
+      if (refreshRes.ok) {
+        const resData = await refreshRes.json();
+        if (resData.access_token) {
+          console.log("Token de Google refrescado exitosamente.");
+          setGoogleToken(resData.access_token);
+          return resData.access_token;
+        }
+      } else {
+        const errData = await refreshRes.json().catch(() => ({}));
+        console.error("Error al refrescar token de Google via API:", errData);
       }
     } catch (error) {
-      console.warn("No se pudo verificar el token de Google (posiblemente sin conexión):", error.message);
+      console.error("Fallo de red al refrescar token de Google:", error.message);
+    }
+    return null;
+  };
+
+  const refreshGoogleToken = async () => {
+    try {
+      const refreshToken = localStorage.getItem('sovereign_google_refresh_token');
+      if (!googleToken) {
+        if (refreshToken) {
+          console.log("No hay token de acceso. Intentando obtener uno nuevo con el refresh token...");
+          await doGoogleRefresh(refreshToken);
+        }
+        return;
+      }
+      
+      const checkRes = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + googleToken);
+      if (!checkRes.ok) {
+        console.warn("Token de Google inválido o expirado. Intentando refrescar...");
+        if (refreshToken) {
+          await doGoogleRefresh(refreshToken);
+        } else {
+          console.warn("No hay un refresh token guardado para Google.");
+        }
+      } else {
+        const info = await checkRes.json();
+        const expiresIn = parseInt(info.expires_in, 10);
+        if (!isNaN(expiresIn) && expiresIn < 600) {
+          console.log(`Token de Google expira en ${expiresIn}s (menos de 10 min). Refrescando...`);
+          if (refreshToken) {
+            await doGoogleRefresh(refreshToken);
+          }
+        } else {
+          console.log("El token de Google sigue siendo válido.");
+        }
+      }
+    } catch (error) {
+      console.warn("Error en la rutina de refresh de Google Token:", error.message);
     }
   };
 
@@ -140,7 +276,7 @@ const AppContent = () => {
     refreshGoogleToken();
     const interval = setInterval(refreshGoogleToken, 50 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [googleToken]);
 
   // Guardar en localStorage cuando cambie el estado
   useEffect(() => {
@@ -296,6 +432,56 @@ const AppContent = () => {
     }
   };
 
+  const handlePayService = async (servicio) => {
+    try {
+      const hoy = new Date();
+      const fechaHoyStr = hoy.toISOString().split('T')[0];
+      
+      const nuevoEgreso = {
+        id: crypto.randomUUID(),
+        monto: parseFloat(servicio.monto) || 0,
+        categoria: 'Suscripciones y Servicios',
+        descripcion: `Pago de servicio: ${servicio.nombre}`,
+        fecha: fechaHoyStr,
+        created_at: new Date().toISOString()
+      };
+      
+      const { error: egresoError } = await supabase
+        .from('egresos')
+        .insert([nuevoEgreso]);
+        
+      if (egresoError) throw egresoError;
+      
+      const fechaPagoActual = new Date(servicio.fecha_pago || fechaHoyStr);
+      fechaPagoActual.setMonth(fechaPagoActual.getMonth() + 1);
+      const siguienteFechaPago = fechaPagoActual.toISOString().split('T')[0];
+      
+      const { error: servicioError } = await supabase
+        .from('servicios')
+        .update({ fecha_pago: siguienteFechaPago })
+        .eq('id', servicio.id);
+        
+      if (servicioError) throw servicioError;
+      
+      const updatedEgresos = [nuevoEgreso, ...(data.egresos || [])];
+      const updatedServicios = (servicios || []).map(s => 
+        s.id === servicio.id ? { ...s, fecha_pago: siguienteFechaPago } : s
+      );
+      
+      setData(prev => ({
+        ...prev,
+        egresos: updatedEgresos
+      }));
+      setServicios(updatedServicios);
+      
+      return true;
+    } catch (e) {
+      console.error("Error al registrar pago de servicio:", e);
+      alert("Error al registrar pago de servicio: " + e.message);
+      return false;
+    }
+  };
+
   const getNotificationCount = () => {
     try {
       const hoy = new Date();
@@ -335,6 +521,7 @@ const AppContent = () => {
             isDark={isDarkMode}
             onNavigateToPrestamo={handleNavigateToPrestamo}
             onQuickPayment={handleQuickPayment}
+            onPayService={handlePayService}
             onNavigateTo={handleNavigateTo}
           />
         );
@@ -481,11 +668,37 @@ const AppContent = () => {
           }} 
         />
         
-        <main className={`flex-1 h-full ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out ${appSettings.isMobileMode ? 'pb-24' : ''}`}>
-          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} ${activeTab === 'ajustes' ? '' : 'max-w-[2000px] mx-auto'} transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'ajustes' ? 'px-0 py-0' : (appSettings.isMobileMode ? 'px-4 py-4' : 'px-6 py-8 lg:px-16 lg:py-12'))}`}>
+        <main className={`flex-1 h-full ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out pb-20 md:pb-0`}>
+          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} ${activeTab === 'ajustes' ? '' : 'max-w-[2000px] mx-auto'} transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'ajustes' ? 'px-0 py-0' : 'px-6 py-8 lg:px-16 lg:py-12')}`}>
             {renderSafeContent()}
           </div>
         </main>
+        
+        {/* Responsive Mobile Bottom Navbar */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-lg flex md:hidden items-center justify-around py-3 px-2 shadow-2xl safe-bottom transition-colors duration-500"
+             style={{
+               backgroundColor: globalTheme.panel,
+               borderColor: globalTheme.border,
+             }}>
+          {[
+            { id: 'resumen', label: 'Inicio', icon: Wallet },
+            { id: 'prestamos', label: 'Préstamos', icon: Landmark },
+            { id: 'pagos', label: 'Egresos', icon: CreditCard },
+            { id: 'inventario', label: 'Stock', icon: Package },
+            { id: 'ajustes', label: 'Ajustes', icon: Settings },
+          ].map(item => {
+            const Icon = item.icon;
+            const active = activeTab === item.id;
+            return (
+              <button key={item.id} onClick={() => setActiveTab(item.id)}
+                      className={`flex flex-col items-center gap-1 transition-all ${active ? 'scale-105' : 'opacity-60'}`}
+                      style={{ color: active ? globalTheme.accent : globalTheme.textSecondary }}>
+                <Icon size={18} />
+                <span className="text-[9px] font-bold tracking-tight">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
         
         {/* AGENTE GLOBAL FLOTANTE */}
         {activeTab !== 'ajustes' && (

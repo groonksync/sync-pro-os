@@ -47,6 +47,23 @@
   color-scheme: dark;
 }
 
+.light-mode {
+  --color-bg:       #F5F5F7;
+  --color-panel:    #FFFFFF;
+  --color-surface:  #FFFFFF;
+  --color-card:     #FFFFFF;
+  --color-input:    #F0F0F2;
+  --color-border:   rgba(0,0,0,0.07);
+  --color-border-l: rgba(0,0,0,0.04);
+  --color-accent:   #27272A;
+  --color-accent-h: #18181B;
+  --color-text:     #0F172A;
+  --color-text-2:   #475569;
+  --color-text-3:   #64748B;
+  --color-text-4:   #94A3B8;
+  color-scheme: light;
+}
+
 /* ═══════════════════════════════════════════════════════════
    GLOBAL RESET & BASE
 ═══════════════════════════════════════════════════════════ */
@@ -75,7 +92,7 @@ body {
 
 .font-display,
 h1.display, h2.display, h3.display {
-  font-family: 'Space Grotesk', 'Geist', sans-serif !important;
+  font-family: 'Geist', 'Inter', sans-serif !important;
   font-feature-settings: 'ss01' 1, 'ss02' 1;
 }
 
@@ -97,7 +114,7 @@ h1.display, h2.display, h3.display {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Space Grotesk', 'Geist', sans-serif;
+  font-family: 'Geist', 'Inter', sans-serif !important;
   font-weight: 700;
   letter-spacing: var(--tracking-tight);
   color: var(--color-text);

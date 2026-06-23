@@ -200,6 +200,7 @@ const CommandCenter = ({
   onNavigateToPrestamo,
   onQuickPayment,
   onNavigateTo,
+  onPayService,
 }) => {
   const t = useTheme(isDark);
   const hoy = new Date();
@@ -212,6 +213,7 @@ const CommandCenter = ({
   const [periodoMes, setPeriodoMes] = useState(mesActual);
   const [filtroCategoria, setFiltroCategoria] = useState(null); // null = todos
   const [modalPago, setModalPago] = useState({ isOpen: false, prestamo: null });
+  const [modalServicio, setModalServicio] = useState({ isOpen: false, servicio: null });
   const [modalIA, setModalIA] = useState({ isOpen: false, contenido: '', cargando: false });
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [configWidgetOpen, setConfigWidgetOpen] = useState(false);
@@ -228,7 +230,7 @@ const CommandCenter = ({
   });
 
   // ─── Hooks ──────────────────────────────────────────────────
-  const categorias = usePrestamoCategorias(data?.prestamos);
+  // const categorias = usePrestamoCategorias(data?.prestamos);
 
   // ─── Efectos ─────────────────────────────────────────────────
   const fetchAiBalance = useCallback(async () => {
@@ -258,7 +260,10 @@ const CommandCenter = ({
   }, 0);
 
   const listaProductos = Array.isArray(data?.productos) ? data.productos : [];
-  const valorInventario = listaProductos.reduce((acc, p) => acc + (parseFloat(p.precio_venta || p.precio || 0) * (parseInt(p.stock_actual || p.stock || 0) || 0)), 0);
+  const valorInventario = listaProductos.reduce((acc, p) => {
+    const costo = parseFloat(p.precio_costo !== undefined && p.precio_costo !== null ? p.precio_costo : (p.precio_compra || p.precio_venta || p.precio || 0));
+    return acc + (costo * (parseInt(p.stock_actual || p.stock || 0) || 0));
+  }, 0);
   const stockBajo = listaProductos.filter(p => (parseInt(p.stock_actual || p.stock || 0) || 0) <= 5);
 
   const listaRecordatorios = Array.isArray(data?.recordatorios) ? data.recordatorios : [];
@@ -281,19 +286,184 @@ const CommandCenter = ({
   }).reduce((s, e) => s + Number(e.monto || 0), 0);
   const balanceMensual = ingresosMes - egresosMes;
 
-  // Cobros del período seleccionado
-  const cobrosDelPeriodo = categorias.porCobrar.filter(p => {
-    if (!p.inicio) return false;
-    const [year, month] = periodoMes.split('-').map(Number);
-    const fechaCobro = new Date(p.inicio);
-    // Mostrar si tiene deuda en el período seleccionado
-    return p.mesesAdeudados?.some(m => m.startsWith(periodoMes));
-  });
+  // NUEVO: Categorización de cobros del período seleccionado
+  const cobrosDelPeriodo = useMemo(() => {
+    const [selYear, selMonth] = periodoMes.split('-').map(Number);
+    const finDelMesSel = new Date(selYear, selMonth, 0);
+
+    return listaPrestamos.map(p => {
+      if (!p.inicio) return null;
+      const pagos = Array.isArray(p.pagos) ? p.pagos : [];
+      const inicio = new Date(p.inicio);
+      if (isNaN(inicio.getTime())) return null;
+
+      const topePeriodo = new Date(selYear, selMonth - 1, 31);
+      const mesesEsperados = [];
+      let cursor = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 1);
+      const fin = p.fin ? new Date(p.fin) : null;
+      const tope = fin && fin < topePeriodo ? fin : topePeriodo;
+
+      while (cursor <= tope) {
+        const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+        mesesEsperados.push(key);
+        cursor.setMonth(cursor.getMonth() + 1);
+      }
+
+      const mesesAdeudados = mesesEsperados.filter(m => !pagos.includes(m));
+      const totalAtraso = mesesAdeudados.length;
+
+      let categoria, dialog;
+      if (totalAtraso === 0) {
+        categoria = 'AL_DIA';
+        dialog = {
+          color: '#22c55e',
+          icono: 'CheckCircle',
+          titulo: 'Al día',
+          mensaje: 'Cliente al día en este periodo.',
+          nivel: 'Bajo',
+        };
+      } else if (totalAtraso === 1) {
+        categoria = 'PENDIENTE';
+        dialog = {
+          color: '#eab308',
+          icono: 'Clock',
+          titulo: 'Pendiente',
+          mensaje: `Debe el mes de ${mesesAdeudados[0]}. Enviar recordatorio.`,
+          nivel: 'Bajo',
+        };
+      } else if (totalAtraso === 2) {
+        categoria = 'DEUDOR_1MES';
+        dialog = {
+          color: '#f97316',
+          icono: 'AlertTriangle',
+          titulo: 'Riesgo medio',
+          mensaje: `Debe 2 meses (${mesesAdeudados.join(', ')}). Contactar.`,
+          nivel: 'Medio',
+        };
+      } else {
+        categoria = 'DEUDOR_CRITICO';
+        dialog = {
+          color: '#ef4444',
+          icono: 'XCircle',
+          titulo: 'Riesgo alto',
+          mensaje: `Debe ${totalAtraso} meses (${mesesAdeudados.join(', ')}). RIESGO CRÍTICO.`,
+          nivel: 'Alto',
+        };
+      }
+
+      return {
+        ...p,
+        categoria,
+        mesesAtraso: totalAtraso,
+        mesesAdeudados,
+        dialog,
+        mesesEsperados
+      };
+    }).filter(p => {
+      if (!p) return false;
+      const inicio = new Date(p.inicio);
+      if (inicio > finDelMesSel) return false;
+
+      if (p.fin) {
+        const fin = new Date(p.fin);
+        const inicioDelMesSel = new Date(selYear, selMonth - 1, 1);
+        if (fin < inicioDelMesSel && p.mesesAtraso === 0) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [listaPrestamos, periodoMes]);
+
+  // NUEVO: Categorías del periodo seleccionado que reemplazan el const categorias inicial
+  const categorias = useMemo(() => {
+    const alDia = cobrosDelPeriodo.filter(p => p.categoria === 'AL_DIA');
+    const pendientes = cobrosDelPeriodo.filter(p => p.categoria === 'PENDIENTE');
+    const deudor1Mes = cobrosDelPeriodo.filter(p => p.categoria === 'DEUDOR_1MES');
+    const deudorCritico = cobrosDelPeriodo.filter(p => p.categoria === 'DEUDOR_CRITICO');
+    const porCobrar = cobrosDelPeriodo.filter(p => p.categoria !== 'AL_DIA');
+
+    const totalPendiente = porCobrar.reduce((sum, p) => {
+      const cap = parseFloat(p.capital) || 0;
+      const int = parseFloat(p.interes) || 0;
+      return sum + (cap * (int / 100));
+    }, 0);
+
+    const totalAlDia = alDia.reduce((sum, p) => {
+      const cap = parseFloat(p.capital) || 0;
+      const int = parseFloat(p.interes) || 0;
+      return sum + (cap * (int / 100));
+    }, 0);
+
+    const totalDeudor1Mes = deudor1Mes.reduce((sum, p) => {
+      const cap = parseFloat(p.capital) || 0;
+      const int = parseFloat(p.interes) || 0;
+      return sum + (cap * (int / 100));
+    }, 0);
+
+    const totalDeudorCritico = deudorCritico.reduce((sum, p) => {
+      const cap = parseFloat(p.capital) || 0;
+      const int = parseFloat(p.interes) || 0;
+      return sum + (cap * (int / 100));
+    }, 0);
+
+    return {
+      alDia,
+      pendientes,
+      deudor1Mes,
+      deudorCritico,
+      porCobrar,
+      todos: cobrosDelPeriodo,
+      totales: {
+        alDia: alDia.length,
+        pendientes: pendientes.length,
+        deudor1Mes: deudor1Mes.length,
+        deudorCritico: deudorCritico.length,
+        totalPorCobrar: porCobrar.length,
+        totalPendiente,
+        totalAlDia,
+        totalDeudor1Mes,
+        totalDeudorCritico,
+      }
+    };
+  }, [cobrosDelPeriodo]);
 
   // Filtrar por categoría si está seleccionada
   const cobrosFiltrados = filtroCategoria
     ? cobrosDelPeriodo.filter(p => p.categoria === filtroCategoria)
     : cobrosDelPeriodo;
+
+  // NUEVO: Lista detallada de egresos y servicios (pagados + proyectados)
+  const listaEgresosDetallados = useMemo(() => {
+    const egresosDelMes = egresos.filter(e => {
+      const fecha = new Date(e.fecha || e.fecha_pago || e.created_at);
+      return fecha.getMonth() === hoy.getMonth() && fecha.getFullYear() === hoy.getFullYear();
+    }).map(e => ({
+      id: e.id,
+      nombre: e.descripcion || e.categoria || 'Egreso',
+      monto: Number(e.monto || 0),
+      tipo: 'egreso',
+      fecha: e.fecha || e.created_at ? new Date(e.fecha || e.created_at).toISOString().split('T')[0] : '',
+    }));
+
+    const serviciosActivos = (servicios || []).filter(s => s.activo !== false);
+
+    const serviciosProyectados = serviciosActivos.filter(s => {
+      const yaPagado = egresosDelMes.some(e => e.nombre.toLowerCase().includes(s.nombre.toLowerCase()));
+      return !yaPagado;
+    }).map(s => ({
+      id: `serv-proj-${s.id}`,
+      nombre: `[Pendiente] ${s.nombre}`,
+      monto: Number(s.monto || 0),
+      tipo: 'servicio_pendiente',
+      fecha: s.fecha_pago || '',
+      servicioOriginal: s
+    }));
+
+    return [...egresosDelMes, ...serviciosProyectados];
+  }, [egresos, servicios, hoy.getMonth(), hoy.getFullYear()]);
+
+  const totalEgresosYServicios = listaEgresosDetallados.reduce((sum, item) => sum + item.monto, 0);
 
   // Notificaciones automáticas
   const notificaciones = useMemo(() => {
@@ -312,28 +482,35 @@ const CommandCenter = ({
       });
     });
     
-    // ⏰ Próximos primeros pagos (notificación 10 días antes)
+    // ⏰ Próximas cuotas de préstamos (vencen en los próximos 10 días o ya vencidas)
     listaPrestamos.forEach(p => {
       try {
-        const cuotas = generarCronograma(p);
-        const primeraNoPagada = cuotas.find(c => c.estado !== 'pagado');
-        if (!primeraNoPagada) return;
+        const cuotas = p.tipo_pago === 'diario' ? generarCronogramaDiario(p) : generarCronograma(p);
         const hoyLocal = new Date();
-        const venc = new Date(primeraNoPagada.fechaVencimiento);
-        const diffTime = venc.getTime() - hoyLocal.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays === 10) {
-          notifs.push({
-            id: `pago-prox-${p.id}`,
-            tipo: 'pago-proximo',
-            icono: 'Bell',
-            mensaje: `🔔 ${p.nombre}: faltan EXACTAMENTE 10 DÍAS para su primer pago (${primeraNoPagada.fechaVencimiento})`,
-            accion: 'Ver',
-            color: '#8b5cf6',
-            prestamoId: p.id,
-          });
+        hoyLocal.setHours(0, 0, 0, 0);
+
+        // Buscar la primera cuota pendiente o vencida
+        const primeraNoPagada = cuotas.find(c => c.estado === 'pendiente' || c.estado === 'vencido');
+        if (primeraNoPagada) {
+          const venc = new Date(primeraNoPagada.fechaVencimiento);
+          venc.setHours(0, 0, 0, 0);
+          const diffTime = venc.getTime() - hoyLocal.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          // Si ya venció o vence en los próximos 10 días
+          if (diffDays <= 10) {
+            notifs.push({
+              id: `cuota-prox-${p.id}-${primeraNoPagada.key}`,
+              tipo: diffDays < 0 ? 'critico' : 'pago-proximo',
+              icono: diffDays < 0 ? 'XCircle' : 'Clock',
+              mensaje: `Cuota de ${p.nombre} ${diffDays < 0 ? 'vencida hace ' + Math.abs(diffDays) + ' días' : 'vence en ' + diffDays + ' días'} (${primeraNoPagada.fechaVencimiento}). Mes: ${primeraNoPagada.label}. Inicio: ${p.inicio}`,
+              accion: 'Cobrar',
+              color: diffDays < 0 ? t.danger : '#8b5cf6',
+              prestamoId: p.id,
+            });
+          }
         }
-      } catch (e) { /* ignorar errores de cómputo */ }
+      } catch (e) { /* ignorar */ }
     });
     
     // Stock bajo
@@ -378,24 +555,22 @@ const CommandCenter = ({
       if (diffDays < 0) {
         notifs.push({
           id: `servicio-vencido-${s.id}`,
-          tipo: 'critico',
+          tipo: 'servicio',
           icono: 'XCircle',
           mensaje: `⚠️ Pago vencido: ${s.nombre} (${parseFloat(s.monto || 0).toFixed(0)} Bs) venció el ${s.fecha_pago}`,
           accion: 'Pagar',
           color: '#ef4444',
-          navigateTo: 'pagos',
-          searchTerm: s.nombre,
+          servicio: s,
         });
       } else if (diffDays <= 5) {
         notifs.push({
           id: `servicio-prox-${s.id}`,
-          tipo: 'pago-proximo',
+          tipo: 'servicio',
           icono: 'AlertTriangle',
           mensaje: `📅 Próximo pago: ${s.nombre} (${parseFloat(s.monto || 0).toFixed(0)} Bs) vence en ${diffDays} días (${s.fecha_pago})`,
-          accion: 'Ver',
+          accion: 'Pagar',
           color: '#f59e0b',
-          navigateTo: 'pagos',
-          searchTerm: s.nombre,
+          servicio: s,
         });
       }
     });
@@ -413,10 +588,10 @@ const CommandCenter = ({
     }
     
     return notifs.sort((a, b) => {
-      const prioridad = { critico: 0, 'pago-proximo': 1, stock: 2, tarea: 3, pendiente: 4 };
+      const prioridad = { critico: 0, servicio: 0, 'pago-proximo': 1, stock: 2, tarea: 3, pendiente: 4 };
       return (prioridad[a.tipo] || 99) - (prioridad[b.tipo] || 99);
     });
-  }, [categorias, stockBajo, tareasCriticas, listaPrestamos, servicios]);
+  }, [categorias, stockBajo, tareasCriticas, listaPrestamos, servicios, t.danger]);
 
   // ─── Handlers ───────────────────────────────────────────────
   const toggleWidget = (widgetId) => {
@@ -435,6 +610,20 @@ const CommandCenter = ({
     await onQuickPayment(p.id);
     setModalPago({ isOpen: false, prestamo: null });
     setToastMsg({ tipo: 'success', texto: `✅ Cobro registrado: ${p.nombre}` });
+  };
+
+  const abrirModalServicio = (servicio) => {
+    setModalServicio({ isOpen: true, servicio });
+  };
+
+  const confirmarPagoServicio = async () => {
+    const s = modalServicio.servicio;
+    if (!s || !onPayService) return;
+    const success = await onPayService(s);
+    if (success) {
+      setModalServicio({ isOpen: false, servicio: null });
+      setToastMsg({ tipo: 'success', texto: `✅ Pago registrado: ${s.nombre}` });
+    }
   };
 
   const generarResumenIA = async () => {
@@ -635,41 +824,41 @@ const CommandCenter = ({
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          FILA 1: KPIs PRINCIPALES (4 tarjetas)
+          FILA 1: KPIs PRINCIPALES (3 tarjetas, adaptable)
           ══════════════════════════════════════════════════════ */}
       <section className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'}`} style={{ marginBottom: '20px' }}>
         
-        {/* KPI 1: Capital / Ingresos */}
+        {/* KPI 1: Capital Activo en Préstamos */}
         <div className="animate-countUp stagger-1" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.accent}12` }}>
               <Wallet size={15} color={t.accent} />
             </div>
             <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: `${t.accent}10`, color: t.accent }}>
-              Capital
+              Activo
             </span>
           </div>
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Activos en Calle</p>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Capital Activo en Préstamos</p>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', 'Geist', sans-serif" }}>
             <CountUp value={totalCapital} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
           </h3>
           <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Rend./Mes</p>
+            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Rend. Esperado/Mes</p>
             <p style={{ fontSize: 11, fontWeight: 700, color: t.success, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>+<CountUp value={totalInteresMensual} /> BS</p>
           </div>
         </div>
 
-        {/* KPI 2: Inventario */}
+        {/* KPI 2: Inventario a Costo */}
         <div className="animate-countUp stagger-2" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${stockBajo.length > 0 ? '#ef4444' : t.accent}12` }}>
-              <Package size={15} color={stockBajo.length > 0 ? '#ef4444' : t.accent} />
+            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${stockBajo.length > 0 ? t.danger : t.accent}12` }}>
+              <Package size={15} color={stockBajo.length > 0 ? t.danger : t.accent} />
             </div>
-            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: stockBajo.length > 0 ? 'rgba(239,68,68,0.1)' : `${t.accent}10`, color: stockBajo.length > 0 ? '#ef4444' : t.accent }}>
-              {stockBajo.length > 0 ? `${stockBajo.length} Stock Bajo` : 'Inventario'}
+            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: stockBajo.length > 0 ? `${t.danger}10` : `${t.accent}10`, color: stockBajo.length > 0 ? t.danger : t.accent }}>
+              {stockBajo.length > 0 ? `${stockBajo.length} Stock Bajo` : 'Almacén'}
             </span>
           </div>
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Valor Almacén</p>
+          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Valor Almacén (Costo)</p>
           <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
             <CountUp value={valorInventario} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
           </h3>
@@ -679,57 +868,84 @@ const CommandCenter = ({
           </div>
         </div>
 
-        {/* KPI 3: Balance Mensual */}
-        <div className="animate-countUp stagger-3" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
+        {/* KPI 3: Egresos y Servicios (col-span-2) */}
+        <div className={`animate-countUp stagger-3 col-span-1 md:col-span-2 lg:col-span-2`} style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${balanceMensual >= 0 ? '#22c55e' : '#ef4444'}12` }}>
-              <BarChart3 size={15} color={balanceMensual >= 0 ? '#22c55e' : '#ef4444'} />
+            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.danger}12` }}>
+              <CreditCard size={15} color={t.danger} />
             </div>
-            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: balanceMensual >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)', color: balanceMensual >= 0 ? '#22c55e' : '#ef4444' }}>
-              Balance
+            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: `${t.danger}10`, color: t.danger }}>
+              Egresos y Servicios
             </span>
           </div>
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Este Mes</p>
-          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
-            {balanceMensual >= 0 ? '+' : '-'}<CountUp value={Math.abs(balanceMensual)} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
-          </h3>
-          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Ingresos</p>
-            <p style={{ fontSize: 11, fontWeight: 700, color: t.success, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>+<CountUp value={ingresosMes} /> BS</p>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Egresos</p>
-            <p style={{ fontSize: 11, fontWeight: 700, color: t.danger, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>-<CountUp value={egresosMes} /> BS</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 0.8fr', gap: '16px' }}>
+            {/* Tabla compacta de egresos */}
+            <div>
+              <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, marginBottom: 8 }}>Detalle de Egresos</p>
+              <div style={{ maxHeight: '100px', overflowY: 'auto', border: `1px solid ${t.border}`, borderRadius: 8, backgroundColor: t.bg }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.input, position: 'sticky', top: 0 }}>
+                      <th style={{ padding: '4px 6px', textAlign: 'left', color: t.textDim, fontWeight: 600 }}>Descripción</th>
+                      <th style={{ padding: '4px 6px', textAlign: 'right', color: t.textDim, fontWeight: 600 }}>Monto</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {listaEgresosDetallados.length > 0 ? (
+                      listaEgresosDetallados.map(item => (
+                        <tr key={item.id} style={{ borderBottom: `1px solid ${t.borderLight || t.border}` }}>
+                          <td style={{ padding: '4px 6px', color: item.tipo === 'servicio_pendiente' ? t.textSecondary : t.text, fontWeight: 500 }}>
+                            {item.nombre}
+                            {item.tipo === 'servicio_pendiente' && (
+                              <span style={{ marginLeft: 4, padding: '1px 3px', borderRadius: 4, backgroundColor: `${t.warning}15`, color: t.warning, fontSize: '8px', fontWeight: 600 }}>
+                                PENDIENTE
+                              </span>
+                            )}
+                          </td>
+                          <td style={{ padding: '4px 6px', textAlign: 'right', fontWeight: 700, color: item.tipo === 'servicio_pendiente' ? t.textSecondary : t.danger }}>
+                            {item.monto.toLocaleString()} BS
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="2" style={{ padding: '16px 6px', textAlign: 'center', color: t.textDim }}>
+                          Sin egresos registrados
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, padding: '0 2px' }}>
+                <span style={{ fontSize: '9px', fontWeight: 700, color: t.textDim, textTransform: 'uppercase' }}>Total Egresos</span>
+                <span style={{ fontSize: '12px', fontWeight: 800, color: t.danger, fontFamily: 'monospace' }}>
+                  {totalEgresosYServicios.toLocaleString()} BS
+                </span>
+              </div>
+            </div>
+
+            {/* Balance mensual resumen */}
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', borderLeft: isMobile ? 'none' : `1px solid ${t.border}`, paddingLeft: isMobile ? 0 : '16px', borderTop: isMobile ? `1px solid ${t.border}` : 'none', paddingTop: isMobile ? '12px' : 0 }}>
+              <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Balance Neto</p>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: balanceMensual >= 0 ? t.success : t.danger, letterSpacing: '-0.035em', margin: '2px 0 6px', fontFamily: "'Space Grotesk', sans-serif" }}>
+                {balanceMensual >= 0 ? '+' : '-'}{Math.abs(balanceMensual).toLocaleString()} <span style={{ fontSize: 9, fontWeight: 500, color: t.textDim }}>BS</span>
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Ingresos</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: t.success, fontFamily: "'JetBrains Mono', monospace" }}>+{ingresosMes.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Egresos</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: t.danger, fontFamily: "'JetBrains Mono', monospace" }}>-{egresosMes.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* KPI 4: Cobros Pendientes */}
-        <div className="animate-countUp stagger-4" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent}12` }}>
-              <CalendarDays size={15} color={categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent} />
-            </div>
-            <span style={{ fontSize: 8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '3px 9px', borderRadius: 9, backgroundColor: categorias.totales.totalPorCobrar > 0 ? 'rgba(234,179,8,0.1)' : `${t.accent}10`, color: categorias.totales.totalPorCobrar > 0 ? '#eab308' : t.accent }}>
-              {categorias.totales.totalPorCobrar > 0 ? `${categorias.totales.totalPorCobrar} Pendientes` : 'Al Día'}
-            </span>
-          </div>
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Por Cobrar</p>
-          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
-            <CountUp value={categorias.totales.totalPendiente} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
-          </h3>
-          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Al Día</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: '#22c55e', fontFamily: "'JetBrains Mono', monospace" }}><CountUp value={categorias.totales.alDia} /></span>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Críticos</span>
-              <span style={{ fontSize: 11, fontWeight: 700, color: categorias.totales.deudorCritico > 0 ? '#ef4444' : t.textDim, fontFamily: "'JetBrains Mono', monospace" }}>
-                <CountUp value={categorias.totales.deudorCritico} />
-              </span>
-            </div>
-          </div>
-        </div>
       </section>
 
       {/* ══════════════════════════════════════════════════════
@@ -985,7 +1201,9 @@ const CommandCenter = ({
                   onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${n.color}15`; }}
                   onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${n.color}08`; }}
                   onClick={() => {
-                    if (n.prestamoId && onNavigateToPrestamo) {
+                    if (n.tipo === 'servicio' && n.servicio) {
+                      abrirModalServicio(n.servicio);
+                    } else if (n.prestamoId && onNavigateToPrestamo) {
                       onNavigateToPrestamo(n.prestamoId);
                     } else if (n.navigateTo && onNavigateTo) {
                       onNavigateTo(n.navigateTo, { search: n.searchTerm });
@@ -1000,37 +1218,51 @@ const CommandCenter = ({
                     {n.mensaje}
                   </p>
                   <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                    {n.tipo === 'critico' && n.prestamoId && (
+                    {n.accion === 'Pagar' && n.servicio && (
+                      <button
+                        onClick={() => abrirModalServicio(n.servicio)}
+                        style={{
+                          padding: '6px 12px', borderRadius: '8px', border: 'none',
+                          backgroundColor: t.danger, color: '#fff',
+                          fontSize: '9px', fontWeight: 700, cursor: 'pointer',
+                        }}
+                      >
+                        Pagar
+                      </button>
+                    )}
+                    {n.accion === 'Cobrar' && n.prestamoId && (
                       <button
                         onClick={() => {
-                          const p = categorias.deudorCritico.find(d => d.id === n.prestamoId);
+                          const p = listaPrestamos.find(d => d.id === n.prestamoId);
                           if (p) abrirModalPago(p);
                         }}
                         style={{
                           padding: '6px 12px', borderRadius: '8px', border: 'none',
-                          backgroundColor: n.color, color: '#fff',
+                          backgroundColor: n.color || t.accent, color: '#fff',
                           fontSize: '9px', fontWeight: 700, cursor: 'pointer',
                         }}
                       >
                         Cobrar
                       </button>
                     )}
-                    <button
-                      onClick={() => {
-                        if (n.prestamoId && onNavigateToPrestamo) {
-                          onNavigateToPrestamo(n.prestamoId);
-                        } else if (n.navigateTo && onNavigateTo) {
-                          onNavigateTo(n.navigateTo, { search: n.searchTerm });
-                        }
-                      }}
-                      style={{
-                        padding: '6px 12px', borderRadius: '8px', border: `1px solid ${t.border}`,
-                        backgroundColor: 'transparent', color: t.textDim,
-                        fontSize: '9px', fontWeight: 600, cursor: 'pointer',
-                      }}
-                    >
-                      {n.accion}
-                    </button>
+                    {n.accion && n.accion !== 'Pagar' && n.accion !== 'Cobrar' && (
+                      <button
+                        onClick={() => {
+                          if (n.prestamoId && onNavigateToPrestamo) {
+                            onNavigateToPrestamo(n.prestamoId);
+                          } else if (n.navigateTo && onNavigateTo) {
+                            onNavigateTo(n.navigateTo, { search: n.searchTerm });
+                          }
+                        }}
+                        style={{
+                          padding: '6px 12px', borderRadius: '8px', border: `1px solid ${t.border}`,
+                          backgroundColor: 'transparent', color: t.textDim,
+                          fontSize: '9px', fontWeight: 600, cursor: 'pointer',
+                        }}
+                      >
+                        {n.accion}
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1200,6 +1432,22 @@ const CommandCenter = ({
           </div>
         )}
       </CommandModal>
+
+      {/* ══════════════════════════════════════════════════════
+          MODAL DE CONFIRMACIÓN DE PAGO DE SERVICIO
+          ══════════════════════════════════════════════════════ */}
+      <CommandModal
+        isOpen={modalServicio.isOpen}
+        onClose={() => setModalServicio({ isOpen: false, servicio: null })}
+        onConfirm={confirmarPagoServicio}
+        titulo={`Confirmar pago de ${modalServicio.servicio?.nombre || ''}`}
+        mensaje={`¿Estás seguro de registrar el pago de servicio ${modalServicio.servicio?.nombre || ''} por ${modalServicio.servicio?.monto || 0} Bs? Se creará un egreso y la fecha de vencimiento del servicio se actualizará al mes siguiente.`}
+        icono={<CreditCard size={22} color="#f14c4c" />}
+        colorAccent="#f14c4c"
+        confirmText="Confirmar Pago"
+        cancelText="Cancelar"
+        isDark={isDark}
+      />
 
       {/* ══════════════════════════════════════════════════════
           MODAL DE RESUMEN IA PROFESIONAL
