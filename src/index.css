@@ -30,13 +30,13 @@
   --tracking-caps:      0.10em;
   --tracking-wide:      0.14em;
 
-  --color-bg:       #0B0B0C;
+  --color-bg:       #121214;
   --color-panel:    #121214;
-  --color-surface:  #18181A;
-  --color-card:     #1C1C1E;
+  --color-surface:  #18181C;
+  --color-card:     #1E1E22;
   --color-input:    #242427;
-  --color-border:   #2D2D30;
-  --color-border-l: #3A3A3E;
+  --color-border:   #222225;
+  --color-border-l: #2D2D32;
   --color-accent:   #C0C0C6;
   --color-accent-h: #D4D4D9;
   --color-text:     #ECECEE;

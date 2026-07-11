@@ -195,5 +195,26 @@ export function generarComprobantePDF({ prestamo, cuotaInfo, tipo = 'mensual' })
   doc.line(left, y, right, y);
 
   const fileName = `comprobante_${prestamo.nombre?.replace(/ /g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`;
-  doc.save(fileName);
+  
+  try {
+    const pdfBlob = doc.output('blob');
+    const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+    
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({
+        files: [file],
+        title: 'Comprobante de Pago',
+        text: `Comprobante de pago de ${prestamo.nombre || 'Cliente'}.`
+      }).catch(err => {
+        // En caso de cancelación o error de compartir, descargar como respaldo
+        console.warn('El usuario canceló o falló la acción de compartir, descargando:', err);
+        doc.save(fileName);
+      });
+    } else {
+      doc.save(fileName);
+    }
+  } catch (e) {
+    console.error('Error usando Web Share API:', e);
+    doc.save(fileName);
+  }
 }

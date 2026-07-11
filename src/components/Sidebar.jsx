@@ -272,7 +272,7 @@ const Sidebar = ({
         display: 'flex', flexDirection: 'column', height: '100%',
         padding: isCollapsed ? '12px 6px' : '14px 8px',
         backgroundColor: sidebarBg || t.bg,
-        borderRight: `1px solid ${t.border}`,
+        borderRight: 'none',
         transition: 'width 0.35s cubic-bezier(0.16,1,0.3,1), padding 0.35s ease',
         position: 'relative', overflow: 'visible', flexShrink: 0,
         fontFamily: "'Geist', 'Inter', sans-serif",

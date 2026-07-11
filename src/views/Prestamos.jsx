@@ -123,6 +123,167 @@ const syncLoanToGoogleCalendar = async (prestamo, token) => {
 };
 
 const generateReciboPDF = (recibo, prestamo, isDark = false) => {
+  if (recibo.formatoExportacion === 'yape') {
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [100, 180] });
+    const W = 100, H = 180;
+    const M = 10;
+    
+    // Background: clean white
+    pdf.setFillColor('#ffffff');
+    pdf.rect(0, 0, W, H, 'F');
+    
+    // Subtle border decoration
+    pdf.setDrawColor('#ecfdf5');
+    pdf.setLineWidth(1.5);
+    pdf.line(M, 8, W - M, 8); // Top green stripe accent
+    
+    // Check circle header
+    pdf.setFillColor('#ecfdf5');
+    pdf.ellipse(W / 2, 22, 9, 9, 'F');
+    pdf.setDrawColor('#10b981');
+    pdf.setLineWidth(1.2);
+    // Draw vector checkmark
+    pdf.line(W / 2 - 3.5, 22, W / 2 - 1, 24.5);
+    pdf.line(W / 2 - 1, 24.5, W / 2 + 4.5, 19.5);
+    
+    let y = 40;
+    
+    // Title
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(16);
+    pdf.setTextColor('#0f172a');
+    pdf.text('Comprobante de Pago', W / 2, y, { align: 'center' });
+    y += 14;
+    
+    // Large Amount
+    pdf.setFontSize(36);
+    pdf.setTextColor('#10b981');
+    const totalCalculado = (parseFloat(recibo.montoInteres) || 0) + 
+                           (parseFloat(recibo.montoMora) || 0) + 
+                           (parseFloat(recibo.montoCapital) || 0) - 
+                           (parseFloat(recibo.montoAjustes) || 0);
+    const totalStr = `Bs ${totalCalculado.toLocaleString()}`;
+    pdf.text(totalStr, W / 2, y, { align: 'center' });
+    y += 10;
+    
+    // Client Name
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(12);
+    pdf.setTextColor('#1e293b');
+    pdf.text(recibo.prestamistaName || prestamo?.nombre || '---', W / 2, y, { align: 'center' });
+    y += 6;
+    
+    // Date & Time
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9.5);
+    pdf.setTextColor('#64748b');
+    const dateFormatted = safeFormatDate(recibo.fechaEmision, { day: 'numeric', month: 'short', year: 'numeric' });
+    const timeFormatted = recibo.horaEmision || new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true });
+    pdf.text(`${dateFormatted}  |  ${timeFormatted}`, W / 2, y, { align: 'center' });
+    y += 10;
+    
+    // Divider
+    pdf.setDrawColor('#f1f5f9');
+    pdf.setLineWidth(0.3);
+    pdf.line(M + 5, y, W - M - 5, y);
+    y += 8;
+    
+    // DATOS DE LA TRANSACCIÓN
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(8.5);
+    pdf.setTextColor('#94a3b8');
+    pdf.text('DATOS DE LA TRANSACCIÓN', M + 5, y);
+    y += 4;
+    
+    // Draw rounded background cell for transaction details
+    const wrappedConcept = pdf.splitTextToSize(recibo.concepto || 'Pago de Cuota', W - 2*M - 16);
+    const boxHeight = 22 + (wrappedConcept.length * 4.5);
+    
+    pdf.setFillColor('#f8fafc');
+    pdf.setDrawColor('#e2e8f0');
+    pdf.setLineWidth(0.2);
+    pdf.roundedRect(M + 3, y, W - 2*M - 6, boxHeight, 2, 2, 'FD');
+    
+    let innerY = y + 5;
+    // Concepto label
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor('#64748b');
+    pdf.text('Concepto', M + 7, innerY);
+    innerY += 4.5;
+    
+    // Concepto value (wrapped)
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9.5);
+    pdf.setTextColor('#0f172a');
+    pdf.text(wrappedConcept, M + 7, innerY);
+    innerY += (wrappedConcept.length * 4.5) + 1.5;
+    
+    // Divider
+    pdf.setDrawColor('#e2e8f0');
+    pdf.setLineWidth(0.15);
+    pdf.line(M + 7, innerY, W - M - 7, innerY);
+    innerY += 4.5;
+    
+    // Método
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor('#64748b');
+    pdf.text('Método', M + 7, innerY);
+    
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9.5);
+    pdf.setTextColor('#0f172a');
+    pdf.text(recibo.metodo || 'Efectivo', W - M - 7, innerY, { align: 'right' });
+    innerY += 5.5;
+    
+    // Nro. transacción
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+    pdf.setTextColor('#64748b');
+    pdf.text('Nro. transacción', M + 7, innerY);
+    
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(9.5);
+    pdf.setTextColor('#0f172a');
+    pdf.text(recibo.numero || 'REC-XXXXXX', W - M - 7, innerY, { align: 'right' });
+    
+    y += boxHeight + 4;
+    const desgloseRows = [];
+    if (parseFloat(recibo.montoInteres) > 0) {
+      desgloseRows.push([recibo.esPagoMensual ? 'Pago Mensual' : 'Intereses', `${parseFloat(recibo.montoInteres).toLocaleString()} ${prestamo?.moneda || 'BOB'}`]);
+    }
+    if (parseFloat(recibo.montoCapital) > 0) {
+      desgloseRows.push(['Capital', `${parseFloat(recibo.montoCapital).toLocaleString()} ${prestamo?.moneda || 'BOB'}`]);
+    }
+    if (parseFloat(recibo.montoMora) > 0) {
+      desgloseRows.push(['Mora', `${parseFloat(recibo.montoMora).toLocaleString()} ${prestamo?.moneda || 'BOB'}`]);
+    }
+    if (parseFloat(recibo.montoAjustes) > 0) {
+      desgloseRows.push(['Ajustes', `-${parseFloat(recibo.montoAjustes).toLocaleString()} ${prestamo?.moneda || 'BOB'}`]);
+    }
+    
+    if (desgloseRows.length > 0) {
+      pdf.setFillColor('#f8fafc');
+      pdf.roundedRect(M + 5, y, W - 2*M - 10, 6 + desgloseRows.length * 6, 2, 2, 'F');
+      
+      let desgloseY = y + 5;
+      desgloseRows.forEach(([lbl, val]) => {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8.5);
+        pdf.setTextColor('#64748b');
+        pdf.text(lbl, M + 8, desgloseY);
+        
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor('#334155');
+        pdf.text(val, W - M - 8, desgloseY, { align: 'right' });
+        desgloseY += 6;
+      });
+    }
+    
+    return pdf;
+  }
+
   const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = 210, M = 20;
   
@@ -144,17 +305,17 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
 
   // ── HEADER ──
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(22);
+  pdf.setFontSize(26);
   pdf.setTextColor(ACCENT);
-  pdf.text('RECIBO DE PAGO', M, y);
+  pdf.text('COMPROBANTE DE PAGO', M, y);
 
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8);
+  pdf.setFontSize(10);
   pdf.setTextColor(TEXT_DIM);
   pdf.text('COMPROBANTE OFICIAL', W - M, y, { align: 'right' });
   
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(11);
+  pdf.setFontSize(13);
   pdf.setTextColor(TEXT_MAIN);
   pdf.text(recibo.numero || 'REC-XXXXXX', W - M, y + 6, { align: 'right' });
 
@@ -171,46 +332,46 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
 
   // Column 1: CLIENTE
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
+  pdf.setFontSize(10);
   pdf.setTextColor(TEXT_DIM);
   pdf.text('PAGADOR / DEUDOR', M, y);
 
   y += 5;
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(11);
+  pdf.setFontSize(13);
   pdf.setTextColor(TEXT_MAIN);
   pdf.text(recibo.prestamistaName || prestamo?.nombre || '---', M, y);
 
   y += 5;
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8.5);
+  pdf.setFontSize(11);
   pdf.setTextColor(TEXT_MID);
   if (prestamo?.ci) pdf.text(`CI: ${prestamo.ci}`, M, y);
-  y += 4.5;
+  y += 5.5;
   if (prestamo?.telefono) pdf.text(`Tel: ${prestamo.telefono}`, M, y);
 
   // Column 2: EMISIÓN & DETALLES
-  let yCol2 = y - 14.5;
+  let yCol2 = y - 15.5;
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
+  pdf.setFontSize(10);
   pdf.setTextColor(TEXT_DIM);
   pdf.text('FECHA DE PAGO', col2, yCol2);
 
-  yCol2 += 5;
+  yCol2 += 5.5;
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
+  pdf.setFontSize(12);
   pdf.setTextColor(TEXT_MAIN);
   pdf.text(safeFormatDate(recibo.fechaEmision, { year: 'numeric', month: 'long', day: 'numeric' }), col2, yCol2);
 
-  yCol2 += 5;
+  yCol2 += 5.5;
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
+  pdf.setFontSize(10);
   pdf.setTextColor(TEXT_DIM);
   pdf.text('MÉTODO DE PAGO', col2, yCol2);
 
-  yCol2 += 5;
+  yCol2 += 5.5;
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(9.5);
+  pdf.setFontSize(11.5);
   pdf.setTextColor(ACCENT);
   pdf.text(recibo.metodo?.toUpperCase() || 'EFECTIVO', col2, yCol2);
 
@@ -220,32 +381,32 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   pdf.setFillColor(PANEL);
   pdf.setDrawColor(BORDER);
   pdf.setLineWidth(0.2);
-  pdf.roundedRect(M, y, W - 2*M, 20, 2, 2, 'FD');
+  pdf.roundedRect(M, y, W - 2*M, 22, 2, 2, 'FD');
 
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
+  pdf.setFontSize(10);
   pdf.setTextColor(TEXT_DIM);
   pdf.text('REFERENCIA DEL CONTRATO', M + 5, y + 6);
 
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(9);
+  pdf.setFontSize(11);
   pdf.setTextColor(TEXT_MAIN);
   const capitalStr = prestamo ? `${parseFloat(prestamo.capital).toLocaleString()} ${prestamo.moneda}` : '---';
   const interesStr = prestamo ? `${prestamo.interes}% mensual` : '---';
-  pdf.text(`Préstamo de ${capitalStr} al ${interesStr}`, M + 5, y + 13);
-  pdf.text(`Fecha Inicio: ${safeFormatDate(prestamo?.inicio)} | Fin: ${safeFormatDate(prestamo?.fin)}`, W - M - 5, y + 13, { align: 'right' });
+  pdf.text(`Préstamo de ${capitalStr} al ${interesStr}`, M + 5, y + 14);
+  pdf.text(`Fecha Inicio: ${safeFormatDate(prestamo?.inicio)} | Fin: ${safeFormatDate(prestamo?.fin)}`, W - M - 5, y + 14, { align: 'right' });
 
-  y += 28;
+  y += 30;
 
   // ── CONCEPTO DE PAGO ──
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(8);
+  pdf.setFontSize(10);
   pdf.setTextColor(TEXT_DIM);
-  pdf.text('CONCEPTO', M, y);
+  pdf.text('CONCEPTO / MOTIVO', M, y);
   
   y += 5;
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(10);
+  pdf.setFontSize(12);
   pdf.setTextColor(TEXT_MAIN);
   pdf.text(recibo.concepto || 'Pago de Cuota', M, y);
 
@@ -255,7 +416,8 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   const moneda = prestamo?.moneda || 'BOB';
   const rows = [];
   if (parseFloat(recibo.montoInteres) > 0) {
-    rows.push(['Pago de Intereses', `${parseFloat(recibo.montoInteres).toLocaleString()} ${moneda}`]);
+    const interestDesc = recibo.esPagoMensual ? 'Pago Mensual' : 'Pago de Intereses';
+    rows.push([interestDesc, `${parseFloat(recibo.montoInteres).toLocaleString()} ${moneda}`]);
   }
   if (parseFloat(recibo.montoMora) > 0) {
     rows.push(['Cargos por Mora', `${parseFloat(recibo.montoMora).toLocaleString()} ${moneda}`]);
@@ -282,12 +444,12 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
       fillColor: TABLE_HEADER_BG,
       textColor: TEXT_MAIN,
       fontStyle: 'bold',
-      fontSize: 9,
+      fontSize: 11,
       halign: 'left'
     },
     bodyStyles: {
       textColor: TEXT_MID,
-      fontSize: 9.5,
+      fontSize: 11.5,
       halign: 'left',
     },
     columnStyles: {
@@ -303,23 +465,23 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
 
   // Total Box
   pdf.setFillColor(PANEL);
-  pdf.roundedRect(W - M - 70, y, 70, 16, 2, 2, 'F');
+  pdf.roundedRect(W - M - 80, y, 80, 18, 2, 2, 'F');
   
   pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8.5);
+  pdf.setFontSize(11);
   pdf.setTextColor(TEXT_MID);
-  pdf.text('TOTAL RECIBIDO', W - M - 65, y + 6);
+  pdf.text('TOTAL RECIBIDO', W - M - 75, y + 6.5);
 
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(13);
+  pdf.setFontSize(16);
   pdf.setTextColor(ACCENT);
-  pdf.text(`${totalCalculado.toLocaleString()} ${moneda}`, W - M - 5, y + 11.5, { align: 'right' });
+  pdf.text(`${totalCalculado.toLocaleString()} ${moneda}`, W - M - 5, y + 12.5, { align: 'right' });
 
   y += 32;
 
   // Watermark "PAGADO"
   pdf.setFont('helvetica', 'bold');
-  pdf.setFontSize(40);
+  pdf.setFontSize(48);
   if (isDark) {
     pdf.setTextColor(16, 45, 30);
   } else {
@@ -327,24 +489,10 @@ const generateReciboPDF = (recibo, prestamo, isDark = false) => {
   }
   pdf.text('PAGADO', W / 2, y - 8, { align: 'center', angle: 12 });
 
-  // Signature lines
-  const sigW = 50;
-  pdf.setDrawColor(BORDER);
-  pdf.setLineWidth(0.3);
-  
-  pdf.line(M, y, M + sigW, y);
-  pdf.line(W - M - sigW, y, W - M, y);
-
-  pdf.setFont('helvetica', 'normal');
-  pdf.setFontSize(8);
-  pdf.setTextColor(TEXT_DIM);
-  pdf.text('FIRMA CLIENTE', M + sigW / 2, y + 5, { align: 'center' });
-  pdf.text('FIRMA ACREEDOR', W - M - sigW / 2, y + 5, { align: 'center' });
-
   // Small note
-  y += 15;
+  y += 10;
   pdf.setFont('helvetica', 'italic');
-  pdf.setFontSize(7.5);
+  pdf.setFontSize(9);
   pdf.setTextColor(TEXT_DIM);
   pdf.text('Este recibo constituye una constancia legal de pago del monto y conceptos indicados.', W / 2, y, { align: 'center' });
 
@@ -570,7 +718,7 @@ const isCuotaReserved = (pagos, cuotaKey) => {
 };
 
 // ─── COMPONENTE PRINCIPAL ────────────────────────────────────
-const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onClearSelection }) => {
+const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preSelectedAction, onClearSelection }) => {
   const t = useTheme(isDark);
   const [prestamoView, setPrestamoView] = useState('list'); 
   const [filtroTipo, setFiltroTipo] = useState('otorgado'); // 'otorgado' | 'recibido' 
@@ -598,6 +746,9 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
     estado: 'Pagado',
     metodo: 'Efectivo',
     notas: '',
+    esPagoMensual: false,
+    formatoExportacion: 'a4', // 'a4' | 'yape'
+    horaEmision: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true }),
   });
   const [reciboDarkMode, setReciboDarkMode] = useState(false);
   const [reciboSubView, setReciboSubView] = useState('emitir'); // 'emitir' | 'historial'
@@ -606,6 +757,10 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
   const [syncingCalendar, setSyncingCalendar] = useState(false);
   const [uploadingDrive, setUploadingDrive] = useState(false);
   const [registrarPagoDb, setRegistrarPagoDb] = useState(true);
+
+  // Estado para la nota del cliente seleccionado
+  const [clienteNota, setClienteNota] = useState('');
+  const [savingNota, setSavingNota] = useState(false);
 
   const { cuotas: ledgerCuotas, resumen: ledgerResumen, proyeccion: ledgerProyeccion } = useAmortizacion(activePrestamo);
 
@@ -728,6 +883,34 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
     }
   };
 
+  const handleShareOrSavePDF = (doc, fileName, clientName) => {
+    try {
+      const pdfBlob = doc.output('blob');
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: 'Comprobante de Pago',
+          text: `Comprobante de pago de ${clientName || 'Cliente'}.`
+        }).then(() => {
+          showToast('📄 Recibo compartido con éxito');
+        }).catch(err => {
+          console.warn('El usuario canceló o falló la acción de compartir, descargando:', err);
+          doc.save(fileName);
+          showToast('📄 Recibo PDF descargado');
+        });
+      } else {
+        doc.save(fileName);
+        showToast('📄 Recibo PDF descargado');
+      }
+    } catch (e) {
+      console.error('Error usando Web Share API:', e);
+      doc.save(fileName);
+      showToast('📄 Recibo PDF descargado');
+    }
+  };
+
   const handleRegenerateReceiptPDF = (receiptItem) => {
     const mockReciboForm = {
       numero: `REC-${Date.now().toString().slice(-6)}`,
@@ -742,8 +925,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
     };
     const doc = generateReciboPDF(mockReciboForm, receiptItem.prestamo, reciboDarkMode);
     const fileName = `${mockReciboForm.numero}_${receiptItem.clientName}.pdf`;
-    doc.save(fileName);
-    showToast('📄 Recibo PDF descargado');
+    handleShareOrSavePDF(doc, fileName, receiptItem.clientName);
   };
 
   const showToast = (message, type = 'success') => {
@@ -753,15 +935,91 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
   useEffect(() => {
     if (preSelectedId && data?.prestamos) {
       const prestamo = data.prestamos.find(p => p.id === preSelectedId);
-      if (prestamo) { openPrestamo(prestamo); if (onClearSelection) onClearSelection(); }
+      if (prestamo) {
+        openPrestamo(prestamo);
+        if (preSelectedAction === 'emitir-recibo') {
+          const clientName = prestamo.nombre || '';
+          const currentPagos = Array.isArray(prestamo.pagos) ? prestamo.pagos : [];
+          const schedule = prestamo.tipo_pago === 'diario' 
+            ? generarCronogramaDiario(prestamo) 
+            : generarCronograma(prestamo);
+          const firstUnpaid = schedule.find(c => !isCuotaPaid(currentPagos, c.key)) || schedule[0];
+          
+          setReciboForm({
+            prestamistaKey: clientName,
+            contratoId: prestamo.id,
+            cuotaKey: firstUnpaid ? firstUnpaid.key : '',
+            numero: `REC-${Date.now().toString().slice(-6)}`,
+            fechaEmision: new Date().toISOString().split('T')[0],
+            concepto: firstUnpaid ? `Pago de Cuota ${firstUnpaid.label} — ${prestamo.nombre}` : '',
+            montoInteres: firstUnpaid ? firstUnpaid.interes : 0,
+            montoCapital: prestamo.tipo_pago === 'diario' ? (firstUnpaid ? firstUnpaid.capital : 0) : 0,
+            montoMora: firstUnpaid ? firstUnpaid.mora : 0,
+            montoAjustes: 0,
+            estado: 'Pagado',
+            metodo: 'Efectivo',
+            notes: '', 
+            notas: '',
+            esPagoMensual: false,
+            formatoExportacion: 'a4',
+            horaEmision: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          });
+          setPrestamoView('recibos');
+        }
+        if (onClearSelection) onClearSelection();
+      }
     }
-  }, [preSelectedId, data?.prestamos]);
+  }, [preSelectedId, preSelectedAction, data?.prestamos]);
 
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3000);
     return () => clearTimeout(t);
   }, [toast]);
+
+  // Cargar nota del cliente al cambiar selectedPrestamistaName
+  useEffect(() => {
+    if (selectedPrestamistaName) {
+      const fetchClientNote = async () => {
+        try {
+          const { data: noteData, error } = await supabase
+            .from('prestamistas_notas')
+            .select('contenido')
+            .eq('nombre_cliente', selectedPrestamistaName)
+            .maybeSingle();
+          if (error) throw error;
+          setClienteNota(noteData ? noteData.contenido : '');
+        } catch (err) {
+          console.error("Error al cargar la nota del cliente:", err.message);
+        }
+      };
+      fetchClientNote();
+    } else {
+      setClienteNota('');
+    }
+  }, [selectedPrestamistaName]);
+
+  const handleSaveClienteNota = async () => {
+    if (!selectedPrestamistaName) return;
+    setSavingNota(true);
+    try {
+      const { error } = await supabase
+        .from('prestamistas_notas')
+        .upsert({
+          nombre_cliente: selectedPrestamistaName,
+          contenido: clienteNota,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'nombre_cliente' });
+
+      if (error) throw error;
+      showToast('📝 Notas del cliente actualizadas');
+    } catch (err) {
+      console.error("Error al guardar la nota del cliente:", err.message);
+      showToast(`❌ Error al guardar nota: ${err.message || 'Fallo de conexión'}`, 'error');
+    } finally {
+      setSavingNota(false);
+    }
+  };
 
   const openPrestamo = (p) => {
     if (!p) return;
@@ -1087,10 +1345,19 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
           <div className="animate-in fade-in duration-300">
             <header style={{
               display: 'flex', flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'flex-end',
+              justifyContent: 'space-between', alignItems: isMobile ? 'center' : 'flex-end',
               gap: '16px', marginBottom: '32px',
+              width: '100%'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: 'center',
+                textAlign: isMobile ? 'center' : 'left',
+                gap: '20px',
+                width: isMobile ? '100%' : 'auto',
+                flexWrap: 'wrap'
+              }}>
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
                     {filtroTipo === 'recibido' ? 'Mis Deudas & Créditos' : 'Cartera de Préstamos'}
@@ -1100,7 +1367,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                   </p>
                 </div>
                 {/* Switcher de Tipo de Préstamo */}
-                <div style={{ display: 'flex', padding: '2px', borderRadius: '10px', backgroundColor: t.accentSoft, border: `1px solid ${t.border}` }}>
+                <div style={{ display: 'flex', padding: '2px', borderRadius: '10px', backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, margin: isMobile ? '0 auto' : '0' }}>
                   <button
                     onClick={() => setFiltroTipo('otorgado')}
                     style={{
@@ -1123,7 +1390,12 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                   </button>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: '10px',
+                width: isMobile ? '100%' : 'auto'
+              }}>
                 <button
                   onClick={() => {
                     setReciboForm({
@@ -1201,7 +1473,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
             {/* KPIs */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)',
               gap: '12px', marginBottom: '24px',
             }}>
               <KPICard t={t} icon={DollarSign} label={filtroTipo === 'recibido' ? "Deuda Recibida" : "Capital Activo"} value={stats.capitalActivo.toLocaleString()} moneda="BOB" color={t.accent} />
@@ -1211,123 +1483,65 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
               <KPICard t={t} icon={Heart} label={filtroTipo === 'recibido' ? "Índice de Cumplimiento" : "Índice de Salud"} value={stats.indiceSalud.toFixed(0)} moneda="/100" color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
             </div>
 
-            {/* Gráficos: Bar Chart + Donut Chart */}
+            {/* Donut Chart — Distribución de Riesgo (Ancho Completo Adaptativo) */}
             <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr',
-              gap: '16px', marginBottom: '24px',
+              padding: '20px', backgroundColor: t.panel,
+              border: `1px solid ${t.border}`, borderRadius: '16px',
+              display: 'flex', flexDirection: 'column',
+              marginBottom: '24px',
             }}>
-              {/* Bar Chart — Proyección 6 meses */}
-              <div style={{
-                padding: '20px', backgroundColor: t.panel,
-                border: `1px solid ${t.border}`, borderRadius: '16px',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                  <BarChart3 size={16} color={t.accent} />
-                  <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: t.textDim }}>
-                    Proyección Próximos 6 Meses
-                  </span>
-                </div>
-                {proyeccionAgregada.length > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '120px', position: 'relative', paddingBottom: '20px' }}>
-                    {/* Línea de base */}
-                    <div style={{ position: 'absolute', left: 0, right: 0, bottom: '24px', height: '1px', backgroundColor: t.border, opacity: 0.3 }} />
-                    {proyeccionAgregada.map((item, idx) => {
-                      const esMayor = item.valor === Math.max(...proyeccionAgregada.map(i => i.valor));
-                      return (
-                        <div key={idx} style={{
-                          flex: 1, display: 'flex', flexDirection: 'column',
-                          alignItems: 'center', height: '100%',
-                          justifyContent: 'flex-end', position: 'relative',
-                        }}>
-                          {/* Valor sobre la barra (solo en hover) */}
-                          <div style={{
-                            fontSize: '8px', fontWeight: 700, color: t.accent,
-                            marginBottom: '4px', opacity: 0.85,
-                            lineHeight: 1,
-                          }}>
-                            {item.valor.toLocaleString()}
-                          </div>
-                          {/* Barra */}
-                          <div
-                            title={`${item.label}: ${item.valor.toLocaleString()}`}
-                            style={{
-                              width: '100%', maxWidth: '40px',
-                              height: `${Math.max(item.pct, 4)}%`,
-                              borderRadius: '4px 4px 0 0',
-                              background: esMayor
-                                ? `linear-gradient(180deg, ${t.accent}, ${t.success}80)`
-                                : `linear-gradient(180deg, ${t.accent}, ${t.accent}40)`,
-                              transition: 'height 0.4s ease, background 0.3s ease',
-                              minHeight: '6px',
-                              cursor: 'pointer',
-                              boxShadow: esMayor ? `0 0 8px ${t.accent}40` : 'none',
-                            }}
-                          />
-                          {/* Etiqueta horizontal debajo - SIN rotación */}
-                          <div style={{
-                            fontSize: '8px', fontWeight: 600, color: t.textDim,
-                            textAlign: 'center', lineHeight: 1.2,
-                            marginTop: '6px', whiteSpace: 'nowrap',
-                            letterSpacing: '0.02em',
-                          }}>
-                            {item.label.substring(0, 3)}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px', color: t.textDim, fontSize: '11px' }}>
-                    Sin préstamos activos para proyectar
-                  </div>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <PieChart size={16} color={t.accent} />
+                <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: t.textDim }}>
+                  Distribución de Riesgo de la Cartera
+                </span>
               </div>
-
-              {/* Donut Chart — Distribución de Riesgo */}
               <div style={{
-                padding: '20px', backgroundColor: t.panel,
-                border: `1px solid ${t.border}`, borderRadius: '16px',
-                display: 'flex', flexDirection: 'column',
+                display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '32px',
+                flex: 1
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                  <PieChart size={16} color={t.accent} />
-                  <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: t.textDim }}>
-                    Distribución de Riesgo
-                  </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1 }}>
-                  <div style={{ position: 'relative', width: '96px', height: '96px', flexShrink: 0 }}>
-                    <svg width="96" height="96" viewBox="0 0 100 100">
-                      {riesgoData.segments.map((seg, idx) => (
-                        <circle
-                          key={idx}
-                          cx="50" cy="50" r="38"
-                          fill="none"
-                          stroke={seg.color}
-                          strokeWidth="12"
-                          strokeDasharray={seg.dashArray}
-                          strokeDashoffset={seg.dashOffset}
-                          transform="rotate(-90 50 50)"
-                          style={{ transition: 'stroke-dasharray 0.5s ease' }}
-                        />
-                      ))}
-                      <circle cx="50" cy="50" r="28" fill={t.panel} />
-                      <text x="50" y="50" textAnchor="middle" dominantBaseline="central"
-                        fill={t.text} fontSize="14" fontWeight="700">
-                        {riesgoData.totalVal}
-                      </text>
-                    </svg>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
-                    {riesgoData.items.map((item, idx) => (
-                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: '9px', fontWeight: 500, color: t.textDim, flex: 1 }}>{item.label}</span>
-                        <span style={{ fontSize: '9px', fontWeight: 700, color: t.text }}>{item.value}</span>
-                      </div>
+                <div style={{ position: 'relative', width: '96px', height: '96px', flexShrink: 0, margin: isMobile ? '0 auto' : '0' }}>
+                  <svg width="96" height="96" viewBox="0 0 100 100">
+                    {riesgoData.segments.map((seg, idx) => (
+                      <circle
+                        key={idx}
+                        cx="50" cy="50" r="38"
+                        fill="none"
+                        stroke={seg.color}
+                        strokeWidth="12"
+                        strokeDasharray={seg.dashArray}
+                        strokeDashoffset={seg.dashOffset}
+                        transform="rotate(-90 50 50)"
+                        style={{ transition: 'stroke-dasharray 0.5s ease' }}
+                      />
                     ))}
-                  </div>
+                    <circle cx="50" cy="50" r="28" fill={t.panel} />
+                    <text x="50" y="50" textAnchor="middle" dominantBaseline="central"
+                      fill={t.text} fontSize="14" fontWeight="700">
+                      {riesgoData.totalVal}
+                    </text>
+                  </svg>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  flex: 1
+                }}>
+                  {riesgoData.items.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '120px', padding: '6px 12px', borderRadius: '8px', backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: `1px solid ${t.border}` }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, flexShrink: 0 }} />
+                      <span style={{ fontSize: '9px', fontWeight: 600, color: t.textDim, flex: 1, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{item.label}</span>
+                      <span style={{ fontSize: '10px', fontWeight: 800, color: t.text, fontFamily: 'monospace' }}>{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1566,153 +1780,244 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
               </button>
             </header>
 
-            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
-              {!isMobile ? (
-                <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: `1px solid ${t.border}` }}>
-                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Contrato</th>
-                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Periodo</th>
-                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Capital</th>
-                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Interés</th>
-                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(prestamosList.filter(p => p.nombre?.trim().toLowerCase() === selectedPrestamistaName?.trim().toLowerCase())).map((p, idx) => {
-                      const moraAmount = moraMap[p.id];
-                      return (
-                        <tr key={p.id} onClick={() => openPrestamo(p)}
-                          style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
-                          onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
-                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                          className="group"
-                        >
-                          <td style={{ padding: '16px 24px' }}>
-                            <div>
-                              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                                Contrato #${idx + 1}
-                              </p>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
-                                <span style={{
-                                  display: 'inline-block',
-                                  width: '6px',
-                                  height: '6px',
-                                  borderRadius: '50%',
-                                  backgroundColor: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
-                                }} />
-                                <span style={{
-                                  fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em',
-                                  color: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
-                                }}>
-                                  {p.estado || 'Activo'}
-                                </span>
-                                {moraAmount > 0 && (
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
-                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
-                                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444' }}>
-                                      +{moraAmount.toLocaleString()} mora
+            <div className={`grid gap-6 ${isMobile ? 'grid-cols-1' : 'grid-cols-12'}`}>
+              {/* Columna Izquierda - Lista de Contratos */}
+              <div className={`${isMobile ? '' : 'col-span-8'} space-y-6`}>
+                <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+                  {!isMobile ? (
+                    <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: `1px solid ${t.border}` }}>
+                          <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Contrato</th>
+                          <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Periodo</th>
+                          <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Capital</th>
+                          <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Interés</th>
+                          <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(prestamosList.filter(p => p.nombre?.trim().toLowerCase() === selectedPrestamistaName?.trim().toLowerCase())).map((p, idx) => {
+                          const moraAmount = moraMap[p.id];
+                          return (
+                            <tr key={p.id} onClick={() => openPrestamo(p)}
+                              style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                              className="group"
+                            >
+                              <td style={{ padding: '16px 24px' }}>
+                                <div>
+                                  <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+                                    Contrato #${idx + 1}
+                                  </p>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                                    <span style={{
+                                      display: 'inline-block',
+                                      width: '6px',
+                                      height: '6px',
+                                      borderRadius: '50%',
+                                      backgroundColor: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
+                                    }} />
+                                    <span style={{
+                                      fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em',
+                                      color: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
+                                    }}>
+                                      {p.estado || 'Activo'}
                                     </span>
+                                    {moraAmount > 0 && (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
+                                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
+                                        <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444' }}>
+                                          +{moraAmount.toLocaleString()} mora
+                                        </span>
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
+                                </div>
+                              </td>
+                              <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                                <span style={{ fontSize: '10px', fontWeight: 500, color: t.textMuted }}>
+                                  {safeFormatDate(p.inicio)}
+                                  {' → '}
+                                  {safeFormatDate(p.fin)}
+                                </span>
+                              </td>
+                              <td style={{ padding: '16px 24px' }}>
+                                <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+                                  {parseFloat(p.capital).toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>{p.moneda}</span>
+                                </p>
+                              </td>
+                              <td style={{ padding: '16px 24px' }}>
+                                <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
+                                  {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span style={{ fontSize: '9px', color: t.accent }}>{p.moneda}</span>
+                                  <span style={{ fontSize: '10px', color: t.textDim }}> ({p.interes}%)</span>
+                                </p>
+                              </td>
+                              <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
+                                    style={{
+                                      padding: '8px', borderRadius: '12px', border: 'none',
+                                      backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    title="Editar"
+                                  >
+                                    <Edit3 size={14} />
+                                  </button>
+                                  <button 
+                                    onClick={(e) => handleDeleteRequest(p, e)}
+                                    style={{
+                                      padding: '8px', borderRadius: '12px', border: 'none',
+                                      backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    title="Eliminar"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div>
+                      {(prestamosList.filter(p => p.nombre?.trim().toLowerCase() === selectedPrestamistaName?.trim().toLowerCase())).map((p, idx) => {
+                        const moraAmount = moraMap[p.id];
+                        return (
+                          <div key={p.id} onClick={() => openPrestamo(p)}
+                            style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
+                            <div>
+                              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>Contrato #${idx + 1}</p>
+                              <p style={{ fontSize: '10px', fontWeight: 600, color: t.accent, marginTop: '2px' }}>
+                                {parseFloat(p.capital).toLocaleString()} {p.moneda} ({p.interes}%)
+                              </p>
+                              {moraAmount > 0 && (
+                                <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444', marginTop: '2px', display: 'inline-block' }}>
+                                  +${moraAmount.toLocaleString()} mora
+                                </span>
+                              )}
                             </div>
-                          </td>
-                          <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 500, color: t.textMuted }}>
-                              {safeFormatDate(p.inicio)}
-                              {' → '}
-                              {safeFormatDate(p.fin)}
-                            </span>
-                          </td>
-                          <td style={{ padding: '16px 24px' }}>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                              {parseFloat(p.capital).toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>{p.moneda}</span>
-                            </p>
-                          </td>
-                          <td style={{ padding: '16px 24px' }}>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
-                              {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span style={{ fontSize: '9px', color: t.accent }}>{p.moneda}</span>
-                              <span style={{ fontSize: '10px', color: t.textDim }}> ({p.interes}%)</span>
-                            </p>
-                          </td>
-                          <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                              <button 
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <button
                                 onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
                                 style={{
-                                  padding: '8px', borderRadius: '12px', border: 'none',
+                                  padding: '8px', borderRadius: '10px', border: 'none',
                                   backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                                  transition: 'all 0.2s',
+                                  fontSize: '10px', fontWeight: 600,
+                                  display: 'flex', alignItems: 'center', gap: '4px',
                                 }}
-                                title="Editar"
                               >
-                                <Edit3 size={14} />
+                                <Edit3 size={12} /> Editar
                               </button>
-                              <button 
+                              <button
                                 onClick={(e) => handleDeleteRequest(p, e)}
                                 style={{
-                                  padding: '8px', borderRadius: '12px', border: 'none',
+                                  padding: '8px', borderRadius: '10px', border: 'none',
                                   backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
-                                  transition: 'all 0.2s',
                                 }}
-                                title="Eliminar"
                               >
                                 <Trash2 size={14} />
                               </button>
+                              <ChevronRight size={18} color={t.textDim} />
                             </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              ) : (
-                <div>
-                  {(prestamosList.filter(p => p.nombre?.trim().toLowerCase() === selectedPrestamistaName?.trim().toLowerCase())).map((p, idx) => {
-                    const moraAmount = moraMap[p.id];
-                    return (
-                      <div key={p.id} onClick={() => openPrestamo(p)}
-                        style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
-                        <div>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>Contrato #${idx + 1}</p>
-                          <p style={{ fontSize: '10px', fontWeight: 600, color: t.accent, marginTop: '2px' }}>
-                            {parseFloat(p.capital).toLocaleString()} {p.moneda} ({p.interes}%)
-                          </p>
-                          {moraAmount > 0 && (
-                            <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444', marginTop: '2px', display: 'inline-block' }}>
-                              +${moraAmount.toLocaleString()} mora
-                            </span>
-                          )}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
-                            style={{
-                              padding: '8px', borderRadius: '10px', border: 'none',
-                              backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                              fontSize: '10px', fontWeight: 600,
-                              display: 'flex', alignItems: 'center', gap: '4px',
-                            }}
-                          >
-                            <Edit3 size={12} /> Editar
-                          </button>
-                          <button
-                            onClick={(e) => handleDeleteRequest(p, e)}
-                            style={{
-                              padding: '8px', borderRadius: '10px', border: 'none',
-                              backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                          <ChevronRight size={18} color={t.textDim} />
-                        </div>
-                      </div>
-                    );
-                  })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
+
+              {/* Columna Derecha - Notas de Cliente */}
+              <div className={`${isMobile ? '' : 'col-span-4'}`}>
+                <div style={{
+                  padding: '24px',
+                  backgroundColor: t.panel,
+                  border: `1px solid ${t.border}`,
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                  height: '100%',
+                  boxSizing: 'border-box'
+                }}>
+                  <h3 style={{
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    color: t.textMuted,
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <Bookmark size={14} color={t.accent} /> Notas del Cliente
+                  </h3>
+                  
+                  <textarea
+                    value={clienteNota}
+                    onChange={e => setClienteNota(e.target.value)}
+                    placeholder="Apuntes sobre este cliente (promesas de pago, referencias, etc.)..."
+                    style={{
+                      width: '100%',
+                      flex: 1,
+                      minHeight: '220px',
+                      padding: '14px',
+                      fontSize: '12px',
+                      backgroundColor: t.input,
+                      border: `1px solid ${t.border}`,
+                      color: t.text,
+                      borderRadius: '12px',
+                      outline: 'none',
+                      resize: 'none',
+                      transition: 'border 0.2s',
+                      boxSizing: 'border-box'
+                    }}
+                    onFocus={e => { e.target.style.borderColor = t.accent; }}
+                    onBlur={e => { e.target.style.borderColor = t.border; }}
+                  />
+
+                  <button
+                    onClick={handleSaveClienteNota}
+                    disabled={savingNota}
+                    style={{
+                      backgroundColor: t.accent,
+                      color: isDark ? '#0A0A0C' : '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '12px 20px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: savingNota ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'all 0.2s',
+                      opacity: savingNota ? 0.6 : 1,
+                      width: '100%',
+                    }}
+                    onMouseEnter={e => { if (!savingNota) e.target.style.backgroundColor = t.accentHover; }}
+                    onMouseLeave={e => { if (!savingNota) e.target.style.backgroundColor = t.accent; }}
+                  >
+                    {savingNota ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" /> Guardando...
+                      </>
+                    ) : (
+                      <>
+                        <Save size={14} /> Guardar Notas
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : prestamoView === 'detail' ? (
@@ -1986,13 +2291,24 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                               </span>
                             </td>
                             <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 700, color: t.text }}>
-                                {(ledgerResumen.totalPagado || 0).toLocaleString()} pagado
-                              </span>
-                              <br />
-                              <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>
-                                {(ledgerResumen.totalPendiente || 0).toLocaleString()} pend.
-                              </span>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: t.text }}>
+                                  {(ledgerResumen.totalPagado || 0).toLocaleString()} pagado
+                                </span>
+                                <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>
+                                  {(ledgerResumen.totalPendiente || 0).toLocaleString()} resta
+                                </span>
+                                {ledgerResumen.capitalPendiente !== undefined && ledgerResumen.capitalPendiente > 0 && (
+                                  <span style={{ fontSize: '9px', fontWeight: 500, color: t.textMuted }}>
+                                    Cap. resta: {(ledgerResumen.capitalPendiente || 0).toLocaleString()}
+                                  </span>
+                                )}
+                                {ledgerResumen.interesPendiente !== undefined && ledgerResumen.interesPendiente > 0 && (
+                                  <span style={{ fontSize: '9px', fontWeight: 500, color: t.textMuted }}>
+                                    Int. resta: {(ledgerResumen.interesPendiente || 0).toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
                               {(ledgerResumen.totalMora || 0) > 0 && (
                                 <>
                                   <br />
@@ -2272,6 +2588,39 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                 {/* COLUMNA IZQUIERDA: FORMULARIO (7 cols) */}
                 <div className="lg:col-span-7 space-y-6">
                   <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px' }} className="space-y-6">
+                    {/* FORMATO DE EXPORTACIÓN */}
+                    <div>
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '8px' }}>
+                        Formato del Comprobante
+                      </label>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setReciboForm(prev => ({ ...prev, formatoExportacion: 'a4' }))}
+                          style={{
+                            flex: 1, padding: '12px', borderRadius: '12px', border: `1px solid ${reciboForm.formatoExportacion === 'a4' ? t.accent : t.border}`,
+                            backgroundColor: reciboForm.formatoExportacion === 'a4' ? t.accentSoft : t.input,
+                            color: reciboForm.formatoExportacion === 'a4' ? t.accent : t.text,
+                            fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          📄 A4 Estándar Profesional
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setReciboForm(prev => ({ ...prev, formatoExportacion: 'yape', horaEmision: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true }) }))}
+                          style={{
+                            flex: 1, padding: '12px', borderRadius: '12px', border: `1px solid ${reciboForm.formatoExportacion === 'yape' ? t.accent : t.border}`,
+                            backgroundColor: reciboForm.formatoExportacion === 'yape' ? t.accentSoft : t.input,
+                            color: reciboForm.formatoExportacion === 'yape' ? t.accent : t.text,
+                            fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                          }}
+                        >
+                          📱 Tarjeta Móvil (Comprobante)
+                        </button>
+                      </div>
+                    </div>
+
                     {/* SELECTORES EN FILA */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {/* Selector de Deudor */}
@@ -2359,8 +2708,8 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                           {contractCuotas.map(c => {
                             const isPaid = isCuotaPaid(selectedContract?.pagos, c.key);
                             return (
-                              <option key={c.key} value={c.key} disabled={isPaid}>
-                                {c.label} {isPaid ? '(PAGADA)' : `(${c.total.toLocaleString()} ${selectedContract?.moneda})`}
+                              <option key={c.key} value={c.key}>
+                                {c.label} {isPaid ? '(PAGADA - Reemitir)' : `(${c.total.toLocaleString()} ${selectedContract?.moneda})`}
                               </option>
                             );
                           })}
@@ -2382,6 +2731,32 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                           placeholder="Ej: Pago de intereses Mes 1"
                           style={{ width: '100%', padding: '12px', fontSize: '12px', backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text, borderRadius: '12px', outline: 'none' }}
                         />
+                        {/* Chips de motivos/conceptos sugeridos */}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '8px' }}>
+                          {['Pago Mensual', 'Pago de Intereses', 'Amortización de Capital', 'Mora'].map(motivo => (
+                            <button
+                              key={motivo}
+                              type="button"
+                              onClick={() => {
+                                const matched = contractCuotas.find(c => c.key === reciboForm.cuotaKey);
+                                const cuotaLabel = matched ? ` ${matched.label}` : '';
+                                setReciboForm(prev => ({
+                                  ...prev,
+                                  concepto: `${motivo}${cuotaLabel} — ${selectedContract?.nombre || ''}`
+                                }));
+                              }}
+                              style={{
+                                padding: '4px 10px', borderRadius: '20px', border: `1px solid ${t.border}`,
+                                backgroundColor: t.input, color: t.textDim, fontSize: '9px', fontWeight: 600, cursor: 'pointer',
+                                transition: 'all 0.15s'
+                              }}
+                              onMouseEnter={e => { e.target.style.backgroundColor = t.accentSoft; e.target.style.color = t.accent; }}
+                              onMouseLeave={e => { e.target.style.backgroundColor = t.input; e.target.style.color = t.textDim; }}
+                            >
+                              {motivo}
+                            </button>
+                          ))}
+                        </div>
                       </div>
 
                       {/* Nro Recibo */}
@@ -2497,6 +2872,15 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                       <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '12px', color: t.text }}>
                         <input
                           type="checkbox"
+                          checked={reciboForm.esPagoMensual || false}
+                          onChange={e => setReciboForm(prev => ({ ...prev, esPagoMensual: e.target.checked }))}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer', accentColor: t.accent }}
+                        />
+                        Mostrar desglose de intereses como "Pago Mensual" en el PDF
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '12px', color: t.text }}>
+                        <input
+                          type="checkbox"
                           checked={registrarPagoDb}
                           onChange={e => setRegistrarPagoDb(e.target.checked)}
                           style={{ width: '16px', height: '16px', accentColor: t.accent }}
@@ -2548,8 +2932,8 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                               setUploadingDrive(false);
                             }
 
-                            // Descargar localmente
-                            doc.save(fileName);
+                            // Descargar / Compartir localmente
+                            handleShareOrSavePDF(doc, fileName, selectedContract?.nombre);
 
                             // Registrar Pago en la DB
                             if (registrarPagoDb && reciboForm.cuotaKey && selectedContract) {
@@ -2625,9 +3009,8 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                     <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>
                       Previsualización en Vivo
                     </span>
-                    
-                    {/* Claro / Oscuro toggle */}
                     <button
+                      type="button"
                       onClick={() => setReciboDarkMode(!reciboDarkMode)}
                       style={{
                         display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px',
@@ -2641,195 +3024,300 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, onCl
                   </div>
 
                   {/* VISTA PREVIA DEL RECIBO */}
-                  <div
-                    style={{
-                      backgroundColor: reciboDarkMode ? '#0d0d0f' : '#ffffff',
-                      color: reciboDarkMode ? '#f8fafc' : '#0f172a',
-                      border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`,
-                      borderRadius: '16px',
-                      padding: '24px',
-                      boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.3)',
-                      fontFamily: 'sans-serif',
-                      minHeight: '480px',
-                      position: 'relative'
-                    }}
-                  >
-                    {/* LOGO & NRO & STAMP */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                      <div>
-                        <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#10b981' }}>RECIBO DE PAGO DE INTERESES</h4>
-                        <span style={{ fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', display: 'block', marginTop: '2px' }}>COMPROBANTE OFICIAL</span>
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-                        <div style={{
-                          padding: '4px 12px',
-                          border: '1.5px solid #10b981',
-                          borderRadius: '6px',
-                          backgroundColor: reciboDarkMode ? 'rgba(6, 78, 59, 0.4)' : 'rgba(236, 253, 245, 0.8)',
-                          color: '#10b981',
-                          fontWeight: 800,
-                          fontSize: '10px',
-                          letterSpacing: '0.05em'
-                        }}>
-                          PAGADO
+                  {reciboForm.formatoExportacion === 'yape' ? (
+                    <div
+                      style={{
+                        backgroundColor: '#ffffff',
+                        color: '#0f172a',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '16px',
+                        padding: '24px 20px',
+                        boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05)',
+                        fontFamily: 'sans-serif',
+                        minHeight: '480px',
+                        position: 'relative',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      {/* Top green accent stripe */}
+                      <div style={{ position: 'absolute', top: 0, left: '20px', right: '20px', height: '4px', backgroundColor: '#10b981', borderRadius: '0 0 4px 4px' }} />
+
+                      {/* Header with Checkmark Icon */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '8px', marginBottom: '12px' }}>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '50%', backgroundColor: '#ecfdf5', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '12px' }}>
+                          <Check size={22} strokeWidth={3} />
                         </div>
-                        <strong style={{ fontSize: '11px', fontFamily: 'monospace' }}>{reciboForm.numero || 'REC-XXXXXX'}</strong>
+                        <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a', textAlign: 'center' }}>
+                          Comprobante de Pago
+                        </h4>
+                      </div>
+
+                      {/* Card Content */}
+                      <div
+                        style={{
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}
+                      >
+                        <div style={{ textAlign: 'center', fontSize: '32px', fontWeight: 800, color: '#10b981' }}>
+                          Bs {((parseFloat(reciboForm.montoInteres) || 0) + (parseFloat(reciboForm.montoMora) || 0) + (parseFloat(reciboForm.montoCapital) || 0) - (parseFloat(reciboForm.montoAjustes) || 0)).toLocaleString()}
+                        </div>
+
+                        <div style={{ textAlign: 'center', fontSize: '12px', fontWeight: 'bold', color: '#1e293b' }}>
+                          {reciboForm.prestamistaName || selectedContract?.nombre || '---'}
+                        </div>
+
+                        <div style={{ textAlign: 'center', fontSize: '9px', color: '#64748b' }}>
+                          {safeFormatDate(reciboForm.fechaEmision, { day: 'numeric', month: 'short', year: 'numeric' })}  |  {reciboForm.horaEmision || new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                        </div>
+
+                        <hr style={{ border: 'none', borderTop: '1px solid #f1f5f9', margin: '4px 0' }} />
+
+                         <div>
+                          <div style={{ fontSize: '8px', fontWeight: 'bold', color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '8px' }}>
+                            DATOS DE LA TRANSACCIÓN
+                          </div>
+                          <div style={{ 
+                            fontSize: '9.5px', 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '10px',
+                            backgroundColor: '#f8fafc',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '10px',
+                            padding: '12px'
+                          }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span style={{ color: '#64748b', fontSize: '8px', fontWeight: 600 }}>Concepto</span>
+                              <strong style={{ color: '#0f172a', fontSize: '10px', wordBreak: 'break-word', lineHeight: '1.3' }}>
+                                {reciboForm.concepto || 'Pago de Cuota'}
+                              </strong>
+                            </div>
+                            <hr style={{ border: 'none', borderTop: '1px solid #e2e8f0', margin: '2px 0' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ color: '#64748b', fontSize: '8px', fontWeight: 600 }}>Método</span>
+                              <strong style={{ color: '#0f172a' }}>{reciboForm.metodo}</strong>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ color: '#64748b', fontSize: '8px', fontWeight: 600 }}>Nro. transacción</span>
+                              <strong style={{ color: '#0f172a', fontFamily: 'monospace' }}>{reciboForm.numero || 'REC-XXXXXX'}</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        {((parseFloat(reciboForm.montoInteres) || 0) > 0 || (parseFloat(reciboForm.montoCapital) || 0) > 0) && (
+                          <div style={{ backgroundColor: '#f8fafc', borderRadius: '8px', padding: '10px', fontSize: '8.5px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {parseFloat(reciboForm.montoInteres) > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#64748b' }}>{reciboForm.esPagoMensual ? 'Pago Mensual' : 'Intereses'}</span>
+                                <strong style={{ color: '#334155' }}>{parseFloat(reciboForm.montoInteres).toLocaleString()} {selectedContract?.moneda || 'BOB'}</strong>
+                              </div>
+                            )}
+                            {parseFloat(reciboForm.montoCapital) > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#64748b' }}>Capital</span>
+                                <strong style={{ color: '#334155' }}>{parseFloat(reciboForm.montoCapital).toLocaleString()} {selectedContract?.moneda || 'BOB'}</strong>
+                              </div>
+                            )}
+                            {parseFloat(reciboForm.montoMora) > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#64748b' }}>Mora</span>
+                                <strong style={{ color: '#334155' }}>{parseFloat(reciboForm.montoMora).toLocaleString()} {selectedContract?.moneda || 'BOB'}</strong>
+                              </div>
+                            )}
+                            {parseFloat(reciboForm.montoAjustes) > 0 && (
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ color: '#64748b' }}>Ajustes</span>
+                                <strong style={{ color: '#334155' }}>-{parseFloat(reciboForm.montoAjustes).toLocaleString()} {selectedContract?.moneda || 'BOB'}</strong>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    <hr style={{ border: 'none', borderTop: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, margin: '14px 0' }} />
-
-                    {/* DOS COLUMNAS DE DATOS */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '10px' }}>
-                      <div>
-                        <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>PAGADOR / DEUDOR</span>
-                        <strong style={{ fontSize: '11px' }}>{reciboForm.prestamistaName || selectedContract?.nombre || '---'}</strong>
-                        {selectedContract?.ci && selectedContract.ci.trim() !== '' && (
-                          <span style={{ display: 'block', marginTop: '2px', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
-                            CI/NIT: {selectedContract.ci}
-                          </span>
-                        )}
-                        {selectedContract?.telefono && (
-                          <span style={{ display: 'block', marginTop: '2px', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
-                            Tel: {selectedContract.telefono}
-                          </span>
-                        )}
-                      </div>
-                      <div>
-                        <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>FECHA Y MÉTODO</span>
-                        <strong>{safeFormatDate(reciboForm.fechaEmision, { day: '2-digit', month: 'long', year: 'numeric' })}</strong>
-                        <span style={{ display: 'block', marginTop: '2px', color: '#10b981', fontWeight: 700 }}>{reciboForm.metodo?.toUpperCase() || 'EFECTIVO'}</span>
-                      </div>
-                    </div>
-
-                    {/* REFERENCIA DEL CONTRATO */}
-                    <div style={{
-                      padding: '10px 12px',
-                      backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc',
-                      borderRadius: '8px',
-                      marginBottom: '14px',
-                      border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`,
-                      fontSize: '9px'
-                    }}>
-                      <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '4px' }}>REFERENCIA DEL CONTRATO</span>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
-                        <span>Préstamo de {selectedContract ? `${parseFloat(selectedContract.capital).toLocaleString()} ${selectedContract.moneda}` : '---'} al {selectedContract ? `${selectedContract.interes}% mensual` : '---'}</span>
-                        <span style={{ color: reciboDarkMode ? '#94a3b8' : '#64748b' }}>
-                          Inicio: {safeFormatDate(selectedContract?.inicio)} | Fin: {safeFormatDate(selectedContract?.fin)}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* CONCEPTO */}
-                    <div style={{ padding: '10px 12px', backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc', borderRadius: '8px', marginBottom: '14px', border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
-                      <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>CONCEPTO ACTUAL</span>
-                      <span style={{ fontSize: '10px', fontWeight: 700 }}>{reciboForm.concepto || 'Pago de Cuota'}</span>
-                    </div>
-
-                    {/* DESGLOSE TABLE */}
-                    <div style={{ fontSize: '10px', marginBottom: '20px' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', paddingBottom: '6px', borderBottom: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, fontWeight: 700, color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
-                        <span>Descripción de Conceptos</span>
-                        <span style={{ textAlign: 'right' }}>Monto</span>
-                      </div>
-                      
-                      <div style={{ minHeight: '80px', display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '6px' }}>
-                        {selectedContract?.capital && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
-                            <span>Capital Invertido (Base del Préstamo)</span>
-                            <span style={{ textAlign: 'right', fontWeight: 700, color: reciboDarkMode ? '#f8fafc' : '#0f172a' }}>{parseFloat(selectedContract.capital).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                  ) : (
+                    <div
+                      style={{
+                        backgroundColor: reciboDarkMode ? '#0d0d0f' : '#ffffff',
+                        color: reciboDarkMode ? '#f8fafc' : '#0f172a',
+                        border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`,
+                        borderRadius: '16px',
+                        padding: '24px',
+                        boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.3)',
+                        fontFamily: 'sans-serif',
+                        minHeight: '480px',
+                        position: 'relative'
+                      }}
+                    >
+                      {/* LOGO & NRO & STAMP */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#10b981' }}>COMPROBANTE DE PAGO</h4>
+                          <span style={{ fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', display: 'block', marginTop: '2px' }}>COMPROBANTE OFICIAL</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                          <div style={{
+                            padding: '4px 12px',
+                            border: '1.5px solid #10b981',
+                            borderRadius: '6px',
+                            backgroundColor: reciboDarkMode ? 'rgba(6, 78, 59, 0.4)' : 'rgba(236, 253, 245, 0.8)',
+                            color: '#10b981',
+                            fontWeight: 800,
+                            fontSize: '10px',
+                            letterSpacing: '0.05em'
+                          }}>
+                            PAGADO
                           </div>
-                        )}
-                        {parseFloat(reciboForm.montoInteres) > 0 && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
-                            <span>Pago de Intereses (Cuota Actual)</span>
-                            <span style={{ textAlign: 'right', fontWeight: 700, color: reciboDarkMode ? '#f8fafc' : '#0f172a' }}>{parseFloat(reciboForm.montoInteres).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
-                          </div>
-                        )}
-                        {parseFloat(reciboForm.montoMora) > 0 && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', color: '#ef4444' }}>
-                            <span>Cargos por Mora</span>
-                            <span style={{ textAlign: 'right', fontWeight: 700 }}>+{parseFloat(reciboForm.montoMora).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
-                          </div>
-                        )}
-                        {parseFloat(reciboForm.montoCapital) > 0 && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
-                            <span>Amortización de Capital</span>
-                            <span style={{ textAlign: 'right', fontWeight: 700, color: reciboDarkMode ? '#f8fafc' : '#0f172a' }}>{parseFloat(reciboForm.montoCapital).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
-                          </div>
-                        )}
-                        {parseFloat(reciboForm.montoAjustes) > 0 && (
-                          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', color: reciboDarkMode ? '#94a3b8' : '#64748b' }}>
-                            <span>Ajustes / Descuentos</span>
-                            <span style={{ textAlign: 'right', fontWeight: 700 }}>-{parseFloat(reciboForm.montoAjustes).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '10px', borderTop: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
-                        <div style={{ textAlign: 'right', padding: '8px 14px', backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc', borderRadius: '8px' }}>
-                          <span style={{ fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', display: 'block', fontWeight: 600 }}>TOTAL RECIBIDO</span>
-                          <strong style={{ fontSize: '14px', color: '#10b981', fontFamily: 'monospace' }}>
-                            {((parseFloat(reciboForm.montoInteres) || 0) + (parseFloat(reciboForm.montoMora) || 0) + (parseFloat(reciboForm.montoCapital) || 0) - (parseFloat(reciboForm.montoAjustes) || 0)).toLocaleString()} {selectedContract?.moneda || 'BOB'}
-                          </strong>
+                          <strong style={{ fontSize: '11px', fontFamily: 'monospace' }}>{reciboForm.numero || 'REC-XXXXXX'}</strong>
                         </div>
                       </div>
-                    </div>
 
-                    {/* RESUMEN DE PAGOS Y ESTADO A LA FECHA */}
-                    {selectedContract && (
+                      <hr style={{ border: 'none', borderTop: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, margin: '14px 0' }} />
+
+                      {/* DOS COLUMNAS DE DATOS */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', fontSize: '10px' }}>
+                        <div>
+                          <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>PAGADOR / DEUDOR</span>
+                          <strong style={{ fontSize: '11px' }}>{reciboForm.prestamistaName || selectedContract?.nombre || '---'}</strong>
+                          {selectedContract?.ci && selectedContract.ci.trim() !== '' && (
+                            <span style={{ display: 'block', marginTop: '2px', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
+                              CI/NIT: {selectedContract.ci}
+                            </span>
+                          )}
+                          {selectedContract?.telefono && (
+                            <span style={{ display: 'block', marginTop: '2px', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
+                              Tel: {selectedContract.telefono}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>FECHA Y MÉTODO</span>
+                          <strong>{safeFormatDate(reciboForm.fechaEmision, { day: '2-digit', month: 'long', year: 'numeric' })}</strong>
+                          <span style={{ display: 'block', marginTop: '2px', color: '#10b981', fontWeight: 700 }}>{reciboForm.metodo?.toUpperCase() || 'EFECTIVO'}</span>
+                        </div>
+                      </div>
+
+                      {/* REFERENCIA DEL CONTRATO */}
                       <div style={{
                         padding: '10px 12px',
                         backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc',
                         borderRadius: '8px',
-                        marginBottom: '20px',
+                        marginBottom: '14px',
                         border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`,
                         fontSize: '9px'
                       }}>
-                        <span style={{ display: 'block', fontSize: '8px', color: reciboDarkMode ? '#f8fafc' : '#0f172a', fontWeight: 700, marginBottom: '6px' }}>
-                          RESUMEN DE PAGOS Y ESTADO A LA FECHA
-                        </span>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '8px' }}>
-                          <div>
-                            <span style={{ display: 'block', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
-                              Cuotas Canceladas: <strong>{previewPaidCount} de {contractCuotas.length}</strong>
-                            </span>
-                            <span style={{ display: 'block', marginTop: '2px', color: reciboDarkMode ? '#94a3b8' : '#475569', wordBreak: 'break-all' }}>
-                              Historial: {previewPagadosList || 'Ninguna'}
-                            </span>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ display: 'block', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
-                              Saldo Capital Restante:
-                            </span>
-                            <strong style={{ fontSize: '11px', color: '#10b981' }}>
-                              {previewSaldoRestante.toLocaleString()} {selectedContract?.moneda || 'BOB'}
+                        <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '4px' }}>REFERENCIA DEL CONTRATO</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                          <span>Préstamo de {selectedContract ? `${parseFloat(selectedContract.capital).toLocaleString()} ${selectedContract.moneda}` : '---'} al {selectedContract ? `${selectedContract.interes}% mensual` : '---'}</span>
+                          <span style={{ color: reciboDarkMode ? '#94a3b8' : '#64748b' }}>
+                            Inicio: {safeFormatDate(selectedContract?.inicio)} | Fin: {safeFormatDate(selectedContract?.fin)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* CONCEPTO */}
+                      <div style={{ padding: '10px 12px', backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc', borderRadius: '8px', marginBottom: '14px', border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
+                        <span style={{ display: 'block', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontWeight: 600, marginBottom: '2px' }}>CONCEPTO ACTUAL</span>
+                        <span style={{ fontSize: '10px', fontWeight: 700 }}>{reciboForm.concepto || 'Pago de Cuota'}</span>
+                      </div>
+
+                      {/* DESGLOSE TABLE */}
+                      <div style={{ fontSize: '10px', marginBottom: '20px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', paddingBottom: '6px', borderBottom: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, fontWeight: 700, color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
+                          <span>Descripción de Conceptos</span>
+                          <span style={{ textAlign: 'right' }}>Monto</span>
+                        </div>
+                        
+                        <div style={{ minHeight: '80px', display: 'flex', flexDirection: 'column', gap: '6px', paddingTop: '6px' }}>
+                          {selectedContract?.capital && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
+                              <span>Capital Invertido (Base del Préstamo)</span>
+                              <span style={{ textAlign: 'right', fontWeight: 700, color: reciboDarkMode ? '#f8fafc' : '#0f172a' }}>{parseFloat(selectedContract.capital).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                            </div>
+                          )}
+                          {parseFloat(reciboForm.montoInteres) > 0 && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
+                              <span>{reciboForm.esPagoMensual ? 'Pago Mensual' : 'Pago de Intereses (Cuota Actual)'}</span>
+                              <span style={{ textAlign: 'right', fontWeight: 700, color: reciboDarkMode ? '#f8fafc' : '#0f172a' }}>{parseFloat(reciboForm.montoInteres).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                            </div>
+                          )}
+                          {parseFloat(reciboForm.montoMora) > 0 && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', color: '#ef4444' }}>
+                              <span>Cargos por Mora</span>
+                              <span style={{ textAlign: 'right', fontWeight: 700 }}>+{parseFloat(reciboForm.montoMora).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                            </div>
+                          )}
+                          {parseFloat(reciboForm.montoCapital) > 0 && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr' }}>
+                              <span>Amortización de Capital</span>
+                              <span style={{ textAlign: 'right', fontWeight: 700, color: reciboDarkMode ? '#f8fafc' : '#0f172a' }}>{parseFloat(reciboForm.montoCapital).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                            </div>
+                          )}
+                          {parseFloat(reciboForm.montoAjustes) > 0 && (
+                            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', color: reciboDarkMode ? '#94a3b8' : '#64748b' }}>
+                              <span>Ajustes / Descuentos</span>
+                              <span style={{ textAlign: 'right', fontWeight: 700 }}>-{parseFloat(reciboForm.montoAjustes).toLocaleString()} {selectedContract?.moneda || 'BOB'}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '10px', borderTop: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}` }}>
+                          <div style={{ textAlign: 'right', padding: '8px 14px', backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc', borderRadius: '8px' }}>
+                            <span style={{ fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', display: 'block', fontWeight: 600 }}>TOTAL RECIBIDO</span>
+                            <strong style={{ fontSize: '14px', color: '#10b981', fontFamily: 'monospace' }}>
+                              {((parseFloat(reciboForm.montoInteres) || 0) + (parseFloat(reciboForm.montoMora) || 0) + (parseFloat(reciboForm.montoCapital) || 0) - (parseFloat(reciboForm.montoAjustes) || 0)).toLocaleString()} {selectedContract?.moneda || 'BOB'}
                             </strong>
                           </div>
                         </div>
                       </div>
-                    )}
 
-                    {/* FIRMAS */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginTop: '32px', textAlign: 'center', fontSize: '8px', color: reciboDarkMode ? '#64748b' : '#94a3b8' }}>
-                      <div>
-                        <div style={{ borderBottom: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, height: '24px' }}></div>
-                        <span style={{ display: 'block', marginTop: '4px', fontWeight: 600 }}>FIRMA CLIENTE</span>
-                      </div>
-                      <div>
-                        <div style={{ borderBottom: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`, height: '24px' }}></div>
-                        <span style={{ display: 'block', marginTop: '4px', fontWeight: 600 }}>FIRMA ACREEDOR</span>
+                      {/* RESUMEN DE PAGOS Y ESTADO A LA FECHA */}
+                      {selectedContract && (
+                        <div style={{
+                          padding: '10px 12px',
+                          backgroundColor: reciboDarkMode ? '#151518' : '#f8fafc',
+                          borderRadius: '8px',
+                          marginBottom: '20px',
+                          border: `1px solid ${reciboDarkMode ? '#1e293b' : '#e2e8f0'}`,
+                          fontSize: '9px'
+                        }}>
+                          <span style={{ display: 'block', fontSize: '8px', color: reciboDarkMode ? '#f8fafc' : '#0f172a', fontWeight: 700, marginBottom: '6px' }}>
+                            RESUMEN DE PAGOS Y ESTADO A LA FECHA
+                          </span>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '8px' }}>
+                            <div>
+                              <span style={{ display: 'block', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
+                                Cuotas Canceladas: <strong>{previewPaidCount} de {contractCuotas.length}</strong>
+                              </span>
+                              <span style={{ display: 'block', marginTop: '2px', color: reciboDarkMode ? '#94a3b8' : '#475569', wordBreak: 'break-all' }}>
+                                Historial: {previewPagadosList || 'Ninguna'}
+                              </span>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <span style={{ display: 'block', color: reciboDarkMode ? '#94a3b8' : '#475569' }}>
+                                Saldo Capital Restante:
+                              </span>
+                              <strong style={{ fontSize: '11px', color: '#10b981' }}>
+                                {previewSaldoRestante.toLocaleString()} {selectedContract?.moneda || 'BOB'}
+                              </strong>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* PIE DE PÁGINA */}
+                      <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontStyle: 'italic' }}>
+                        <span>Este recibo constituye una constancia legal de pago del monto y conceptos indicados.</span>
+                        <span style={{ display: 'block', marginTop: '4px', fontStyle: 'normal', fontWeight: 500 }}>
+                          5to anillo y Radial 13, B/Alto Olivo, calle carrasco, N12
+                        </span>
                       </div>
                     </div>
-
-                    {/* PIE DE PÁGINA */}
-                    <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '7.5px', color: reciboDarkMode ? '#64748b' : '#94a3b8', fontStyle: 'italic' }}>
-                      <span>Este recibo constituye una constancia legal de pago del monto y conceptos indicados.</span>
-                      <span style={{ display: 'block', marginTop: '4px', fontStyle: 'normal', fontWeight: 500 }}>
-                        5to anillo y Radial 13, B/Alto Olivo, calle carrasco, N12
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             ) : (

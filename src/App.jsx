@@ -177,6 +177,7 @@ const AppContent = () => {
   const [meetingsList, setMeetingsList] = useState([]);
   const [servicios, setServicios] = useState([]);
   const [selectedPrestamoId, setSelectedPrestamoId] = useState(null);
+  const [selectedPrestamoAction, setSelectedPrestamoAction] = useState(null);
   const [googleToken, setGoogleToken] = useState(() => localStorage.getItem('sovereign_google_token'));
   const [googleUser, setGoogleUser] = useState(() => {
     const saved = localStorage.getItem('sovereign_google_user');
@@ -304,7 +305,8 @@ const AppContent = () => {
     const saved = localStorage.getItem('sovereign_settings');
     const defaults = {
       accentColor: '#C0C0C6',
-      isMobileMode: false,
+      mobileModeSource: 'auto',
+      isMobileMode: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
       interfaceDensity: 'normal',
       currencyRates: { USD: 10.50, EUR: 11.20, BRL: 2.10 },
       studioName: 'Inefable Studio',
@@ -318,6 +320,24 @@ const AppContent = () => {
   useEffect(() => {
     localStorage.setItem('sovereign_settings', JSON.stringify(appSettings));
   }, [appSettings]);
+
+  // Detección automática y dinámica del tamaño de pantalla móvil (breakpoint Tailwind md: 768px)
+  useEffect(() => {
+    const handleResize = () => {
+      if (appSettings.mobileModeSource === 'auto' || !appSettings.mobileModeSource) {
+        const isMobileSize = window.innerWidth < 768;
+        if (appSettings.isMobileMode !== isMobileSize) {
+          setAppSettings(prev => ({
+            ...prev,
+            isMobileMode: isMobileSize
+          }));
+        }
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [appSettings.mobileModeSource, appSettings.isMobileMode]);
 
   // Sincronizar settings cuando Ajustes los modifica
   useEffect(() => {
@@ -395,8 +415,9 @@ const AppContent = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const handleNavigateToPrestamo = (id) => {
+  const handleNavigateToPrestamo = (id, action = null) => {
     setSelectedPrestamoId(id);
+    setSelectedPrestamoAction(action);
     setActiveTab('prestamos');
   };
 
@@ -551,12 +572,16 @@ const AppContent = () => {
             settings={appSettings}
             isDark={isDarkMode}
             token={googleToken}
-            preSelectedId={selectedPrestamoId} 
-            onClearSelection={() => setSelectedPrestamoId(null)}
+            preSelectedId={selectedPrestamoId}
+            preSelectedAction={selectedPrestamoAction} 
+            onClearSelection={() => {
+              setSelectedPrestamoId(null);
+              setSelectedPrestamoAction(null);
+            }}
           />
         );
         case 'notificaciones': return <Notifications data={data} servicios={servicios} onNavigate={setActiveTab} isDark={isDarkMode} />;
-        case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} initialFilterText={egresosSearch} token={googleToken} />;
+        case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} initialFilterText={egresosSearch} token={googleToken} settings={appSettings} />;
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} initialSearch={inventarioSearch} />;
         case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} token={googleToken} />;
         case 'flujo-trabajo': return <FlujoTrabajo settings={appSettings} isDark={isDarkMode} />;

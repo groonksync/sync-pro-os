@@ -1142,7 +1142,7 @@ const CommandCenter = ({
                           </p>
                         </td>
                         <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                          <button onClick={() => abrirModalPago(p)}
+                          <button onClick={() => onNavigateToPrestamo && onNavigateToPrestamo(p.id, 'emitir-recibo')}
                             style={{
                               padding: '10px 16px', minHeight: '44px', borderRadius: '8px', border: 'none',
                               backgroundColor: isCritico ? '#ef4444' : t.accent,
@@ -1242,8 +1242,7 @@ const CommandCenter = ({
                     {n.accion === 'Cobrar' && n.prestamoId && (
                       <button
                         onClick={() => {
-                          const p = listaPrestamos.find(d => d.id === n.prestamoId);
-                          if (p) abrirModalPago(p);
+                          if (onNavigateToPrestamo) onNavigateToPrestamo(n.prestamoId, 'emitir-recibo');
                         }}
                         style={{
                           padding: '6px 12px', borderRadius: '8px', border: 'none',

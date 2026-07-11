@@ -131,7 +131,7 @@ function generarCronogramaDiario(prestamo) {
   let capitalAcumulado = 0;
 
   for (let dia = 0; dia < totalDias; dia++) {
-    const fechaActual = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + dia);
+    const fechaActual = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() + dia + 1);
     if (isNaN(fechaActual.getTime())) continue;
     const key = formatDate(fechaActual);
     capitalAcumulado += capitalDiario;
@@ -180,6 +180,10 @@ function calcularResumenDiario(cuotas) {
   const vencidas = cuotas.filter(c => c.estado === 'vencido').length;
   const pendientes = cuotas.filter(c => c.estado === 'pendiente').length;
   const totalPagado = cuotas.filter(c => c.estado === 'pagado').reduce((s, c) => s + c.total, 0);
+  const totalContratoVal = cuotas.reduce((s, c) => s + c.total, 0);
+  const totalRestante = Math.max(totalContratoVal - totalPagado, 0);
+  const capitalPendiente = cuotas.filter(c => c.estado !== 'pagado').reduce((s, c) => s + (c.capital || 0), 0);
+  const interesPendiente = cuotas.filter(c => c.estado !== 'pagado').reduce((s, c) => s + (c.interes || 0), 0);
   const saldoRestante = cuotas.length > 0 ? cuotas[cuotas.length - 1].capitalRestante : 0;
   const ultimaPagada = [...cuotas].reverse().find(c => c.estado === 'pagado');
   const progreso = cuotas.length > 0
@@ -197,6 +201,13 @@ function calcularResumenDiario(cuotas) {
     ultimoDiaPagado: ultimaPagada?.key || null,
     cuotaDiaria: cuotas[0]?.total || 0,
     capitalRestante: saldoRestante,
+    // Compatibilidad con la tabla general de cuenta corriente (Prestamos.jsx)
+    totalCuotas: cuotas.length,
+    cuotasPagadas: pagadas,
+    totalPendiente: Math.round(totalRestante * 100) / 100,
+    totalMora: 0,
+    capitalPendiente: Math.round(capitalPendiente * 100) / 100,
+    interesPendiente: Math.round(interesPendiente * 100) / 100,
   };
 }
 
@@ -212,6 +223,8 @@ function _calcularResumen(cuotas) {
   const totalPagado = cuotas.filter(c => c.estado === 'pagado').reduce((s, c) => s + c.total, 0);
   const totalReservado = cuotas.filter(c => c.estado === 'reservado').reduce((s, c) => s + c.total, 0);
   const totalPendiente = cuotas.filter(c => c.estado === 'pendiente' || c.estado === 'vencido').reduce((s, c) => s + c.total, 0);
+  const capitalPendiente = cuotas.filter(c => c.estado !== 'pagado' && c.estado !== 'reservado').reduce((s, c) => s + (c.capital || 0), 0);
+  const interesPendiente = cuotas.filter(c => c.estado !== 'pagado' && c.estado !== 'reservado').reduce((s, c) => s + (c.interes || 0), 0);
   const totalMora = cuotas.reduce((s, c) => s + (c.mora || 0), 0);
   const interesPromedio = cuotas.length > 0 ? cuotas[0].interes : 0;
   const mesesAtraso = cuotasVencidas;
@@ -230,6 +243,8 @@ function _calcularResumen(cuotas) {
     interesPromedio,
     mesesAtraso,
     tasaMoraDiaria: TASA_MORA_DIARIA,
+    capitalPendiente: Math.round(capitalPendiente * 100) / 100,
+    interesPendiente: Math.round(interesPendiente * 100) / 100,
   };
 }
 

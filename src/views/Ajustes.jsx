@@ -373,7 +373,7 @@ export default function Ajustes({ isDark, settings: propSettings, onUpdateSettin
       <Fila label="Modo de Visualización" desc="Forzar interfaz para móvil o escritorio">
         <div style={{ display: 'flex', gap: '6px' }}>
           {[
-            { label: 'Automático', source: 'auto', mobile: window.innerWidth < 1024 },
+            { label: 'Automático', source: 'auto', mobile: window.innerWidth < 768 },
             { label: 'Smartphone', source: 'manual', mobile: true },
             { label: 'Escritorio', source: 'manual', mobile: false }
           ].map(opt => {

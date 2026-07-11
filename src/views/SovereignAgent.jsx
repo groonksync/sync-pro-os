@@ -277,7 +277,7 @@ const SovereignAgent = ({ settings, setSettings, isDark, onRefresh, currentView 
       {/* ===== BOTÓN FLOTANTE — DISEÑO PREMIUM MINIMAL ===== */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`fixed z-[1000] bottom-auto top-[30%] right-2 md:bottom-8 md:right-8 md:top-auto md:right-8 flex items-center gap-3 transition-all duration-300 active:scale-95 group ${
+        className={`fixed z-[1000] bottom-24 right-4 md:bottom-8 md:right-8 flex items-center gap-3 transition-all duration-300 active:scale-95 group ${
           isOpen
             ? 'px-4 py-4 md:px-5 md:py-4 rounded-xl bg-white/10 backdrop-blur-xl border border-white/20'
             : 'px-4 py-3.5 md:px-5 md:py-3.5 rounded-xl bg-white/[0.07] backdrop-blur-xl border border-white/[0.12] hover:bg-white/[0.12] hover:border-white/25'

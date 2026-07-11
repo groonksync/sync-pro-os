@@ -1339,7 +1339,7 @@ REGLAS DE FORMATO Y ESTILO:
 
 
       {/* TOP HEADER PANEL */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, gap: 16 }}>
+      <header style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center', marginBottom: 24, gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
           <div>
             <h2 style={{ fontSize: 28, fontWeight: 700, color: t.text, letterSpacing: '-0.04em', margin: 0, fontFamily: "'Inter', system-ui, sans-serif" }}>
@@ -1379,7 +1379,7 @@ REGLAS DE FORMATO Y ESTILO:
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'stretch', gap: 12, width: isMobile ? '100%' : 'auto' }}>
           {activeSection === 'productos' ? (
             <>
               <button 
@@ -1416,7 +1416,7 @@ REGLAS DE FORMATO Y ESTILO:
       {activeSection === 'productos' && (
         <>
           {/* METRICS DASHBOARD */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
           { label: 'Inversión de Capital (Costo)', value: `${stats.totalInv.toLocaleString()} BS`, icon: Briefcase, color: '#a0a0a0' },
           { label: 'Valor Estimado de Venta', value: `${stats.totalSaleVal.toLocaleString()} BS`, icon: TrendingUp, color: '#3b82f6' },
@@ -1438,7 +1438,7 @@ REGLAS DE FORMATO Y ESTILO:
       </div>
 
       {/* CATEGORÍAS + STOCK CRÍTICO ROW — Siempre visibles debajo de métricas */}
-      <div style={{ display: 'flex', gap: 20, marginBottom: 20, flexShrink: 0 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 20, marginBottom: 20, flexShrink: 0 }}>
         
         {/* Categories Pill Card */}
         <div style={{ flex: 1.3, backgroundColor: t.panel, border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, borderRadius: 24, padding: 22, display: 'flex', flexDirection: 'column', gap: 14 }}>
