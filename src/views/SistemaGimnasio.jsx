@@ -184,10 +184,24 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     fetchData();
   }, []);
 
-  // Calcular vencimiento en base a una fecha de inicio y una cantidad de días
+  // Calcular vencimiento en base a una fecha de inicio y una cantidad de días (híbrido y ultra-seguro)
   const calcularVencimiento = (fechaBaseStr, dias) => {
-    const d = new Date(fechaBaseStr + 'T12:00:00'); // Evitar desfase de zona horaria
-    d.setDate(d.getDate() + parseInt(dias, 10));
+    let diasNum = parseInt(dias, 10);
+    if (isNaN(diasNum)) {
+      diasNum = 30; // 30 días por defecto para evitar caídas
+    }
+    
+    // Normalizar fecha base
+    const baseStr = fechaBaseStr || new Date().toISOString().split('T')[0];
+    const d = new Date(baseStr + 'T12:00:00');
+    
+    if (isNaN(d.getTime())) {
+      const backupDate = new Date();
+      backupDate.setDate(backupDate.getDate() + diasNum);
+      return backupDate.toISOString().split('T')[0];
+    }
+    
+    d.setDate(d.getDate() + diasNum);
     return d.toISOString().split('T')[0];
   };
 
@@ -293,7 +307,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       const cuponSeleccionado = cupones.find(c => c.id === formData.cupon_id);
       
       const { descuento, total } = getPreciosFinales();
-      const vencimientoCalculado = calcularVencimiento(formData.fecha_inicio, planSeleccionado.duracion_meses);
+      const duracionDias = planSeleccionado ? (planSeleccionado.duracion_dias || (planSeleccionado.duracion_meses ? planSeleccionado.duracion_meses * 30 : 30)) : 30;
+      const vencimientoCalculado = calcularVencimiento(formData.fecha_inicio, duracionDias);
 
       // 1. Registrar Miembro
       const { data: nuevoMiembro, error: miembroError } = await supabase
