@@ -25,6 +25,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
+  const [toastType, setToastType] = useState('success'); // 'success' | 'error'
+  const [dbError, setDbError] = useState(false);
 
   // Estados del Formulario de Registro
   const [formData, setFormData] = useState({
@@ -39,8 +41,9 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     descuento_aplicado: 0
   });
 
-  const triggerToast = (msg) => {
+  const triggerToast = (msg, type = 'success') => {
     setToastMessage(msg);
+    setToastType(type);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
   };
@@ -48,6 +51,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
   // Cargar datos al inicializar
   const fetchData = async () => {
     setLoading(true);
+    setDbError(false);
     try {
       // 1. Obtener Planes
       const { data: planesData, error: planesError } = await supabase
@@ -128,7 +132,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
     } catch (error) {
       console.error("Error al cargar datos de GymOS:", error);
-      triggerToast("Error de conexión al cargar datos.");
+      setDbError(true);
+      triggerToast("Error de conexión con la base de datos.", "error");
     } finally {
       setLoading(false);
     }
@@ -157,7 +162,12 @@ const SistemaGimnasio = ({ settings, isDark }) => {
   const handleSaveMiembro = async (e) => {
     e.preventDefault();
     if (!formData.nombre.trim()) {
-      triggerToast("El nombre es requerido.");
+      triggerToast("El nombre es requerido.", "error");
+      return;
+    }
+
+    if (!formData.plan_id) {
+      triggerToast("Debes seleccionar un plan de membresía válido. Asegúrate de ejecutar el script SQL en Supabase.", "error");
       return;
     }
 
@@ -225,7 +235,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
     } catch (error) {
       console.error("Error al registrar miembro:", error);
-      triggerToast("Error al guardar miembro.");
+      triggerToast(error.message || "Error al guardar miembro.", "error");
     } finally {
       setLoading(false);
     }
@@ -334,8 +344,17 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             borderRadius: 16, boxShadow: '0 20px 60px rgba(0,0,0,0.6)', display: 'flex',
             alignItems: 'center', gap: 12, minWidth: 280, justifyContent: 'center'
           }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: t.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#000' }}>
-              <CheckCircle size={16} />
+            <div style={{ 
+              width: 28, 
+              height: 28, 
+              borderRadius: '50%', 
+              backgroundColor: toastType === 'success' ? '#10B981' : '#EF4444', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              color: '#FFF' 
+            }}>
+              {toastType === 'success' ? <CheckCircle size={16} style={{ color: '#000' }} /> : <AlertTriangle size={16} />}
             </div>
             <span style={{ color: t.text, fontSize: 10, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.2em' }}>{toastMessage}</span>
           </div>
@@ -393,6 +412,23 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           </button>
         </div>
       </div>
+
+      {/* Alerta de Base de Datos / SQL Faltante */}
+      {dbError && (
+        <div style={{
+          padding: 16, borderRadius: 12, backgroundColor: 'rgba(239, 68, 68, 0.05)',
+          border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', flexDirection: 'column', gap: 8,
+          animation: 'fadeIn 0.3s ease-out', marginBottom: 16
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#EF4444', fontWeight: 700, fontSize: 13 }}>
+            <AlertTriangle size={18} />
+            Tablas de Base de Datos no detectadas
+          </div>
+          <p style={{ fontSize: 12, color: t.textMuted, margin: 0, lineHeight: 1.5 }}>
+            Parece que no se han creado las tablas de <strong>GymOS</strong> en tu base de datos de Supabase. Para solucionarlo, ve al SQL Editor de Supabase y ejecuta el script <strong>supabase_gym_schema.sql</strong> que he creado en la raíz de tu proyecto.
+          </p>
+        </div>
+      )}
 
       {/* Tabs de Navegación Interna */}
       <div style={{
