@@ -100,7 +100,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           gym_planes (
             nombre,
             precio,
-            duracion_meses
+            duracion_dias
           )
         `)
         .order('nombre');
@@ -157,7 +157,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           ...miembro,
           membresia: miembro.gym_planes?.nombre || 'Ninguno',
           precioPlan: miembro.gym_planes?.precio || 0,
-          duracionPlan: miembro.gym_planes?.duracion_meses || 1,
+          duracionPlan: miembro.gym_planes?.duracion_dias || 30,
           fecha_inicio: fechaInicioMembresia,
           vencimiento,
           estadoPago
@@ -184,10 +184,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     fetchData();
   }, []);
 
-  // Calcular vencimiento en base a una fecha de inicio y una cantidad de meses
-  const calcularVencimiento = (fechaBaseStr, meses) => {
+  // Calcular vencimiento en base a una fecha de inicio y una cantidad de días
+  const calcularVencimiento = (fechaBaseStr, dias) => {
     const d = new Date(fechaBaseStr + 'T12:00:00'); // Evitar desfase de zona horaria
-    d.setMonth(d.getMonth() + parseInt(meses, 10));
+    d.setDate(d.getDate() + parseInt(dias, 10));
     return d.toISOString().split('T')[0];
   };
 
@@ -470,7 +470,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       }
 
       const inicioStr = fechaBase.toISOString().split('T')[0];
-      const vencimientoCalculado = calcularVencimiento(inicioStr, planSeleccionado.duracion_meses);
+      const vencimientoCalculado = calcularVencimiento(inicioStr, planSeleccionado.duracion_dias);
 
       const { error: pagoError } = await supabase
         .from('gym_pagos')
@@ -1003,7 +1003,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                       </p>
                     </div>
                     <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, color: t.textMuted }}>Periodo: {plan.duracion_meses} mes(es)</span>
+                      <span style={{ fontSize: 10, color: t.textMuted }}>Periodo: {plan.duracion_dias} día(s)</span>
                     </div>
                   </div>
                 ))}
