@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS public.gym_cupones (
 -- Habilitar RLS para la tabla de cupones
 ALTER TABLE public.gym_cupones ENABLE ROW LEVEL SECURITY;
 
+-- Borrar políticas previas para evitar error de duplicados
+DROP POLICY IF EXISTS "Permitir lectura completa a usuarios autenticados" ON public.gym_cupones;
+DROP POLICY IF EXISTS "Permitir control total a usuarios autenticados" ON public.gym_cupones;
+
 -- Crear políticas para usuarios autenticados
 CREATE POLICY "Permitir lectura completa a usuarios autenticados" 
 ON public.gym_cupones FOR SELECT TO authenticated USING (true);
@@ -83,7 +87,7 @@ ALTER TABLE public.gym_planes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gym_miembros ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.gym_pagos ENABLE ROW LEVEL SECURITY;
 
--- Re-crear políticas si no existen
+-- Re-crear políticas si no existen (limpieza previa)
 DO $$
 BEGIN
     DROP POLICY IF EXISTS "Permitir lectura completa a usuarios autenticados" ON public.gym_planes;
