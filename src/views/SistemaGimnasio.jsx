@@ -27,6 +27,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
   const [papeleraMiembros, setPapeleraMiembros] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dbError, setDbError] = useState(false);
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState('Todos');
+  const [hoveredMiembroId, setHoveredMiembroId] = useState(null);
   
   // Estados para Toasts
   const [toastMessage, setToastMessage] = useState('');
@@ -541,7 +543,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                           m.membresia.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           (m.grupo_familiar && m.grupo_familiar.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesHealth = filterHealthAlerts ? m.alertas_medicas : true;
-    return matchesSearch && matchesHealth;
+    const matchesPayment = filterPaymentStatus === 'Todos' ? true : m.estadoPago === filterPaymentStatus;
+    return matchesSearch && matchesHealth && matchesPayment;
   });
 
   return (
@@ -697,10 +700,16 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {/* Tarjetas de Métricas */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
-                <div style={{
-                  padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8
-                }}>
+                <div 
+                  onClick={() => { setFilterPaymentStatus('Todos'); setActiveSubTab('miembros'); }}
+                  style={{
+                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8,
+                    cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = t.accent; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
+                >
                   <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Miembros Registrados</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800 }}>{totalMiembros}</span>
@@ -708,10 +717,16 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   </div>
                 </div>
 
-                <div style={{
-                  padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8
-                }}>
+                <div 
+                  onClick={() => { setFilterPaymentStatus('Al día'); setActiveSubTab('miembros'); }}
+                  style={{
+                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8,
+                    cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#10B981'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
+                >
                   <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Membresías Al Día</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#10B981' }}>{miembrosActivos}</span>
@@ -719,10 +734,16 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   </div>
                 </div>
 
-                <div style={{
-                  padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8
-                }}>
+                <div 
+                  onClick={() => { setFilterPaymentStatus('Por vencer'); setActiveSubTab('miembros'); }}
+                  style={{
+                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8,
+                    cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#F59E0B'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
+                >
                   <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Próximos a Vencer</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#F59E0B' }}>{miembrosPorVencer}</span>
@@ -730,10 +751,16 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   </div>
                 </div>
 
-                <div style={{
-                  padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8
-                }}>
+                <div 
+                  onClick={() => { setFilterPaymentStatus('Vencido'); setActiveSubTab('miembros'); }}
+                  style={{
+                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8,
+                    cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#EF4444'; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
+                >
                   <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vencidos / Deudores</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#EF4444' }}>{miembrosMorosos}</span>
@@ -869,8 +896,34 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   }}
                 >
                   <Filter size={14} />
-                  {filterHealthAlerts ? 'Solo Alertas de Salud: ON' : 'Filtrar por Salud'}
+                  {filterHealthAlerts ? 'Salud: ON' : 'Filtrar por Salud'}
                 </button>
+
+                {/* Filtros rápidos del Semáforo de Pagos */}
+                <div style={{ display: 'flex', gap: 6, alignItems: 'center', borderLeft: `1px solid ${t.border}`, paddingLeft: 12 }}>
+                  {[
+                    { status: 'Todos', label: 'Todos', color: t.text },
+                    { status: 'Al día', label: 'Al Día', color: '#10B981' },
+                    { status: 'Por vencer', label: 'Por Vencer', color: '#F59E0B' },
+                    { status: 'Vencido', label: 'Vencidos', color: '#EF4444' }
+                  ].map(item => {
+                    const active = filterPaymentStatus === item.status;
+                    return (
+                      <button
+                        key={item.status}
+                        onClick={() => setFilterPaymentStatus(item.status)}
+                        style={{
+                          padding: '6px 12px', borderRadius: 8, border: active ? `1px solid ${item.color}` : `1px solid ${t.border}`,
+                          backgroundColor: active ? `${item.color}15` : 'transparent',
+                          color: active ? item.color : t.textMuted, fontSize: 12, fontWeight: 600,
+                          cursor: 'pointer', transition: 'all 0.15s'
+                        }}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Tabla de Miembros */}
@@ -903,9 +956,37 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 <span style={{ fontWeight: 650 }}>{miembro.nombre}</span>
                                 {miembro.alertas_medicas && (
-                                  <span style={{ fontSize: 9, color: '#F59E0B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <AlertTriangle size={10} /> Alerta Física
-                                  </span>
+                                  <div 
+                                    onMouseEnter={() => setHoveredMiembroId(miembro.id)}
+                                    onMouseLeave={() => setHoveredMiembroId(null)}
+                                    style={{ position: 'relative', display: 'inline-flex', cursor: 'help', alignSelf: 'flex-start' }}
+                                  >
+                                    <span style={{ 
+                                      fontSize: 9, color: '#F59E0B', fontWeight: 700, 
+                                      display: 'flex', alignItems: 'center', gap: 2,
+                                      backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                                      padding: '2px 6px', borderRadius: 6, border: '1px solid rgba(245, 158, 11, 0.2)'
+                                    }}>
+                                      <AlertTriangle size={9} /> Cuidado Especial
+                                    </span>
+
+                                    {hoveredMiembroId === miembro.id && (
+                                      <div style={{
+                                        position: 'absolute', bottom: '135%', left: '50%', transform: 'translateX(-50%)',
+                                        backgroundColor: isDark ? 'rgba(15,15,18,0.98)' : 'rgba(255,255,255,0.98)',
+                                        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+                                        border: '1px solid rgba(245, 158, 11, 0.3)', padding: 12, borderRadius: 12, width: 240, zIndex: 999,
+                                        boxShadow: '0 10px 30px rgba(0,0,0,0.6)', color: t.text, pointerEvents: 'none',
+                                        lineHeight: 1.4, fontSize: 11, fontWeight: 500, textAlign: 'left',
+                                        animation: 'fadeIn 0.15s ease-out'
+                                      }}>
+                                        <div style={{ fontWeight: 700, color: '#F59E0B', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                          <HeartPulse size={12} /> Ficha de Cuidado Físico:
+                                        </div>
+                                        {miembro.notas_medicas || 'Requiere cuidado pero no se detallaron notas específicas.'}
+                                      </div>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </td>
