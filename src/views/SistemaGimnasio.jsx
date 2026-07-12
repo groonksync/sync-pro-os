@@ -1,15 +1,16 @@
-// Inefable - GymOS Prototype (Sistema Gimnasio)
+// Inefable - GymOS Prototype (Sistema Gimnasio V2.0)
 // Created: 2026-07-12
-// Updated: Integración real con Supabase
+// Updated: Bolivian Currency, Customizable Soft Delete, Coupon DB Integration & Date Ranges
 import React, { useState, useEffect } from 'react';
 import { 
   Dumbbell, Users, CreditCard, Tag, AlertTriangle, Plus, Search, 
   Calendar, Phone, ExternalLink, ArrowRight, UserPlus, CheckCircle, 
   XCircle, Filter, Sparkles, TrendingUp, AlertCircle, HeartPulse,
-  DollarSign, RefreshCw
+  DollarSign, RefreshCw, Trash2, RotateCcw, ShieldAlert, Award
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useTheme } from '../lib/theme';
+import { safeDelete } from '../lib/trashService';
 
 const SistemaGimnasio = ({ settings, isDark }) => {
   const t = useTheme(isDark);
@@ -22,11 +23,15 @@ const SistemaGimnasio = ({ settings, isDark }) => {
   const [miembros, setMiembros] = useState([]);
   const [planes, setPlanes] = useState([]);
   const [pagos, setPagos] = useState([]);
+  const [cupones, setCupones] = useState([]);
+  const [papeleraMiembros, setPapeleraMiembros] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dbError, setDbError] = useState(false);
+  
+  // Estados para Toasts
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState('success'); // 'success' | 'error'
-  const [dbError, setDbError] = useState(false);
 
   // Estados del Formulario de Registro
   const [formData, setFormData] = useState({
@@ -38,8 +43,24 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     notas_medicas: '',
     alertas_medicas: false,
     metodo_pago: 'Efectivo',
-    descuento_aplicado: 0
+    descuento_manual: 0,
+    cupon_id: '',
+    fecha_inicio: new Date().toISOString().split('T')[0]
   });
+
+  // Estado para Formulario de Nuevo Cupón
+  const [newCoupon, setNewCoupon] = useState({
+    codigo: '',
+    tipo_descuento: 'Porcentaje',
+    valor: 10,
+    activo: true
+  });
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  // Estados del Modal de Eliminación Seguro
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedMiembroForDelete, setSelectedMiembroForDelete] = useState(null);
+  const [diasRetencionDelete, setDiasRetencionDelete] = useState(60);
 
   const triggerToast = (msg, type = 'success') => {
     setToastMessage(msg);
@@ -48,7 +69,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  // Cargar datos al inicializar
+  // Cargar datos de Supabase
   const fetchData = async () => {
     setLoading(true);
     setDbError(false);
@@ -62,7 +83,16 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       if (planesError) throw planesError;
       setPlanes(planesData || []);
 
-      // 2. Obtener Miembros con Join a Planes
+      // 2. Obtener Cupones
+      const { data: cuponesData, error: cuponesError } = await supabase
+        .from('gym_cupones')
+        .select('*')
+        .order('codigo');
+      
+      if (cuponesError) throw cuponesError;
+      setCupones(cuponesData || []);
+
+      // 3. Obtener Miembros
       const { data: miembrosData, error: miembrosError } = await supabase
         .from('gym_miembros')
         .select(`
@@ -77,7 +107,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
       if (miembrosError) throw miembrosError;
 
-      // 3. Obtener Pagos para calcular estados
+      // 4. Obtener Pagos
       const { data: pagosData, error: pagosError } = await supabase
         .from('gym_pagos')
         .select('*')
@@ -86,18 +116,28 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       if (pagosError) throw pagosError;
       setPagos(pagosData || []);
 
-      // Mapear miembros y determinar dinámicamente su estado de pago basado en su último pago
+      // 5. Obtener Miembros en la Papelera de Supabase
+      const { data: papeleraData, error: papeleraError } = await supabase
+        .from('papelera')
+        .select('*')
+        .eq('tipo_dato', 'gym_miembro');
+      
+      if (papeleraError) throw papeleraError;
+      setPapeleraMiembros(papeleraData || []);
+
+      // Mapear miembros y calcular estado y fechas basado en el último pago
       const hoy = new Date().toISOString().split('T')[0];
       const miembrosConEstado = (miembrosData || []).map(miembro => {
-        // Encontrar el pago más reciente para este miembro
         const pagosMiembro = (pagosData || []).filter(p => p.miembro_id === miembro.id && p.estado === 'Pagado');
         
-        let estadoPago = 'Vencido'; // Por defecto si no tiene pagos
+        let estadoPago = 'Vencido';
         let vencimiento = 'Sin registro';
+        let fechaInicioMembresia = miembro.fecha_inicio || 'Sin registro';
 
         if (pagosMiembro.length > 0) {
-          const ultimoPago = pagosMiembro[0]; // Ordenados por fecha_vencimiento desc
+          const ultimoPago = pagosMiembro[0]; // Ordenado desc
           vencimiento = ultimoPago.fecha_vencimiento;
+          fechaInicioMembresia = ultimoPago.fecha_inicio || miembro.fecha_inicio;
           
           const fechaVence = new Date(vencimiento);
           const fechaHoy = new Date(hoy);
@@ -118,6 +158,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           membresia: miembro.gym_planes?.nombre || 'Ninguno',
           precioPlan: miembro.gym_planes?.precio || 0,
           duracionPlan: miembro.gym_planes?.duracion_meses || 1,
+          fecha_inicio: fechaInicioMembresia,
           vencimiento,
           estadoPago
         };
@@ -125,7 +166,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
       setMiembros(miembrosConEstado);
 
-      // Si no hay un plan seleccionado en el formulario, seleccionar el primero por defecto
+      // Valores por defecto para formulario
       if (planesData && planesData.length > 0 && !formData.plan_id) {
         setFormData(prev => ({ ...prev, plan_id: planesData[0].id }));
       }
@@ -133,7 +174,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     } catch (error) {
       console.error("Error al cargar datos de GymOS:", error);
       setDbError(true);
-      triggerToast("Error de conexión con la base de datos.", "error");
+      triggerToast("Error de conexión al cargar base de datos Supabase.", "error");
     } finally {
       setLoading(false);
     }
@@ -143,11 +184,37 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     fetchData();
   }, []);
 
-  // Calcular fecha de vencimiento basada en la duración del plan (meses)
-  const calcularVencimiento = (meses) => {
-    const d = new Date();
+  // Calcular vencimiento en base a una fecha de inicio y una cantidad de meses
+  const calcularVencimiento = (fechaBaseStr, meses) => {
+    const d = new Date(fechaBaseStr + 'T12:00:00'); // Evitar desfase de zona horaria
     d.setMonth(d.getMonth() + parseInt(meses, 10));
     return d.toISOString().split('T')[0];
+  };
+
+  // Calcular el descuento y el total en Bolivianos
+  const getPreciosFinales = () => {
+    const planSeleccionado = planes.find(p => p.id === formData.plan_id);
+    if (!planSeleccionado) return { subtotal: 0, descuento: 0, total: 0 };
+
+    const subtotal = parseFloat(planSeleccionado.precio) || 0;
+    let descuento = parseFloat(formData.descuento_manual) || 0;
+
+    if (formData.cupon_id) {
+      const cuponSeleccionado = cupones.find(c => c.id === formData.cupon_id);
+      if (cuponSeleccionado && cuponSeleccionado.activo) {
+        if (cuponSeleccionado.tipo_descuento === 'Porcentaje') {
+          descuento += (subtotal * (parseFloat(cuponSeleccionado.valor) / 100));
+        } else {
+          descuento += parseFloat(cuponSeleccionado.valor);
+        }
+      }
+    }
+
+    return {
+      subtotal,
+      descuento: Math.min(descuento, subtotal), // El descuento no puede exceder el costo
+      total: Math.max(0, subtotal - descuento)
+    };
   };
 
   const handleInputChange = (e) => {
@@ -158,7 +225,56 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }));
   };
 
-  // Guardar Miembro e Inicializar su primer pago
+  // Crear cupón en Supabase
+  const handleCreateCoupon = async (e) => {
+    e.preventDefault();
+    if (!newCoupon.codigo.trim() || newCoupon.valor <= 0) {
+      triggerToast("Ingresa datos válidos para el cupón.", "error");
+      return;
+    }
+
+    setCouponLoading(true);
+    try {
+      const { error } = await supabase
+        .from('gym_cupones')
+        .insert([{
+          codigo: newCoupon.codigo.toUpperCase().trim(),
+          tipo_descuento: newCoupon.tipo_descuento,
+          valor: parseFloat(newCoupon.valor),
+          activo: newCoupon.activo
+        }]);
+
+      if (error) throw error;
+
+      triggerToast(`Cupón ${newCoupon.codigo.toUpperCase()} creado.`);
+      setNewCoupon({ codigo: '', tipo_descuento: 'Porcentaje', valor: 10, activo: true });
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error al guardar cupón: " + (err.message || ''), "error");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  // Cambiar estado activo/inactivo de un cupón
+  const toggleCouponStatus = async (id, status) => {
+    try {
+      const { error } = await supabase
+        .from('gym_cupones')
+        .update({ activo: !status })
+        .eq('id', id);
+
+      if (error) throw error;
+      triggerToast("Estado del cupón actualizado.");
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error al actualizar cupón.", "error");
+    }
+  };
+
+  // Guardar Miembro, calcular fechas e insertar primer pago con descuento
   const handleSaveMiembro = async (e) => {
     e.preventDefault();
     if (!formData.nombre.trim()) {
@@ -167,57 +283,60 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }
 
     if (!formData.plan_id) {
-      triggerToast("Debes seleccionar un plan de membresía válido. Asegúrate de ejecutar el script SQL en Supabase.", "error");
+      triggerToast("Debes seleccionar un plan de membresía. Verifica tu Supabase.", "error");
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
+      const planSeleccionado = planes.find(p => p.id === formData.plan_id);
+      const cuponSeleccionado = cupones.find(c => c.id === formData.cupon_id);
+      
+      const { descuento, total } = getPreciosFinales();
+      const vencimientoCalculado = calcularVencimiento(formData.fecha_inicio, planSeleccionado.duracion_meses);
 
-      // 1. Insertar el miembro en gym_miembros
+      // 1. Registrar Miembro
       const { data: nuevoMiembro, error: miembroError } = await supabase
         .from('gym_miembros')
         .insert([{
           nombre: formData.nombre,
-          telefono: formData.telefono,
+          telefono: formData.telefono || null,
           email: formData.email || null,
-          plan_id: formData.plan_id || null,
+          plan_id: formData.plan_id,
           grupo_familiar: formData.grupo_familiar || null,
           notas_medicas: formData.notas_medicas,
-          alertas_medicas: formData.alertas_medicas
+          alertas_medicas: formData.alertas_medicas,
+          fecha_inicio: formData.fecha_inicio,
+          cupon_aplicado: cuponSeleccionado ? cuponSeleccionado.codigo : null
         }])
         .select();
 
       if (miembroError) throw miembroError;
-
       const miembroCreado = nuevoMiembro[0];
 
-      // 2. Si se asignó un plan, registrar automáticamente el pago e inicializar la membresía activa
-      if (formData.plan_id && miembroCreado) {
-        const planSeleccionado = planes.find(p => p.id === formData.plan_id);
-        if (planSeleccionado) {
-          const vencimientoCalculado = calcularVencimiento(planSeleccionado.duracion_meses);
-          const descVal = parseFloat(formData.descuento_aplicado) || 0;
+      // 2. Registrar Transacción de Pago inicial
+      if (miembroCreado) {
+        const { error: pagoError } = await supabase
+          .from('gym_pagos')
+          .insert([{
+            miembro_id: miembroCreado.id,
+            monto: planSeleccionado.precio,
+            descuento: descuento,
+            fecha_pago: formData.fecha_inicio,
+            fecha_inicio: formData.fecha_inicio,
+            fecha_vencimiento: vencimientoCalculado,
+            estado: 'Pagado',
+            metodo_pago: formData.metodo_pago,
+            cupon_id: cuponSeleccionado ? cuponSeleccionado.id : null
+          }]);
 
-          const { error: pagoError } = await supabase
-            .from('gym_pagos')
-            .insert([{
-              miembro_id: miembroCreado.id,
-              monto: planSeleccionado.precio,
-              descuento: descVal,
-              fecha_vencimiento: vencimientoCalculado,
-              estado: 'Pagado',
-              metodo_pago: formData.metodo_pago
-            }]);
-
-          if (pagoError) throw pagoError;
-        }
+        if (pagoError) throw pagoError;
       }
 
-      triggerToast("Miembro registrado con éxito.");
+      triggerToast("Miembro registrado y pago acreditado.");
       setIsModalOpen(false);
       
-      // Limpiar Formulario
+      // Reset Formulario
       setFormData({
         nombre: '',
         telefono: '',
@@ -227,62 +346,152 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         notas_medicas: '',
         alertas_medicas: false,
         metodo_pago: 'Efectivo',
-        descuento_aplicado: 0
+        descuento_manual: 0,
+        cupon_id: '',
+        fecha_inicio: new Date().toISOString().split('T')[0]
       });
 
-      // Recargar datos
       await fetchData();
-
-    } catch (error) {
-      console.error("Error al registrar miembro:", error);
-      triggerToast(error.message || "Error al guardar miembro.", "error");
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error al guardar miembro: " + (err.message || ''), "error");
     } finally {
       setLoading(false);
     }
   };
 
-  // Registrar un pago rápido de renovación para un miembro existente
-  const handleRenovacionRapida = async (miembro) => {
+  // Abrir Modal de Confirmación de Borrado Seguro
+  const openDeleteModal = (miembro) => {
+    setSelectedMiembroForDelete(miembro);
+    setDiasRetencionDelete(60); // Default 60 días
+    setDeleteModalOpen(true);
+  };
+
+  // Enviar a papelera Supabase (Soft Delete)
+  const handleConfirmDelete = async () => {
+    if (!selectedMiembroForDelete) return;
+
+    setLoading(true);
     try {
-      setLoading(true);
+      // Elimina de gym_miembros y lo mueve a papelera Supabase con fecha de vencimiento personalizada
+      await safeDelete('gym_miembro', selectedMiembroForDelete.id, selectedMiembroForDelete, diasRetencionDelete);
+      
+      triggerToast(`Miembro enviado a papelera por ${diasRetencionDelete} días.`);
+      setDeleteModalOpen(false);
+      setSelectedMiembroForDelete(null);
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error al enviar a papelera.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Restaurar miembro borrado desde la papelera Supabase
+  const handleRestoreMiembro = async (trashEntry) => {
+    setLoading(true);
+    try {
+      const dataOriginal = trashEntry.datos_originales;
+
+      // 1. Re-insertar en gym_miembros
+      const { error: insertError } = await supabase
+        .from('gym_miembros')
+        .insert([{
+          id: dataOriginal.id,
+          nombre: dataOriginal.nombre,
+          telefono: dataOriginal.telefono,
+          email: dataOriginal.email,
+          plan_id: dataOriginal.plan_id,
+          grupo_familiar: dataOriginal.grupo_familiar,
+          notas_medicas: dataOriginal.notas_medicas,
+          alertas_medicas: dataOriginal.alertas_medicas,
+          fecha_inicio: dataOriginal.fecha_inicio,
+          cupon_aplicado: dataOriginal.cupon_aplicado
+        }]);
+
+      if (insertError) throw insertError;
+
+      // 2. Eliminar entrada de papelera
+      const { error: deleteError } = await supabase
+        .from('papelera')
+        .delete()
+        .eq('id', trashEntry.id);
+
+      if (deleteError) throw deleteError;
+
+      triggerToast(`Miembro ${dataOriginal.nombre} restaurado.`);
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error al restaurar miembro de la papelera.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Eliminar definitivamente de la papelera sin esperar
+  const handlePurgeMiembro = async (trashId) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('papelera')
+        .delete()
+        .eq('id', trashId);
+
+      if (error) throw error;
+      triggerToast("Registro purgado de forma permanente.");
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error al purgar registro.", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Registrar pago rápido de renovación para cliente existente
+  const handleRenovacionRapida = async (miembro) => {
+    setLoading(true);
+    try {
       const planSeleccionado = planes.find(p => p.id === miembro.plan_id);
       if (!planSeleccionado) {
-        triggerToast("Este miembro no tiene un plan válido asignado.");
+        triggerToast("Este miembro no tiene un plan asignado válido.", "error");
         return;
       }
 
-      // Si ya tiene un vencimiento y está al día, sumamos al vencimiento actual. Si ya venció, sumamos a partir de hoy.
       let fechaBase = new Date();
+      // Si el vencimiento es a futuro, extender a partir del vencimiento. Si ya venció, inicia hoy.
       if (miembro.vencimiento && miembro.vencimiento !== 'Sin registro') {
-        const tempVence = new Date(miembro.vencimiento);
+        const tempVence = new Date(miembro.vencimiento + 'T12:00:00');
         if (tempVence > fechaBase) {
           fechaBase = tempVence;
         }
       }
-      
-      fechaBase.setMonth(fechaBase.getMonth() + planSeleccionado.duracion_meses);
-      const nuevoVencimiento = fechaBase.toISOString().split('T')[0];
 
-      // Insertar el pago en gym_pagos
+      const inicioStr = fechaBase.toISOString().split('T')[0];
+      const vencimientoCalculado = calcularVencimiento(inicioStr, planSeleccionado.duracion_meses);
+
       const { error: pagoError } = await supabase
         .from('gym_pagos')
         .insert([{
           miembro_id: miembro.id,
           monto: planSeleccionado.precio,
           descuento: 0,
-          fecha_vencimiento: nuevoVencimiento,
+          fecha_pago: new Date().toISOString().split('T')[0],
+          fecha_inicio: inicioStr,
+          fecha_vencimiento: vencimientoCalculado,
           estado: 'Pagado',
           metodo_pago: 'Efectivo'
         }]);
 
       if (pagoError) throw pagoError;
 
-      triggerToast(`Membresía de ${miembro.nombre} renovada.`);
+      triggerToast(`Plan de ${miembro.nombre} renovado (vence: ${vencimientoCalculado}).`);
       await fetchData();
-
-    } catch (error) {
-      console.error("Error al renovar membresía:", error);
-      triggerToast("Error al procesar la renovación.");
+    } catch (err) {
+      console.error(err);
+      triggerToast("Error al procesar renovación rápida.", "error");
     } finally {
       setLoading(false);
     }
@@ -299,20 +508,13 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
   const handleSendWhatsApp = (miembro) => {
     if (!miembro.telefono) {
-      triggerToast("Este miembro no tiene número de teléfono registrado.");
+      triggerToast("Miembro sin número telefónico.", "error");
       return;
     }
-    const mensaje = `Hola ${miembro.nombre}, te saludamos de GymOS. Te recordamos que tu membresía (${miembro.membresia}) venció o está próxima a vencer el ${miembro.vencimiento}. Te invitamos a realizar tu pago a la brevedad para seguir disfrutando de tus entrenamientos sin interrupciones. ¡Que tengas un excelente día!`;
-    const encodedText = encodeURIComponent(mensaje);
+    const mensaje = `Hola ${miembro.nombre}, te saludamos de GymOS. Te recordamos que tu membresía (${miembro.membresia}) registrada el ${miembro.fecha_inicio} vence el ${miembro.vencimiento}. Te invitamos a realizar tu renovación para seguir entrenando sin cortes. ¡Te esperamos!`;
     const cleanPhone = miembro.telefono.replace(/\s+/g, '');
-    window.open(`https://wa.me/${cleanPhone}?text=${encodedText}`, '_blank');
+    window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
-
-  // Promociones constantes del sistema (pueden expandirse)
-  const promociones = [
-    { id: '1', codigo: 'FAMILIA10', desc: '10% de descuento automático en membresías para grupos familiares vinculados.', activo: true },
-    { id: '2', codigo: 'APERTURA20', desc: '20% de descuento en el primer mes para nuevos miembros.', activo: true },
-  ];
 
   const totalMiembros = miembros.length;
   const miembrosActivos = miembros.filter(m => m.estadoPago === 'Al día' || m.estadoPago === 'Por vencer').length;
@@ -322,8 +524,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
   const filteredMiembros = miembros.filter(m => {
     const matchesSearch = m.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           m.membresia.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          (m.grupoFamiliar && m.grupoFamiliar.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesHealth = filterHealthAlerts ? m.alertasMedicas : true;
+                          (m.grupo_familiar && m.grupo_familiar.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesHealth = filterHealthAlerts ? m.alertas_medicas : true;
     return matchesSearch && matchesHealth;
   });
 
@@ -374,11 +576,11 @@ const SistemaGimnasio = ({ settings, isDark }) => {
               <Dumbbell size={20} style={{ color: '#0A0A0C' }} />
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
-              GymOS <span style={{ fontSize: 11, fontWeight: 650, color: t.accent, verticalAlign: 'middle', border: `1px solid ${t.accent}40`, padding: '2px 8px', borderRadius: 20, marginLeft: 8 }}>V1.0</span>
+              GymOS <span style={{ fontSize: 11, fontWeight: 650, color: t.accent, verticalAlign: 'middle', border: `1px solid ${t.accent}40`, padding: '2px 8px', borderRadius: 20, marginLeft: 8 }}>V2.0</span>
             </h1>
           </div>
           <p style={{ fontSize: 13, color: t.textMuted, margin: '6px 0 0 0' }}>
-            Panel de control para miembros del gimnasio, alertas de salud y cobranza integrada.
+            Módulo de Administración de Fitness: Miembros, Fichas de Salud, Promociones y Facturación (Precios en Bolivianos Bs.).
           </p>
         </div>
         
@@ -422,10 +624,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#EF4444', fontWeight: 700, fontSize: 13 }}>
             <AlertTriangle size={18} />
-            Tablas de Base de Datos no detectadas
+            Tablas de Base de Datos no detectadas o migración faltante
           </div>
           <p style={{ fontSize: 12, color: t.textMuted, margin: 0, lineHeight: 1.5 }}>
-            Parece que no se han creado las tablas de <strong>GymOS</strong> en tu base de datos de Supabase. Para solucionarlo, ve al SQL Editor de Supabase y ejecuta el script <strong>supabase_gym_schema.sql</strong> que he creado en la raíz de tu proyecto.
+            Parece que no se han creado o actualizado las tablas de <strong>GymOS V2.0</strong> en tu base de datos de Supabase. Para solucionarlo, ve al SQL Editor de Supabase y ejecuta el script <strong>supabase_gym_schema_v2.sql</strong> que he creado en la raíz de tu proyecto.
           </p>
         </div>
       )}
@@ -439,7 +641,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           { id: 'resumen', label: 'Dashboard', icon: TrendingUp },
           { id: 'miembros', label: 'Base de Datos Miembros', icon: Users },
           { id: 'planes', label: 'Planes y Membresías', icon: CreditCard },
-          { id: 'promociones', label: 'Descuentos y Promos', icon: Tag }
+          { id: 'promociones', label: 'Cupones & Promos', icon: Tag },
+          { id: 'papelera', label: 'Papelera de Clientes', icon: Trash2 }
         ].map(tab => {
           const active = activeSubTab === tab.id;
           return (
@@ -457,12 +660,14 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             >
               <tab.icon size={15} />
               {tab.label}
+              {tab.id === 'papelera' && papeleraMiembros.length > 0 && (
+                <span style={{ fontSize: 9, backgroundColor: '#EF4444', color: '#FFF', padding: '1px 5px', borderRadius: 99, fontWeight: 700, marginLeft: 2 }}>{papeleraMiembros.length}</span>
+              )}
             </button>
           );
         })}
       </div>
 
-      {/* Cargando */}
       {loading && miembros.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0', gap: 12 }}>
           <div className="animate-spin" style={{ width: 28, height: 28, borderRadius: '50%', border: `2px solid ${t.border}`, borderTopColor: t.accent }} />
@@ -484,7 +689,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Miembros Registrados</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800 }}>{totalMiembros}</span>
-                    <span style={{ fontSize: 11, color: t.accent, fontWeight: 600 }}>Total</span>
+                    <span style={{ fontSize: 11, color: t.accent, fontWeight: 600 }}>Total Activos</span>
                   </div>
                 </div>
 
@@ -492,10 +697,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
                   boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8
                 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Membresías Activas</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Membresías Al Día</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#10B981' }}>{miembrosActivos}</span>
-                    <span style={{ fontSize: 11, color: t.textMuted }}>{totalMiembros > 0 ? ((miembrosActivos/totalMiembros)*100).toFixed(0) : 0}% del total</span>
+                    <span style={{ fontSize: 11, color: t.textMuted }}>{totalMiembros > 0 ? ((miembrosActivos/totalMiembros)*100).toFixed(0) : 0}%</span>
                   </div>
                 </div>
 
@@ -503,10 +708,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
                   boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8
                 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pagos por Vencer</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Próximos a Vencer</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#F59E0B' }}>{miembrosPorVencer}</span>
-                    <span style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>Vence en &le; 5 días</span>
+                    <span style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>&le; 5 días</span>
                   </div>
                 </div>
 
@@ -514,10 +719,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
                   boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8
                 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vencidos / Morosos</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vencidos / Deudores</span>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#EF4444' }}>{miembrosMorosos}</span>
-                    <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 600 }}>Alerta de cobro</span>
+                    <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 600 }}>Alerta de Cobro</span>
                   </div>
                 </div>
               </div>
@@ -546,7 +751,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                           }}>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0, flex: 1, marginRight: 8 }}>
                               <span style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{miembro.nombre}</span>
-                              <span style={{ fontSize: 11, color: t.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Plan: {miembro.membresia} • Expira: {miembro.vencimiento}</span>
+                              <span style={{ fontSize: 11, color: t.textMuted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Plan: {miembro.membresia} • Vence: {miembro.vencimiento}</span>
                             </div>
                             
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -564,8 +769,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                                   fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4,
                                   transition: 'opacity 0.2s'
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.opacity = 0.8}
-                                onMouseLeave={e => e.currentTarget.style.opacity = 1}
                               >
                                 Recordar
                               </button>
@@ -585,13 +788,13 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   display: 'flex', flexDirection: 'column', gap: 16
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Fichas Médicas de Atención Especial</h3>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Atención Especial de Salud</h3>
                     <HeartPulse size={18} style={{ color: t.accent }} />
                   </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {miembros.filter(m => m.alertasMedicas).length > 0 ? (
-                      miembros.filter(m => m.alertasMedicas).slice(0, 4).map(miembro => (
+                    {miembros.filter(m => m.alertas_medicas).length > 0 ? (
+                      miembros.filter(m => m.alertas_medicas).slice(0, 4).map(miembro => (
                         <div key={miembro.id} style={{
                           padding: 12, borderRadius: 12, backgroundColor: 'rgba(245, 158, 11, 0.03)',
                           border: '1px solid rgba(245, 158, 11, 0.15)', display: 'flex', flexDirection: 'column', gap: 6
@@ -599,7 +802,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 13, fontWeight: 700, color: t.accent }}>{miembro.nombre}</span>
                             <span style={{ fontSize: 9, color: '#F59E0B', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 3 }}>
-                              <AlertCircle size={10} /> Alerta Salud
+                              <AlertCircle size={10} /> Ficha de cuidado
                             </span>
                           </div>
                           <p style={{ fontSize: 11, color: t.textSecondary, margin: 0, lineHeight: 1.4 }}>
@@ -666,10 +869,11 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Miembro</th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Contacto</th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Membresía</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Fecha Inicio</th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Vencimiento</th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Grupo Familiar</th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Estado Pago</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600, textAlign: 'right' }}>Acción</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600, textAlign: 'right' }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -685,13 +889,21 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                                 <span style={{ fontWeight: 650 }}>{miembro.nombre}</span>
                                 {miembro.alertas_medicas && (
                                   <span style={{ fontSize: 9, color: '#F59E0B', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}>
-                                    <AlertTriangle size={10} /> Alerta Salud
+                                    <AlertTriangle size={10} /> Alerta Física
                                   </span>
                                 )}
                               </div>
                             </td>
                             <td style={{ padding: '14px 16px', color: t.textSecondary }}>{miembro.telefono || '—'}</td>
-                            <td style={{ padding: '14px 16px', fontWeight: 500 }}>{miembro.membresia}</td>
+                            <td style={{ padding: '14px 16px', fontWeight: 500 }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                <span>{miembro.membresia}</span>
+                                {miembro.cupon_aplicado && (
+                                  <span style={{ fontSize: 9, color: t.accent, fontWeight: 600 }}>Promo: {miembro.cupon_aplicado}</span>
+                                )}
+                              </div>
+                            </td>
+                            <td style={{ padding: '14px 16px', color: t.textSecondary }}>{miembro.fecha_inicio}</td>
                             <td style={{ padding: '14px 16px', color: t.textSecondary }}>{miembro.vencimiento}</td>
                             <td style={{ padding: '14px 16px', color: t.textSecondary }}>
                               {miembro.grupo_familiar ? (
@@ -708,10 +920,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                               }}>{miembro.estadoPago}</span>
                             </td>
                             <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
                                 <button
                                   onClick={() => handleRenovacionRapida(miembro)}
-                                  title="Renovar un mes / registrar cobro"
+                                  title="Renovar plan actual"
                                   style={{
                                     padding: '5px 10px', borderRadius: 8, border: `1px solid ${t.border}`,
                                     backgroundColor: 'transparent', color: t.text, cursor: 'pointer',
@@ -730,12 +942,26 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                                     style={{
                                       padding: '5px 10px', borderRadius: 8, border: 'none',
                                       backgroundColor: '#10B981', color: '#FFFFFF', cursor: 'pointer',
-                                      fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center'
+                                      fontSize: 11, fontWeight: 650, display: 'flex', alignItems: 'center'
                                     }}
                                   >
                                     Recordar
                                   </button>
                                 )}
+
+                                <button
+                                  onClick={() => openDeleteModal(miembro)}
+                                  title="Eliminar Miembro (Envía a Papelera)"
+                                  style={{
+                                    padding: '5px 10px', borderRadius: 8, border: 'none',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', cursor: 'pointer',
+                                    fontSize: 11, fontWeight: 600
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+                                >
+                                  Eliminar
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -743,8 +969,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                       })
                     ) : (
                       <tr>
-                        <td colSpan="7" style={{ padding: '40px 16px', textAlign: 'center', color: t.textMuted }}>
-                          No se encontraron miembros registrados en la base de datos de Supabase.
+                        <td colSpan="8" style={{ padding: '40px 16px', textAlign: 'center', color: t.textMuted }}>
+                          No se encontraron miembros registrados.
                         </td>
                       </tr>
                     )}
@@ -770,14 +996,14 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                         <span style={{ fontSize: 15, fontWeight: 750 }}>{plan.nombre}</span>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: t.accent }}>${plan.precio}</span>
+                        <span style={{ fontSize: 16, fontWeight: 800, color: t.accent }}>{plan.precio} Bs.</span>
                       </div>
                       <p style={{ fontSize: 12, color: t.textSecondary, margin: 0, lineHeight: 1.5 }}>
                         {plan.descripcion || 'Sin descripción'}
                       </p>
                     </div>
                     <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, color: t.textMuted }}>Duración: {plan.duracion_meses} mes(es)</span>
+                      <span style={{ fontSize: 10, color: t.textMuted }}>Periodo: {plan.duracion_meses} mes(es)</span>
                     </div>
                   </div>
                 ))}
@@ -785,44 +1011,193 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             </div>
           )}
 
-          {/* 4. TAB DESCUENTOS Y PROMOS */}
+          {/* 4. TAB DESCUENTOS Y PROMOS (Cupones CRUD) */}
           {activeSubTab === 'promociones' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Cupones y Promociones Activas</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr md:350px', gap: 20, alignItems: 'start' }}>
+              
+              {/* Listado de Cupones */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Cupones Registrados</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+                  {cupones.length > 0 ? (
+                    cupones.map(promo => (
+                      <div key={promo.id} style={{
+                        padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14,
+                        opacity: promo.activo ? 1 : 0.6
+                      }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                            <span style={{ 
+                              fontSize: 12, fontWeight: 700, color: t.accent,
+                              fontFamily: "'JetBrains Mono', monospace", border: `1px solid ${t.accent}40`,
+                              padding: '4px 8px', borderRadius: 6, backgroundColor: `${t.accent}0d`
+                            }}>{promo.codigo}</span>
+                            <span style={{ 
+                              fontSize: 10, fontWeight: 600, color: promo.activo ? '#10B981' : t.textMuted,
+                              display: 'flex', alignItems: 'center', gap: 4
+                            }}>
+                              {promo.activo ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                              {promo.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: 12, color: t.textSecondary, margin: 0 }}>
+                            Tipo: {promo.tipo_descuento} • Valor: {promo.tipo_descuento === 'Porcentaje' ? `${promo.valor}%` : `${promo.valor} Bs.`}
+                          </p>
+                        </div>
+                        <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                          <button
+                            onClick={() => toggleCouponStatus(promo.id, promo.activo)}
+                            style={{
+                              background: 'none', border: 'none', color: t.textSecondary, fontSize: 11,
+                              cursor: 'pointer', fontWeight: 600
+                            }}
+                          >
+                            {promo.activo ? 'Desactivar' : 'Activar'}
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{ fontSize: 12, color: t.textMuted, gridColumn: '1/-1', textAlign: 'center', padding: '40px 0' }}>No hay cupones guardados. Crea uno al lado.</p>
+                  )}
+                </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-                {promociones.map(promo => (
-                  <div key={promo.id} style={{
-                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14,
-                    opacity: promo.activo ? 1 : 0.6
-                  }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                        <span style={{ 
-                          fontSize: 12, fontWeight: 700, color: t.accent,
-                          fontFamily: "'JetBrains Mono', monospace", border: `1px solid ${t.accent}40`,
-                          padding: '4px 8px', borderRadius: 6, backgroundColor: `${t.accent}0d`
-                        }}>{promo.codigo}</span>
-                        <span style={{ 
-                          fontSize: 10, fontWeight: 600, color: promo.activo ? '#10B981' : t.textMuted,
-                          display: 'flex', alignItems: 'center', gap: 4
-                        }}>
-                          {promo.activo ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                          {promo.activo ? 'Activa' : 'Inactiva'}
-                        </span>
-                      </div>
-                      <p style={{ fontSize: 12, color: t.textSecondary, margin: 0, lineHeight: 1.5 }}>
-                        {promo.desc}
-                      </p>
-                    </div>
-                    <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, color: t.textMuted }}>Aplicación Automática</span>
-                    </div>
-                  </div>
-                ))}
+              {/* Crear Cupón */}
+              <form onSubmit={handleCreateCoupon} style={{
+                padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                display: 'flex', flexDirection: 'column', gap: 14
+              }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Space Grotesk', sans-serif" }}>Crear Nuevo Cupón</h3>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Código del Cupón</label>
+                  <input
+                    type="text"
+                    value={newCoupon.codigo}
+                    onChange={e => setNewCoupon({ ...newCoupon, codigo: e.target.value })}
+                    placeholder="Ej. VERANO30"
+                    required
+                    style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Tipo de Descuento</label>
+                  <select
+                    value={newCoupon.tipo_descuento}
+                    onChange={e => setNewCoupon({ ...newCoupon, tipo_descuento: e.target.value })}
+                    style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: t.panel, color: t.text, outline: 'none' }}
+                  >
+                    <option value="Porcentaje">Porcentaje (%)</option>
+                    <option value="Monto">Monto Fijo (Bs.)</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Valor del Descuento</label>
+                  <input
+                    type="number"
+                    value={newCoupon.valor}
+                    onChange={e => setNewCoupon({ ...newCoupon, valor: parseFloat(e.target.value) || 0 })}
+                    placeholder="Ej. 10"
+                    min="1"
+                    required
+                    style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={couponLoading}
+                  style={{
+                    padding: '10px 14px', borderRadius: 8, border: 'none',
+                    backgroundColor: t.accent, color: '#0A0A0C', cursor: 'pointer',
+                    fontSize: 12, fontWeight: 600, transition: 'opacity 0.2s', marginTop: 6
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
+                  onMouseLeave={e => e.currentTarget.style.opacity = 1}
+                >
+                  {couponLoading ? 'Creando...' : 'Guardar Cupón'}
+                </button>
+              </form>
+
+            </div>
+          )}
+
+          {/* 5. TAB PAPELERA DE CLIENTES */}
+          {activeSubTab === 'papelera' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Papelera de Clientes Borrados</h3>
+              
+              <div style={{
+                width: '100%', overflowX: 'auto', backgroundColor: t.panel,
+                border: `1px solid ${t.border}`, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+              }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Miembro</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Fecha Borrado</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Fecha Expiración</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Plan Original</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600, textAlign: 'right' }}>Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {papeleraMiembros.length > 0 ? (
+                      papeleraMiembros.map((item) => {
+                        const datos = item.datos_originales || {};
+                        const borrado = new Date(item.borrado_el).toLocaleDateString();
+                        const expira = new Date(item.expira_el).toLocaleDateString();
+                        return (
+                          <tr key={item.id} style={{ borderBottom: `1px solid ${t.border}`, transition: 'background 0.2s' }}
+                              onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)'}
+                              onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                            <td style={{ padding: '14px 16px', fontWeight: 650 }}>{item.nombre_item}</td>
+                            <td style={{ padding: '14px 16px', color: t.textSecondary }}>{borrado}</td>
+                            <td style={{ padding: '14px 16px', color: '#EF4444', fontWeight: 600 }}>{expira}</td>
+                            <td style={{ padding: '14px 16px', color: t.textSecondary }}>{datos.membresia || '—'}</td>
+                            <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                                <button
+                                  onClick={() => handleRestoreMiembro(item)}
+                                  title="Restaurar miembro a la base activa"
+                                  style={{
+                                    padding: '5px 10px', borderRadius: 8, border: `1px solid ${t.border}`,
+                                    backgroundColor: 'transparent', color: t.text, cursor: 'pointer',
+                                    fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4
+                                  }}
+                                >
+                                  <RotateCcw size={12} /> Restaurar
+                                </button>
+                                
+                                <button
+                                  onClick={() => handlePurgeMiembro(item.id)}
+                                  title="Eliminar de forma permanente"
+                                  style={{
+                                    padding: '5px 10px', borderRadius: 8, border: 'none',
+                                    backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', cursor: 'pointer',
+                                    fontSize: 11, fontWeight: 600
+                                  }}
+                                >
+                                  Purgar
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="5" style={{ padding: '40px 16px', textAlign: 'center', color: t.textMuted }}>
+                          La papelera de clientes está vacía.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -875,7 +1250,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                     name="telefono"
                     value={formData.telefono}
                     onChange={handleInputChange}
-                    placeholder="Ej. +502 5555 4444" 
+                    placeholder="Ej. 70838665" 
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }} 
                   />
                 </div>
@@ -901,7 +1276,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                     onChange={handleInputChange}
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: t.panel, color: t.text, outline: 'none' }}
                   >
-                    {planes.map(p => <option key={p.id} value={p.id}>{p.nombre} (${p.precio})</option>)}
+                    {planes.map(p => <option key={p.id} value={p.id}>{p.nombre} ({p.precio} Bs.)</option>)}
                   </select>
                 </div>
                 
@@ -920,6 +1295,16 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Fecha de Inicio</label>
+                  <input 
+                    type="date" 
+                    name="fecha_inicio"
+                    value={formData.fecha_inicio}
+                    onChange={handleInputChange}
+                    style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Método de Pago</label>
                   <select 
                     name="metodo_pago"
@@ -932,19 +1317,54 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                     <option value="Tarjeta">Tarjeta de Crédito/Débito</option>
                   </select>
                 </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Aplicar Cupón</label>
+                  <select 
+                    name="cupon_id"
+                    value={formData.cupon_id}
+                    onChange={handleInputChange}
+                    style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: t.panel, color: t.text, outline: 'none' }}
+                  >
+                    <option value="">Ninguno</option>
+                    {cupones.filter(c => c.activo).map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.codigo} ({c.tipo_descuento === 'Porcentaje' ? `${c.valor}%` : `${c.valor} Bs.`})
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Descuento Directo ($)</label>
+                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Descuento Manual Directo (Bs.)</label>
                   <input 
                     type="number" 
-                    name="descuento_aplicado"
-                    value={formData.descuento_aplicado}
+                    name="descuento_manual"
+                    value={formData.descuento_manual}
                     onChange={handleInputChange}
                     placeholder="0.00" 
                     min="0"
                     step="0.01"
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }} 
                   />
+                </div>
+              </div>
+
+              {/* Caja informativa de Cobro */}
+              <div style={{
+                padding: 12, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.02)',
+                border: `1px solid ${t.border}`, display: 'flex', justifyContent: 'space-between',
+                fontSize: 12, fontWeight: 600
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{ color: t.textMuted }}>Subtotal: {getPreciosFinales().subtotal} Bs.</span>
+                  <span style={{ color: t.accent }}>Descuento: -{getPreciosFinales().descuento} Bs.</span>
+                </div>
+                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{ color: t.textMuted }}>Moneda: Bs. (Bolivia)</span>
+                  <span style={{ fontSize: 14, color: '#10B981', fontWeight: 800 }}>Total: {getPreciosFinales().total} Bs.</span>
                 </div>
               </div>
 
@@ -995,6 +1415,66 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           </form>
         </div>
       )}
+
+      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN SEGURO (PAPELERA DÍAS) */}
+      {deleteModalOpen && selectedMiembroForDelete && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1001, display: 'flex', alignItems: 'center',
+          justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)'
+        }}>
+          <div style={{
+            maxWidth: 420, width: '100%', backgroundColor: t.panel, border: `1px solid ${t.border}`,
+            borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
+            animation: 'fadeInScale 0.2s ease-out forwards'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#EF4444' }}>
+              <ShieldAlert size={22} />
+              <h3 style={{ fontSize: 15, fontWeight: 800, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Space Grotesk', sans-serif" }}>Confirmar Envío a Papelera</h3>
+            </div>
+            
+            <p style={{ fontSize: 12, color: t.textSecondary, margin: 0, lineHeight: 1.5 }}>
+              ¿Estás seguro de que deseas enviar a <strong>{selectedMiembroForDelete.nombre}</strong> a la papelera? Su servicio quedará inactivo.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '8px 0' }}>
+              <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 650, textTransform: 'uppercase' }}>
+                Días de retención en papelera antes del borrado final:
+              </label>
+              <input
+                type="number"
+                value={diasRetencionDelete}
+                onChange={e => setDiasRetencionDelete(Math.max(1, parseInt(e.target.value, 10) || 60))}
+                min="1"
+                placeholder="60"
+                style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none', fontSize: 13, fontWeight: 600 }}
+              />
+              <span style={{ fontSize: 9, color: t.textMuted }}>
+                *El registro se eliminará permanentemente de forma automática transcurrido este tiempo.
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: `1px solid ${t.border}`, paddingTop: 14 }}>
+              <button
+                type="button"
+                onClick={() => { setDeleteModalOpen(false); setSelectedMiembroForDelete(null); }}
+                style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: 'transparent', color: t.textMuted, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={loading}
+                style={{ padding: '8px 16px', borderRadius: 8, border: 'none', backgroundColor: '#EF4444', color: '#FFF', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
+              >
+                {loading ? 'Borrando...' : 'Mover a Papelera'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -9,9 +9,10 @@ const TABLE_MAP = {
   servicio: { table: 'servicios', label: 'Servicio', icon: 'servicio' },
   reunion: { table: 'reuniones', label: 'Reunión', icon: 'reunion' },
   cliente: { table: 'clientes_editor', label: 'Cliente', icon: 'cliente' },
+  gym_miembro: { table: 'gym_miembros', label: 'Miembro Gimnasio', icon: 'gym_miembro' },
 };
 
-export async function moveToTrash(tipo, itemId, itemData) {
+export async function moveToTrash(tipo, itemId, itemData, diasRetencion = 30) {
   const config = TABLE_MAP[tipo];
   if (!config) throw new Error(`Tipo "${tipo}" no soportado para papelera`);
 
@@ -23,7 +24,7 @@ export async function moveToTrash(tipo, itemId, itemData) {
     datos_originales: itemData,
     item_id: itemId || itemData?.id,
     borrado_el: new Date().toISOString(),
-    expira_el: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    expira_el: new Date(Date.now() + diasRetencion * 24 * 60 * 60 * 1000).toISOString(),
   };
 
   try {
@@ -54,7 +55,7 @@ export async function deleteFromTable(tipo, itemId) {
   }
 }
 
-export async function safeDelete(tipo, itemId, itemData) {
-  await moveToTrash(tipo, itemId, itemData);
+export async function safeDelete(tipo, itemId, itemData, diasRetencion = 30) {
+  await moveToTrash(tipo, itemId, itemData, diasRetencion);
   await deleteFromTable(tipo, itemId);
 }
