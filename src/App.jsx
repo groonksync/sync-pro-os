@@ -20,6 +20,7 @@ import PublicCatalog from './views/PublicCatalog';
 import BovedaPass from './views/BovedaPass';
 import FlujoTrabajo from './views/FlujoTrabajo';
 import ConversorWebP from './views/ConversorWebP';
+import SistemaGimnasio from './views/SistemaGimnasio';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
 import { getTheme } from './lib/theme';
@@ -584,6 +585,7 @@ const AppContent = () => {
         case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} initialFilterText={egresosSearch} token={googleToken} settings={appSettings} />;
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} initialSearch={inventarioSearch} />;
         case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} token={googleToken} />;
+        case 'gimnasio': return <SistemaGimnasio settings={appSettings} isDark={isDarkMode} />;
         case 'flujo-trabajo': return <FlujoTrabajo settings={appSettings} isDark={isDarkMode} />;
         case 'conversor-imagenes': return <ConversorWebP settings={appSettings} isDark={isDarkMode} />;
         case 'boveda': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;

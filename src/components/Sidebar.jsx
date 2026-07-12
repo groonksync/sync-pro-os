@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Calendar, Wallet, Bell, Settings, CreditCard,
   Package, TrendingUp, Activity, Video, Briefcase, Cloud,
   Landmark, Trash2, ShoppingBag, PanelLeftClose, PanelLeftOpen,
-  Sun, Moon, ShieldCheck, Building2, Workflow, Image, Menu, X
+  Sun, Moon, ShieldCheck, Building2, Workflow, Image, Menu, X,
+  Dumbbell
 } from 'lucide-react';
 import { getTheme, useTheme } from '../lib/theme';
 
@@ -15,6 +16,12 @@ const MENU_GROUPS = [
       { id: 'prestamos',     label: 'Préstamos',            icon: Landmark },
       { id: 'inventario',    label: 'Empresa',              icon: Building2 },
       { id: 'pagos',         label: 'Mis Egresos',          icon: Wallet },
+    ],
+  },
+  {
+    label: 'Sistemas',
+    items: [
+      { id: 'gimnasio',       label: 'Sistema Gimnasio',    icon: Dumbbell },
     ],
   },
   {
