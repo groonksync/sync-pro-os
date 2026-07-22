@@ -1,5 +1,5 @@
-// Inefable - GymOS Pro (Sistema de Gestión de Gimnasio & Fitness V3.0)
-// Features: Check-In Terminal en Vivo, Expediente 360° con Progreso Físico, Arqueo de Caja y Contabilidad en Bs.
+// Inefable - Sistema Pro (Sistema de Gestión de Gimnasio & Fitness Enterprise)
+// Updated: Header "Sistema Pro", Ultra-Detailed Pricing Cards in Bs. & Vibrant Colored Coupon Badges
 import React, { useState, useEffect } from 'react';
 import { 
   Dumbbell, Users, CreditCard, Tag, AlertTriangle, Plus, Search, 
@@ -7,17 +7,28 @@ import {
   XCircle, Filter, Sparkles, TrendingUp, AlertCircle, HeartPulse,
   DollarSign, RefreshCw, Trash2, RotateCcw, ShieldAlert, Award,
   QrCode, Receipt, Scale, Activity, ShieldCheck, Wallet, FileText,
-  Check, Clock, UserCheck, UserX, ChevronRight, BarChart2
+  Check, Clock, UserCheck, UserX, ChevronRight, BarChart2, CheckCircle2,
+  Zap, Ticket, Percent, Layers, Shield
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useTheme } from '../lib/theme';
 import { safeDelete } from '../lib/trashService';
+
+// Mapa de esquemas de colores vibrantes para cada cupón
+const COUPON_COLOR_PALETTES = [
+  { border: '#10B981', bg: 'rgba(16, 185, 129, 0.06)', gradient: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.02) 100%)', badgeBg: 'rgba(16, 185, 129, 0.2)', text: '#10B981' },
+  { border: '#F59E0B', bg: 'rgba(245, 158, 11, 0.06)', gradient: 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.02) 100%)', badgeBg: 'rgba(245, 158, 11, 0.2)', text: '#F59E0B' },
+  { border: '#8B5CF6', bg: 'rgba(139, 92, 246, 0.06)', gradient: 'linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0.02) 100%)', badgeBg: 'rgba(139, 92, 246, 0.2)', text: '#8B5CF6' },
+  { border: '#F43F5E', bg: 'rgba(244, 63, 94, 0.06)', gradient: 'linear-gradient(135deg, rgba(244,63,94,0.15) 0%, rgba(244,63,94,0.02) 100%)', badgeBg: 'rgba(244, 63, 94, 0.2)', text: '#F43F5E' },
+  { border: '#06B6D4', bg: 'rgba(6, 182, 212, 0.06)', gradient: 'linear-gradient(135deg, rgba(6,182,212,0.15) 0%, rgba(6,182,212,0.02) 100%)', badgeBg: 'rgba(6, 182, 212, 0.2)', text: '#06B6D4' }
+];
 
 const SistemaGimnasio = ({ settings, isDark }) => {
   const t = useTheme(isDark);
   const [activeSubTab, setActiveSubTab] = useState('resumen');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterHealthAlerts, setFilterHealthAlerts] = useState(false);
+  const [planCategoryFilter, setPlanCategoryFilter] = useState('Todos');
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Estados para datos reales de Supabase
@@ -588,7 +599,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       triggerToast("Miembro sin número telefónico.", "error");
       return;
     }
-    const mensaje = `Hola ${miembro.nombre}, te saludamos de GymOS. Te recordamos que tu membresía (${miembro.membresia}) registrada el ${miembro.fecha_inicio} vence el ${miembro.vencimiento}. Te invitamos a realizar tu renovación para seguir entrenando sin cortes. ¡Te esperamos!`;
+    const mensaje = `Hola ${miembro.nombre}, te saludamos de Sistema Pro. Te recordamos que tu membresía (${miembro.membresia}) registrada el ${miembro.fecha_inicio} vence el ${miembro.vencimiento}. Te invitamos a realizar tu renovación para seguir entrenando sin cortes. ¡Te esperamos!`;
     const cleanPhone = miembro.telefono.replace(/\s+/g, '');
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
@@ -611,6 +622,12 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     const matchesHealth = filterHealthAlerts ? m.alertas_medicas : true;
     const matchesPayment = filterPaymentStatus === 'Todos' ? true : m.estadoPago === filterPaymentStatus;
     return matchesSearch && matchesHealth && matchesPayment;
+  });
+
+  const filteredPlanes = planes.filter(p => {
+    if (planCategoryFilter === 'General') return !p.nombre.toLowerCase().includes('disciplina');
+    if (planCategoryFilter === 'Disciplinas') return p.nombre.toLowerCase().includes('disciplina');
+    return true;
   });
 
   return (
@@ -642,24 +659,14 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         </div>
       )}
 
-      {/* Header Pro */}
+      {/* Header Pro (Sin ícono al lado del nombre) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 12,
-              background: `linear-gradient(135deg, ${t.accent}, #F59E0B)`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: `0 4px 20px ${t.accent}30`
-            }}>
-              <Dumbbell size={22} style={{ color: '#0A0A0C' }} />
-            </div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
-              GymOS Pro <span style={{ fontSize: 11, fontWeight: 700, color: t.accent, verticalAlign: 'middle', border: `1px solid ${t.accent}40`, padding: '2px 8px', borderRadius: 20, marginLeft: 8 }}>V3.0 Enterprise</span>
-            </h1>
-          </div>
-          <p style={{ fontSize: 13, color: t.textMuted, margin: '6px 0 0 0' }}>
-            Control de Acceso en Vivo, Fichas de Salud, Arqueo de Caja y Seguimiento Físico (Precios en Bs.).
+          <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
+            Sistema Pro
+          </h1>
+          <p style={{ fontSize: 13, color: t.textMuted, margin: '4px 0 0 0' }}>
+            Plataforma Enterprise de Control de Acceso, Expedientes, Contabilidad y Membresías.
           </p>
         </div>
         
@@ -675,6 +682,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             }}
           >
             <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
+            Actualizar
           </button>
           
           <button 
@@ -719,10 +727,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         {[
           { id: 'resumen', label: 'Dashboard', icon: TrendingUp },
           { id: 'checkin', label: 'Control de Acceso', icon: QrCode },
-          { id: 'miembros', label: 'Miembros & Expediente 360°', icon: Users },
+          { id: 'miembros', label: 'Miembros & Expedientes', icon: Users },
           { id: 'contabilidad', label: 'Contabilidad & Caja', icon: Receipt },
           { id: 'planes', label: 'Planes y Tarifas', icon: CreditCard },
-          { id: 'promociones', label: 'Cupones & Promos', icon: Tag },
+          { id: 'promociones', label: 'Cupones & Promos', icon: Ticket },
           { id: 'papelera', label: 'Papelera', icon: Trash2 }
         ].map(tab => {
           const active = activeSubTab === tab.id;
@@ -759,7 +767,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           {/* 1. DASHBOARD */}
           {activeSubTab === 'resumen' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              {/* Tarjetas Interactivas de Métricas */}
+              {/* Tarjetas Interactivas de Métricas con Iconos Ricos */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
                 <div 
                   onClick={() => { setFilterPaymentStatus('Todos'); setActiveSubTab('miembros'); }}
@@ -771,7 +779,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = t.accent; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Miembros Registrados</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Miembros Registrados</span>
+                    <Users size={18} style={{ color: t.accent }} />
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800 }}>{totalMiembros}</span>
                     <span style={{ fontSize: 11, color: t.accent, fontWeight: 600 }}>Total Activos</span>
@@ -788,7 +799,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#10B981'; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Membresías Al Día</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Membresías Al Día</span>
+                    <CheckCircle2 size={18} style={{ color: '#10B981' }} />
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#10B981' }}>{miembrosActivos}</span>
                     <span style={{ fontSize: 11, color: t.textMuted }}>{totalMiembros > 0 ? ((miembrosActivos/totalMiembros)*100).toFixed(0) : 0}%</span>
@@ -805,7 +819,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#F59E0B'; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Próximos a Vencer</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Próximos a Vencer</span>
+                    <Clock size={18} style={{ color: '#F59E0B' }} />
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#F59E0B' }}>{miembrosPorVencer}</span>
                     <span style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>&le; 5 días</span>
@@ -822,7 +839,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#EF4444'; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
                 >
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vencidos / Deudores</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vencidos / Deudores</span>
+                    <AlertTriangle size={18} style={{ color: '#EF4444' }} />
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                     <span style={{ fontSize: 28, fontWeight: 800, color: '#EF4444' }}>{miembrosMorosos}</span>
                     <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 600 }}>Alerta de Cobro</span>
@@ -838,7 +858,9 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   display: 'flex', flexDirection: 'column', gap: 16
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Acción de Cobro Requerida</h3>
+                    <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <AlertCircle size={18} style={{ color: '#EF4444' }} /> Acción de Cobro Requerida
+                    </h3>
                     <span style={{ fontSize: 10, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>Alerta</span>
                   </div>
                   
@@ -890,8 +912,9 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   display: 'flex', flexDirection: 'column', gap: 16
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Atención Especial de Salud</h3>
-                    <HeartPulse size={18} style={{ color: t.accent }} />
+                    <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <HeartPulse size={18} style={{ color: t.accent }} /> Atención Especial de Salud
+                    </h3>
                   </div>
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -1096,7 +1119,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 </div>
               </div>
 
-              {/* Tabla de Miembros */}
+              {/* Tabla de Miembros con Iconos Ricos */}
               <div style={{
                 width: '100%', overflowX: 'auto', backgroundColor: t.panel,
                 border: `1px solid ${t.border}`, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
@@ -1104,13 +1127,13 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Miembro</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Contacto</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Membresía</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Fecha Inicio</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Vencimiento</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Grupo</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Estado</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Users size={14} /> Miembro</span></th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Phone size={14} /> Contacto</span></th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CreditCard size={14} /> Membresía</span></th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={14} /> Fecha Inicio</span></th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14} /> Vencimiento</span></th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Users size={14} /> Grupo</span></th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}><span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Activity size={14} /> Estado</span></th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600, textAlign: 'right' }}>Acciones Pro</th>
                     </tr>
                   </thead>
@@ -1161,7 +1184,9 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                                 <span>{miembro.membresia}</span>
                                 {miembro.cupon_aplicado && (
-                                  <span style={{ fontSize: 9, color: t.accent, fontWeight: 600 }}>Promo: {miembro.cupon_aplicado}</span>
+                                  <span style={{ fontSize: 9, color: t.accent, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                    <Tag size={10} /> Promo: {miembro.cupon_aplicado}
+                                  </span>
                                 )}
                               </div>
                             </td>
@@ -1255,17 +1280,26 @@ const SistemaGimnasio = ({ settings, isDark }) => {
               {/* Tarjetas de Resumen Financiero */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
                 <div style={{ padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Ingresos de Hoy</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Ingresos de Hoy</span>
+                    <DollarSign size={18} style={{ color: '#10B981' }} />
+                  </div>
                   <span style={{ fontSize: 28, fontWeight: 800, color: '#10B981' }}>{ingresosHoy.toFixed(2)} Bs.</span>
                 </div>
 
                 <div style={{ padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Total Acumulado del Mes</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Total Acumulado del Mes</span>
+                    <Wallet size={18} style={{ color: t.accent }} />
+                  </div>
                   <span style={{ fontSize: 28, fontWeight: 800, color: t.accent }}>{ingresosMes.toFixed(2)} Bs.</span>
                 </div>
 
                 <div style={{ padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Total Descuentos Aplicados</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Total Descuentos Aplicados</span>
+                    <Percent size={18} style={{ color: '#F59E0B' }} />
+                  </div>
                   <span style={{ fontSize: 28, fontWeight: 800, color: '#F59E0B' }}>{totalDescuentos.toFixed(2)} Bs.</span>
                 </div>
               </div>
@@ -1275,7 +1309,9 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 padding: 20, borderRadius: 20, backgroundColor: t.panel, border: `1px solid ${t.border}`,
                 display: 'flex', flexDirection: 'column', gap: 16
               }}>
-                <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Libro Diario de Transacciones (Cobros en Bs.)</h3>
+                <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, fontFamily: "'Space Grotesk', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Receipt size={18} style={{ color: t.accent }} /> Libro Diario de Transacciones (Cobros en Bs.)
+                </h3>
 
                 <div style={{ overflowX: 'auto' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
@@ -1323,76 +1359,187 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             </div>
           )}
 
-          {/* 5. PLANES Y MEMBRESÍAS */}
+          {/* 5. PLANES Y MEMBRESÍAS (Diseño Elaborado con Casillas Grandes y Precios Sellados en Botones) */}
           {activeSubTab === 'planes' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Planes Habilitados (Bolivianos Bs.)</h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-                {planes.map(plan => (
-                  <div key={plan.id} style={{
-                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14
-                  }}>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                        <span style={{ fontSize: 15, fontWeight: 750 }}>{plan.nombre}</span>
-                        <span style={{ fontSize: 16, fontWeight: 800, color: t.accent }}>{plan.precio} Bs.</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, fontFamily: "'Space Grotesk', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <CreditCard size={20} style={{ color: t.accent }} /> Tarifario Oficial de Planes & Disciplinas (Bs.)
+                </h3>
+
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {['Todos', 'General', 'Disciplinas'].map(cat => (
+                    <button
+                      key={cat}
+                      onClick={() => setPlanCategoryFilter(cat)}
+                      style={{
+                        padding: '6px 14px', borderRadius: 10,
+                        border: planCategoryFilter === cat ? `1px solid ${t.accent}` : `1px solid ${t.border}`,
+                        backgroundColor: planCategoryFilter === cat ? t.accentSoft : 'transparent',
+                        color: planCategoryFilter === cat ? t.accent : t.textMuted,
+                        fontSize: 12, fontWeight: 600, cursor: 'pointer'
+                      }}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Grid de Casillas Grandes para Planes */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+                {filteredPlanes.map((plan, idx) => {
+                  const isDisciplina = plan.nombre.toLowerCase().includes('disciplina');
+                  return (
+                    <div key={plan.id} style={{
+                      padding: 24, borderRadius: 20, backgroundColor: t.panel,
+                      border: `1.5px solid ${isDisciplina ? 'rgba(139, 92, 246, 0.3)' : t.border}`,
+                      boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                      display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 20,
+                      position: 'relative', overflow: 'hidden'
+                    }}>
+                      {/* Top Ribbon badge */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <span style={{ fontSize: 10, fontWeight: 800, color: isDisciplina ? '#8B5CF6' : t.accent, textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            {isDisciplina ? <Sparkles size={12} /> : <Award size={12} />} {isDisciplina ? 'Clase Individual' : 'Plan Membresía'}
+                          </span>
+                          <h4 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>{plan.nombre}</h4>
+                        </div>
+
+                        {/* Botón Sellado de Precio */}
+                        <div style={{
+                          padding: '8px 16px', borderRadius: 12,
+                          background: isDisciplina 
+                            ? 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)' 
+                            : `linear-gradient(135deg, ${t.accent} 0%, #F59E0B 100%)`,
+                          color: '#0A0A0C', fontWeight: 900, fontSize: 18,
+                          fontFamily: "'JetBrains Mono', monospace",
+                          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {parseFloat(plan.precio).toFixed(0)} Bs.
+                        </div>
                       </div>
+
                       <p style={{ fontSize: 12, color: t.textSecondary, margin: 0, lineHeight: 1.5 }}>
-                        {plan.descripcion || 'Sin descripción'}
+                        {plan.descripcion || 'Acceso garantizado a las instalaciones del gimnasio.'}
                       </p>
+
+                      {/* Lista de Detalles del Plan */}
+                      <div style={{ padding: 14, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: t.textSecondary }}>
+                          <CheckCircle2 size={14} style={{ color: '#10B981' }} />
+                          <span>Acceso ilimitado a equipos y área fitness</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: t.textSecondary }}>
+                          <Clock size={14} style={{ color: t.accent }} />
+                          <span>Duración exacta: <strong>{plan.duracion_dias} día(s) hábiles</strong></span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: t.textSecondary }}>
+                          <Users size={14} style={{ color: '#06B6D4' }} />
+                          <span>Válido para 1 persona</span>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, plan_id: plan.id }));
+                          setIsModalOpen(true);
+                        }}
+                        style={{
+                          width: '100%', padding: '12px', borderRadius: 12,
+                          border: `1px solid ${t.accent}`, backgroundColor: t.accentSoft,
+                          color: t.accent, fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accent; e.currentTarget.style.color = '#0A0A0C'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accentSoft; e.currentTarget.style.color = t.accent; }}
+                      >
+                        Inscribir Cliente en este Plan <ChevronRight size={14} />
+                      </button>
                     </div>
-                    <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 10, color: t.textMuted }}>Periodo: {plan.duracion_dias} día(s)</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* 6. CUPONES & PROMOS */}
+          {/* 6. CUPONES & PROMOS (Diseño Colorido Específico por Cupón) */}
           {activeSubTab === 'promociones' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr md:350px', gap: 20, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr md:360px', gap: 20, alignItems: 'start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Cupones Registrados</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, fontFamily: "'Space Grotesk', sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Ticket size={20} style={{ color: t.accent }} /> Cupones Promocionales Activos
+                </h3>
+
+                {/* Grid de Cupones con Colores Específicos */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16 }}>
                   {cupones.length > 0 ? (
-                    cupones.map(promo => (
-                      <div key={promo.id} style={{
-                        padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 14,
-                        opacity: promo.activo ? 1 : 0.6
-                      }}>
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                            <span style={{ 
-                              fontSize: 12, fontWeight: 700, color: t.accent,
-                              fontFamily: "'JetBrains Mono', monospace", border: `1px solid ${t.accent}40`,
-                              padding: '4px 8px', borderRadius: 6, backgroundColor: `${t.accent}0d`
-                            }}>{promo.codigo}</span>
-                            <span style={{ 
-                              fontSize: 10, fontWeight: 600, color: promo.activo ? '#10B981' : t.textMuted,
-                              display: 'flex', alignItems: 'center', gap: 4
-                            }}>
-                              {promo.activo ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                              {promo.activo ? 'Activo' : 'Inactivo'}
-                            </span>
+                    cupones.map((promo, idx) => {
+                      const colorTheme = COUPON_COLOR_PALETTES[idx % COUPON_COLOR_PALETTES.length];
+                      const miembrosConCupon = miembros.filter(m => m.cupon_aplicado === promo.codigo).length;
+
+                      return (
+                        <div key={promo.id} style={{
+                          padding: 20, borderRadius: 20,
+                          background: colorTheme.gradient,
+                          border: `1.5px solid ${colorTheme.border}`,
+                          boxShadow: `0 8px 25px ${colorTheme.border}15`,
+                          display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 16,
+                          opacity: promo.activo ? 1 : 0.55, transition: 'all 0.2s'
+                        }}>
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                              <span style={{ 
+                                fontSize: 13, fontWeight: 800, color: colorTheme.text,
+                                fontFamily: "'JetBrains Mono', monospace", border: `1px solid ${colorTheme.border}`,
+                                padding: '4px 10px', borderRadius: 8, backgroundColor: colorTheme.badgeBg,
+                                display: 'flex', alignItems: 'center', gap: 6
+                              }}>
+                                <Tag size={12} /> {promo.codigo}
+                              </span>
+                              
+                              <span style={{ 
+                                fontSize: 10, fontWeight: 700, color: promo.activo ? '#10B981' : t.textMuted,
+                                display: 'flex', alignItems: 'center', gap: 4,
+                                backgroundColor: promo.activo ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                                padding: '2px 8px', borderRadius: 12
+                              }}>
+                                {promo.activo ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                                {promo.activo ? 'Activo' : 'Inactivo'}
+                              </span>
+                            </div>
+
+                            {/* Badge de Descuento */}
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '8px 0' }}>
+                              <span style={{ fontSize: 26, fontWeight: 900, color: colorTheme.text }}>
+                                {promo.tipo_descuento === 'Porcentaje' ? `${promo.valor}%` : `${promo.valor} Bs.`}
+                              </span>
+                              <span style={{ fontSize: 11, fontWeight: 700, color: t.textMuted }}>DESCUENTO</span>
+                            </div>
+
+                            <p style={{ fontSize: 11, color: t.textSecondary, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <Users size={12} /> Usado por {miembrosConCupon} miembro(s) registrado(s)
+                            </p>
                           </div>
-                          <p style={{ fontSize: 12, color: t.textSecondary, margin: 0 }}>
-                            Tipo: {promo.tipo_descuento} • Valor: {promo.tipo_descuento === 'Porcentaje' ? `${promo.valor}%` : `${promo.valor} Bs.`}
-                          </p>
+
+                          <div style={{ borderTop: `1px solid ${colorTheme.border}40`, paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={() => toggleCouponStatus(promo.id, promo.activo)}
+                              style={{
+                                background: 'none', border: `1px solid ${colorTheme.border}`,
+                                color: colorTheme.text, fontSize: 11, padding: '4px 10px', borderRadius: 6,
+                                cursor: 'pointer', fontWeight: 700
+                              }}
+                            >
+                              {promo.activo ? 'Desactivar Cupón' : 'Activar Cupón'}
+                            </button>
+                          </div>
                         </div>
-                        <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
-                          <button
-                            onClick={() => toggleCouponStatus(promo.id, promo.activo)}
-                            style={{ background: 'none', border: 'none', color: t.textSecondary, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
-                          >
-                            {promo.activo ? 'Desactivar' : 'Activar'}
-                          </button>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   ) : (
                     <p style={{ fontSize: 12, color: t.textMuted, textAlign: 'center', padding: '40px 0' }}>No hay cupones guardados.</p>
                   )}
@@ -1401,10 +1548,12 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
               {/* Formulario Cupón */}
               <form onSubmit={handleCreateCoupon} style={{
-                padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                display: 'flex', flexDirection: 'column', gap: 14
+                padding: 20, borderRadius: 20, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                display: 'flex', flexDirection: 'column', gap: 14, boxShadow: '0 8px 30px rgba(0,0,0,0.15)'
               }}>
-                <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Space Grotesk', sans-serif" }}>Crear Nuevo Cupón</h3>
+                <h3 style={{ fontSize: 14, fontWeight: 800, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Space Grotesk', sans-serif", display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Plus size={16} style={{ color: t.accent }} /> Crear Nuevo Cupón
+                </h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Código del Cupón</label>
@@ -1414,7 +1563,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                     onChange={e => setNewCoupon({ ...newCoupon, codigo: e.target.value })}
                     placeholder="Ej. VERANO30"
                     required
-                    style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }}
+                    style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none', fontWeight: 700 }}
                   />
                 </div>
 
@@ -1449,7 +1598,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   style={{
                     padding: '10px 14px', borderRadius: 8, border: 'none',
                     backgroundColor: t.accent, color: '#0A0A0C', cursor: 'pointer',
-                    fontSize: 12, fontWeight: 600, marginTop: 6
+                    fontSize: 12, fontWeight: 700, marginTop: 6
                   }}
                 >
                   {couponLoading ? 'Creando...' : 'Guardar Cupón'}
