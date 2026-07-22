@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { 
-  LayoutDashboard, Calendar, Wallet, Bell, Settings, CreditCard,
-  Package, TrendingUp, Activity, Video, Briefcase, Cloud,
+  LayoutDashboard, Wallet, Bell, Settings, CreditCard,
+  Package, TrendingUp, Activity, Video, Briefcase,
   Landmark, Trash2, ShoppingBag, PanelLeftClose, PanelLeftOpen,
-  Sun, Moon, ShieldCheck, Building2, Workflow, Image, Menu, X,
-  Dumbbell
+  Sun, Moon, Building2, Image, Menu, X, Dumbbell
 } from 'lucide-react';
 import { getTheme, useTheme } from '../lib/theme';
 
@@ -34,12 +33,8 @@ const MENU_GROUPS = [
   {
     label: 'Herramientas',
     items: [
-      { id: 'drive-sovereign',   label: 'Almacenamiento',     icon: Cloud },
-      { id: 'calendar',          label: 'Calendario',         icon: Calendar },
       { id: 'recordatorios',     label: 'Recordatorios',      icon: Bell },
-      { id: 'flujo-trabajo',     label: 'Flujo de Trabajo',   icon: Workflow },
       { id: 'conversor-imagenes',label: 'Conversor WebP',     icon: Image },
-      { id: 'boveda',            label: 'Contraseñas',        icon: ShieldCheck },
       { id: 'papelera',          label: 'Papelera',           icon: Trash2 },
     ],
   },

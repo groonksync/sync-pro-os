@@ -9,16 +9,11 @@ import Notifications from './views/Notifications';
 import MisEgresos from './views/MisEgresos';
 import Inventario from './views/Inventario';
 import Ajustes from './views/Ajustes';
-import DriveSovereign from './views/DriveSovereign';
-import GoogleCalendar from './views/GoogleCalendar';
 import Recordatorios from './views/Recordatorios';
-import BovedaSoberana from './views/BovedaSoberana';
 import TrashView from './views/TrashView';
 import SovereignAgent from './views/SovereignAgent';
 import ClientPortal from './views/ClientPortal';
 import PublicCatalog from './views/PublicCatalog';
-import BovedaPass from './views/BovedaPass';
-import FlujoTrabajo from './views/FlujoTrabajo';
 import ConversorWebP from './views/ConversorWebP';
 import SistemaGimnasio from './views/SistemaGimnasio';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -586,11 +581,7 @@ const AppContent = () => {
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} initialSearch={inventarioSearch} />;
         case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} token={googleToken} />;
         case 'gimnasio': return <SistemaGimnasio settings={appSettings} isDark={isDarkMode} />;
-        case 'flujo-trabajo': return <FlujoTrabajo settings={appSettings} isDark={isDarkMode} />;
         case 'conversor-imagenes': return <ConversorWebP settings={appSettings} isDark={isDarkMode} />;
-        case 'boveda': return <BovedaPass settings={appSettings} isDark={isDarkMode} />;
-        case 'calendar': return <GoogleCalendar token={googleToken} settings={appSettings} isDark={isDarkMode} />;
-        case 'drive-sovereign': return <DriveSovereign token={googleToken} user={googleUser} onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }} isDark={isDarkMode} />;
         case 'papelera': return <TrashView settings={appSettings} isDark={isDarkMode} />;
         case 'catalogo': return <PublicCatalog />;
         case 'configuracion': return (

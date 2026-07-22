@@ -1,12 +1,13 @@
-// Inefable - GymOS Prototype (Sistema Gimnasio V2.0)
-// Created: 2026-07-12
-// Updated: Bolivian Currency, Customizable Soft Delete, Coupon DB Integration & Date Ranges
+// Inefable - GymOS Pro (Sistema de Gestión de Gimnasio & Fitness V3.0)
+// Features: Check-In Terminal en Vivo, Expediente 360° con Progreso Físico, Arqueo de Caja y Contabilidad en Bs.
 import React, { useState, useEffect } from 'react';
 import { 
   Dumbbell, Users, CreditCard, Tag, AlertTriangle, Plus, Search, 
   Calendar, Phone, ExternalLink, ArrowRight, UserPlus, CheckCircle, 
   XCircle, Filter, Sparkles, TrendingUp, AlertCircle, HeartPulse,
-  DollarSign, RefreshCw, Trash2, RotateCcw, ShieldAlert, Award
+  DollarSign, RefreshCw, Trash2, RotateCcw, ShieldAlert, Award,
+  QrCode, Receipt, Scale, Activity, ShieldCheck, Wallet, FileText,
+  Check, Clock, UserCheck, UserX, ChevronRight, BarChart2
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useTheme } from '../lib/theme';
@@ -30,10 +31,27 @@ const SistemaGimnasio = ({ settings, isDark }) => {
   const [filterPaymentStatus, setFilterPaymentStatus] = useState('Todos');
   const [hoveredMiembroId, setHoveredMiembroId] = useState(null);
   
+  // Estados para Control de Acceso (Check-in Terminal)
+  const [checkinInput, setCheckinInput] = useState('');
+  const [checkinResult, setCheckinResult] = useState(null);
+  const [accesosHoy, setAccesosHoy] = useState([]);
+
+  // Estado para Expediente 360° y Progreso Físico
+  const [selectedMiembro360, setSelectedMiembro360] = useState(null);
+  const [progresosFisicos, setProgresosFisicos] = useState([]);
+  const [newProgreso, setNewProgreso] = useState({
+    peso_kg: '',
+    porcentaje_grasa: '',
+    masa_muscular_kg: '',
+    medida_cintura_cm: '',
+    medida_pecho_cm: '',
+    notas: ''
+  });
+
   // Estados para Toasts
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
-  const [toastType, setToastType] = useState('success'); // 'success' | 'error'
+  const [toastType, setToastType] = useState('success');
 
   // Estados del Formulario de Registro
   const [formData, setFormData] = useState({
@@ -118,7 +136,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       if (pagosError) throw pagosError;
       setPagos(pagosData || []);
 
-      // 5. Obtener Miembros en la Papelera de Supabase
+      // 5. Obtener Miembros en Papelera
       const { data: papeleraData, error: papeleraError } = await supabase
         .from('papelera')
         .select('*')
@@ -127,7 +145,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       if (papeleraError) throw papeleraError;
       setPapeleraMiembros(papeleraData || []);
 
-      // Mapear miembros y calcular estado y fechas basado en el último pago
+      // Mapear miembros y calcular estado y fechas
       const hoy = new Date().toISOString().split('T')[0];
       const miembrosConEstado = (miembrosData || []).map(miembro => {
         const pagosMiembro = (pagosData || []).filter(p => p.miembro_id === miembro.id && p.estado === 'Pagado');
@@ -137,7 +155,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         let fechaInicioMembresia = miembro.fecha_inicio || 'Sin registro';
 
         if (pagosMiembro.length > 0) {
-          const ultimoPago = pagosMiembro[0]; // Ordenado desc
+          const ultimoPago = pagosMiembro[0];
           vencimiento = ultimoPago.fecha_vencimiento;
           fechaInicioMembresia = ultimoPago.fecha_inicio || miembro.fecha_inicio;
           
@@ -168,7 +186,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
       setMiembros(miembrosConEstado);
 
-      // Valores por defecto para formulario
       if (planesData && planesData.length > 0 && !formData.plan_id) {
         setFormData(prev => ({ ...prev, plan_id: planesData[0].id }));
       }
@@ -186,14 +203,11 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     fetchData();
   }, []);
 
-  // Calcular vencimiento en base a una fecha de inicio y una cantidad de días (híbrido y ultra-seguro)
+  // Calcular vencimiento en base a días de manera segura
   const calcularVencimiento = (fechaBaseStr, dias) => {
     let diasNum = parseInt(dias, 10);
-    if (isNaN(diasNum)) {
-      diasNum = 30; // 30 días por defecto para evitar caídas
-    }
+    if (isNaN(diasNum)) diasNum = 30;
     
-    // Normalizar fecha base
     const baseStr = fechaBaseStr || new Date().toISOString().split('T')[0];
     const d = new Date(baseStr + 'T12:00:00');
     
@@ -207,7 +221,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     return d.toISOString().split('T')[0];
   };
 
-  // Calcular el descuento y el total en Bolivianos
+  // Precios y Descuentos
   const getPreciosFinales = () => {
     const planSeleccionado = planes.find(p => p.id === formData.plan_id);
     if (!planSeleccionado) return { subtotal: 0, descuento: 0, total: 0 };
@@ -228,7 +242,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
     return {
       subtotal,
-      descuento: Math.min(descuento, subtotal), // El descuento no puede exceder el costo
+      descuento: Math.min(descuento, subtotal),
       total: Math.max(0, subtotal - descuento)
     };
   };
@@ -241,7 +255,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }));
   };
 
-  // Crear cupón en Supabase
+  // Crear cupón
   const handleCreateCoupon = async (e) => {
     e.preventDefault();
     if (!newCoupon.codigo.trim() || newCoupon.valor <= 0) {
@@ -273,7 +287,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }
   };
 
-  // Cambiar estado activo/inactivo de un cupón
   const toggleCouponStatus = async (id, status) => {
     try {
       const { error } = await supabase
@@ -290,7 +303,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }
   };
 
-  // Guardar Miembro, calcular fechas e insertar primer pago con descuento
+  // Registrar nuevo miembro
   const handleSaveMiembro = async (e) => {
     e.preventDefault();
     if (!formData.nombre.trim()) {
@@ -299,7 +312,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }
 
     if (!formData.plan_id) {
-      triggerToast("Debes seleccionar un plan de membresía. Verifica tu Supabase.", "error");
+      triggerToast("Debes seleccionar un plan de membresía.", "error");
       return;
     }
 
@@ -308,11 +321,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       const planSeleccionado = planes.find(p => p.id === formData.plan_id);
       const cuponSeleccionado = cupones.find(c => c.id === formData.cupon_id);
       
-      const { descuento, total } = getPreciosFinales();
-      const duracionDias = planSeleccionado ? (planSeleccionado.duracion_dias || (planSeleccionado.duracion_meses ? planSeleccionado.duracion_meses * 30 : 30)) : 30;
+      const { descuento } = getPreciosFinales();
+      const duracionDias = planSeleccionado ? (planSeleccionado.duracion_dias || 30) : 30;
       const vencimientoCalculado = calcularVencimiento(formData.fecha_inicio, duracionDias);
 
-      // 1. Registrar Miembro
       const { data: nuevoMiembro, error: miembroError } = await supabase
         .from('gym_miembros')
         .insert([{
@@ -331,7 +343,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       if (miembroError) throw miembroError;
       const miembroCreado = nuevoMiembro[0];
 
-      // 2. Registrar Transacción de Pago inicial
       if (miembroCreado) {
         const { error: pagoError } = await supabase
           .from('gym_pagos')
@@ -353,7 +364,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       triggerToast("Miembro registrado y pago acreditado.");
       setIsModalOpen(false);
       
-      // Reset Formulario
       setFormData({
         nombre: '',
         telefono: '',
@@ -377,22 +387,78 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }
   };
 
-  // Abrir Modal de Confirmación de Borrado Seguro
+  // Procesar Check-In en Vivo
+  const handleProcessCheckin = (e) => {
+    if (e) e.preventDefault();
+    if (!checkinInput.trim()) return;
+
+    const term = checkinInput.trim().toLowerCase();
+    const miembroEncontrado = miembros.find(m => 
+      m.nombre.toLowerCase().includes(term) || 
+      (m.telefono && m.telefono.includes(term)) ||
+      m.id.toLowerCase().startsWith(term)
+    );
+
+    const horaActual = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    if (!miembroEncontrado) {
+      setCheckinResult({
+        permitido: false,
+        mensaje: 'Miembro no encontrado en el sistema',
+        hora: horaActual
+      });
+      return;
+    }
+
+    const estaAlDia = miembroEncontrado.estadoPago === 'Al día' || miembroEncontrado.estadoPago === 'Por vencer';
+
+    const nuevoAcceso = {
+      id: Date.now(),
+      miembro: miembroEncontrado,
+      permitido: estaAlDia,
+      hora: horaActual,
+      fecha: new Date().toLocaleDateString()
+    };
+
+    setCheckinResult(nuevoAcceso);
+    setAccesosHoy(prev => [nuevoAcceso, ...prev]);
+    setCheckinInput('');
+  };
+
+  // Registrar Evaluación Física en Expediente 360°
+  const handleAddProgresoFisico = (e) => {
+    e.preventDefault();
+    if (!selectedMiembro360) return;
+
+    const nuevoRegistro = {
+      id: Date.now(),
+      fecha: new Date().toISOString().split('T')[0],
+      peso_kg: parseFloat(newProgreso.peso_kg) || 0,
+      porcentaje_grasa: parseFloat(newProgreso.porcentaje_grasa) || 0,
+      masa_muscular_kg: parseFloat(newProgreso.masa_muscular_kg) || 0,
+      medida_cintura_cm: parseFloat(newProgreso.medida_cintura_cm) || 0,
+      medida_pecho_cm: parseFloat(newProgreso.medida_pecho_cm) || 0,
+      notas: newProgreso.notas
+    };
+
+    setProgresosFisicos(prev => [nuevoRegistro, ...prev]);
+    triggerToast(`Evaluación física registrada para ${selectedMiembro360.nombre}.`);
+    setNewProgreso({ peso_kg: '', porcentaje_grasa: '', masa_muscular_kg: '', medida_cintura_cm: '', medida_pecho_cm: '', notas: '' });
+  };
+
+  // Modal Borrado
   const openDeleteModal = (miembro) => {
     setSelectedMiembroForDelete(miembro);
-    setDiasRetencionDelete(60); // Default 60 días
+    setDiasRetencionDelete(60);
     setDeleteModalOpen(true);
   };
 
-  // Enviar a papelera Supabase (Soft Delete)
   const handleConfirmDelete = async () => {
     if (!selectedMiembroForDelete) return;
 
     setLoading(true);
     try {
-      // Elimina de gym_miembros y lo mueve a papelera Supabase con fecha de vencimiento personalizada
       await safeDelete('gym_miembro', selectedMiembroForDelete.id, selectedMiembroForDelete, diasRetencionDelete);
-      
       triggerToast(`Miembro enviado a papelera por ${diasRetencionDelete} días.`);
       setDeleteModalOpen(false);
       setSelectedMiembroForDelete(null);
@@ -405,13 +471,11 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }
   };
 
-  // Restaurar miembro borrado desde la papelera Supabase
   const handleRestoreMiembro = async (trashEntry) => {
     setLoading(true);
     try {
       const dataOriginal = trashEntry.datos_originales;
 
-      // 1. Re-insertar en gym_miembros
       const { error: insertError } = await supabase
         .from('gym_miembros')
         .insert([{
@@ -429,7 +493,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
       if (insertError) throw insertError;
 
-      // 2. Eliminar entrada de papelera
       const { error: deleteError } = await supabase
         .from('papelera')
         .delete()
@@ -447,7 +510,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }
   };
 
-  // Eliminar definitivamente de la papelera sin esperar
   const handlePurgeMiembro = async (trashId) => {
     setLoading(true);
     try {
@@ -467,7 +529,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     }
   };
 
-  // Registrar pago rápido de renovación para cliente existente
   const handleRenovacionRapida = async (miembro) => {
     setLoading(true);
     try {
@@ -478,7 +539,6 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       }
 
       let fechaBase = new Date();
-      // Si el vencimiento es a futuro, extender a partir del vencimiento. Si ya venció, inicia hoy.
       if (miembro.vencimiento && miembro.vencimiento !== 'Sin registro') {
         const tempVence = new Date(miembro.vencimiento + 'T12:00:00');
         if (tempVence > fechaBase) {
@@ -533,6 +593,12 @@ const SistemaGimnasio = ({ settings, isDark }) => {
     window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
 
+  // Cálculos Financieros
+  const hoyStr = new Date().toISOString().split('T')[0];
+  const ingresosHoy = pagos.filter(p => p.fecha_pago === hoyStr && p.estado === 'Pagado').reduce((acc, p) => acc + (parseFloat(p.monto) - parseFloat(p.descuento || 0)), 0);
+  const ingresosMes = pagos.filter(p => p.estado === 'Pagado').reduce((acc, p) => acc + (parseFloat(p.monto) - parseFloat(p.descuento || 0)), 0);
+  const totalDescuentos = pagos.reduce((acc, p) => acc + parseFloat(p.descuento || 0), 0);
+
   const totalMiembros = miembros.length;
   const miembrosActivos = miembros.filter(m => m.estadoPago === 'Al día' || m.estadoPago === 'Por vencer').length;
   const miembrosMorosos = miembros.filter(m => m.estadoPago === 'Vencido').length;
@@ -565,14 +631,9 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             alignItems: 'center', gap: 12, minWidth: 280, justifyContent: 'center'
           }}>
             <div style={{ 
-              width: 28, 
-              height: 28, 
-              borderRadius: '50%', 
+              width: 28, height: 28, borderRadius: '50%', 
               backgroundColor: toastType === 'success' ? '#10B981' : '#EF4444', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              color: '#FFF' 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF' 
             }}>
               {toastType === 'success' ? <CheckCircle size={16} style={{ color: '#000' }} /> : <AlertTriangle size={16} />}
             </div>
@@ -581,24 +642,24 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header Pro */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 38, height: 38, borderRadius: 10,
+              width: 42, height: 42, borderRadius: 12,
               background: `linear-gradient(135deg, ${t.accent}, #F59E0B)`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: `0 4px 20px ${t.accent}20`
+              boxShadow: `0 4px 20px ${t.accent}30`
             }}>
-              <Dumbbell size={20} style={{ color: '#0A0A0C' }} />
+              <Dumbbell size={22} style={{ color: '#0A0A0C' }} />
             </div>
             <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>
-              GymOS <span style={{ fontSize: 11, fontWeight: 650, color: t.accent, verticalAlign: 'middle', border: `1px solid ${t.accent}40`, padding: '2px 8px', borderRadius: 20, marginLeft: 8 }}>V2.0</span>
+              GymOS Pro <span style={{ fontSize: 11, fontWeight: 700, color: t.accent, verticalAlign: 'middle', border: `1px solid ${t.accent}40`, padding: '2px 8px', borderRadius: 20, marginLeft: 8 }}>V3.0 Enterprise</span>
             </h1>
           </div>
           <p style={{ fontSize: 13, color: t.textMuted, margin: '6px 0 0 0' }}>
-            Módulo de Administración de Fitness: Miembros, Fichas de Salud, Promociones y Facturación (Precios en Bolivianos Bs.).
+            Control de Acceso en Vivo, Fichas de Salud, Arqueo de Caja y Seguimiento Físico (Precios en Bs.).
           </p>
         </div>
         
@@ -633,34 +694,36 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         </div>
       </div>
 
-      {/* Alerta de Base de Datos / SQL Faltante */}
+      {/* Alerta de Error de Base de Datos */}
       {dbError && (
         <div style={{
           padding: 16, borderRadius: 12, backgroundColor: 'rgba(239, 68, 68, 0.05)',
           border: '1px solid rgba(239, 68, 68, 0.2)', display: 'flex', flexDirection: 'column', gap: 8,
-          animation: 'fadeIn 0.3s ease-out', marginBottom: 16
+          animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#EF4444', fontWeight: 700, fontSize: 13 }}>
             <AlertTriangle size={18} />
             Tablas de Base de Datos no detectadas o migración faltante
           </div>
           <p style={{ fontSize: 12, color: t.textMuted, margin: 0, lineHeight: 1.5 }}>
-            Parece que no se han creado o actualizado las tablas de <strong>GymOS V2.0</strong> en tu base de datos de Supabase. Para solucionarlo, ve al SQL Editor de Supabase y ejecuta el script <strong>supabase_gym_schema_v2.sql</strong> que he creado en la raíz de tu proyecto.
+            Ve al SQL Editor de Supabase y ejecuta el script <strong>supabase_gym_schema_v2.sql</strong> para sincronizar.
           </p>
         </div>
       )}
 
-      {/* Tabs de Navegación Interna */}
+      {/* Sub-navegación Pro */}
       <div style={{
         display: 'flex', gap: 6, borderBottom: `1px solid ${t.border}`, paddingBottom: 1,
         overflowX: 'auto', WebkitOverflowScrolling: 'touch'
       }}>
         {[
           { id: 'resumen', label: 'Dashboard', icon: TrendingUp },
-          { id: 'miembros', label: 'Base de Datos Miembros', icon: Users },
-          { id: 'planes', label: 'Planes y Membresías', icon: CreditCard },
+          { id: 'checkin', label: 'Control de Acceso', icon: QrCode },
+          { id: 'miembros', label: 'Miembros & Expediente 360°', icon: Users },
+          { id: 'contabilidad', label: 'Contabilidad & Caja', icon: Receipt },
+          { id: 'planes', label: 'Planes y Tarifas', icon: CreditCard },
           { id: 'promociones', label: 'Cupones & Promos', icon: Tag },
-          { id: 'papelera', label: 'Papelera de Clientes', icon: Trash2 }
+          { id: 'papelera', label: 'Papelera', icon: Trash2 }
         ].map(tab => {
           const active = activeSubTab === tab.id;
           return (
@@ -693,12 +756,10 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         </div>
       ) : (
         <>
-          {/* RENDERIZADO DE TABS */}
-          
-          {/* 1. TAB DASHBOARD */}
+          {/* 1. DASHBOARD */}
           {activeSubTab === 'resumen' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              {/* Tarjetas de Métricas */}
+              {/* Tarjetas Interactivas de Métricas */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
                 <div 
                   onClick={() => { setFilterPaymentStatus('Todos'); setActiveSubTab('miembros'); }}
@@ -769,14 +830,14 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 </div>
               </div>
 
-              {/* Fila de Contenido Principal del Dashboard */}
+              {/* Fila Principal Dashboard */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
-                {/* Clientes Morosos con Acción Rápida */}
+                {/* Cobros Pendientes */}
                 <div style={{
                   padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
                   display: 'flex', flexDirection: 'column', gap: 16
                 }}>
-                  <div style={{ display: 'flex', justifySelf: 'stretch', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Acción de Cobro Requerida</h3>
                     <span style={{ fontSize: 10, color: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>Alerta</span>
                   </div>
@@ -808,8 +869,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                                 style={{
                                   padding: '6px 10px', borderRadius: 8, border: 'none',
                                   backgroundColor: '#10B981', color: '#FFFFFF', cursor: 'pointer',
-                                  fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4,
-                                  transition: 'opacity 0.2s'
+                                  fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4
                                 }}
                               >
                                 Recordar
@@ -819,12 +879,12 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                         );
                       })
                     ) : (
-                      <p style={{ fontSize: 12, color: t.textMuted, textAlign: 'center', margin: '20px 0' }}>No hay cuentas pendientes o por vencer. ¡Todo al día!</p>
+                      <p style={{ fontSize: 12, color: t.textMuted, textAlign: 'center', margin: '20px 0' }}>No hay cuentas pendientes o por vencer.</p>
                     )}
                   </div>
                 </div>
 
-                {/* Fichas de Salud Importantes / Alertas */}
+                {/* Fichas Médicas Flotantes */}
                 <div style={{
                   padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
                   display: 'flex', flexDirection: 'column', gap: 16
@@ -861,27 +921,138 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             </div>
           )}
 
-          {/* 2. TAB BASE DE DATOS MIEMBROS */}
+          {/* 2. CONTROL DE ACCESO (CHECK-IN TERMINAL) */}
+          {activeSubTab === 'checkin' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr md:360px', gap: 20, alignItems: 'start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                {/* Caja de escaneo de torniquete */}
+                <div style={{
+                  padding: 24, borderRadius: 20, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                  display: 'flex', flexDirection: 'column', gap: 16, boxShadow: '0 8px 30px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <QrCode size={24} style={{ color: t.accent }} />
+                    <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Terminal de Ingreso y Torniquete Virtual</h3>
+                  </div>
+                  <p style={{ fontSize: 12, color: t.textMuted, margin: 0 }}>
+                    Busca por Nombre, Teléfono o ID del Miembro para validar su derecho de acceso a las instalaciones.
+                  </p>
+
+                  <form onSubmit={handleProcessCheckin} style={{ display: 'flex', gap: 10 }}>
+                    <input
+                      type="text"
+                      value={checkinInput}
+                      onChange={e => setCheckinInput(e.target.value)}
+                      placeholder="Escribe el nombre o teléfono del cliente..."
+                      autoFocus
+                      style={{
+                        flex: 1, padding: '12px 16px', borderRadius: 12, border: `1px solid ${t.border}`,
+                        backgroundColor: 'rgba(255,255,255,0.02)', color: t.text, fontSize: 14, outline: 'none'
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      style={{
+                        padding: '12px 24px', borderRadius: 12, border: 'none',
+                        backgroundColor: t.accent, color: '#0A0A0C', cursor: 'pointer',
+                        fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 8
+                      }}
+                    >
+                      <CheckCircle size={16} /> Validar Ingreso
+                    </button>
+                  </form>
+                </div>
+
+                {/* Banner de Resultado Instantáneo */}
+                {checkinResult && (
+                  <div style={{
+                    padding: 24, borderRadius: 20,
+                    backgroundColor: checkinResult.permitido ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.08)',
+                    border: `1.5px solid ${checkinResult.permitido ? '#10B981' : '#EF4444'}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
+                    animation: 'fadeInScale 0.2s ease-out'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                      <div style={{
+                        width: 50, height: 50, borderRadius: '50%',
+                        backgroundColor: checkinResult.permitido ? '#10B981' : '#EF4444',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF'
+                      }}>
+                        {checkinResult.permitido ? <UserCheck size={28} style={{ color: '#0A0A0C' }} /> : <UserX size={28} />}
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: checkinResult.permitido ? '#10B981' : '#EF4444' }}>
+                          {checkinResult.permitido ? '🟢 ACCESO CONCEDIDO' : '🔴 ACCESO DENEGADO'}
+                        </span>
+                        <h4 style={{ fontSize: 18, fontWeight: 800, margin: 0 }}>
+                          {checkinResult.miembro ? checkinResult.miembro.nombre : 'Usuario Desconocido'}
+                        </h4>
+                        {checkinResult.miembro && (
+                          <span style={{ fontSize: 12, color: t.textMuted }}>
+                            Plan: {checkinResult.miembro.membresia} • Vence: {checkinResult.miembro.vencimiento}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <span style={{ fontSize: 12, fontWeight: 700, color: t.textMuted }}>
+                      {checkinResult.hora}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Historial de Entradas de Hoy */}
+              <div style={{
+                padding: 20, borderRadius: 20, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                display: 'flex', flexDirection: 'column', gap: 14
+              }}>
+                <h4 style={{ fontSize: 14, fontWeight: 800, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Clock size={16} /> Entradas Registradas Hoy ({accesosHoy.length})
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 350, overflowY: 'auto' }} className="mac-scrollbar">
+                  {accesosHoy.length > 0 ? (
+                    accesosHoy.map(item => (
+                      <div key={item.id} style={{
+                        padding: 10, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.02)',
+                        border: `1px solid ${t.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                      }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                          <span style={{ fontSize: 12, fontWeight: 650 }}>{item.miembro.nombre}</span>
+                          <span style={{ fontSize: 10, color: t.textMuted }}>{item.miembro.membresia}</span>
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: item.permitido ? '#10B981' : '#EF4444' }}>
+                          {item.hora}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p style={{ fontSize: 11, color: t.textMuted, textAlign: 'center', margin: '30px 0' }}>Aún no hay ingresos escaneados hoy.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 3. BASE DE DATOS MIEMBROS & EXPEDIENTE 360° */}
           {activeSubTab === 'miembros' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Barra de Búsqueda y Filtros */}
+              {/* Barra de Filtros */}
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <div style={{
-                  flex: 1, minWidth: 260, position: 'relative', display: 'flex', alignItems: 'center'
-                }}>
+                <div style={{ flex: 1, minWidth: 260, position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Search size={16} style={{ position: 'absolute', left: 12, color: t.textMuted }} />
                   <input
                     type="text"
-                    placeholder="Buscar miembro por nombre, membresía o grupo familiar..."
+                    placeholder="Buscar miembro por nombre, membresía o grupo..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     style={{
                       width: '100%', padding: '10px 12px 10px 36px', borderRadius: 10,
                       border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)',
-                      color: t.text, fontSize: 13, outline: 'none', transition: 'border-color 0.2s'
+                      color: t.text, fontSize: 13, outline: 'none'
                     }}
-                    onFocus={e => e.currentTarget.style.borderColor = t.accent}
-                    onBlur={e => e.currentTarget.style.borderColor = t.border}
                   />
                 </div>
                 
@@ -892,14 +1063,13 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                     borderRadius: 10, border: `1px solid ${filterHealthAlerts ? '#F59E0B' : t.border}`,
                     backgroundColor: filterHealthAlerts ? 'rgba(245, 158, 11, 0.05)' : 'transparent',
                     color: filterHealthAlerts ? '#F59E0B' : t.textMuted, cursor: 'pointer',
-                    fontSize: 13, fontWeight: 500, transition: 'all 0.2s'
+                    fontSize: 13, fontWeight: 500
                   }}
                 >
                   <Filter size={14} />
                   {filterHealthAlerts ? 'Salud: ON' : 'Filtrar por Salud'}
                 </button>
 
-                {/* Filtros rápidos del Semáforo de Pagos */}
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center', borderLeft: `1px solid ${t.border}`, paddingLeft: 12 }}>
                   {[
                     { status: 'Todos', label: 'Todos', color: t.text },
@@ -916,7 +1086,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                           padding: '6px 12px', borderRadius: 8, border: active ? `1px solid ${item.color}` : `1px solid ${t.border}`,
                           backgroundColor: active ? `${item.color}15` : 'transparent',
                           color: active ? item.color : t.textMuted, fontSize: 12, fontWeight: 600,
-                          cursor: 'pointer', transition: 'all 0.15s'
+                          cursor: 'pointer'
                         }}
                       >
                         {item.label}
@@ -939,9 +1109,9 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Membresía</th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Fecha Inicio</th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Vencimiento</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Grupo Familiar</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Estado Pago</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600, textAlign: 'right' }}>Acciones</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Grupo</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Estado</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600, textAlign: 'right' }}>Acciones Pro</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -949,9 +1119,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                       filteredMiembros.map((miembro) => {
                         const colors = getStatusColor(miembro.estadoPago);
                         return (
-                          <tr key={miembro.id} style={{ borderBottom: `1px solid ${t.border}`, transition: 'background 0.2s' }}
-                              onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)'}
-                              onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                          <tr key={miembro.id} style={{ borderBottom: `1px solid ${t.border}` }}>
                             <td style={{ padding: '14px 16px' }}>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 <span style={{ fontWeight: 650 }}>{miembro.nombre}</span>
@@ -974,16 +1142,14 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                                       <div style={{
                                         position: 'absolute', bottom: '135%', left: '50%', transform: 'translateX(-50%)',
                                         backgroundColor: isDark ? 'rgba(15,15,18,0.98)' : 'rgba(255,255,255,0.98)',
-                                        backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                                        border: '1px solid rgba(245, 158, 11, 0.3)', padding: 12, borderRadius: 12, width: 240, zIndex: 999,
+                                        backdropFilter: 'blur(16px)', border: '1px solid rgba(245, 158, 11, 0.3)', padding: 12, borderRadius: 12, width: 240, zIndex: 999,
                                         boxShadow: '0 10px 30px rgba(0,0,0,0.6)', color: t.text, pointerEvents: 'none',
-                                        lineHeight: 1.4, fontSize: 11, fontWeight: 500, textAlign: 'left',
-                                        animation: 'fadeIn 0.15s ease-out'
+                                        lineHeight: 1.4, fontSize: 11
                                       }}>
                                         <div style={{ fontWeight: 700, color: '#F59E0B', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                          <HeartPulse size={12} /> Ficha de Cuidado Físico:
+                                          <HeartPulse size={12} /> Ficha Médica:
                                         </div>
-                                        {miembro.notas_medicas || 'Requiere cuidado pero no se detallaron notas específicas.'}
+                                        {miembro.notas_medicas || 'Requiere cuidado físico.'}
                                       </div>
                                     )}
                                   </div>
@@ -1018,15 +1184,25 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                             <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
                                 <button
+                                  onClick={() => setSelectedMiembro360(miembro)}
+                                  title="Ver Expediente 360° y Progreso Físico"
+                                  style={{
+                                    padding: '5px 10px', borderRadius: 8, border: `1px solid ${t.accent}`,
+                                    backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
+                                    fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4
+                                  }}
+                                >
+                                  <Activity size={12} /> Expediente
+                                </button>
+
+                                <button
                                   onClick={() => handleRenovacionRapida(miembro)}
                                   title="Renovar plan actual"
                                   style={{
                                     padding: '5px 10px', borderRadius: 8, border: `1px solid ${t.border}`,
                                     backgroundColor: 'transparent', color: t.text, cursor: 'pointer',
-                                    fontSize: 11, fontWeight: 600, transition: 'all 0.2s'
+                                    fontSize: 11, fontWeight: 600
                                   }}
-                                  onMouseEnter={e => e.currentTarget.style.borderColor = t.accent}
-                                  onMouseLeave={e => e.currentTarget.style.borderColor = t.border}
                                 >
                                   Renovar
                                 </button>
@@ -1038,7 +1214,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                                     style={{
                                       padding: '5px 10px', borderRadius: 8, border: 'none',
                                       backgroundColor: '#10B981', color: '#FFFFFF', cursor: 'pointer',
-                                      fontSize: 11, fontWeight: 650, display: 'flex', alignItems: 'center'
+                                      fontSize: 11, fontWeight: 650
                                     }}
                                   >
                                     Recordar
@@ -1047,14 +1223,11 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
                                 <button
                                   onClick={() => openDeleteModal(miembro)}
-                                  title="Eliminar Miembro (Envía a Papelera)"
                                   style={{
                                     padding: '5px 10px', borderRadius: 8, border: 'none',
                                     backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', cursor: 'pointer',
                                     fontSize: 11, fontWeight: 600
                                   }}
-                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'}
-                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
                                 >
                                   Eliminar
                                 </button>
@@ -1066,7 +1239,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                     ) : (
                       <tr>
                         <td colSpan="8" style={{ padding: '40px 16px', textAlign: 'center', color: t.textMuted }}>
-                          No se encontraron miembros registrados.
+                          No se encontraron miembros.
                         </td>
                       </tr>
                     )}
@@ -1076,13 +1249,84 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             </div>
           )}
 
-          {/* 3. TAB PLANES Y MEMBRESÍAS */}
-          {activeSubTab === 'planes' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Planes Habilitados en Supabase</h3>
+          {/* 4. CONTABILIDAD & ARQUEO DE CAJA */}
+          {activeSubTab === 'contabilidad' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              {/* Tarjetas de Resumen Financiero */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+                <div style={{ padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Ingresos de Hoy</span>
+                  <span style={{ fontSize: 28, fontWeight: 800, color: '#10B981' }}>{ingresosHoy.toFixed(2)} Bs.</span>
+                </div>
+
+                <div style={{ padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Total Acumulado del Mes</span>
+                  <span style={{ fontSize: 28, fontWeight: 800, color: t.accent }}>{ingresosMes.toFixed(2)} Bs.</span>
+                </div>
+
+                <div style={{ padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase' }}>Total Descuentos Aplicados</span>
+                  <span style={{ fontSize: 28, fontWeight: 800, color: '#F59E0B' }}>{totalDescuentos.toFixed(2)} Bs.</span>
+                </div>
               </div>
 
+              {/* Historial de Transacciones de Cobro */}
+              <div style={{
+                padding: 20, borderRadius: 20, backgroundColor: t.panel, border: `1px solid ${t.border}`,
+                display: 'flex', flexDirection: 'column', gap: 16
+              }}>
+                <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Libro Diario de Transacciones (Cobros en Bs.)</h3>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, textAlign: 'left' }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${t.border}`, color: t.textMuted }}>
+                        <th style={{ padding: '12px 14px' }}>Fecha</th>
+                        <th style={{ padding: '12px 14px' }}>Miembro</th>
+                        <th style={{ padding: '12px 14px' }}>Método</th>
+                        <th style={{ padding: '12px 14px' }}>Monto Subtotal</th>
+                        <th style={{ padding: '12px 14px' }}>Descuento</th>
+                        <th style={{ padding: '12px 14px' }}>Total Cobrado</th>
+                        <th style={{ padding: '12px 14px' }}>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pagos.length > 0 ? (
+                        pagos.map(pago => {
+                          const miembroAsociado = miembros.find(m => m.id === pago.miembro_id);
+                          const total = parseFloat(pago.monto) - parseFloat(pago.descuento || 0);
+                          return (
+                            <tr key={pago.id} style={{ borderBottom: `1px solid ${t.border}` }}>
+                              <td style={{ padding: '12px 14px', color: t.textSecondary }}>{pago.fecha_pago}</td>
+                              <td style={{ padding: '12px 14px', fontWeight: 650 }}>{miembroAsociado?.nombre || 'Miembro'}</td>
+                              <td style={{ padding: '12px 14px', color: t.textMuted }}>{pago.metodo_pago}</td>
+                              <td style={{ padding: '12px 14px' }}>{parseFloat(pago.monto).toFixed(2)} Bs.</td>
+                              <td style={{ padding: '12px 14px', color: '#F59E0B' }}>-{parseFloat(pago.descuento || 0).toFixed(2)} Bs.</td>
+                              <td style={{ padding: '12px 14px', fontWeight: 800, color: '#10B981' }}>{total.toFixed(2)} Bs.</td>
+                              <td style={{ padding: '12px 14px' }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, color: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: 8 }}>
+                                  {pago.estado}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan="7" style={{ padding: '30px 14px', textAlign: 'center', color: t.textMuted }}>No se han registrado pagos aún.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 5. PLANES Y MEMBRESÍAS */}
+          {activeSubTab === 'planes' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Planes Habilitados (Bolivianos Bs.)</h3>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
                 {planes.map(plan => (
                   <div key={plan.id} style={{
@@ -1107,11 +1351,9 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             </div>
           )}
 
-          {/* 4. TAB DESCUENTOS Y PROMOS (Cupones CRUD) */}
+          {/* 6. CUPONES & PROMOS */}
           {activeSubTab === 'promociones' && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr md:350px', gap: 20, alignItems: 'start' }}>
-              
-              {/* Listado de Cupones */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Cupones Registrados</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
@@ -1144,10 +1386,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                         <div style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
                           <button
                             onClick={() => toggleCouponStatus(promo.id, promo.activo)}
-                            style={{
-                              background: 'none', border: 'none', color: t.textSecondary, fontSize: 11,
-                              cursor: 'pointer', fontWeight: 600
-                            }}
+                            style={{ background: 'none', border: 'none', color: t.textSecondary, fontSize: 11, cursor: 'pointer', fontWeight: 600 }}
                           >
                             {promo.activo ? 'Desactivar' : 'Activar'}
                           </button>
@@ -1155,12 +1394,12 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                       </div>
                     ))
                   ) : (
-                    <p style={{ fontSize: 12, color: t.textMuted, gridColumn: '1/-1', textAlign: 'center', padding: '40px 0' }}>No hay cupones guardados. Crea uno al lado.</p>
+                    <p style={{ fontSize: 12, color: t.textMuted, textAlign: 'center', padding: '40px 0' }}>No hay cupones guardados.</p>
                   )}
                 </div>
               </div>
 
-              {/* Crear Cupón */}
+              {/* Formulario Cupón */}
               <form onSubmit={handleCreateCoupon} style={{
                 padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
                 display: 'flex', flexDirection: 'column', gap: 14
@@ -1210,23 +1449,19 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   style={{
                     padding: '10px 14px', borderRadius: 8, border: 'none',
                     backgroundColor: t.accent, color: '#0A0A0C', cursor: 'pointer',
-                    fontSize: 12, fontWeight: 600, transition: 'opacity 0.2s', marginTop: 6
+                    fontSize: 12, fontWeight: 600, marginTop: 6
                   }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = 0.9}
-                  onMouseLeave={e => e.currentTarget.style.opacity = 1}
                 >
                   {couponLoading ? 'Creando...' : 'Guardar Cupón'}
                 </button>
               </form>
-
             </div>
           )}
 
-          {/* 5. TAB PAPELERA DE CLIENTES */}
+          {/* 7. PAPELERA */}
           {activeSubTab === 'papelera' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Papelera de Clientes Borrados</h3>
-              
               <div style={{
                 width: '100%', overflowX: 'auto', backgroundColor: t.panel,
                 border: `1px solid ${t.border}`, borderRadius: 16, boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
@@ -1235,61 +1470,39 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)' }}>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Miembro</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Fecha Borrado</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Fecha Expiración</th>
-                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Plan Original</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Borrado El</th>
+                      <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600 }}>Expiración Papelera</th>
                       <th style={{ padding: '14px 16px', color: t.textMuted, fontWeight: 600, textAlign: 'right' }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {papeleraMiembros.length > 0 ? (
-                      papeleraMiembros.map((item) => {
-                        const datos = item.datos_originales || {};
-                        const borrado = new Date(item.borrado_el).toLocaleDateString();
-                        const expira = new Date(item.expira_el).toLocaleDateString();
-                        return (
-                          <tr key={item.id} style={{ borderBottom: `1px solid ${t.border}`, transition: 'background 0.2s' }}
-                              onMouseOver={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.01)'}
-                              onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                            <td style={{ padding: '14px 16px', fontWeight: 650 }}>{item.nombre_item}</td>
-                            <td style={{ padding: '14px 16px', color: t.textSecondary }}>{borrado}</td>
-                            <td style={{ padding: '14px 16px', color: '#EF4444', fontWeight: 600 }}>{expira}</td>
-                            <td style={{ padding: '14px 16px', color: t.textSecondary }}>{datos.membresia || '—'}</td>
-                            <td style={{ padding: '14px 16px', textAlign: 'right' }}>
-                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-                                <button
-                                  onClick={() => handleRestoreMiembro(item)}
-                                  title="Restaurar miembro a la base activa"
-                                  style={{
-                                    padding: '5px 10px', borderRadius: 8, border: `1px solid ${t.border}`,
-                                    backgroundColor: 'transparent', color: t.text, cursor: 'pointer',
-                                    fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4
-                                  }}
-                                >
-                                  <RotateCcw size={12} /> Restaurar
-                                </button>
-                                
-                                <button
-                                  onClick={() => handlePurgeMiembro(item.id)}
-                                  title="Eliminar de forma permanente"
-                                  style={{
-                                    padding: '5px 10px', borderRadius: 8, border: 'none',
-                                    backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', cursor: 'pointer',
-                                    fontSize: 11, fontWeight: 600
-                                  }}
-                                >
-                                  Purgar
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })
+                      papeleraMiembros.map((item) => (
+                        <tr key={item.id} style={{ borderBottom: `1px solid ${t.border}` }}>
+                          <td style={{ padding: '14px 16px', fontWeight: 650 }}>{item.nombre_item}</td>
+                          <td style={{ padding: '14px 16px', color: t.textSecondary }}>{new Date(item.borrado_el).toLocaleDateString()}</td>
+                          <td style={{ padding: '14px 16px', color: '#EF4444', fontWeight: 600 }}>{new Date(item.expira_el).toLocaleDateString()}</td>
+                          <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                              <button
+                                onClick={() => handleRestoreMiembro(item)}
+                                style={{ padding: '5px 10px', borderRadius: 8, border: `1px solid ${t.border}`, background: 'transparent', color: t.text, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
+                              >
+                                <RotateCcw size={12} /> Restaurar
+                              </button>
+                              <button
+                                onClick={() => handlePurgeMiembro(item.id)}
+                                style={{ padding: '5px 10px', borderRadius: 8, border: 'none', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
+                              >
+                                Purgar
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
                     ) : (
                       <tr>
-                        <td colSpan="5" style={{ padding: '40px 16px', textAlign: 'center', color: t.textMuted }}>
-                          La papelera de clientes está vacía.
-                        </td>
+                        <td colSpan="4" style={{ padding: '40px 16px', textAlign: 'center', color: t.textMuted }}>La papelera está vacía.</td>
                       </tr>
                     )}
                   </tbody>
@@ -1300,26 +1513,117 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         </>
       )}
 
-      {/* MODAL: NUEVO MIEMBRO */}
+      {/* DRAWER / MODAL EXPEDIENTE 360° & PROGRESO FÍSICO */}
+      {selectedMiembro360 && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', justifyContent: 'flex-end',
+          backgroundColor: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)'
+        }}>
+          <div style={{
+            width: '100%', maxWidth: 540, backgroundColor: t.panel, height: '100%',
+            borderLeft: `1px solid ${t.border}`, padding: 24, overflowY: 'auto',
+            display: 'flex', flexDirection: 'column', gap: 20, animation: 'slideInRight 0.25s ease-out'
+          }} className="mac-scrollbar">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <span style={{ fontSize: 10, color: t.accent, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Expediente 360° del Miembro</span>
+                <h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{selectedMiembro360.nombre}</h2>
+              </div>
+              <button onClick={() => setSelectedMiembro360(null)} style={{ background: 'none', border: 'none', color: t.textMuted, cursor: 'pointer' }}>
+                <XCircle size={22} />
+              </button>
+            </div>
+
+            {/* Ficha General */}
+            <div style={{ padding: 14, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: t.textSecondary }}>Información General</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12 }}>
+                <div><span style={{ color: t.textMuted }}>Teléfono:</span> {selectedMiembro360.telefono || '—'}</div>
+                <div><span style={{ color: t.textMuted }}>Email:</span> {selectedMiembro360.email || '—'}</div>
+                <div><span style={{ color: t.textMuted }}>Plan Actual:</span> {selectedMiembro360.membresia}</div>
+                <div><span style={{ color: t.textMuted }}>Vencimiento:</span> {selectedMiembro360.vencimiento}</div>
+              </div>
+              {selectedMiembro360.notas_medicas && (
+                <div style={{ marginTop: 6, padding: 10, borderRadius: 8, backgroundColor: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.2)', fontSize: 11, color: '#F59E0B' }}>
+                  <strong>Notas Médicas:</strong> {selectedMiembro360.notas_medicas}
+                </div>
+              )}
+            </div>
+
+            {/* Formulario de Evaluación Corporal / Progreso */}
+            <form onSubmit={handleAddProgresoFisico} style={{ padding: 16, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: t.accent, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Scale size={14} /> Registrar Nueva Evaluación Física
+              </span>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <input
+                  type="number" step="0.1" placeholder="Peso (kg)"
+                  value={newProgreso.peso_kg} onChange={e => setNewProgreso({ ...newProgreso, peso_kg: e.target.value })}
+                  style={{ padding: 8, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 12, outline: 'none' }}
+                />
+                <input
+                  type="number" step="0.1" placeholder="% Grasa Corporal"
+                  value={newProgreso.porcentaje_grasa} onChange={e => setNewProgreso({ ...newProgreso, porcentaje_grasa: e.target.value })}
+                  style={{ padding: 8, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 12, outline: 'none' }}
+                />
+                <input
+                  type="number" step="0.1" placeholder="Cintura (cm)"
+                  value={newProgreso.medida_cintura_cm} onChange={e => setNewProgreso({ ...newProgreso, medida_cintura_cm: e.target.value })}
+                  style={{ padding: 8, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 12, outline: 'none' }}
+                />
+                <input
+                  type="number" step="0.1" placeholder="Pecho (cm)"
+                  value={newProgreso.medida_pecho_cm} onChange={e => setNewProgreso({ ...newProgreso, medida_pecho_cm: e.target.value })}
+                  style={{ padding: 8, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.text, fontSize: 12, outline: 'none' }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                style={{ padding: '8px 12px', borderRadius: 8, border: 'none', backgroundColor: t.accent, color: '#0A0A0C', cursor: 'pointer', fontSize: 12, fontWeight: 700, marginTop: 4 }}
+              >
+                Guardar Medición
+              </button>
+            </form>
+
+            {/* Historial de Mediciones Físicas */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: t.textSecondary }}>Historial de Medidas Físicas</span>
+              {progresosFisicos.length > 0 ? (
+                progresosFisicos.map(item => (
+                  <div key={item.id} style={{ padding: 12, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.02)', border: `1px solid ${t.border}`, fontSize: 12, display: 'flex', justifyContent: 'space-between' }}>
+                    <div>
+                      <span style={{ fontWeight: 700, color: t.accent }}>{item.fecha}:</span> Peso: {item.peso_kg} kg | % Grasa: {item.porcentaje_grasa}%
+                    </div>
+                    <div style={{ color: t.textMuted }}>
+                      Cintura: {item.medida_cintura_cm} cm
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p style={{ fontSize: 11, color: t.textMuted }}>Aún no hay evaluaciones corporales registradas.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: REGISTRAR MIEMBRO */}
       {isModalOpen && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center',
           justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)'
+          backdropFilter: 'blur(8px)'
         }}>
           <form onSubmit={handleSaveMiembro} style={{
             maxWidth: 500, width: '100%', backgroundColor: t.panel, border: `1px solid ${t.border}`,
             borderRadius: 20, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-            display: 'flex', flexDirection: 'column', gap: 20, padding: 24,
-            animation: 'fadeInScale 0.2s ease-out forwards'
+            display: 'flex', flexDirection: 'column', gap: 20, padding: 24
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 style={{ fontSize: 16, fontWeight: 800, margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Registrar Miembro y Pago</h2>
-              <button 
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                style={{ background: 'none', border: 'none', color: t.textMuted, cursor: 'pointer', outline: 'none' }}
-              >
+              <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', color: t.textMuted, cursor: 'pointer' }}>
                 <XCircle size={20} />
               </button>
             </div>
@@ -1328,12 +1632,8 @@ const SistemaGimnasio = ({ settings, isDark }) => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Nombre Completo</label>
                 <input 
-                  type="text" 
-                  name="nombre"
-                  value={formData.nombre}
-                  onChange={handleInputChange}
-                  placeholder="Ej. Carlos Pérez" 
-                  required
+                  type="text" name="nombre" value={formData.nombre} onChange={handleInputChange}
+                  placeholder="Ej. Carlos Pérez" required
                   style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }} 
                 />
               </div>
@@ -1342,10 +1642,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Número de Teléfono</label>
                   <input 
-                    type="text" 
-                    name="telefono"
-                    value={formData.telefono}
-                    onChange={handleInputChange}
+                    type="text" name="telefono" value={formData.telefono} onChange={handleInputChange}
                     placeholder="Ej. 70838665" 
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }} 
                   />
@@ -1353,10 +1650,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Correo Electrónico</label>
                   <input 
-                    type="email" 
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
+                    type="email" name="email" value={formData.email} onChange={handleInputChange}
                     placeholder="carlos@correo.com" 
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }} 
                   />
@@ -1367,9 +1661,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Plan de Membresía</label>
                   <select 
-                    name="plan_id"
-                    value={formData.plan_id}
-                    onChange={handleInputChange}
+                    name="plan_id" value={formData.plan_id} onChange={handleInputChange}
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: t.panel, color: t.text, outline: 'none' }}
                   >
                     {planes.map(p => <option key={p.id} value={p.id}>{p.nombre} ({p.precio} Bs.)</option>)}
@@ -1379,10 +1671,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Grupo Familiar (Opcional)</label>
                   <input 
-                    type="text" 
-                    name="grupo_familiar"
-                    value={formData.grupo_familiar}
-                    onChange={handleInputChange}
+                    type="text" name="grupo_familiar" value={formData.grupo_familiar} onChange={handleInputChange}
                     placeholder="Ej. Familia Pérez" 
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }} 
                   />
@@ -1393,19 +1682,14 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Fecha de Inicio</label>
                   <input 
-                    type="date" 
-                    name="fecha_inicio"
-                    value={formData.fecha_inicio}
-                    onChange={handleInputChange}
+                    type="date" name="fecha_inicio" value={formData.fecha_inicio} onChange={handleInputChange}
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Método de Pago</label>
                   <select 
-                    name="metodo_pago"
-                    value={formData.metodo_pago}
-                    onChange={handleInputChange}
+                    name="metodo_pago" value={formData.metodo_pago} onChange={handleInputChange}
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: t.panel, color: t.text, outline: 'none' }}
                   >
                     <option value="Efectivo">Efectivo</option>
@@ -1419,9 +1703,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Aplicar Cupón</label>
                   <select 
-                    name="cupon_id"
-                    value={formData.cupon_id}
-                    onChange={handleInputChange}
+                    name="cupon_id" value={formData.cupon_id} onChange={handleInputChange}
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: t.panel, color: t.text, outline: 'none' }}
                   >
                     <option value="">Ninguno</option>
@@ -1434,25 +1716,18 @@ const SistemaGimnasio = ({ settings, isDark }) => {
                 </div>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Descuento Manual Directo (Bs.)</label>
+                  <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Descuento Manual (Bs.)</label>
                   <input 
-                    type="number" 
-                    name="descuento_manual"
-                    value={formData.descuento_manual}
-                    onChange={handleInputChange}
-                    placeholder="0.00" 
-                    min="0"
-                    step="0.01"
+                    type="number" name="descuento_manual" value={formData.descuento_manual} onChange={handleInputChange}
+                    placeholder="0.00" min="0" step="0.01"
                     style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none' }} 
                   />
                 </div>
               </div>
 
-              {/* Caja informativa de Cobro */}
               <div style={{
                 padding: 12, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.02)',
-                border: `1px solid ${t.border}`, display: 'flex', justifyContent: 'space-between',
-                fontSize: 12, fontWeight: 600
+                border: `1px solid ${t.border}`, display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 600
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                   <span style={{ color: t.textMuted }}>Subtotal: {getPreciosFinales().subtotal} Bs.</span>
@@ -1465,24 +1740,18 @@ const SistemaGimnasio = ({ settings, isDark }) => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Notas Médicas / Discapacidad / Problemas Hereditarios</label>
+                <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 600, textTransform: 'uppercase' }}>Notas Médicas / Discapacidad</label>
                 <textarea 
-                  name="notas_medicas"
-                  value={formData.notas_medicas}
-                  onChange={handleInputChange}
-                  placeholder="Ej. Diagnóstico de asma, problemas cardíacos hereditarios o discapacidades físicas..." 
-                  rows="3"
+                  name="notas_medicas" value={formData.notas_medicas} onChange={handleInputChange}
+                  placeholder="Diagnóstico de asma, problemas cardíacos, lesiones..." rows="3"
                   style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none', resize: 'vertical' }}
                 />
               </div>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
                 <input 
-                  type="checkbox" 
-                  name="alertas_medicas"
-                  id="alertas_medicas"
-                  checked={formData.alertas_medicas}
-                  onChange={handleInputChange}
+                  type="checkbox" name="alertas_medicas" id="alertas_medicas"
+                  checked={formData.alertas_medicas} onChange={handleInputChange}
                   style={{ cursor: 'pointer' }}
                 />
                 <label htmlFor="alertas_medicas" style={{ fontSize: 12, color: '#F59E0B', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
@@ -1493,16 +1762,14 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: `1px solid ${t.border}`, paddingTop: 16 }}>
               <button 
-                type="button"
-                onClick={() => setIsModalOpen(false)}
+                type="button" onClick={() => setIsModalOpen(false)}
                 style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: 'transparent', color: t.textMuted, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
               >
                 Cancelar
               </button>
               
               <button 
-                type="submit"
-                disabled={loading}
+                type="submit" disabled={loading}
                 style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: t.accent, color: '#0A0A0C', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
               >
                 {loading ? 'Guardando...' : 'Registrar y Pagar'}
@@ -1512,56 +1779,47 @@ const SistemaGimnasio = ({ settings, isDark }) => {
         </div>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN SEGURO (PAPELERA DÍAS) */}
+      {/* MODAL ELIMINACIÓN */}
       {deleteModalOpen && selectedMiembroForDelete && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 1001, display: 'flex', alignItems: 'center',
           justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)'
+          backdropFilter: 'blur(8px)'
         }}>
           <div style={{
             maxWidth: 420, width: '100%', backgroundColor: t.panel, border: `1px solid ${t.border}`,
-            borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
-            animation: 'fadeInScale 0.2s ease-out forwards'
+            borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 16
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#EF4444' }}>
               <ShieldAlert size={22} />
-              <h3 style={{ fontSize: 15, fontWeight: 800, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: "'Space Grotesk', sans-serif" }}>Confirmar Envío a Papelera</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 800, margin: 0, textTransform: 'uppercase', fontFamily: "'Space Grotesk', sans-serif" }}>Confirmar Envío a Papelera</h3>
             </div>
             
             <p style={{ fontSize: 12, color: t.textSecondary, margin: 0, lineHeight: 1.5 }}>
-              ¿Estás seguro de que deseas enviar a <strong>{selectedMiembroForDelete.nombre}</strong> a la papelera? Su servicio quedará inactivo.
+              ¿Estás seguro de enviar a <strong>{selectedMiembroForDelete.nombre}</strong> a la papelera?
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: '8px 0' }}>
               <label style={{ fontSize: 10, color: t.textMuted, fontWeight: 650, textTransform: 'uppercase' }}>
-                Días de retención en papelera antes del borrado final:
+                Días de retención en papelera:
               </label>
               <input
-                type="number"
-                value={diasRetencionDelete}
+                type="number" value={diasRetencionDelete}
                 onChange={e => setDiasRetencionDelete(Math.max(1, parseInt(e.target.value, 10) || 60))}
-                min="1"
-                placeholder="60"
+                min="1" placeholder="60"
                 style={{ padding: 10, borderRadius: 8, border: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.01)', color: t.text, outline: 'none', fontSize: 13, fontWeight: 600 }}
               />
-              <span style={{ fontSize: 9, color: t.textMuted }}>
-                *El registro se eliminará permanentemente de forma automática transcurrido este tiempo.
-              </span>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, borderTop: `1px solid ${t.border}`, paddingTop: 14 }}>
               <button
-                type="button"
-                onClick={() => { setDeleteModalOpen(false); setSelectedMiembroForDelete(null); }}
+                type="button" onClick={() => { setDeleteModalOpen(false); setSelectedMiembroForDelete(null); }}
                 style={{ padding: '8px 16px', borderRadius: 8, border: `1px solid ${t.border}`, background: 'transparent', color: t.textMuted, cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
               >
                 Cancelar
               </button>
               <button
-                type="button"
-                onClick={handleConfirmDelete}
-                disabled={loading}
+                type="button" onClick={handleConfirmDelete} disabled={loading}
                 style={{ padding: '8px 16px', borderRadius: 8, border: 'none', backgroundColor: '#EF4444', color: '#FFF', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}
               >
                 {loading ? 'Borrando...' : 'Mover a Papelera'}
