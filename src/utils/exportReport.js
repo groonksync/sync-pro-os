@@ -69,6 +69,36 @@ export function exportStockBajoCSV(stockBajo) {
 }
 
 /**
+ * Exporta el historial de egresos como CSV.
+ * @param {Array} egresos - Array de egresos
+ * @param {string} titulo - Sufijo opcional para el nombre del archivo
+ */
+export function exportEgresosCSV(egresos, titulo = '') {
+  const headers = ['Fecha', 'Concepto', 'Categoría', 'Monto (BOB)'];
+  
+  const rows = egresos.map(e => [
+    e.fecha || e.created_at || 'N/A',
+    e.descripcion || 'Sin concepto',
+    e.categoria || 'General',
+    parseFloat(e.monto || 0).toFixed(2),
+  ]);
+  
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+  ].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const filename = `Egresos_${titulo || new Date().toISOString().split('T')[0]}.csv`;
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+/**
  * Exporta un reporte PDF ejecutivo con KPIs y tabla de cobros.
  * @param {Object} estado - Estado completo del CommandCenter
  */
