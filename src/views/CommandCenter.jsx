@@ -964,64 +964,7 @@ const CommandCenter = ({
 
       </section>
 
-      {/* ══════════════════════════════════════════════════════
-          FILA 1B: GRID DE MÓDULOS DE SISTEMA (3x3 Ejecutivo)
-          ══════════════════════════════════════════════════════ */}
-      <section style={{ marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <LayoutDashboard size={15} color={t.accent} />
-            <h3 style={{ fontSize: 12, fontWeight: 800, color: t.text, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-              Módulos del Sistema
-            </h3>
-          </div>
-          <span style={{ fontSize: 10, color: t.textDim, fontWeight: 500 }}>Acceso rápido y métricas activas</span>
-        </div>
 
-        <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
-          {MODULE_WIDGETS.map(widget => {
-            const info = widget.getData({ meetingsList, data, servicios });
-            const IconComp = widget.icono;
-            return (
-              <div
-                key={widget.id}
-                onClick={() => onNavigateTo && onNavigateTo(widget.accion)}
-                className="metric-card-executive cursor-pointer"
-                style={{
-                  padding: '16px',
-                  backgroundColor: t.panel,
-                  borderColor: t.border,
-                  transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.borderColor = widget.color;
-                  e.currentTarget.style.transform = 'translateY(-3px)';
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.borderColor = t.border;
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <div className="icon-squircle" style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: `${widget.color}15`, border: `1px solid ${widget.color}30` }}>
-                    <IconComp size={16} color={widget.color} strokeWidth={2} />
-                  </div>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: widget.color }} />
-                </div>
-                <h4 style={{ fontSize: 12, fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
-                  {widget.titulo}
-                </h4>
-                <p className="num-tabular" style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, margin: '3px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {info.principal}
-                </p>
-                <p style={{ fontSize: 9, color: t.textDim, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {info.secundaria}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
       {/* ══════════════════════════════════════════════════════
           FILA 2: COBROS — TIMELINE & TABLA EJECUTIVA

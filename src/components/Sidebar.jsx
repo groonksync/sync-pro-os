@@ -274,29 +274,13 @@ const Sidebar = ({
         display: 'flex', flexDirection: 'column', height: '100%',
         padding: isCollapsed ? '12px 6px' : '14px 8px',
         backgroundColor: sidebarBg || t.bg,
-        borderRight: 'none',
+        borderRight: `1px solid ${t.border}`,
         transition: 'width 0.35s cubic-bezier(0.16,1,0.3,1), padding 0.35s ease',
-        position: 'relative', overflow: 'visible', flexShrink: 0,
+        position: 'relative', flexShrink: 0,
         fontFamily: "'Geist', 'Inter', sans-serif",
       }}
     >
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        style={{
-          position: 'absolute', right: -11, top: 48,
-          width: 22, height: 22, borderRadius: 7,
-          background: t.panel, border: `1px solid ${t.border}`,
-          color: t.textMuted, cursor: 'pointer', display: 'flex',
-          alignItems: 'center', justifyContent: 'center', zIndex: 100,
-          transition: 'all 0.2s ease',
-        }}
-        onMouseEnter={e => { e.currentTarget.style.color = t.text; e.currentTarget.style.borderColor = t.borderLight; }}
-        onMouseLeave={e => { e.currentTarget.style.color = t.textMuted; e.currentTarget.style.borderColor = t.border; }}
-      >
-        {isCollapsed ? <PanelLeftOpen size={11} /> : <PanelLeftClose size={11} />}
-      </button>
-
-      <div style={{ height: 8 }} />
+      <div style={{ height: 4 }} />
 
       <nav style={{
         flex: 1, display: 'flex', flexDirection: 'column', gap: 1,
@@ -600,6 +584,55 @@ const Sidebar = ({
               fontFamily: "'Geist', sans-serif",
             }}>
               Configuración
+            </div>
+          )}
+        </div>
+
+        {/* Botón Integrado de Colapsar/Expandir Menú */}
+        <div style={{ position: 'relative', marginTop: 4 }}>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            onMouseEnter={() => setTooltip('__collapse')}
+            onMouseLeave={() => setTooltip(null)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center',
+              justifyContent: isCollapsed ? 'center' : 'flex-start',
+              gap: 10, padding: isCollapsed ? 8 : '7px 10px',
+              borderRadius: 10, border: `1px solid ${t.border}`,
+              background: 'transparent',
+              color: t.textMuted, cursor: 'pointer', transition: 'all 0.18s ease',
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.background = t.hover;
+              e.currentTarget.style.color = t.text;
+              e.currentTarget.style.borderColor = t.borderLight;
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = t.textMuted;
+              e.currentTarget.style.borderColor = t.border;
+            }}
+          >
+            <div style={{ width: 28, height: 28, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {isCollapsed ? <PanelLeftOpen size={15} /> : <PanelLeftClose size={15} />}
+            </div>
+            {!isCollapsed && (
+              <span style={{ fontSize: 11, fontWeight: 500, letterSpacing: '-0.005em', color: t.textSecondary, fontFamily: "'Geist', sans-serif" }}>
+                Colapsar Menú
+              </span>
+            )}
+          </button>
+          {isCollapsed && tooltip === '__collapse' && (
+            <div style={{
+              position: 'absolute', left: 66, top: '50%', transform: 'translateY(-50%)',
+              padding: '6px 14px', borderRadius: 8, zIndex: 300,
+              background: t.panel, border: `1px solid ${t.borderLight}`,
+              color: t.text, fontSize: 12, fontWeight: 500,
+              whiteSpace: 'nowrap', pointerEvents: 'none',
+              animation: 'fadeInScale 0.18s ease forwards',
+              fontFamily: "'Geist', sans-serif",
+            }}>
+              Expandir Menú
             </div>
           )}
         </div>
