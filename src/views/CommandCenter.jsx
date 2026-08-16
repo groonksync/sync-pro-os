@@ -185,7 +185,7 @@ const CountUp = ({ value = 0, decimals = 0, suffix = '', style = {}, duration = 
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
-  return <span style={style}>{fmt}{suffix}</span>;
+  return <span className="num-tabular tabular-nums" style={style}>{fmt}{suffix}</span>;
 };
 
 // ============================================================
@@ -824,103 +824,107 @@ const CommandCenter = ({
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          FILA 1: KPIs PRINCIPALES (3 tarjetas, adaptable)
+          FILA 1: KPIs PRINCIPALES (Tarjetas Ejecutivas Modernas)
           ══════════════════════════════════════════════════════ */}
-      <section className={`grid gap-3 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'}`} style={{ marginBottom: '20px' }}>
+      <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'}`} style={{ marginBottom: '24px' }}>
         
         {/* KPI 1: Capital Activo en Préstamos */}
-        <div className="animate-countUp stagger-1" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.accent}12` }}>
-              <Wallet size={15} color={t.accent} />
+        <div className="metric-card-executive animate-countUp stagger-1" style={{ backgroundColor: t.panel, borderColor: t.border }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div className="icon-squircle" style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: `${t.accent}15`, border: `1px solid ${t.accent}30` }}>
+              <Wallet size={17} color={t.accent} strokeWidth={2} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.accent }} />
-              <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>
-                Activo
-              </span>
-            </div>
+            <span className="badge-luxury-success">
+              <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }} />
+              Activo
+            </span>
           </div>
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Capital Activo en Préstamos</p>
-          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', 'Geist', sans-serif" }}>
-            <CountUp value={totalCapital} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
+          <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: t.textMuted, margin: 0 }}>
+            Capital en Préstamos
+          </p>
+          <h3 style={{ fontSize: 24, fontWeight: 800, color: t.text, letterSpacing: '-0.04em', margin: '4px 0 0', fontFamily: "'Geist', 'Space Grotesk', sans-serif" }}>
+            <CountUp value={totalCapital} /> <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: '0.05em' }}>BS</span>
           </h3>
-          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Rend. Esperado/Mes</p>
-            <p style={{ fontSize: 11, fontWeight: 700, color: t.success, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>+<CountUp value={totalInteresMensual} /> BS</p>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Rendimiento / Mes</span>
+            <span className="num-tabular" style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>+<CountUp value={totalInteresMensual} /> BS</span>
           </div>
         </div>
 
         {/* KPI 2: Inventario a Costo */}
-        <div className="animate-countUp stagger-2" style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${stockBajo.length > 0 ? t.danger : t.accent}12` }}>
-              <Package size={15} color={stockBajo.length > 0 ? t.danger : t.accent} />
+        <div className="metric-card-executive animate-countUp stagger-2" style={{ backgroundColor: t.panel, borderColor: t.border }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div className="icon-squircle" style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: stockBajo.length > 0 ? 'rgba(239, 68, 68, 0.12)' : `${t.accent}15`, border: `1px solid ${stockBajo.length > 0 ? 'rgba(239, 68, 68, 0.3)' : `${t.accent}30`}` }}>
+              <Package size={17} color={stockBajo.length > 0 ? '#ef4444' : t.accent} strokeWidth={2} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: stockBajo.length > 0 ? t.danger : t.accent }} />
-              <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: stockBajo.length > 0 ? t.danger : t.textDim }}>
-                {stockBajo.length > 0 ? `${stockBajo.length} Stock Bajo` : 'Almacén'}
+            {stockBajo.length > 0 ? (
+              <span className="badge-luxury-danger">
+                <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: '#ef4444', display: 'inline-block' }} />
+                {stockBajo.length} Críticos
               </span>
-            </div>
+            ) : (
+              <span className="badge-luxury-neutral">
+                Almacén OK
+              </span>
+            )}
           </div>
-          <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Valor Almacén (Costo)</p>
-          <h3 style={{ fontSize: 22, fontWeight: 700, color: t.text, letterSpacing: '-0.035em', marginTop: 4, margin: '4px 0 0', fontFamily: "'Space Grotesk', sans-serif" }}>
-            <CountUp value={valorInventario} />{' '}<span style={{ fontSize: 11, fontWeight: 500, color: t.textDim }}>BS</span>
+          <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: t.textMuted, margin: 0 }}>
+            Valor Almacén (Costo)
+          </p>
+          <h3 style={{ fontSize: 24, fontWeight: 800, color: t.text, letterSpacing: '-0.04em', margin: '4px 0 0', fontFamily: "'Geist', 'Space Grotesk', sans-serif" }}>
+            <CountUp value={valorInventario} /> <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: '0.05em' }}>BS</span>
           </h3>
-          <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>Artículos</p>
-            <p style={{ fontSize: 11, fontWeight: 700, color: t.text, margin: 0, fontFamily: "'JetBrains Mono', monospace" }}><CountUp value={listaProductos.length} /> items</p>
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Total Productos</span>
+            <span className="num-tabular" style={{ fontSize: 11, fontWeight: 700, color: t.text }}><CountUp value={listaProductos.length} /> items</span>
           </div>
         </div>
 
         {/* KPI 3: Egresos y Servicios (col-span-2) */}
-        <div className={`animate-countUp stagger-3 col-span-1 md:col-span-2 lg:col-span-2`} style={{ padding: '18px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 14, animationFillMode: 'both' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: `${t.danger}12` }}>
-              <CreditCard size={15} color={t.danger} />
+        <div className={`metric-card-executive animate-countUp stagger-3 col-span-1 md:col-span-2 lg:col-span-2`} style={{ backgroundColor: t.panel, borderColor: t.border }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div className="icon-squircle" style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+              <CreditCard size={17} color="#f87171" strokeWidth={2} />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.danger }} />
-              <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>
-                Egresos y Servicios
-              </span>
-            </div>
+            <span className="badge-luxury-neutral">
+              Egresos & Servicios
+            </span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 0.8fr', gap: '16px' }}>
             {/* Tabla compacta de egresos */}
             <div>
-              <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, marginBottom: 8 }}>Detalle de Egresos</p>
-              <div style={{ maxHeight: '100px', overflowY: 'auto', border: `1px solid ${t.border}`, borderRadius: 8, backgroundColor: t.bg }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px' }}>
+              <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textMuted, marginBottom: 8 }}>
+                Detalle del Período
+              </p>
+              <div style={{ maxHeight: '110px', overflowY: 'auto', border: `1px solid ${t.border}`, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.2)' }} className="mac-scrollbar">
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                   <thead>
-                    <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: t.input, position: 'sticky', top: 0 }}>
-                      <th style={{ padding: '4px 6px', textAlign: 'left', color: t.textDim, fontWeight: 600 }}>Descripción</th>
-                      <th style={{ padding: '4px 6px', textAlign: 'right', color: t.textDim, fontWeight: 600 }}>Monto</th>
+                    <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)', position: 'sticky', top: 0 }}>
+                      <th style={{ padding: '6px 10px', textAlign: 'left', color: t.textDim, fontWeight: 700, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Concepto</th>
+                      <th style={{ padding: '6px 10px', textAlign: 'right', color: t.textDim, fontWeight: 700, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Monto</th>
                     </tr>
                   </thead>
                   <tbody>
                     {listaEgresosDetallados.length > 0 ? (
                       listaEgresosDetallados.map(item => (
-                        <tr key={item.id} style={{ borderBottom: `1px solid ${t.borderLight || t.border}` }}>
-                          <td style={{ padding: '4px 6px', color: item.tipo === 'servicio_pendiente' ? t.textSecondary : t.text, fontWeight: 500 }}>
+                        <tr key={item.id} style={{ borderBottom: `1px solid rgba(255,255,255,0.03)` }}>
+                          <td style={{ padding: '6px 10px', color: item.tipo === 'servicio_pendiente' ? t.textSecondary : t.text, fontWeight: 500 }}>
                             {item.nombre}
                             {item.tipo === 'servicio_pendiente' && (
-                              <span style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: '4px', color: t.warning, fontSize: '8px', fontWeight: 600 }}>
-                                <span style={{ display: 'inline-block', width: '4px', height: '4px', borderRadius: '50%', backgroundColor: t.warning }} />
-                                PENDIENTE
+                              <span className="badge-luxury-warning" style={{ marginLeft: 6, padding: '1px 5px', fontSize: '8px' }}>
+                                Pendiente
                               </span>
                             )}
                           </td>
-                          <td style={{ padding: '4px 6px', textAlign: 'right', fontWeight: 700, color: item.tipo === 'servicio_pendiente' ? t.textSecondary : t.danger }}>
+                          <td className="num-tabular" style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, color: item.tipo === 'servicio_pendiente' ? t.textSecondary : '#f87171' }}>
                             {item.monto.toLocaleString()} BS
                           </td>
                         </tr>
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="2" style={{ padding: '16px 6px', textAlign: 'center', color: t.textDim }}>
+                        <td colSpan="2" style={{ padding: '20px 10px', textAlign: 'center', color: t.textDim, fontSize: '10px' }}>
                           Sin egresos registrados
                         </td>
                       </tr>
@@ -928,9 +932,9 @@ const CommandCenter = ({
                   </tbody>
                 </table>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, padding: '0 2px' }}>
-                <span style={{ fontSize: '9px', fontWeight: 700, color: t.textDim, textTransform: 'uppercase' }}>Total Egresos</span>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: t.danger, fontFamily: 'monospace' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, padding: '0 2px' }}>
+                <span style={{ fontSize: '9px', fontWeight: 700, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total Egresos</span>
+                <span className="num-tabular" style={{ fontSize: '13px', fontWeight: 800, color: '#f87171' }}>
                   {totalEgresosYServicios.toLocaleString()} BS
                 </span>
               </div>
@@ -938,18 +942,20 @@ const CommandCenter = ({
 
             {/* Balance mensual resumen */}
             <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', borderLeft: isMobile ? 'none' : `1px solid ${t.border}`, paddingLeft: isMobile ? 0 : '16px', borderTop: isMobile ? `1px solid ${t.border}` : 'none', paddingTop: isMobile ? '12px' : 0 }}>
-              <p style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textDim, margin: 0 }}>Balance Neto</p>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: balanceMensual >= 0 ? t.success : t.danger, letterSpacing: '-0.035em', margin: '2px 0 6px', fontFamily: "'Space Grotesk', sans-serif" }}>
-                {balanceMensual >= 0 ? '+' : '-'}{Math.abs(balanceMensual).toLocaleString()} <span style={{ fontSize: 9, fontWeight: 500, color: t.textDim }}>BS</span>
+              <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textMuted, margin: 0 }}>
+                Balance Neto
+              </p>
+              <h3 className="num-tabular" style={{ fontSize: 20, fontWeight: 800, color: balanceMensual >= 0 ? '#10b981' : '#f87171', letterSpacing: '-0.035em', margin: '4px 0 8px', fontFamily: "'Geist', sans-serif" }}>
+                {balanceMensual >= 0 ? '+' : '-'}{Math.abs(balanceMensual).toLocaleString()} <span style={{ fontSize: 10, fontWeight: 600, color: t.textDim }}>BS</span>
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Ingresos</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: t.success, fontFamily: "'JetBrains Mono', monospace" }}>+{ingresosMes.toLocaleString()}</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Ingresos</span>
+                  <span className="num-tabular" style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>+{ingresosMes.toLocaleString()} BS</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Egresos</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: t.danger, fontFamily: "'JetBrains Mono', monospace" }}>-{egresosMes.toLocaleString()}</span>
+                  <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Egresos</span>
+                  <span className="num-tabular" style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>-{egresosMes.toLocaleString()} BS</span>
                 </div>
               </div>
             </div>
@@ -959,115 +965,146 @@ const CommandCenter = ({
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          FILA 1B: BARRA DE CATEGORÍAS
+          FILA 1B: GRID DE MÓDULOS DE SISTEMA (3x3 Ejecutivo)
           ══════════════════════════════════════════════════════ */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap',
-        marginBottom: '20px', padding: '14px 18px',
-        backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '14px',
-      }}>
-        <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginRight: '8px' }}>
-          Deudores:
-        </span>
-        <CategoryBadge categoria="AL_DIA" count={categorias.totales.alDia} activo={filtroCategoria === 'AL_DIA'} onClick={() => setFiltroCategoria(filtroCategoria === 'AL_DIA' ? null : 'AL_DIA')} />
-        <CategoryBadge categoria="PENDIENTE" count={categorias.totales.pendientes} activo={filtroCategoria === 'PENDIENTE'} onClick={() => setFiltroCategoria(filtroCategoria === 'PENDIENTE' ? null : 'PENDIENTE')} />
-        <CategoryBadge categoria="DEUDOR_1MES" count={categorias.totales.deudor1Mes} activo={filtroCategoria === 'DEUDOR_1MES'} onClick={() => setFiltroCategoria(filtroCategoria === 'DEUDOR_1MES' ? null : 'DEUDOR_1MES')} />
-        <CategoryBadge categoria="DEUDOR_CRITICO" count={categorias.totales.deudorCritico} activo={filtroCategoria === 'DEUDOR_CRITICO'} onClick={() => setFiltroCategoria(filtroCategoria === 'DEUDOR_CRITICO' ? null : 'DEUDOR_CRITICO')} />
-        {filtroCategoria && (
-          <button
-            onClick={() => setFiltroCategoria(null)}
-            style={{ padding: '6px 10px', borderRadius: '8px', border: 'none', background: 'transparent', color: t.textDim, cursor: 'pointer', fontSize: '10px', fontWeight: 600, marginLeft: '4px' }}
-          >
-            <X size={12} style={{ marginRight: '4px', display: 'inline' }} /> Limpiar
-          </button>
-        )}
-      </div>
+      <section style={{ marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <LayoutDashboard size={15} color={t.accent} />
+            <h3 style={{ fontSize: 12, fontWeight: 800, color: t.text, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+              Módulos del Sistema
+            </h3>
+          </div>
+          <span style={{ fontSize: 10, color: t.textDim, fontWeight: 500 }}>Acceso rápido y métricas activas</span>
+        </div>
+
+        <div className={`grid gap-3 ${isMobile ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
+          {MODULE_WIDGETS.map(widget => {
+            const info = widget.getData({ meetingsList, data, servicios });
+            const IconComp = widget.icono;
+            return (
+              <div
+                key={widget.id}
+                onClick={() => onNavigateTo && onNavigateTo(widget.accion)}
+                className="metric-card-executive cursor-pointer"
+                style={{
+                  padding: '16px',
+                  backgroundColor: t.panel,
+                  borderColor: t.border,
+                  transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = widget.color;
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = t.border;
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div className="icon-squircle" style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: `${widget.color}15`, border: `1px solid ${widget.color}30` }}>
+                    <IconComp size={16} color={widget.color} strokeWidth={2} />
+                  </div>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: widget.color }} />
+                </div>
+                <h4 style={{ fontSize: 12, fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
+                  {widget.titulo}
+                </h4>
+                <p className="num-tabular" style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, margin: '3px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {info.principal}
+                </p>
+                <p style={{ fontSize: 9, color: t.textDim, margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {info.secundaria}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* ══════════════════════════════════════════════════════
-          FILA 2: COBROS — TIMELINE MEJORADO
+          FILA 2: COBROS — TIMELINE & TABLA EJECUTIVA
           ══════════════════════════════════════════════════════ */}
       <section style={{ marginBottom: '24px' }}>
         <div style={{
           padding: '24px', backgroundColor: t.panel,
-          border: `1px solid ${t.border}`, borderRadius: '16px',
+          border: `1px solid ${t.border}`, borderRadius: '18px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
         }}>
-          {/* Header con fecha destacada */}
+          {/* Header con filtros segmentados */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: '20px',
+            marginBottom: '20px', flexWrap: 'wrap', gap: '14px',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{
+              <div className="icon-squircle" style={{
                 width: '42px', height: '42px', borderRadius: '12px',
-                backgroundColor: `${t.warning}20`, color: t.warning,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backgroundColor: `${t.warning}15`, color: t.warning, border: `1px solid ${t.warning}30`
               }}>
-                <CalendarDays size={20} />
+                <CalendarDays size={20} strokeWidth={2} />
               </div>
               <div>
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
-                  Cobros — {periodosDisponibles.find(p => p.key === periodoMes)?.label || periodoMes}
+                <h3 style={{ fontSize: 14, fontWeight: 800, color: t.text, margin: 0, letterSpacing: '-0.02em' }}>
+                  Gestión de Cobros — {periodosDisponibles.find(p => p.key === periodoMes)?.label || periodoMes}
                 </h3>
                 <p style={{
-                  fontSize: '10px', color: t.textDim, margin: '2px 0 0',
+                  fontSize: '10px', color: t.textMuted, margin: '2px 0 0',
                   display: 'flex', alignItems: 'center', gap: '6px',
                 }}>
                   <span style={{
                     display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%',
-                    backgroundColor: cobrosDelPeriodo.length > 0 ? t.warning : t.success,
+                    backgroundColor: cobrosDelPeriodo.length > 0 ? '#fbbf24' : '#34d399',
                   }} />
-                  {cobrosDelPeriodo.length} deudores · {categorias.totales.totalPendiente.toLocaleString()} {settings?.loanDefaultCurrency || 'BOB'} pendientes
+                  {cobrosDelPeriodo.length} clientes · <span className="num-tabular" style={{ fontWeight: 700, color: t.text }}>{categorias.totales.totalPendiente.toLocaleString()} {settings?.loanDefaultCurrency || 'BOB'}</span> pendientes
                 </p>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {['AL_DIA', 'PENDIENTE', 'DEUDOR_1MES', 'DEUDOR_CRITICO'].map(cat => {
-                const count = cobrosDelPeriodo.filter(p => p.categoria === cat).length;
-                if (count === 0) return null;
-                return (
-                  <div key={cat} onClick={() => setFiltroCategoria(filtroCategoria === cat ? null : cat)}
-                    style={{
-                      padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '9px', fontWeight: 600,
-                      backgroundColor: filtroCategoria === cat ? (cat === 'DEUDOR_CRITICO' ? '#ef444420' : `${t.accent}20`) : t.input,
-                      color: filtroCategoria === cat ? (cat === 'DEUDOR_CRITICO' ? '#ef4444' : t.accent) : t.textDim,
-                      border: `1px solid ${filtroCategoria === cat ? (cat === 'DEUDOR_CRITICO' ? '#ef444440' : `${t.accent}40`) : 'transparent'}`,
-                      display: 'flex', alignItems: 'center', gap: '4px',
-                    }}>
-                    <span style={{
-                      width: '5px', height: '5px', borderRadius: '50%',
-                      backgroundColor: cat === 'AL_DIA' ? '#22c55e' : cat === 'PENDIENTE' ? '#eab308' : cat === 'DEUDOR_1MES' ? '#f97316' : '#ef4444',
-                    }} />
-                    {count}
-                  </div>
-                );
-              })}
-              {filtroCategoria && (
-                <div onClick={() => setFiltroCategoria(null)}
-                  style={{
-                    padding: '5px 10px', borderRadius: '8px', cursor: 'pointer', fontSize: '9px',
-                    color: t.textDim, border: `1px solid ${t.border}`,
-                  }}>
-                  ✕
-                </div>
-              )}
+
+            {/* Segmented Filter Buttons */}
+            <div className="tab-segmented-wrap">
+              <button
+                onClick={() => setFiltroCategoria(null)}
+                className={`tab-segmented-btn ${filtroCategoria === null ? 'active' : ''}`}
+              >
+                Todos ({cobrosDelPeriodo.length})
+              </button>
+              <button
+                onClick={() => setFiltroCategoria(filtroCategoria === 'AL_DIA' ? null : 'AL_DIA')}
+                className={`tab-segmented-btn ${filtroCategoria === 'AL_DIA' ? 'active' : ''}`}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
+                Al Día ({categorias.totales.alDia})
+              </button>
+              <button
+                onClick={() => setFiltroCategoria(filtroCategoria === 'PENDIENTE' ? null : 'PENDIENTE')}
+                className={`tab-segmented-btn ${filtroCategoria === 'PENDIENTE' ? 'active' : ''}`}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+                Pendientes ({categorias.totales.pendientes})
+              </button>
+              <button
+                onClick={() => setFiltroCategoria(filtroCategoria === 'DEUDOR_CRITICO' ? null : 'DEUDOR_CRITICO')}
+                className={`tab-segmented-btn ${filtroCategoria === 'DEUDOR_CRITICO' ? 'active' : ''}`}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#ef4444' }} />
+                Críticos ({categorias.totales.deudorCritico})
+              </button>
             </div>
           </div>
 
-          {/* Tabla de cobros con diseño mejorado */}
+          {/* Tabla de cobros con diseño executive */}
           {cobrosFiltrados.length > 0 ? (
-            <div style={{ overflowX: 'auto', borderRadius: '12px', border: `1px solid ${t.borderLight || t.border}` }}>
-              <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '650px' }}>
+            <div className="table-luxury-container">
+              <table className="table-luxury">
                 <thead>
-                  <tr style={{
-                    backgroundColor: t.input,
-                    borderBottom: `1px solid ${t.border}`,
-                  }}>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Prestamista</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Estado</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Deuda</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Capital</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés</th>
-                    <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Cobrar</th>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Atraso</th>
+                    <th style={{ textAlign: 'right' }}>Capital</th>
+                    <th style={{ textAlign: 'right' }}>Interés / Mes</th>
+                    <th style={{ textAlign: 'center' }}>Acción</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1075,26 +1112,18 @@ const CommandCenter = ({
                     const badgeColor = p.dialog?.color || t.textDim;
                     const isCritico = p.categoria === 'DEUDOR_CRITICO';
                     return (
-                      <tr key={p.id} style={{
-                        borderBottom: `1px solid ${t.borderLight || t.border}`,
-                        transition: 'background 0.15s',
-                        backgroundColor: isCritico ? `${t.danger}06` : 'transparent',
-                      }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = isCritico ? `${t.danger}06` : 'transparent'}
-                      >
-                        <td style={{ padding: '12px 14px' }}>
+                      <tr key={p.id} style={{ backgroundColor: isCritico ? 'rgba(239, 68, 68, 0.04)' : 'transparent' }}>
+                        <td>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{
-                              width: '32px', height: '32px', borderRadius: '10px',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: '11px', fontWeight: 700,
-                              backgroundColor: `${badgeColor}18`, color: badgeColor,
+                            <div className="icon-squircle" style={{
+                              width: '34px', height: '34px', borderRadius: '10px',
+                              fontSize: '11px', fontWeight: 800,
+                              backgroundColor: `${badgeColor}18`, color: badgeColor, border: `1px solid ${badgeColor}30`
                             }}>
                               {p.nombre?.charAt(0) || '?'}
                             </div>
                             <div>
-                              <p style={{ fontSize: 12, fontWeight: 700, color: t.text, margin: 0, fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.02em' }}>
+                              <p style={{ fontSize: 12, fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                                 {p.nombre || 'Sin nombre'}
                               </p>
                               <p style={{ fontSize: '9px', color: t.textDim, margin: '2px 0 0' }}>
@@ -1103,55 +1132,41 @@ const CommandCenter = ({
                             </div>
                           </div>
                         </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 600, color: t.text }}>
-                            <span style={{
-                              display: 'inline-block',
-                              width: '6px',
-                              height: '6px',
-                              borderRadius: '50%',
-                              backgroundColor: badgeColor,
-                            }} />
-                            {p.categoria === 'AL_DIA' ? 'Al Día' :
-                              p.categoria === 'PENDIENTE' ? 'Pendiente' :
-                              p.categoria === 'DEUDOR_1MES' ? 'Vencido' : 'Crítico'}
-                          </div>
-                        </td>
-                        <td style={{ padding: '12px 14px' }}>
-                          <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>
-                            {p.mesesAtraso > 0 ? `${p.mesesAtraso} mes${p.mesesAtraso > 1 ? 'es' : ''}` : 'Al corriente'}
-                          </p>
-                          {p.mesesAtraso > 3 && (
-                            <div style={{
-                              marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px',
-                              color: t.danger, fontSize: '9px', fontWeight: 600,
-                            }}>
-                              <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: t.danger }} />
-                              Riesgo alto
-                            </div>
+                        <td>
+                          {p.categoria === 'AL_DIA' && (
+                            <span className="badge-luxury-success">Al Día</span>
+                          )}
+                          {p.categoria === 'PENDIENTE' && (
+                            <span className="badge-luxury-warning">Pendiente</span>
+                          )}
+                          {p.categoria === 'DEUDOR_1MES' && (
+                            <span className="badge-luxury-warning">1 Mes Atraso</span>
+                          )}
+                          {p.categoria === 'DEUDOR_CRITICO' && (
+                            <span className="badge-luxury-danger">Crítico</span>
                           )}
                         </td>
-                        <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                          <p style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0, fontFamily: 'monospace' }}>
-                            {(parseFloat(p.capital) || 0).toLocaleString()}
+                        <td>
+                          <p className="num-tabular" style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>
+                            {p.mesesAtraso > 0 ? `${p.mesesAtraso} mes${p.mesesAtraso > 1 ? 'es' : ''}` : 'Al corriente'}
                           </p>
                         </td>
-                        <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                          <p style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', margin: 0, fontFamily: "'JetBrains Mono', monospace" }}>
-                            +{(parseFloat(p.capital) * (parseFloat(p.interes) / 100) || 0).toLocaleString()}
+                        <td style={{ textAlign: 'right' }}>
+                          <p className="num-tabular" style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0 }}>
+                            {(parseFloat(p.capital) || 0).toLocaleString()} {p.moneda || 'Bs'}
                           </p>
                         </td>
-                        <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                          <button onClick={() => onNavigateToPrestamo && onNavigateToPrestamo(p.id, 'emitir-recibo')}
-                            style={{
-                              padding: '10px 16px', minHeight: '44px', borderRadius: '8px', border: 'none',
-                              backgroundColor: isCritico ? '#ef4444' : t.accent,
-                              color: isCritico ? '#fff' : (isDark ? '#000' : '#fff'), fontSize: '11px', fontWeight: 600, cursor: 'pointer',
-                              transition: 'all 0.15s',
-                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                            }}
-                            onMouseEnter={e => e.target.style.opacity = '0.8'}
-                            onMouseLeave={e => e.target.style.opacity = '1'}>
+                        <td style={{ textAlign: 'right' }}>
+                          <p className="num-tabular" style={{ fontSize: 12, fontWeight: 700, color: '#10b981', margin: 0 }}>
+                            +{(parseFloat(p.capital) * (parseFloat(p.interes) / 100) || 0).toLocaleString()} Bs
+                          </p>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            onClick={() => onNavigateToPrestamo && onNavigateToPrestamo(p.id, 'emitir-recibo')}
+                            className={isCritico ? 'btn-luxury-danger' : 'btn-luxury-primary'}
+                            style={{ padding: '6px 14px', fontSize: '10px' }}
+                          >
                             Cobrar
                           </button>
                         </td>
@@ -1163,12 +1178,12 @@ const CommandCenter = ({
             </div>
           ) : (
             <div style={{
-              textAlign: 'center', padding: '40px 20px',
+              textAlign: 'center', padding: '48px 20px',
               color: t.textDim, fontSize: '11px',
             }}>
-              <CalendarDays size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
-              <p style={{ margin: 0, fontWeight: 500 }}>No hay cobros para este período</p>
-              <p style={{ margin: '4px 0 0', fontSize: '9px' }}>Selecciona otro mes o agrega nuevos préstamos</p>
+              <CalendarDays size={32} style={{ opacity: 0.25, margin: '0 auto 8px' }} />
+              <p style={{ margin: 0, fontWeight: 600, color: t.text }}>No hay cobros para este período</p>
+              <p style={{ margin: '4px 0 0', fontSize: '10px', color: t.textMuted }}>Selecciona otro mes o agrega nuevos préstamos</p>
             </div>
           )}
         </div>

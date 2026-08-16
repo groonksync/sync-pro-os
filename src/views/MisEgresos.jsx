@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   Plus, Trash2, CreditCard, ArrowDownRight, Tag, Coffee, Wrench, Wifi, User, 
   ShoppingCart, Calendar, Edit3, Save, X, Search, FileText, 
@@ -8,6 +8,37 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
+
+// CountUp Animated Numbers
+const CountUp = ({ value = 0, decimals = 0, suffix = '', duration = 900 }) => {
+  const [display, setDisplay] = useState(0);
+  const prevValue = useRef(0);
+  const rafRef = useRef(null);
+
+  useEffect(() => {
+    const start = prevValue.current;
+    const end = Number(value) || 0;
+    prevValue.current = end;
+    if (start === end) { setDisplay(end); return; }
+    const startTime = performance.now();
+    const tick = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 5);
+      const current = start + (end - start) * eased;
+      setDisplay(current);
+      if (progress < 1) rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [value, duration]);
+
+  const fmt = display.toLocaleString('es', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+  return <span className="num-tabular tabular-nums">{fmt}{suffix}</span>;
+};
 
 // Categorías para suscripciones / servicios
 const SERVICIO_CATEGORIAS = [
@@ -457,22 +488,22 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Mis Egresos y Suscripciones
             </h2>
-            <p className="text-neutral-500 text-[10px] uppercase font-bold tracking-wider mt-1">
-              Control simplificado de pagos mensuales y compartidos
+            <p className="text-neutral-400 text-[11px] font-medium tracking-normal mt-1">
+              Control simplificado de pagos mensuales y servicios compartidos
             </p>
           </div>
           
           {/* Segmented Tab Control */}
-          <div className="flex bg-white/5 border border-white/10 p-1 rounded-xl">
+          <div className="tab-segmented-wrap">
             <button
               onClick={() => setActiveTab('pagos')}
-              className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'pagos' ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'}`}
+              className={`tab-segmented-btn ${activeTab === 'pagos' ? 'active' : ''}`}
             >
               Control de Pagos
             </button>
             <button
               onClick={() => setActiveTab('historial')}
-              className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${activeTab === 'historial' ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'}`}
+              className={`tab-segmented-btn ${activeTab === 'historial' ? 'active' : ''}`}
             >
               Historial Completo
             </button>
@@ -481,20 +512,20 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
         {/* ── RESUMEN FINANCIERO DEL MES (Visible en ambas pestañas) ────────── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-5 rounded-2xl border" style={{ backgroundColor: t.panel, borderColor: t.border }}>
-            <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-500 block mb-1">Egresos de este Mes</span>
-            <h3 className="text-2xl font-black">{totalEgresosMes.toLocaleString()} <span className="text-xs font-bold text-neutral-500">Bs.</span></h3>
-            <span className="text-[9px] text-neutral-400 mt-1 block">Gastos registrados hasta hoy</span>
+          <div className="metric-card-executive" style={{ backgroundColor: t.panel, borderColor: t.border }}>
+            <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-400 block mb-1">Egresos de este Mes</span>
+            <h3 className="text-2xl font-black text-white"><CountUp value={totalEgresosMes} /> <span className="text-xs font-bold text-neutral-400">Bs.</span></h3>
+            <span className="text-[10px] text-neutral-400 mt-1 block font-medium">Gastos registrados hasta hoy</span>
           </div>
-          <div className="p-5 rounded-2xl border" style={{ backgroundColor: t.panel, borderColor: t.border }}>
-            <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-500 block mb-1">Pendiente del Mes (Vencidos/Hoy)</span>
-            <h3 className="text-2xl font-black text-amber-500">{totalPendienteMes.toLocaleString()} <span className="text-xs font-bold text-amber-500/80">Bs.</span></h3>
-            <span className="text-[9px] text-neutral-400 mt-1 block">Importe neto que te corresponde pagar</span>
+          <div className="metric-card-executive" style={{ backgroundColor: t.panel, borderColor: t.border }}>
+            <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-400 block mb-1">Pendiente del Mes (Vencidos/Hoy)</span>
+            <h3 className="text-2xl font-black text-amber-400"><CountUp value={totalPendienteMes} /> <span className="text-xs font-bold text-amber-400/80">Bs.</span></h3>
+            <span className="text-[10px] text-neutral-400 mt-1 block font-medium">Importe neto por pagar</span>
           </div>
-          <div className="p-5 rounded-2xl border" style={{ backgroundColor: t.panel, borderColor: t.border }}>
-            <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-500 block mb-1">Aportes / Co-pagos Proyectados</span>
-            <h3 className="text-2xl font-black text-emerald-500">+{totalAportesProyectados.toLocaleString()} <span className="text-xs font-bold text-emerald-500/80">Bs.</span></h3>
-            <span className="text-[9px] text-neutral-400 mt-1 block">Abonos recibidos de terceros</span>
+          <div className="metric-card-executive" style={{ backgroundColor: t.panel, borderColor: t.border }}>
+            <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-400 block mb-1">Aportes / Co-pagos Proyectados</span>
+            <h3 className="text-2xl font-black text-emerald-400">+<CountUp value={totalAportesProyectados} /> <span className="text-xs font-bold text-emerald-400/80">Bs.</span></h3>
+            <span className="text-[10px] text-neutral-400 mt-1 block font-medium">Abonos recibidos de terceros</span>
           </div>
         </div>
       </header>

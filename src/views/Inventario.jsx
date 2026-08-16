@@ -1416,22 +1416,25 @@ REGLAS DE FORMATO Y ESTILO:
       {activeSection === 'productos' && (
         <>
           {/* METRICS DASHBOARD */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5'}`} style={{ marginBottom: 24 }}>
         {[
-          { label: 'Inversión de Capital (Costo)', value: `${stats.totalInv.toLocaleString()} BS`, icon: Briefcase, color: '#a0a0a0' },
-          { label: 'Valor Estimado de Venta', value: `${stats.totalSaleVal.toLocaleString()} BS`, icon: TrendingUp, color: '#3b82f6' },
-          { label: 'Ganancia Neta Potencial', value: `${stats.totalEarns.toLocaleString()} BS`, icon: DollarSign, color: '#10b981', sub: stats.totalInv > 0 ? `Margen: ${((stats.totalEarns / stats.totalInv) * 100).toFixed(0)}%` : 'Margen: 0%' },
-          { label: 'Ítems en Inventario', value: `${stats.totalCount} ref`, icon: Package, color: '#8b5cf6' },
-          { label: 'Stock Crítico', value: stats.lowStock.length, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#f59e0b' : '#707070' }
+          { label: 'Inversión Total (Costo)', value: `${stats.totalInv.toLocaleString()} BS`, icon: Briefcase, color: '#a0a0a0' },
+          { label: 'Valor Estimado Venta', value: `${stats.totalSaleVal.toLocaleString()} BS`, icon: TrendingUp, color: '#38bdf8' },
+          { label: 'Ganancia Potencial', value: `${stats.totalEarns.toLocaleString()} BS`, icon: DollarSign, color: '#10b981', sub: stats.totalInv > 0 ? `Margen: ${((stats.totalEarns / stats.totalInv) * 100).toFixed(0)}%` : 'Margen: 0%' },
+          { label: 'Total Productos', value: `${stats.totalCount} refs`, icon: Package, color: '#a78bfa' },
+          { label: 'Stock Crítico', value: `${stats.lowStock.length} items`, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#ef4444' : '#64748b' }
         ].map((m, i) => (
-          <div key={i} style={{ backgroundColor: t.panel, border: t.isDark ? '1px solid rgba(255,255,255,0.06)' : `1px solid ${t.border}`, borderRadius: 20, padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: 'none', position: 'relative', overflow: 'hidden' }}>
-            <div>
-              <span style={{ fontSize: 8, fontWeight: 900, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{m.label}</span>
-              <p style={{ fontSize: 20, fontWeight: 900, color: m.color, fontFamily: 'monospace', margin: '4px 0 0 0', letterSpacing: '-0.02em' }}>{m.value}</p>
-              {m.sub && <span style={{ fontSize: 8, color: t.textDim, fontWeight: 700, marginTop: 4, display: 'block' }}>{m.sub}</span>}
+          <div key={i} className="metric-card-executive" style={{ backgroundColor: t.panel, borderColor: t.border }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div className="icon-squircle" style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${m.color}15`, color: m.color, border: `1px solid ${m.color}30` }}>
+                <m.icon size={16} strokeWidth={2} />
+              </div>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: m.color }} />
             </div>
-            <div style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: m.color }}>
-              <m.icon size={18} />
+            <div>
+              <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block' }}>{m.label}</span>
+              <p className="num-tabular tabular-nums" style={{ fontSize: 20, fontWeight: 800, color: t.text, margin: '4px 0 0 0', letterSpacing: '-0.03em' }}>{m.value}</p>
+              {m.sub && <span style={{ fontSize: 9, color: '#10b981', fontWeight: 600, marginTop: 4, display: 'block' }}>{m.sub}</span>}
             </div>
           </div>
         ))}

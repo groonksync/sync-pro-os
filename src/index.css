@@ -907,3 +907,350 @@ input.catalog-search-input-field,
     height: 40px !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   EXECUTIVE LUXURY DESIGN TOKENS & UTILITIES
+   Added: 2026 Modern Pro UI System
+═══════════════════════════════════════════════════════════ */
+
+/* 1. Tabular Numbers & Number Tickers */
+.num-tabular, .tabular-nums {
+  font-feature-settings: "tnum" 1, "zero" 1 !important;
+  font-variant-numeric: tabular-nums !important;
+  font-family: 'JetBrains Mono', 'Geist', monospace !important;
+  letter-spacing: -0.02em;
+}
+
+/* 2. Interactive Squircles & Icon Badges */
+.icon-squircle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.icon-squircle:hover {
+  transform: translateY(-1px) scale(1.04);
+}
+
+/* 3. Luxury Buttons */
+.btn-luxury-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background-color: var(--color-text);
+  color: var(--color-bg);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-luxury-primary:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.btn-luxury-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-luxury-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background-color: rgba(255, 255, 255, 0.04);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+}
+
+.light-mode .btn-luxury-secondary {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.btn-luxury-secondary:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: var(--color-border-l);
+  color: var(--color-text);
+  transform: translateY(-1px);
+}
+
+.light-mode .btn-luxury-secondary:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.btn-luxury-secondary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.btn-luxury-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--color-text-2);
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-luxury-ghost:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--color-text);
+}
+
+.light-mode .btn-luxury-ghost:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.btn-luxury-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-luxury-danger:hover:not(:disabled) {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-luxury-danger:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* 4. Luxury Segmented Tabs */
+.tab-segmented-wrap {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  background-color: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  gap: 2px;
+}
+
+.light-mode .tab-segmented-wrap {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.tab-segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.tab-segmented-btn:hover:not(.active) {
+  color: var(--color-text-2);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.tab-segmented-btn.active {
+  color: var(--color-text);
+  background-color: rgba(255, 255, 255, 0.1);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.light-mode .tab-segmented-btn.active {
+  background-color: #FFFFFF;
+  color: #111827;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* 5. Luxury Status Badges */
+.badge-luxury-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.badge-luxury-warning {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.badge-luxury-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.badge-luxury-neutral {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-2);
+  border: 1px solid var(--color-border);
+}
+
+/* 6. Executive Data Table */
+.table-luxury-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-panel);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.table-luxury {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+}
+
+.table-luxury th {
+  padding: 12px 16px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-3);
+  background-color: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+
+.light-mode .table-luxury th {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.table-luxury td {
+  padding: 14px 16px;
+  font-size: 12px;
+  color: var(--color-text);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  vertical-align: middle;
+  transition: background-color 0.15s ease;
+}
+
+.light-mode .table-luxury td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.table-luxury tr:last-child td {
+  border-bottom: none;
+}
+
+.table-luxury tbody tr {
+  transition: all 0.18s ease;
+}
+
+.table-luxury tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.light-mode .table-luxury tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* 7. Metric Cards Executive */
+.metric-card-executive {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.metric-card-executive:hover {
+  border-color: var(--color-border-l);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.metric-card-executive::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  pointer-events: none;
+}

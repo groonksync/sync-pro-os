@@ -3458,27 +3458,27 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
   );
 };
 
-// ─── COMPONENTE KPI CARD ────────────────────────────────────
+// ─── COMPONENTE KPI CARD EJECUTIVO ──────────────────────────
 const KPICard = ({ t, icon: Icon, label, value, moneda, color }) => (
-  <div style={{
-    padding: '16px', backgroundColor: t.panel,
-    border: `1px solid ${t.border}`, borderRadius: '12px',
-    display: 'flex', flexDirection: 'column', gap: '8px',
+  <div className="metric-card-executive" style={{
+    backgroundColor: t.panel,
+    borderColor: t.border,
+    display: 'flex', flexDirection: 'column', gap: '10px',
   }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      <div style={{
-        width: '32px', height: '32px', borderRadius: '10px',
-        backgroundColor: `${color}15`, color,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div className="icon-squircle" style={{
+        width: '36px', height: '36px', borderRadius: '10px',
+        backgroundColor: `${color}15`, color, border: `1px solid ${color}30`
       }}>
-        <Icon size={16} />
+        <Icon size={16} strokeWidth={2} />
       </div>
-      <span style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: t.textDim }}>
-        {label}
-      </span>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: color }} />
     </div>
-    <span style={{ fontSize: '1rem', fontWeight: 700, color: t.text, lineHeight: 1 }}>
-      {value} {moneda && <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>{moneda}</span>}
+    <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textMuted }}>
+      {label}
+    </span>
+    <span className="num-tabular tabular-nums" style={{ fontSize: '1.25rem', fontWeight: 800, color: t.text, lineHeight: 1, letterSpacing: '-0.03em' }}>
+      {value} {moneda && <span style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted, letterSpacing: '0.05em' }}>{moneda}</span>}
     </span>
   </div>
 );

@@ -768,84 +768,84 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           {activeSubTab === 'resumen' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {/* Tarjetas Interactivas de Métricas con Iconos Ricos */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                 <div 
                   onClick={() => { setFilterPaymentStatus('Todos'); setActiveSubTab('miembros'); }}
-                  style={{
-                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8,
-                    cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = t.accent; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
+                  className="metric-card-executive cursor-pointer"
+                  style={{ backgroundColor: t.panel, borderColor: t.border }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Miembros Registrados</span>
-                    <Users size={18} style={{ color: t.accent }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div className="icon-squircle" style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${t.accent}15`, color: t.accent, border: `1px solid ${t.accent}30` }}>
+                      <Users size={16} strokeWidth={2} />
+                    </div>
+                    <span className="badge-luxury-neutral">
+                      Total
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <span style={{ fontSize: 28, fontWeight: 800 }}>{totalMiembros}</span>
-                    <span style={{ fontSize: 11, color: t.accent, fontWeight: 600 }}>Total Activos</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Miembros Registrados</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                    <span className="num-tabular tabular-nums" style={{ fontSize: 24, fontWeight: 800, color: t.text }}>{totalMiembros}</span>
+                    <span style={{ fontSize: 10, color: t.accent, fontWeight: 600 }}>Total Activos</span>
                   </div>
                 </div>
 
                 <div 
                   onClick={() => { setFilterPaymentStatus('Al día'); setActiveSubTab('miembros'); }}
-                  style={{
-                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8,
-                    cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#10B981'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
+                  className="metric-card-executive cursor-pointer"
+                  style={{ backgroundColor: t.panel, borderColor: t.border }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Membresías Al Día</span>
-                    <CheckCircle2 size={18} style={{ color: '#10B981' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div className="icon-squircle" style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10B981', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                      <CheckCircle2 size={16} strokeWidth={2} />
+                    </div>
+                    <span className="badge-luxury-success">
+                      Al Día
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <span style={{ fontSize: 28, fontWeight: 800, color: '#10B981' }}>{miembrosActivos}</span>
-                    <span style={{ fontSize: 11, color: t.textMuted }}>{totalMiembros > 0 ? ((miembrosActivos/totalMiembros)*100).toFixed(0) : 0}%</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Membresías Al Día</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                    <span className="num-tabular tabular-nums" style={{ fontSize: 24, fontWeight: 800, color: '#10B981' }}>{miembrosActivos}</span>
+                    <span style={{ fontSize: 10, color: t.textMuted, fontWeight: 600 }}>{totalMiembros > 0 ? ((miembrosActivos/totalMiembros)*100).toFixed(0) : 0}%</span>
                   </div>
                 </div>
 
                 <div 
                   onClick={() => { setFilterPaymentStatus('Por vencer'); setActiveSubTab('miembros'); }}
-                  style={{
-                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8,
-                    cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#F59E0B'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
+                  className="metric-card-executive cursor-pointer"
+                  style={{ backgroundColor: t.panel, borderColor: t.border }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Próximos a Vencer</span>
-                    <Clock size={18} style={{ color: '#F59E0B' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div className="icon-squircle" style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#F59E0B', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                      <Clock size={16} strokeWidth={2} />
+                    </div>
+                    <span className="badge-luxury-warning">
+                      Por Vencer
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <span style={{ fontSize: 28, fontWeight: 800, color: '#F59E0B' }}>{miembrosPorVencer}</span>
-                    <span style={{ fontSize: 11, color: '#F59E0B', fontWeight: 500 }}>&le; 5 días</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Próximos a Vencer</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                    <span className="num-tabular tabular-nums" style={{ fontSize: 24, fontWeight: 800, color: '#F59E0B' }}>{miembrosPorVencer}</span>
+                    <span style={{ fontSize: 10, color: '#F59E0B', fontWeight: 600 }}>&le; 5 días</span>
                   </div>
                 </div>
 
                 <div 
                   onClick={() => { setFilterPaymentStatus('Vencido'); setActiveSubTab('miembros'); }}
-                  style={{
-                    padding: 20, borderRadius: 16, backgroundColor: t.panel, border: `1px solid ${t.border}`,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.15)', display: 'flex', flexDirection: 'column', gap: 8,
-                    cursor: 'pointer', transition: 'transform 0.2s, border-color 0.2s'
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.borderColor = '#EF4444'; }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.borderColor = t.border; }}
+                  className="metric-card-executive cursor-pointer"
+                  style={{ backgroundColor: t.panel, borderColor: t.border }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Vencidos / Deudores</span>
-                    <AlertTriangle size={18} style={{ color: '#EF4444' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <div className="icon-squircle" style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(239, 68, 68, 0.15)', color: '#EF4444', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                      <AlertTriangle size={16} strokeWidth={2} />
+                    </div>
+                    <span className="badge-luxury-danger">
+                      Crítico
+                    </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                    <span style={{ fontSize: 28, fontWeight: 800, color: '#EF4444' }}>{miembrosMorosos}</span>
-                    <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 600 }}>Alerta de Cobro</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Vencidos / Deudores</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}>
+                    <span className="num-tabular tabular-nums" style={{ fontSize: 24, fontWeight: 800, color: '#EF4444' }}>{miembrosMorosos}</span>
+                    <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 600 }}>Alerta</span>
                   </div>
                 </div>
               </div>
