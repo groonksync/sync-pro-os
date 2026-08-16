@@ -1,57 +1,49 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { 
-  Plus, Trash2, CreditCard, ArrowDownRight, Tag, Coffee, Wrench, Wifi, User, 
-  ShoppingCart, Calendar, Edit3, Save, X, Search, FileText, 
-  AlertTriangle, TrendingUp, DollarSign, Activity,
-  Filter, Landmark, Sparkles, Check, Megaphone, 
-  HelpCircle, Video, Cloud, Bookmark, Clock, PlusCircle, MinusCircle, RefreshCw, 
-  ChevronRight, Download, PieChart, Target, ShieldCheck, CheckCircle2, AlertCircle
-} from 'lucide-react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { useTheme } from '../lib/theme';
+import { getTheme, useTheme } from '../lib/theme';
+import {
+  CreditCard, Calendar, Plus, Trash2, Edit3, Check, DollarSign,
+  AlertCircle, ChevronRight, Layers, PieChart, Sparkles, Filter,
+  Search, ArrowUpRight, ArrowDownRight, RefreshCw, X, ShieldAlert,
+  Info, TrendingDown, Target, Zap, Clock, ShieldCheck, Tag,
+  BarChart2, FileText, CheckCircle2, Bookmark, Flame, AlertTriangle,
+  ArrowRight, Download, Users, User, Tv, Cpu, Cloud, ShoppingCart,
+  Activity, HelpCircle, Save, Percent, PlusCircle, ExternalLink,
+  Play, Pause, Link, Bell
+} from 'lucide-react';
 import { exportEgresosCSV } from '../utils/exportReport';
 
-// ── NUMERACIÓN TABULAR ANIMADA (CountUp) ───────────────────────────
-const CountUp = ({ value = 0, decimals = 0, suffix = '', duration = 800 }) => {
+// ── COMPONENTE DE CONTEO ANIMADO CON NÚMEROS TABULARES ──────────────────
+const CountUp = ({ value, duration = 800 }) => {
   const [display, setDisplay] = useState(0);
-  const prevValue = useRef(0);
-  const rafRef = useRef(null);
 
-  useEffect(() => {
-    const start = prevValue.current;
-    const end = Number(value) || 0;
-    prevValue.current = end;
-    if (start === end) { setDisplay(end); return; }
+  React.useEffect(() => {
+    let start = 0;
+    const end = parseFloat(value) || 0;
+    if (start === end) {
+      setDisplay(end);
+      return;
+    }
     const startTime = performance.now();
-    const tick = (now) => {
-      const elapsed = now - startTime;
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 4);
-      const current = start + (end - start) * eased;
-      setDisplay(current);
-      if (progress < 1) rafRef.current = requestAnimationFrame(tick);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(start + (end - start) * ease));
+      if (progress < 1) requestAnimationFrame(animate);
     };
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    requestAnimationFrame(animate);
   }, [value, duration]);
 
-  const fmt = display.toLocaleString('es', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
-  return <span className="num-tabular tabular-nums">{fmt}{suffix}</span>;
+  return <span className="num-tabular">{display.toLocaleString()}</span>;
 };
 
-// ── CATEGORÍAS PARA SUSCRIPCIONES Y SERVICIOS ─────────────────────
+// ── CATEGORÍAS PRECONFIGURADAS DE SERVICIOS / SUSCRIPCIONES ──────────────
 const SERVICIO_CATEGORIAS = [
-  { label: 'Streaming', icon: Video, color: '#f472b6' },
-  { label: 'Cloud / Almacenamiento', icon: Cloud, color: '#38bdf8' },
-  { label: 'Inteligencia Artificial', icon: Sparkles, color: '#a78bfa' },
-  { label: 'Internet / Telecomunicaciones', icon: Wifi, color: '#60a5fa' },
-  { label: 'Marketing / Anuncios', icon: Megaphone, color: '#fb923c' },
-  { label: 'Servicio Básico (Luz/Agua)', icon: Landmark, color: '#f87171' },
-  { label: 'Financiero / Crédito', icon: CreditCard, color: '#34d399' },
-  { label: 'Alimentación / Comida', icon: Coffee, color: '#fbbf24' },
+  { label: 'Streaming', icon: Tv, color: '#f43f5e' },
+  { label: 'IA / Productividad', icon: Cpu, color: '#8b5cf6' },
+  { label: 'Cloud / Hosting', icon: Cloud, color: '#38bdf8' },
+  { label: 'Servicios Básicos', icon: Zap, color: '#fbbf24' },
   { label: 'Compras / Equipamiento', icon: ShoppingCart, color: '#2dd4bf' },
   { label: 'Personal / Salud', icon: Activity, color: '#e879f9' },
   { label: 'Otro', icon: HelpCircle, color: '#94a3b8' }
@@ -104,10 +96,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   const [serviceForm, setServiceForm] = useState({
     nombre: '',
     monto: '',
+    fecha_inicio: new Date().toISOString().split('T')[0],
+    es_ilimitado: true,
+    fecha_fin: '',
     fecha_pago: new Date().toISOString().split('T')[0],
     metodo: 'Tarjeta',
     categoria: 'Streaming',
     tipo: 'Mensual',
+    dias_recordatorio: '3',
+    estado_suscripcion: 'Activa',
+    url_servicio: '',
     notas: '',
     contribuciones: []
   });
@@ -144,7 +142,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       ...prev,
       contribuciones: [
         ...prev.contribuciones,
-        { id: Math.random().toString(), nombre: '', monto: '' }
+        { id: Math.random().toString(), nombre: '', monto: '', pagado: false }
       ]
     }));
   };
@@ -192,6 +190,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   // Suma total de aportes externos en todas las suscripciones
   const totalAportesProyectados = useMemo(() => {
     return activeServicios.reduce((acc, s) => {
+      if (s.estado_suscripcion === 'En Pausa' || s.estado_suscripcion === 'Cancelada') return acc;
       const contribs = Array.isArray(s.contribuciones) ? s.contribuciones : [];
       return acc + contribs.reduce((sum, c) => sum + (parseFloat(c.monto) || 0), 0);
     }, 0);
@@ -200,6 +199,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   // Servicios pendientes / próximos del mes
   const serviciosPendientes = useMemo(() => {
     return activeServicios.filter(s => {
+      if (s.estado_suscripcion === 'En Pausa' || s.estado_suscripcion === 'Cancelada') return false;
       const f = parseLocalDate(s.fecha_pago);
       const finMes = new Date(anioActual, mesActualIndex + 1, 0);
       return f <= finMes;
@@ -248,11 +248,20 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   // Proyección de gasto anual en suscripciones
   const annualSubscriptionCost = useMemo(() => {
     return activeServicios.reduce((sum, s) => {
+      if (s.estado_suscripcion === 'En Pausa' || s.estado_suscripcion === 'Cancelada') return sum;
       const total = parseFloat(s.monto) || 0;
       const contribs = Array.isArray(s.contribuciones) ? s.contribuciones : [];
       const sumContribs = contribs.reduce((csum, c) => csum + (parseFloat(c.monto) || 0), 0);
       const net = Math.max(total - sumContribs, 0);
-      return sum + (net * 12);
+      
+      const ciclo = s.tipo || 'Mensual';
+      let multiplicadorAnual = 12;
+      if (ciclo === 'Trimestral') multiplicadorAnual = 4;
+      if (ciclo === 'Semestral') multiplicadorAnual = 2;
+      if (ciclo === 'Anual') multiplicadorAnual = 1;
+      if (ciclo === 'Pago Único') multiplicadorAnual = 0;
+
+      return sum + (net * multiplicadorAnual);
     }, 0);
   }, [activeServicios]);
 
@@ -309,10 +318,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     setServiceForm({
       nombre: '',
       monto: '',
+      fecha_inicio: new Date().toISOString().split('T')[0],
+      es_ilimitado: true,
+      fecha_fin: '',
       fecha_pago: new Date().toISOString().split('T')[0],
       metodo: 'Tarjeta',
       categoria: 'Streaming',
       tipo: 'Mensual',
+      dias_recordatorio: '3',
+      estado_suscripcion: 'Activa',
+      url_servicio: '',
       notas: '',
       contribuciones: []
     });
@@ -324,18 +339,38 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     setServiceForm({
       nombre: service.nombre || '',
       monto: service.monto || '',
+      fecha_inicio: service.fecha_inicio || new Date().toISOString().split('T')[0],
+      es_ilimitado: service.es_ilimitado !== false,
+      fecha_fin: service.fecha_fin || '',
       fecha_pago: service.fecha_pago || new Date().toISOString().split('T')[0],
       metodo: service.metodo || 'Tarjeta',
       categoria: service.categoria || 'Streaming',
       tipo: service.tipo || 'Mensual',
+      dias_recordatorio: service.dias_recordatorio || '3',
+      estado_suscripcion: service.estado_suscripcion || 'Activa',
+      url_servicio: service.url_servicio || '',
       notas: service.notas || '',
       contribuciones: Array.isArray(service.contribuciones) ? service.contribuciones.map(c => ({
         id: c.id || Math.random().toString(),
         nombre: c.nombre || '',
-        monto: c.monto || ''
+        monto: c.monto || '',
+        pagado: !!c.pagado
       })) : []
     });
     setShowServiceModal(true);
+  };
+
+  const handleToggleServiceStatus = async (service) => {
+    const nuevoEstado = service.estado_suscripcion === 'En Pausa' ? 'Activa' : 'En Pausa';
+    try {
+      if (setServicios) {
+        setServicios(activeServicios.map(s => s.id === service.id ? { ...s, estado_suscripcion: nuevoEstado } : s));
+      }
+      await supabase.from('servicios').update({ estado_suscripcion: nuevoEstado }).eq('id', service.id);
+      if (onRefresh) await onRefresh();
+    } catch (err) {
+      console.error("Error al cambiar estado:", err);
+    }
   };
 
   const handleSaveService = async (e) => {
@@ -346,20 +381,27 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     const payload = {
       nombre: serviceForm.nombre.trim(),
       monto: parseFloat(serviceForm.monto) || 0,
+      fecha_inicio: serviceForm.fecha_inicio,
+      es_ilimitado: serviceForm.es_ilimitado,
+      fecha_fin: serviceForm.es_ilimitado ? null : (serviceForm.fecha_fin || null),
       fecha_pago: serviceForm.fecha_pago,
       metodo: serviceForm.metodo,
       categoria: serviceForm.categoria,
       tipo: serviceForm.tipo,
+      dias_recordatorio: serviceForm.dias_recordatorio,
+      estado_suscripcion: serviceForm.estado_suscripcion,
+      url_servicio: serviceForm.url_servicio?.trim() || '',
       notas: serviceForm.notas.trim(),
       contribuciones: (serviceForm.contribuciones || []).map(c => ({
+        id: c.id || Math.random().toString(),
         nombre: c.nombre.trim(),
-        monto: parseFloat(c.monto) || 0
+        monto: parseFloat(c.monto) || 0,
+        pagado: !!c.pagado
       }))
     };
 
     try {
       if (editingService) {
-        // Optimistic UI
         const updated = activeServicios.map(s => s.id === editingService.id ? { ...s, ...payload } : s);
         setServicios(updated);
         await supabase.from('servicios').update(payload).eq('id', editingService.id);
@@ -378,7 +420,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     }
   };
 
-  // PAGO RÁPIDO EN 1-CLIC
+  // PAGO RÁPIDO EN 1-CLIC CON AVANCE POR CICLO
   const handlePayServiceClick = async (service) => {
     try {
       const hoyStr = new Date().toISOString().split('T')[0];
@@ -390,9 +432,20 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       const nombresContribs = contribs.map(c => `${c.nombre} (${c.monto} BOB)`).join(', ');
       const descPago = `Suscripción: ${service.nombre}` + (nombresContribs ? ` · Aportes: ${nombresContribs}` : '');
 
-      // 1. Siguiente fecha de vencimiento (+1 mes)
+      // 1. Siguiente fecha de vencimiento según ciclo
       const fActual = parseLocalDate(service.fecha_pago || hoyStr);
-      fActual.setMonth(fActual.getMonth() + 1);
+      const ciclo = service.tipo || 'Mensual';
+      
+      if (ciclo === 'Trimestral') {
+        fActual.setMonth(fActual.getMonth() + 3);
+      } else if (ciclo === 'Semestral') {
+        fActual.setMonth(fActual.getMonth() + 6);
+      } else if (ciclo === 'Anual') {
+        fActual.setFullYear(fActual.getFullYear() + 1);
+      } else {
+        fActual.setMonth(fActual.getMonth() + 1);
+      }
+      
       const siguienteFechaPago = fActual.toISOString().split('T')[0];
 
       // 2. Crear nuevo egreso
@@ -459,16 +512,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           egresos: [item, ...(prev?.egresos || [])]
         }));
       }
+      await supabase.from('egresos').insert([item]);
       setQuickExpense({
         descripcion: '',
         monto: '',
         categoria: 'Servicio',
         fecha: new Date().toISOString().split('T')[0]
       });
-      await supabase.from('egresos').insert([item]);
       if (onRefresh) await onRefresh();
     } catch (err) {
-      console.error("Error al registrar egreso:", err);
+      console.error("Error al registrar egreso rápido:", err);
     } finally {
       setQuickLoading(false);
     }
@@ -530,7 +583,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               Control de Egresos & Suscripciones
             </h2>
             <p style={{ fontSize: '11px', color: t.textMuted, margin: '4px 0 0', fontWeight: 500 }}>
-              Gestión inteligente de presupuesto, costos fijos y gastos compartidos
+              Gestión inteligente de presupuesto, costos fijos y suscripciones continuas
             </p>
           </div>
 
@@ -570,147 +623,129 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           </div>
         </div>
 
-        {/* ── TARJETAS MÉTRICAS EJECUTIVAS (Linear Style con Sparklines Animadas) ──── */}
+        {/* ── TARJETAS MÉTRICAS EJECUTIVAS (Linear Style con Gráficos de Barras) ──── */}
         <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
           
           {/* Tarjeta 1: Total Gastado */}
           <div className="metric-card-executive animate-countUp stagger-1" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary }}>Egresos del Mes</span>
                 <span className="badge-luxury-neutral" style={{ padding: '2px 8px', fontSize: '9px' }}>
-                  {budgetPercent}% Presupuesto
+                  {budgetPercent}% Consumido
                 </span>
               </div>
               <h3 style={{ fontSize: 26, fontWeight: 800, color: '#f87171', letterSpacing: '-0.04em', margin: 0 }}>
                 <CountUp value={totalEgresosMes} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted }}>BOB</span>
               </h3>
             </div>
-            {/* Animated Smooth Sparkline Curve */}
-            <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
-              <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-                <defs>
-                  <linearGradient id="grad-egresos-red" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity="0.35" />
-                    <stop offset="60%" stopColor="#ef4444" stopOpacity="0.08" />
-                    <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
-                  </linearGradient>
-                  <filter id="glow-egresos-red" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#ef4444" floodOpacity="0.4" />
-                  </filter>
-                </defs>
-                <path
-                  d="M 0,52 C 50,52 80,38 125,44 C 170,50 200,24 240,30 C 270,34 288,18 300,20 L 300,65 L 0,65 Z"
-                  fill="url(#grad-egresos-red)"
-                  className="sparkline-animated-fill"
-                />
-                <path
-                  d="M 0,52 C 50,52 80,38 125,44 C 170,50 200,24 240,30 C 270,34 288,18 300,20"
-                  fill="none"
-                  stroke="#ef4444"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter="url(#glow-egresos-red)"
-                  className="sparkline-animated-path"
-                />
-                <circle cx="298" cy="20" r="3" fill="#ef4444" />
-                <circle cx="298" cy="20" r="6" fill="#ef4444" opacity="0.3" />
-              </svg>
+            {/* Executive Bar Chart */}
+            <div style={{ width: '100%', marginTop: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '5px', height: '46px', padding: '0 2px' }}>
+                {[35, 48, 60, 52, 70, 65, 80, 75, 88, 100].map((val, idx, arr) => {
+                  const isLast = idx === arr.length - 1;
+                  return (
+                    <div key={idx} style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                      <div
+                        style={{
+                          width: '100%',
+                          height: `${val}%`,
+                          borderRadius: '4px 4px 2px 2px',
+                          backgroundColor: isLast ? '#ef4444' : 'rgba(255, 255, 255, 0.1)',
+                          boxShadow: isLast ? '0 0 10px rgba(239, 68, 68, 0.4)' : 'none',
+                          transition: 'all 0.25s ease',
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
+                <span>Presupuesto Límite</span>
+                <span style={{ color: '#ef4444' }}>{monthlyBudget.toLocaleString()} BOB</span>
+              </div>
             </div>
           </div>
 
           {/* Tarjeta 2: Pendiente / Vencimientos */}
           <div className="metric-card-executive animate-countUp stagger-2" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary }}>Por Pagar (Pendientes)</span>
                 <span className="badge-luxury-warning" style={{ padding: '2px 8px', fontSize: '9px' }}>
-                  {serviciosPendientes.length} servicios
+                  {serviciosPendientes.length} suscripciones
                 </span>
               </div>
               <h3 style={{ fontSize: 26, fontWeight: 800, color: '#fbbf24', letterSpacing: '-0.04em', margin: 0 }}>
                 <CountUp value={totalPendienteMes} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted }}>BOB</span>
               </h3>
             </div>
-            {/* Animated Smooth Sparkline Curve */}
-            <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
-              <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-                <defs>
-                  <linearGradient id="grad-egresos-amber" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.35" />
-                    <stop offset="60%" stopColor="#fbbf24" stopOpacity="0.08" />
-                    <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
-                  </linearGradient>
-                  <filter id="glow-egresos-amber" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#fbbf24" floodOpacity="0.4" />
-                  </filter>
-                </defs>
-                <path
-                  d="M 0,46 C 45,46 75,32 115,38 C 155,44 190,22 230,28 C 265,32 285,14 300,16 L 300,65 L 0,65 Z"
-                  fill="url(#grad-egresos-amber)"
-                  className="sparkline-animated-fill"
-                />
-                <path
-                  d="M 0,46 C 45,46 75,32 115,38 C 155,44 190,22 230,28 C 265,32 285,14 300,16"
-                  fill="none"
-                  stroke="#fbbf24"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter="url(#glow-egresos-amber)"
-                  className="sparkline-animated-path"
-                />
-                <circle cx="298" cy="16" r="3" fill="#fbbf24" />
-                <circle cx="298" cy="16" r="6" fill="#fbbf24" opacity="0.3" />
-              </svg>
+            {/* Executive Bar Chart */}
+            <div style={{ width: '100%', marginTop: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '5px', height: '46px', padding: '0 2px' }}>
+                {[50, 60, 45, 75, 68, 82, 70, 85, 90, 100].map((val, idx, arr) => {
+                  const isLast = idx === arr.length - 1;
+                  return (
+                    <div key={idx} style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                      <div
+                        style={{
+                          width: '100%',
+                          height: `${val}%`,
+                          borderRadius: '4px 4px 2px 2px',
+                          backgroundColor: isLast ? '#fbbf24' : 'rgba(255, 255, 255, 0.1)',
+                          boxShadow: isLast ? '0 0 10px rgba(251, 191, 36, 0.4)' : 'none',
+                          transition: 'all 0.25s ease',
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
+                <span>Compromisos Activos</span>
+                <span style={{ color: '#fbbf24' }}>{activeServicios.length} en seguimiento</span>
+              </div>
             </div>
           </div>
 
           {/* Tarjeta 3: Aportes / Ahorro */}
           <div className="metric-card-executive animate-countUp stagger-3" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary }}>Aportes de Co-pagadores</span>
                 <span className="badge-luxury-success" style={{ padding: '2px 8px', fontSize: '9px' }}>
-                  Ahorro Activo
+                  Ahorro Mensual
                 </span>
               </div>
               <h3 style={{ fontSize: 26, fontWeight: 800, color: '#34d399', letterSpacing: '-0.04em', margin: 0 }}>
                 +<CountUp value={totalAportesProyectados} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted }}>BOB</span>
               </h3>
             </div>
-            {/* Animated Smooth Sparkline Curve */}
-            <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
-              <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-                <defs>
-                  <linearGradient id="grad-egresos-emerald" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#34d399" stopOpacity="0.35" />
-                    <stop offset="60%" stopColor="#34d399" stopOpacity="0.08" />
-                    <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
-                  </linearGradient>
-                  <filter id="glow-egresos-emerald" x="-20%" y="-20%" width="140%" height="140%">
-                    <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#34d399" floodOpacity="0.4" />
-                  </filter>
-                </defs>
-                <path
-                  d="M 0,50 C 50,50 85,34 130,40 C 175,46 205,22 245,28 C 275,32 288,14 300,16 L 300,65 L 0,65 Z"
-                  fill="url(#grad-egresos-emerald)"
-                  className="sparkline-animated-fill"
-                />
-                <path
-                  d="M 0,50 C 50,50 85,34 130,40 C 175,46 205,22 245,28 C 275,32 288,14 300,16"
-                  fill="none"
-                  stroke="#34d399"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter="url(#glow-egresos-emerald)"
-                  className="sparkline-animated-path"
-                />
-                <circle cx="298" cy="16" r="3" fill="#34d399" />
-                <circle cx="298" cy="16" r="6" fill="#34d399" opacity="0.3" />
-              </svg>
+            {/* Executive Bar Chart */}
+            <div style={{ width: '100%', marginTop: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '5px', height: '46px', padding: '0 2px' }}>
+                {[20, 35, 45, 55, 60, 70, 78, 85, 92, 100].map((val, idx, arr) => {
+                  const isLast = idx === arr.length - 1;
+                  return (
+                    <div key={idx} style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                      <div
+                        style={{
+                          width: '100%',
+                          height: `${val}%`,
+                          borderRadius: '4px 4px 2px 2px',
+                          backgroundColor: isLast ? '#34d399' : 'rgba(255, 255, 255, 0.1)',
+                          boxShadow: isLast ? '0 0 10px rgba(52, 211, 153, 0.4)' : 'none',
+                          transition: 'all 0.25s ease',
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
+                <span>Reducción de Costo</span>
+                <span style={{ color: '#34d399' }}>Gastos Compartidos</span>
+              </div>
             </div>
           </div>
 
@@ -729,10 +764,10 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
                 <div>
                   <h3 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Suscripciones y Pagos Recurrentes
+                    Suscripciones y Servicios Activos
                   </h3>
                   <p style={{ fontSize: 11, color: t.textMuted, margin: '2px 0 0' }}>
-                    Registra y gestiona el ciclo mensual con división de aportes
+                    Configuración de fecha de inicio, vigencia continua/ilimitada y aportes compartidos
                   </p>
                 </div>
                 <button
@@ -746,8 +781,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               {activeServicios.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 20px', color: t.textDim }}>
                   <Bookmark size={36} style={{ opacity: 0.2, margin: '0 auto 12px' }} />
-                  <p style={{ margin: 0, fontWeight: 600, color: t.text }}>No tienes servicios registrados</p>
-                  <p style={{ margin: '4px 0 0', fontSize: '11px', color: t.textMuted }}>Agrega Netflix, Spotify, ChatGPT, Alquiler o Servicios Básicos</p>
+                  <p style={{ margin: 0, fontWeight: 600, color: t.text }}>No tienes suscripciones registradas</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '11px', color: t.textMuted }}>Agrega tus servicios como Netflix, ChatGPT Plus, Claude, Alquiler o Hosting</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -759,19 +794,22 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                     const sumContribs = contribs.reduce((acc, c) => acc + (parseFloat(c.monto) || 0), 0);
                     const totalMonto = parseFloat(s.monto) || 0;
                     const neto = Math.max(totalMonto - sumContribs, 0);
+                    const isPaused = s.estado_suscripcion === 'En Pausa';
 
                     return (
                       <div
                         key={s.id}
                         style={{
                           padding: '16px 18px', borderRadius: '16px',
-                          backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)',
+                          backgroundColor: isPaused ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)',
+                          border: isPaused ? '1px dashed rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.06)',
                           display: 'flex', flexDirection: isMobile ? 'column' : 'row',
                           alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between',
                           gap: '14px', transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          opacity: isPaused ? 0.7 : 1
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.03)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)'; e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'; }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = isPaused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)'; }}
                       >
                         {/* Identificador & Avatar */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
@@ -786,15 +824,48 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                               <h4 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                                 {s.nombre}
                               </h4>
-                              <span style={{
-                                fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '9999px',
-                                backgroundColor: venc.bg, color: venc.color, textTransform: 'uppercase', letterSpacing: '0.04em'
-                              }}>
-                                {venc.label}
-                              </span>
+                              
+                              {/* Estado de Suscripción */}
+                              {isPaused ? (
+                                <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '9999px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', textTransform: 'uppercase' }}>
+                                  Pausada
+                                </span>
+                              ) : (
+                                <span style={{
+                                  fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '9999px',
+                                  backgroundColor: venc.bg, color: venc.color, textTransform: 'uppercase', letterSpacing: '0.04em'
+                                }}>
+                                  {venc.label}
+                                </span>
+                              )}
+
+                              {/* Badge Ilimitado o Fecha Fin */}
+                              {s.es_ilimitado !== false ? (
+                                <span style={{ fontSize: '9px', fontWeight: 600, padding: '1px 6px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}>
+                                  Ilimitada
+                                </span>
+                              ) : s.fecha_fin ? (
+                                <span style={{ fontSize: '9px', fontWeight: 600, padding: '1px 6px', borderRadius: '6px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#f87171' }}>
+                                  Fin: {s.fecha_fin}
+                                </span>
+                              ) : null}
+
+                              {/* Enlace Web directo si existe */}
+                              {s.url_servicio && (
+                                <a
+                                  href={s.url_servicio.startsWith('http') ? s.url_servicio : `https://${s.url_servicio}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-neutral-400 hover:text-white transition-colors"
+                                  title="Abrir plataforma del servicio"
+                                >
+                                  <ExternalLink size={12} />
+                                </a>
+                              )}
                             </div>
-                            <p style={{ fontSize: '11px', color: t.textMuted, margin: '2px 0 0' }}>
-                              Ciclo {s.tipo || 'Mensual'} · Vence el <span className="num-tabular" style={{ fontWeight: 600, color: t.textSecondary }}>{s.fecha_pago}</span> {s.notas ? `· ${s.notas}` : ''}
+
+                            <p style={{ fontSize: '11px', color: t.textMuted, margin: '3px 0 0' }}>
+                              Inicio: <span className="num-tabular" style={{ color: t.textSecondary }}>{s.fecha_inicio || 'N/A'}</span> · Ciclo {s.tipo || 'Mensual'} · Próximo: <span className="num-tabular" style={{ fontWeight: 600, color: t.textSecondary }}>{s.fecha_pago}</span> {s.notas ? `· ${s.notas}` : ''}
                             </p>
 
                             {/* Chips de Co-pagadores */}
@@ -832,9 +903,17 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                             <button
                               onClick={() => handlePayServiceClick(s)}
                               className="btn-action-pill btn-action-pill-primary"
-                              title="Marcar pago de este mes y avanzar fecha"
+                              title="Marcar pago de este período y avanzar fecha"
                             >
                               <Check size={12} /> Pagar
+                            </button>
+                            <button
+                              onClick={() => handleToggleServiceStatus(s)}
+                              className="btn-action-pill"
+                              style={{ padding: '6px 8px' }}
+                              title={isPaused ? "Reactivar Suscripción" : "Pausar Suscripción"}
+                            >
+                              {isPaused ? <Play size={12} color="#34d399" /> : <Pause size={12} color="#fbbf24" />}
                             </button>
                             <button
                               onClick={() => handleOpenEditService(s)}
@@ -882,6 +961,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                     required
                   />
                 </div>
+
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="number"
@@ -904,37 +984,39 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                     <option value="Otro">Otro</option>
                   </select>
                 </div>
-                <div>
-                  <input
-                    type="date"
-                    value={quickExpense.fecha}
-                    onChange={e => setQuickExpense(prev => ({ ...prev, fecha: e.target.value }))}
-                    className="w-full text-xs"
-                    required
-                  />
-                </div>
+
                 <button
                   type="submit"
                   disabled={quickLoading}
-                  className="btn-action-pill btn-action-pill-primary w-full py-2.5"
-                  style={{ width: '100%', borderRadius: '12px', fontSize: '11px' }}
+                  className="btn-action-pill btn-action-pill-primary w-full py-2"
+                  style={{ borderRadius: '10px' }}
                 >
-                  {quickLoading ? <RefreshCw size={13} className="animate-spin" /> : <Save size={13} />} Guardar Egreso
+                  {quickLoading ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />} Registrar Gasto
                 </button>
               </form>
             </div>
 
-            {/* Widget: Resumen Anual Proyectado */}
-            <div style={{ padding: '20px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-              <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, display: 'block' }}>
-                Proyección Anual
-              </span>
-              <h3 className="num-tabular" style={{ fontSize: '20px', fontWeight: 800, color: t.text, margin: '4px 0 2px' }}>
-                {annualSubscriptionCost.toLocaleString()} <span style={{ fontSize: '11px', color: t.textMuted }}>BOB/año</span>
-              </h3>
-              <p style={{ fontSize: '10px', color: t.textMuted, margin: 0 }}>
-                Costo neto anual estimado de tus {activeServicios.length} suscripciones activas
-              </p>
+            {/* Widget: Proyección de Costo Anual */}
+            <div style={{ padding: '22px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
+              <h4 style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+                Proyección Anual de Suscripciones
+              </h4>
+              <div style={{ marginBottom: '12px' }}>
+                <span style={{ fontSize: '11px', color: t.textMuted }}>Gasto Anual Neto Proyectado</span>
+                <p className="num-tabular" style={{ fontSize: '22px', fontWeight: 800, color: t.text, margin: '2px 0 0' }}>
+                  {annualSubscriptionCost.toLocaleString()} <span style={{ fontSize: '12px', color: t.textMuted }}>BOB / año</span>
+                </p>
+              </div>
+              <div style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: t.textMuted, marginBottom: '6px' }}>
+                  <span>Ahorro anual por aportes:</span>
+                  <span style={{ color: '#34d399', fontWeight: 700 }}>+{(totalAportesProyectados * 12).toLocaleString()} BOB</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: t.textMuted }}>
+                  <span>Suscripciones activas:</span>
+                  <span style={{ color: t.text, fontWeight: 700 }}>{activeServicios.filter(s => s.estado_suscripcion !== 'En Pausa').length}</span>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -943,106 +1025,126 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          PESTAÑA 2: PRESUPUESTO & ANALÍTICA DE GASTOS
+          PESTAÑA 2: PRESUPUESTO MENSUAL Y ANALÍTICA
           ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'presupuesto' && (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           
-          {/* Tarjeta de Control Presupuestario */}
-          <div style={{ padding: '24px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+          {/* Tarjeta de Control de Presupuesto */}
+          <div className="md:col-span-6" style={{ padding: '24px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
-                <h3 style={{ fontSize: 15, fontWeight: 800, color: t.text, margin: 0, letterSpacing: '-0.02em' }}>
-                  Control de Presupuesto Mensual
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Presupuesto Inteligente del Mes
                 </h3>
                 <p style={{ fontSize: 11, color: t.textMuted, margin: '2px 0 0' }}>
-                  Establece un techo de gastos para mantener tu salud financiera
+                  Límite de gasto mensual con alertas de consumo en tiempo real
                 </p>
               </div>
-
-              {isEditingBudget ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <input
-                    type="number"
-                    value={tempBudgetInput}
-                    onChange={e => setTempBudgetInput(e.target.value)}
-                    className="text-xs"
-                    style={{ width: '120px', padding: '6px 10px', borderRadius: '10px' }}
-                    autoFocus
-                  />
-                  <button onClick={handleSaveBudget} className="btn-action-pill btn-action-pill-primary">
-                    <Check size={12} /> Guardar
-                  </button>
-                  <button onClick={() => setIsEditingBudget(false)} className="btn-action-pill">
-                    Cancelar
-                  </button>
-                </div>
-              ) : (
-                <button onClick={() => { setTempBudgetInput(monthlyBudget.toString()); setIsEditingBudget(true); }} className="btn-action-pill">
-                  <Edit3 size={12} /> Ajustar Límite ({monthlyBudget.toLocaleString()} BOB)
-                </button>
-              )}
+              <button
+                onClick={() => {
+                  setTempBudgetInput(monthlyBudget.toString());
+                  setIsEditingBudget(!isEditingBudget);
+                }}
+                className="btn-action-pill"
+              >
+                <Edit3 size={12} /> {isEditingBudget ? 'Cancelar' : 'Ajustar Límite'}
+              </button>
             </div>
+
+            {isEditingBudget && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', padding: '14px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                <input
+                  type="number"
+                  value={tempBudgetInput}
+                  onChange={e => setTempBudgetInput(e.target.value)}
+                  placeholder="Nuevo Límite en BOB"
+                  className="flex-1 text-xs"
+                />
+                <button
+                  onClick={handleSaveBudget}
+                  className="btn-action-pill btn-action-pill-primary"
+                >
+                  <Save size={12} /> Guardar
+                </button>
+              </div>
+            )}
 
             {/* Barra de Progreso del Presupuesto */}
-            <div style={{ width: '100%', height: '12px', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.05)', overflow: 'hidden', position: 'relative' }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${budgetPercent}%`,
-                  borderRadius: '9999px',
-                  backgroundColor: budgetPercent > 90 ? '#ef4444' : budgetPercent > 70 ? '#f59e0b' : '#10b981',
-                  transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-                  boxShadow: `0 0 12px ${budgetPercent > 90 ? '#ef4444' : budgetPercent > 70 ? '#f59e0b' : '#10b981'}`
-                }}
-              />
+            <div style={{ marginBottom: '24px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: t.textMuted, marginBottom: '8px' }}>
+                <span>Consumido: <strong style={{ color: t.text }}>{totalEgresosMes.toLocaleString()} BOB</strong></span>
+                <span>Límite: <strong style={{ color: t.text }}>{monthlyBudget.toLocaleString()} BOB</strong></span>
+              </div>
+              <div style={{ width: '100%', height: '10px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '9999px', overflow: 'hidden', position: 'relative' }}>
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${budgetPercent}%`,
+                    backgroundColor: budgetPercent > 90 ? '#ef4444' : (budgetPercent > 70 ? '#fbbf24' : '#10b981'),
+                    borderRadius: '9999px',
+                    transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
+                <span style={{ fontSize: '11px', color: t.textMuted }}>
+                  {budgetRemaining >= 0 ? 'Saldo restante disponible:' : '¡Excedido por:'}
+                </span>
+                <span className="num-tabular" style={{ fontSize: '15px', fontWeight: 800, color: budgetRemaining >= 0 ? '#34d399' : '#ef4444' }}>
+                  {Math.abs(budgetRemaining).toLocaleString()} BOB
+                </span>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', fontSize: '11px' }}>
-              <span style={{ color: t.textMuted }}>
-                Gastado: <strong className="num-tabular" style={{ color: t.text }}>{totalEgresosMes.toLocaleString()} BOB</strong> ({budgetPercent}%)
-              </span>
-              <span style={{ color: budgetRemaining >= 0 ? '#34d399' : '#ef4444', fontWeight: 700 }}>
-                {budgetRemaining >= 0 ? `Disponible: +${budgetRemaining.toLocaleString()} BOB` : `Excedido por: ${Math.abs(budgetRemaining).toLocaleString()} BOB`}
-              </span>
+            {/* Diagnóstico */}
+            <div style={{ padding: '14px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Info size={18} color={budgetPercent > 90 ? '#ef4444' : '#10b981'} />
+              <p style={{ fontSize: '11px', color: t.textSecondary, margin: 0, lineHeight: 1.4 }}>
+                {budgetPercent > 90
+                  ? 'Atención: Has superado el 90% del presupuesto asignado para este mes.'
+                  : (budgetPercent > 70
+                    ? 'Has consumido más del 70% del presupuesto. Modera los egresos no esenciales.'
+                    : 'Excelente control financiero. Tu nivel de egresos se mantiene en la zona óptima.')}
+              </p>
             </div>
           </div>
 
-          {/* Desglose por Categoría */}
-          <div style={{ padding: '24px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-            <h3 style={{ fontSize: 14, fontWeight: 800, color: t.text, margin: '0 0 18px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-              Distribución de Gastos por Categoría (Este Mes)
+          {/* Analítica y Distribución por Categoría */}
+          <div className="md:col-span-6" style={{ padding: '24px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+              Distribución de Gastos
             </h3>
+            <p style={{ fontSize: 11, color: t.textMuted, margin: '0 0 20px' }}>
+              Desglose porcentual de los egresos registrados este mes
+            </p>
 
             {categoryBreakdown.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px', color: t.textDim, fontSize: '11px' }}>
-                No hay gastos registrados en el mes actual para generar analíticas.
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: t.textDim, fontSize: '11px' }}>
+                No hay egresos registrados en el mes actual para generar el desglose.
               </div>
             ) : (
-              <div className="space-y-4">
-                {categoryBreakdown.map((cat, idx) => {
-                  const IconC = cat.icon;
+              <div className="space-y-3">
+                {categoryBreakdown.map(item => {
+                  const IconComp = item.icon;
                   return (
-                    <div key={idx} className="space-y-1.5">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                    <div key={item.name} style={{ padding: '10px 14px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: cat.color }} />
-                          <span style={{ fontWeight: 600, color: t.text }}>{cat.name}</span>
+                          <IconComp size={14} color={item.color} />
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: t.text }}>{item.name}</span>
                         </div>
-                        <span className="num-tabular" style={{ fontWeight: 700, color: t.text }}>
-                          {cat.amount.toLocaleString()} BOB <span style={{ fontSize: '10px', color: t.textMuted }}>({cat.percentage}%)</span>
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span className="num-tabular" style={{ fontSize: '12px', fontWeight: 700, color: t.textSecondary }}>
+                            {item.amount.toLocaleString()} BOB
+                          </span>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: item.color, backgroundColor: `${item.color}15`, padding: '1px 6px', borderRadius: '6px' }}>
+                            {item.percentage}%
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ width: '100%', height: '6px', borderRadius: '9999px', backgroundColor: 'rgba(255,255,255,0.04)', overflow: 'hidden' }}>
-                        <div
-                          style={{
-                            height: '100%',
-                            width: `${cat.percentage}%`,
-                            borderRadius: '9999px',
-                            backgroundColor: cat.color,
-                            transition: 'width 0.5s ease'
-                          }}
-                        />
+                      <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '9999px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${item.percentage}%`, backgroundColor: item.color, borderRadius: '9999px' }} />
                       </div>
                     </div>
                   );
@@ -1188,17 +1290,20 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
         </div>
       )}
 
-      {/* ── MODAL NUEVA / EDITAR SUSCRIPCIÓN ───────────────────────────────── */}
+      {/* ── MODAL NUEVA / EDITAR SUSCRIPCIÓN COMPLETA ─────────────────────── */}
       {showServiceModal && (
         <div className="fixed inset-0 z-[1050] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div
-            className="w-full max-w-lg border rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            className="w-full max-w-xl border rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
             style={{ backgroundColor: t.panel, borderColor: t.border }}
           >
             <div className="p-5 border-b flex justify-between items-center" style={{ borderColor: t.border }}>
-              <h3 className="text-xs font-black uppercase tracking-wider text-white">
-                {editingService ? "Editar Suscripción" : "Nueva Suscripción"}
-              </h3>
+              <div className="flex items-center gap-2.5">
+                <Bookmark size={16} className="text-emerald-400" />
+                <h3 className="text-xs font-black uppercase tracking-wider text-white">
+                  {editingService ? "Ajustes de Suscripción" : "Nueva Suscripción & Servicio"}
+                </h3>
+              </div>
               <button
                 onClick={() => setShowServiceModal(false)}
                 className="p-2 rounded-lg bg-white/5 text-neutral-400 hover:text-white transition-all"
@@ -1207,33 +1312,36 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </button>
             </div>
 
-            <form onSubmit={handleSaveService} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto mac-scrollbar">
-              <div className="grid grid-cols-2 gap-3">
+            <form onSubmit={handleSaveService} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto mac-scrollbar">
+              
+              {/* FILA 1: Nombre y Costo Total */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Nombre del Servicio</label>
                   <input
                     type="text"
                     value={serviceForm.nombre}
                     onChange={e => setServiceForm(prev => ({ ...prev, nombre: e.target.value }))}
-                    placeholder="Ej. Netflix, Spotify, ChatGPT"
+                    placeholder="Ej. Netflix, ChatGPT Plus, Midjourney, iCloud"
                     className="w-full text-xs"
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Costo Mensual Total (BOB)</label>
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Costo Total del Período (BOB)</label>
                   <input
                     type="number"
                     value={serviceForm.monto}
                     onChange={e => setServiceForm(prev => ({ ...prev, monto: e.target.value }))}
-                    placeholder="Ej. 100"
+                    placeholder="Ej. 140"
                     className="w-full text-xs"
                     required
                   />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              {/* FILA 2: Categoría, Ciclo y Estado */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Categoría</label>
                   <select
@@ -1246,34 +1354,140 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Fecha Vencimiento</label>
-                  <input
-                    type="date"
-                    value={serviceForm.fecha_pago}
-                    onChange={e => setServiceForm(prev => ({ ...prev, fecha_pago: e.target.value }))}
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Ciclo de Cobro</label>
+                  <select
+                    value={serviceForm.tipo}
+                    onChange={e => setServiceForm(prev => ({ ...prev, tipo: e.target.value }))}
                     className="w-full text-xs"
-                    required
-                  />
+                  >
+                    <option value="Mensual">Mensual (Cada mes)</option>
+                    <option value="Trimestral">Trimestral (Cada 3 meses)</option>
+                    <option value="Semestral">Semestral (Cada 6 meses)</option>
+                    <option value="Anual">Anual (Cada año)</option>
+                    <option value="Pago Único">Pago Único / Perpetuo</option>
+                  </select>
                 </div>
+
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Método</label>
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Estado</label>
+                  <select
+                    value={serviceForm.estado_suscripcion}
+                    onChange={e => setServiceForm(prev => ({ ...prev, estado_suscripcion: e.target.value }))}
+                    className="w-full text-xs"
+                  >
+                    <option value="Activa">Activa</option>
+                    <option value="En Pausa">En Pausa</option>
+                    <option value="Cancelada">Cancelada</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* FILA 3: VIGENCIA & FECHAS AVANZADAS */}
+              <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-1.5">
+                    <Calendar size={13} className="text-emerald-400" /> Cronograma de Vigencia
+                  </span>
+                  
+                  {/* Switch Ilimitado */}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={serviceForm.es_ilimitado}
+                      onChange={e => setServiceForm(prev => ({ ...prev, es_ilimitado: e.target.checked }))}
+                      className="accent-emerald-500 rounded"
+                    />
+                    <span className="text-[10px] font-semibold text-neutral-400">Suscripción Continua (Ilimitada)</span>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1">Fecha de Inicio / Contratación</label>
+                    <input
+                      type="date"
+                      value={serviceForm.fecha_inicio}
+                      onChange={e => setServiceForm(prev => ({ ...prev, fecha_inicio: e.target.value }))}
+                      className="w-full text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1">Próximo Vencimiento / Pago</label>
+                    <input
+                      type="date"
+                      value={serviceForm.fecha_pago}
+                      onChange={e => setServiceForm(prev => ({ ...prev, fecha_pago: e.target.value }))}
+                      className="w-full text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1">
+                      {serviceForm.es_ilimitado ? "Finalización (Ilimitada)" : "Fecha Fin de Contrato"}
+                    </label>
+                    <input
+                      type="date"
+                      value={serviceForm.fecha_fin}
+                      onChange={e => setServiceForm(prev => ({ ...prev, fecha_fin: e.target.value }))}
+                      disabled={serviceForm.es_ilimitado}
+                      className={`w-full text-xs ${serviceForm.es_ilimitado ? 'opacity-40 cursor-not-allowed' : ''}`}
+                      placeholder={serviceForm.es_ilimitado ? "Sin vencimiento" : ""}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* FILA 4: Método de Pago, Recordatorio y Enlace Web */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Método de Pago</label>
                   <select
                     value={serviceForm.metodo}
                     onChange={e => setServiceForm(prev => ({ ...prev, metodo: e.target.value }))}
                     className="w-full text-xs"
                   >
-                    <option value="Tarjeta">Tarjeta</option>
+                    <option value="Tarjeta">Tarjeta Débito/Crédito</option>
+                    <option value="Transferencia">Transferencia Bancaria</option>
+                    <option value="QR">Pago QR</option>
+                    <option value="Débito Automático">Débito Automático</option>
                     <option value="Efectivo">Efectivo</option>
-                    <option value="Transferencia">Transferencia</option>
-                    <option value="QR">QR</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Aviso Previo</label>
+                  <select
+                    value={serviceForm.dias_recordatorio}
+                    onChange={e => setServiceForm(prev => ({ ...prev, dias_recordatorio: e.target.value }))}
+                    className="w-full text-xs"
+                  >
+                    <option value="1">1 día antes</option>
+                    <option value="3">3 días antes</option>
+                    <option value="5">5 días antes</option>
+                    <option value="7">7 días antes</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Enlace / Web del Servicio</label>
+                  <input
+                    type="text"
+                    value={serviceForm.url_servicio}
+                    onChange={e => setServiceForm(prev => ({ ...prev, url_servicio: e.target.value }))}
+                    placeholder="ej. netflix.com, openai.com"
+                    className="w-full text-xs"
+                  />
                 </div>
               </div>
 
-              {/* CO-PAGADORES (GASTOS COMPARTIDOS) */}
-              <div className="pt-4 border-t border-white/5">
-                <div className="flex justify-between items-center mb-3">
+              {/* FILA 5: CO-PAGADORES (GASTOS COMPARTIDOS) */}
+              <div className="pt-3 border-t border-white/5">
+                <div className="flex justify-between items-center mb-2.5">
                   <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-1.5">
                     <User size={12} className="text-neutral-500" /> Gastos Compartidos (Co-pagadores)
                   </label>
@@ -1288,16 +1502,16 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 </div>
 
                 {(serviceForm.contribuciones || []).length === 0 ? (
-                  <p className="text-[10px] text-neutral-500 italic py-2">
-                    Este servicio lo pagas tú solo en su totalidad.
+                  <p className="text-[10px] text-neutral-500 italic py-1">
+                    Este servicio no tiene co-pagadores; lo cubres tú al 100%.
                   </p>
                 ) : (
-                  <div className="space-y-2 mb-3">
+                  <div className="space-y-2 mb-2">
                     {serviceForm.contribuciones.map(c => (
                       <div key={c.id} className="flex gap-2 items-center">
                         <input
                           type="text"
-                          placeholder="Nombre (ej. Carlos)"
+                          placeholder="Nombre (ej. Juan)"
                           value={c.nombre}
                           onChange={e => updateContributor(c.id, 'nombre', e.target.value)}
                           className="flex-1 text-[11px]"
@@ -1324,22 +1538,22 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 )}
 
                 <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex justify-between items-center mt-2">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-500">Monto Neto Real para Ti:</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-500">Costo Neto Propio a Pagar:</span>
                   <span className="text-xs font-black text-emerald-400">{computedNetCost.toLocaleString()} BOB</span>
                 </div>
               </div>
 
               <div>
-                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Notas adicionales</label>
+                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Notas, PIN o Perfil</label>
                 <textarea
                   value={serviceForm.notas}
                   onChange={e => setServiceForm(prev => ({ ...prev, notas: e.target.value }))}
-                  placeholder="Detalles, correo de la cuenta, PIN..."
-                  className="w-full h-16 text-xs resize-none"
+                  placeholder="Detalles de la cuenta, perfil asignado, correo o contraseña..."
+                  className="w-full h-14 text-xs resize-none"
                 />
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-white/5">
+              <div className="flex gap-2 pt-3 border-t border-white/5">
                 <button
                   type="submit"
                   disabled={serviceLoading}
@@ -1348,21 +1562,13 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 >
                   {serviceLoading ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />} Guardar Suscripción
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowServiceModal(false)}
-                  className="btn-action-pill"
-                  style={{ borderRadius: '12px', padding: '0 20px' }}
-                >
-                  Cancelar
-                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* ── MODAL EDITAR EGRESO ────────────────────────────────────────────── */}
+      {/* ── MODAL DE EDICIÓN DE EGRESO ─────────────────────────────────────── */}
       {showExpenseModal && (
         <div className="fixed inset-0 z-[1050] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div
@@ -1383,7 +1589,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
             <form onSubmit={handleSaveExpense} className="p-6 space-y-4">
               <div>
-                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Concepto o Descripción</label>
+                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Concepto</label>
                 <input
                   type="text"
                   value={expenseForm.descripcion}
@@ -1405,31 +1611,31 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Categoría</label>
-                  <select
-                    value={expenseForm.categoria}
-                    onChange={e => setExpenseForm(prev => ({ ...prev, categoria: e.target.value }))}
+                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Fecha</label>
+                  <input
+                    type="date"
+                    value={expenseForm.fecha}
+                    onChange={e => setExpenseForm(prev => ({ ...prev, fecha: e.target.value }))}
                     className="w-full text-xs"
-                  >
-                    <option value="Servicio">Servicio</option>
-                    <option value="Suscripción">Suscripción</option>
-                    <option value="Alimentación / Comida">Alimentación</option>
-                    <option value="Personal / Salud">Personal</option>
-                    <option value="Compras / Equipamiento">Compra</option>
-                    <option value="Otro">Otro</option>
-                  </select>
+                    required
+                  />
                 </div>
               </div>
 
               <div>
-                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Fecha del Gasto</label>
-                <input
-                  type="date"
-                  value={expenseForm.fecha}
-                  onChange={e => setExpenseForm(prev => ({ ...prev, fecha: e.target.value }))}
+                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Categoría</label>
+                <select
+                  value={expenseForm.categoria}
+                  onChange={e => setExpenseForm(prev => ({ ...prev, categoria: e.target.value }))}
                   className="w-full text-xs"
-                  required
-                />
+                >
+                  <option value="Servicio">Servicio</option>
+                  <option value="Suscripción">Suscripción</option>
+                  <option value="Alimentación / Comida">Alimentación</option>
+                  <option value="Personal / Salud">Personal</option>
+                  <option value="Compras / Equipamiento">Compra</option>
+                  <option value="Otro">Otro</option>
+                </select>
               </div>
 
               <div className="flex gap-2 pt-4 border-t border-white/5">
@@ -1439,15 +1645,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   className="btn-action-pill btn-action-pill-primary flex-1 py-2.5"
                   style={{ borderRadius: '12px' }}
                 >
-                  {expenseLoading ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />} Actualizar Egreso
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowExpenseModal(false)}
-                  className="btn-action-pill"
-                  style={{ borderRadius: '12px', padding: '0 20px' }}
-                >
-                  Cancelar
+                  {expenseLoading ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />} Guardar Cambios
                 </button>
               </div>
             </form>

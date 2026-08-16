@@ -824,14 +824,14 @@ const CommandCenter = ({
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          FILA 1: KPIs PRINCIPALES (Tarjetas Ejecutivas con Sparklines Animadas)
+          FILA 1: KPIs PRINCIPALES (Tarjetas Ejecutivas con Gráfico de Barras)
           ══════════════════════════════════════════════════════ */}
       <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`} style={{ marginBottom: '28px' }}>
         
         {/* KPI 1: Capital Activo en Préstamos */}
         <div className="metric-card-executive animate-countUp stagger-1" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
                 Active Capital
               </span>
@@ -843,44 +843,38 @@ const CommandCenter = ({
               <CountUp value={totalCapital} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
             </h3>
           </div>
-          {/* Animated Smooth Sparkline Curve */}
-          <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
-            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-              <defs>
-                <linearGradient id="grad-active-cap" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
-                  <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                </linearGradient>
-                <filter id="glow-cap" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#10b981" floodOpacity="0.4" />
-                </filter>
-              </defs>
-              <path
-                d="M 0,48 C 50,48 75,32 120,38 C 165,44 195,20 235,26 C 265,30 285,15 300,16 L 300,65 L 0,65 Z"
-                fill="url(#grad-active-cap)"
-                className="sparkline-animated-fill"
-              />
-              <path
-                d="M 0,48 C 50,48 75,32 120,38 C 165,44 195,20 235,26 C 265,30 285,15 300,16"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="url(#glow-cap)"
-                className="sparkline-animated-path"
-              />
-              <circle cx="298" cy="16" r="3" fill="#10b981" />
-              <circle cx="298" cy="16" r="6" fill="#10b981" opacity="0.3" />
-            </svg>
+          {/* Executive Bar Chart */}
+          <div style={{ width: '100%', marginTop: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '5px', height: '46px', padding: '0 2px' }}>
+              {[45, 52, 60, 58, 68, 72, 80, 78, 88, 100].map((val, idx, arr) => {
+                const isLast = idx === arr.length - 1;
+                return (
+                  <div key={idx} style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                    <div
+                      style={{
+                        width: '100%',
+                        height: `${val}%`,
+                        borderRadius: '4px 4px 2px 2px',
+                        backgroundColor: isLast ? '#10b981' : 'rgba(255, 255, 255, 0.1)',
+                        boxShadow: isLast ? '0 0 10px rgba(16, 185, 129, 0.4)' : 'none',
+                        transition: 'all 0.25s ease',
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
+              <span>Evolución Mensual</span>
+              <span style={{ color: '#10b981' }}>+2.5% vs Mes Anterior</span>
+            </div>
           </div>
         </div>
 
         {/* KPI 2: Inventario a Costo */}
         <div className="metric-card-executive animate-countUp stagger-2" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
                 Inventory Value
               </span>
@@ -892,44 +886,38 @@ const CommandCenter = ({
               <CountUp value={valorInventario} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
             </h3>
           </div>
-          {/* Animated Smooth Sparkline Curve */}
-          <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
-            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-              <defs>
-                <linearGradient id="grad-inv-val" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.35" />
-                  <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.08" />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
-                </linearGradient>
-                <filter id="glow-inv" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#f59e0b" floodOpacity="0.4" />
-                </filter>
-              </defs>
-              <path
-                d="M 0,52 C 45,50 80,48 125,52 C 170,56 200,32 240,24 C 270,18 288,26 300,18 L 300,65 L 0,65 Z"
-                fill="url(#grad-inv-val)"
-                className="sparkline-animated-fill"
-              />
-              <path
-                d="M 0,52 C 45,50 80,48 125,52 C 170,56 200,32 240,24 C 270,18 288,26 300,18"
-                fill="none"
-                stroke="#f59e0b"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="url(#glow-inv)"
-                className="sparkline-animated-path"
-              />
-              <circle cx="298" cy="18" r="3" fill="#f59e0b" />
-              <circle cx="298" cy="18" r="6" fill="#f59e0b" opacity="0.3" />
-            </svg>
+          {/* Executive Bar Chart */}
+          <div style={{ width: '100%', marginTop: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '5px', height: '46px', padding: '0 2px' }}>
+              {[60, 65, 55, 70, 75, 68, 82, 85, 92, 100].map((val, idx, arr) => {
+                const isLast = idx === arr.length - 1;
+                return (
+                  <div key={idx} style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                    <div
+                      style={{
+                        width: '100%',
+                        height: `${val}%`,
+                        borderRadius: '4px 4px 2px 2px',
+                        backgroundColor: isLast ? '#f59e0b' : 'rgba(255, 255, 255, 0.1)',
+                        boxShadow: isLast ? '0 0 10px rgba(245, 158, 11, 0.4)' : 'none',
+                        transition: 'all 0.25s ease',
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
+              <span>Rotación de Stock</span>
+              <span style={{ color: '#f59e0b' }}>+6.3% Crecimiento</span>
+            </div>
           </div>
         </div>
 
         {/* KPI 3: Balance Neto Mensual */}
         <div className="metric-card-executive animate-countUp stagger-3" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
                 Net Balance
               </span>
@@ -941,37 +929,34 @@ const CommandCenter = ({
               {balanceMensual >= 0 ? '+' : '-'}<CountUp value={Math.abs(balanceMensual)} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
             </h3>
           </div>
-          {/* Animated Smooth Sparkline Curve */}
-          <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
-            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
-              <defs>
-                <linearGradient id="grad-net-bal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
-                  <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
-                </linearGradient>
-                <filter id="glow-net" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#10b981" floodOpacity="0.4" />
-                </filter>
-              </defs>
-              <path
-                d="M 0,50 C 40,50 75,34 120,40 C 160,46 190,26 230,30 C 265,34 285,16 300,18 L 300,65 L 0,65 Z"
-                fill="url(#grad-net-bal)"
-                className="sparkline-animated-fill"
-              />
-              <path
-                d="M 0,50 C 40,50 75,34 120,40 C 160,46 190,26 230,30 C 265,34 285,16 300,18"
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                filter="url(#glow-net)"
-                className="sparkline-animated-path"
-              />
-              <circle cx="298" cy="18" r="3" fill="#10b981" />
-              <circle cx="298" cy="18" r="6" fill="#10b981" opacity="0.3" />
-            </svg>
+          {/* Executive Bar Chart */}
+          <div style={{ width: '100%', marginTop: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '5px', height: '46px', padding: '0 2px' }}>
+              {[30, 45, 50, 42, 60, 65, 75, 70, 85, 100].map((val, idx, arr) => {
+                const isLast = idx === arr.length - 1;
+                const barColor = balanceMensual >= 0 ? '#10b981' : '#f87171';
+                return (
+                  <div key={idx} style={{ flex: 1, height: '100%', display: 'flex', alignItems: 'flex-end' }}>
+                    <div
+                      style={{
+                        width: '100%',
+                        height: `${val}%`,
+                        borderRadius: '4px 4px 2px 2px',
+                        backgroundColor: isLast ? barColor : 'rgba(255, 255, 255, 0.1)',
+                        boxShadow: isLast ? `0 0 10px ${barColor}60` : 'none',
+                        transition: 'all 0.25s ease',
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
+              <span>Flujo Neto</span>
+              <span style={{ color: balanceMensual >= 0 ? '#10b981' : '#f87171' }}>
+                {balanceMensual >= 0 ? 'Margen Positivo' : 'Déficit del Mes'}
+              </span>
+            </div>
           </div>
         </div>
 
