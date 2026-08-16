@@ -6,7 +6,7 @@ import {
   ChevronDown, ChevronUp, AlertTriangle, Clock, UserPlus,
   Download, Brain, Eye, EyeOff, X, Filter, Box, Check,
   CheckCircle, XCircle, DollarSign, Sparkles, Flame,
-  FileSpreadsheet
+  FileSpreadsheet, LayoutDashboard
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
