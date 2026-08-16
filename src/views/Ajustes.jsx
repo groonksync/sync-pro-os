@@ -1,69 +1,27 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
-  Palette, Monitor, Sidebar, Image, Type, Layout, Sun, Moon, Eye, EyeOff,
+  Palette, Monitor, Sidebar as SidebarIcon, Image as ImageIcon, Type, Layout, Sun, Moon, Eye, EyeOff,
   DollarSign, BadgePercent, CalendarDays, Bell, BellRing, BellOff,
   Smartphone, Tablet, Shield, Lock, Key, Download, Upload, Trash2,
   RefreshCw, Wifi, WifiOff, Zap, Cpu, Languages, Clock, MonitorDown,
   CreditCard, Building2, Wallet, FileText, Video, FolderOpen, MousePointer2,
-  ChevronDown, ChevronRight, Save, Check, X, Camera, QrCode, Link,
+  ChevronDown, ChevronRight, Save, Check, X, Camera, QrCode, Link as LinkIcon,
   AppWindow, Terminal, LogOut, RotateCcw, Info, AlertTriangle, Globe,
-  BookA, BookAudio, BookOpen, Bookmark, Braces, Briefcase, Calendar,
-  ChevronLeft, ChevronUp, ChevronsLeft, Circle, Clipboard, Code,
-  Cog, Command, Compass, Copy, Cpu as CpuIcon, Database, Disc,
-  ExternalLink, Feather, File, Fingerprint, Flag, GitBranch,
-  GripVertical, Headphones, Heart, HelpCircle, Home, Inbox,
-  Layers, LifeBuoy, Lightbulb, List, Loader, Lock as LockIcon,
-  LogIn, Mail, MapPin, Maximize, Menu, MessageSquare, Mic,
-  Minimize, Minus, Monitor as MonitorIcon, Moon as MoonIcon,
-  MoreHorizontal, Move, Music, Navigation, Paperclip,
-  Pause, Pen, Pencil, Phone, PieChart, Pin, Play, Plus,
-  Power, Printer, Radio, Repeat, Reply, Rewind,
-  Rocket, RotateCw, Rss, Scissors, Search, Send,
-  Server, Settings, Share, Shield as ShieldIcon,
-  ShieldOff, Shuffle, SkipBack, SkipForward,
-  Sliders, Smartphone as SmartphoneIcon,
-  Smile, Speaker, Square, Star, StopCircle,
-  Sun as SunIcon, Sunrise, Sunset, SwatchBook,
-  SwitchCamera, Table, Tag, Target, Terminal as TerminalIcon,
-  Thermometer, ThumbsUp, ToggleLeft, ToggleRight,
-  Trash, Trello, TrendingUp, Triangle,
-  Trophy, Truck, Tv, Twitch, Twitter, Umbrella,
+  Bookmark, Briefcase, Calendar, CheckCircle2, ChevronUp, Layers, Sparkles,
+  Play, Bot, ExternalLink
 } from 'lucide-react';
 import { useSettings } from '../lib/settingsStore';
 import { getTheme, useTheme } from '../lib/theme';
+import { aiService } from '../services/aiService';
 
-const ICONS = {
-  Pallete: Palette, Monitor: Monitor, Sidebar: Sidebar, Image: Image,
-  Type: Type, Layout: Layout, Dollar: DollarSign, Percent: BadgePercent,
-  Calendar: CalendarDays, Bell: Bell, Shield: Shield, Lock: Lock,
-  Key: Key, Download: Download, Upload: Upload, Trash: Trash2,
-  Refresh: RefreshCw, Wifi: Wifi, Zap: Zap, Cpu: CpuIcon,
-  Languages: Languages, Clock: Clock, Building: Building2,
-  Wallet: Wallet, File: FileText, Video: Video, Folder: FolderOpen,
-  CreditCard: CreditCard, QrCode: QrCode, Link: Link,
-  Info: Info, Alert: AlertTriangle, Globe: Globe,
-  Smartphone: SmartphoneIcon, ToggleLeft: ToggleLeft,
-  Sun: SunIcon, Moon: MoonIcon, Eye: Eye, EyeOff: EyeOff,
-  Save: Save, Check: Check, X: X, Home: Home, Star: Star,
-};
-
-const SECCIONES = [
-  { id: 'apariencia', icon: 'Pallete', label: 'Apariencia', desc: 'Colores, fondo, barra lateral e imagen' },
-  { id: 'panel', icon: 'Layout', label: 'Panel Principal', desc: 'Widgets del dashboard y vista predeterminada' },
-  { id: 'prestamos', icon: 'Dollar', label: 'Préstamos', desc: 'Defaults, cobros, recordatorios y QR' },
-  { id: 'flujo', icon: 'File', label: 'Flujo de Trabajo', desc: 'Editor de documentos y plantillas' },
-  { id: 'video', icon: 'Video', label: 'Editor de Video', desc: 'Rutas y plantillas Adobe' },
-  { id: 'empresa', icon: 'Building', label: 'Empresa', desc: 'Datos fiscales y facturación' },
-  { id: 'egresos', icon: 'Wallet', label: 'Egresos', desc: 'Categorías y seguimiento' },
-  { id: 'calendario', icon: 'Calendar', label: 'Calendario', desc: 'Vista y sincronización' },
-  { id: 'notificaciones', icon: 'Bell', label: 'Notificaciones', desc: 'Push, sonidos y toasts' },
-  { id: 'idioma', icon: 'Languages', label: 'Idioma y Región', desc: 'Idioma, moneda y zona horaria' },
-  { id: 'seguridad', icon: 'Lock', label: 'Seguridad', desc: 'PIN, bloqueo y datos sensibles' },
-  { id: 'respaldo', icon: 'Download', label: 'Respaldo y Sinc', desc: 'Exportar/Importar configuración' },
-  { id: 'rendimiento', icon: 'Zap', label: 'Rendimiento', desc: 'Caché, animaciones y modo' },
-  { id: 'ia', icon: 'Cpu', label: 'Inteligencia Artificial', desc: 'Proveedores y modelos' },
-  { id: 'sistema', icon: 'Info', label: 'Sistema', desc: 'Versión, entorno y actualizaciones' },
-  { id: 'mantenimiento', icon: 'Trash', label: 'Mantenimiento', desc: 'Limpieza de datos y diagnóstico' },
+const SECCIONES_PROFESIONALES = [
+  { id: 'ia', icon: Cpu, label: 'Inteligencia Artificial', desc: 'Google Gemini, DeepSeek y prueba de API en vivo', badge: 'PRO' },
+  { id: 'apariencia', icon: Palette, label: 'Apariencia & Tema', desc: 'Colores, tonos OLED, barra lateral y wallpaper' },
+  { id: 'prestamos', icon: DollarSign, label: 'Préstamos & Cartera', desc: 'Moneda base, tasas, plazos y QR de cobro' },
+  { id: 'egresos', icon: Wallet, label: 'Egresos & Presupuesto', desc: 'Límites mensuales y alertas de suscripción' },
+  { id: 'empresa', icon: Building2, label: 'Empresa & Catálogo', desc: 'Datos comerciales, NIT y valorizaciones' },
+  { id: 'notificaciones', icon: Bell, label: 'Notificaciones & Alertas', desc: 'Avisos de vencimientos y recordatorios' },
+  { id: 'respaldo', icon: Shield, label: 'Seguridad & Respaldo', desc: 'Exportar/importar datos y cuenta Google' },
 ];
 
 const ACCENT_COLORS = [
@@ -84,138 +42,48 @@ const ACCENT_COLORS = [
 const MODOS_FONDO = [
   { id: 'darkGray', label: 'Gris Oscuro', color: '#141414' },
   { id: 'black', label: 'Negro OLED', color: '#000000' },
-  { id: 'lightGray', label: 'Gris Claro', color: '#2a2a2a' },
-];
-
-const SIDEBAR_OPTIONS = [
-  { id: 'same', label: 'Mismo que fondo' },
-  { id: 'black', label: 'Negro OLED (#000000)' },
-  { id: 'darkGray', label: 'Gris Oscuro (#141414)' },
-  { id: 'lightGray', label: 'Gris Claro (#2a2a2a)' },
+  { id: 'lightGray', label: 'Gris Carbón', color: '#242428' },
 ];
 
 const DENSIDADES = [
-  { id: 'compact', label: 'Compacto', desc: 'Máxima información' },
-  { id: 'normal', label: 'Normal', desc: 'Balance ideal' },
-  { id: 'comfortable', label: 'Cómodo', desc: 'Espacio amplio' },
+  { id: 'compact', label: 'Compacto', desc: 'Mayor información' },
+  { id: 'normal', label: 'Normal', desc: 'Equilibrio visual' },
+  { id: 'comfortable', label: 'Cómodo', desc: 'Espaciado amplio' },
 ];
 
-const WIDGETS_DISPONIBLES = [
-  { id: 'ingresos', label: 'Ingresos del Mes', icon: 'Dollar' },
-  { id: 'prestamos', label: 'Préstamos Activos', icon: 'CreditCard' },
-  { id: 'cobros', label: 'Cobros de Hoy', icon: 'Calendar' },
-  { id: 'recordatorios', label: 'Recordatorios', icon: 'Bell' },
-  { id: 'egresos', label: 'Egresos del Mes', icon: 'Wallet' },
-  { id: 'movimientos', label: 'Últimos Movimientos', icon: 'Activity' },
-  { id: 'proyeccion', label: 'Proyección', icon: 'TrendingUp' },
-  { id: 'salud', label: 'Salud de Cartera', icon: 'Heart' },
-];
-
-const FONT_OPTIONS = ['Inter', 'Roboto', 'Merriweather', 'JetBrains Mono', 'Open Sans', 'Lato', 'Poppins', 'Montserrat'];
-const WORK_SIZE_OPTIONS = [12, 14, 16, 18, 20];
-const MARGIN_OPTIONS = [
-  { id: 'narrow', label: 'Estrecho' },
-  { id: 'normal', label: 'Normal' },
-  { id: 'wide', label: 'Ancho' },
-];
-const AUTOSAVE_INTERVALS = [1, 3, 5, 10];
-const TOAST_DURATIONS = [2000, 4000, 6000, 10000];
-const TOAST_POSITIONS = [
-  { id: 'top-right', label: 'Superior derecha' },
-  { id: 'top-left', label: 'Superior izquierda' },
-  { id: 'bottom-right', label: 'Inferior derecha' },
-  { id: 'bottom-left', label: 'Inferior izquierda' },
-];
-const SOUND_TYPES = ['chime', 'bell', 'ping', 'digital', 'soft', 'none'];
-const ZOOM_OPTIONS = [90, 100, 110, 125, 150];
-const DEFAULT_VIEWS = [
-  { id: 'dashboard', label: 'Panel Principal' },
-  { id: 'prestamos', label: 'Préstamos' },
-  { id: 'flujo', label: 'Flujo de Trabajo' },
-];
-const LOAN_TERMS = [1, 3, 6, 9, 12];
-const VIDEO_RESOLUTIONS = ['1080p', '2K', '4K'];
-
-// ─── COMPONENTE SECCIÓN COLAPSABLE ──────────────────────────
-const Seccion = ({ icon, label, desc, children, defaultOpen = true }) => {
-  const [open, setOpen] = useState(defaultOpen);
-  const Icon = ICONS[icon] || Info;
-
-  return (
-    <div style={{
-      borderRadius: '16px', overflow: 'hidden',
-      backgroundColor: '#1a1a1a', border: '1px solid #2e2e30',
-      transition: 'all 0.2s',
-    }}>
-      <div onClick={() => setOpen(!open)}
-        style={{
-          padding: '14px 18px', cursor: 'pointer',
-          display: 'flex', alignItems: 'center', gap: '12px',
-          userSelect: 'none',
-        }}>
-        <div style={{
-          width: '32px', height: '32px', borderRadius: '10px',
-          backgroundColor: 'rgba(160,160,160,0.1)', color: '#a0a0a0',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-        }}>
-          <Icon size={15} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#d4d4d4' }}>{label}</p>
-          <p style={{ margin: '2px 0 0', fontSize: '10px', color: '#707070' }}>{desc}</p>
-        </div>
-        {open ? <ChevronUp size={14} color="#707070" /> : <ChevronDown size={14} color="#707070" />}
-      </div>
-      {open && <div style={{ padding: '0 18px 18px' }}>{children}</div>}
-    </div>
-  );
-};
-
-// ─── COMPONENTE ROW (label + control) ──────────────────────
-const Fila = ({ label, desc, children }) => (
-  <div style={{
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    padding: '8px 0', borderBottom: '1px solid #2a2a2a',
-    gap: '12px',
-  }}>
-    <div style={{ flex: 1, minWidth: 0 }}>
-      <p style={{ margin: 0, fontSize: '11px', fontWeight: 500, color: '#d4d4d4' }}>{label}</p>
-      {desc && <p style={{ margin: '2px 0 0', fontSize: '9px', color: '#707070' }}>{desc}</p>}
-    </div>
-    <div style={{ flexShrink: 0 }}>{children}</div>
-  </div>
-);
-
-// ─── SWITCH TOGGLE ─────────────────────────────────────────
-const Toggle = ({ value, onChange }) => (
-  <div onClick={() => onChange(!value)}
-    style={{
-      width: '40px', height: '22px', borderRadius: '11px',
-      backgroundColor: value ? '#a0a0a0' : '#333',
-      cursor: 'pointer', position: 'relative',
-      transition: 'background 0.2s',
-    }}>
-    <div style={{
-      width: '18px', height: '18px', borderRadius: '50%',
-      backgroundColor: 'white', position: 'absolute',
-      top: '2px', left: value ? '20px' : '2px',
-      transition: 'left 0.2s',
-    }} />
-  </div>
-);
-
-// ─── COMPONENTE PRINCIPAL ──────────────────────────────────
-export default function Ajustes({ isDark, settings: propSettings, onUpdateSetting }) {
+export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onLogout }) {
   const { settings, updateSetting, updateSettings, resetSettings, exportSettings, importSettings } = useSettings();
   const s = settings;
   const t = useMemo(() => getTheme(isDark, s), [isDark, s]);
-  const [activeSection, setActiveSection] = useState('apariencia');
+  
+  const [activeSection, setActiveSection] = useState('ia');
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [testingAi, setTestingAi] = useState(false);
+  const [aiTestResult, setAiTestResult] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
-  const fileInputRef = useRef(null);
-  const imgPreviewRef = useRef(null);
 
-  // Imagen de fondo
+  const fileInputRef = useRef(null);
+  const qrInputRef = useRef(null);
+
+  // Probar conexión de IA en vivo
+  const handleTestAiConnection = async () => {
+    setTestingAi(true);
+    setAiTestResult(null);
+    try {
+      const provider = s.aiProvider || 'gemini';
+      const key = provider === 'deepseek' ? s.deepseekKey : (provider === 'openrouter' ? s.openrouterKey : s.geminiKey);
+      const model = provider === 'deepseek' ? (s.deepseekModel || 'deepseek-chat') : (s.geminiModel || 'gemini-1.5-flash');
+
+      const result = await aiService.testConnection(provider, key, model);
+      setAiTestResult(result);
+    } catch (err) {
+      setAiTestResult({ success: false, message: err.message || 'Error inesperado al probar conexión.' });
+    } finally {
+      setTestingAi(false);
+    }
+  };
+
+  // Manejo de fondos y QR
   const handleBgImageUpload = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -229,7 +97,6 @@ export default function Ajustes({ isDark, settings: propSettings, onUpdateSettin
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [updateSetting]);
 
-  // QR de pago
   const handleQrUpload = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -238,30 +105,35 @@ export default function Ajustes({ isDark, settings: propSettings, onUpdateSettin
     reader.readAsDataURL(file);
   }, [updateSetting]);
 
-  const handleRemoveQr = useCallback(() => updateSetting('loanQrImage', null), [updateSetting]);
+  const handleRemoveQr = useCallback(() => {
+    updateSetting('loanQrImage', null);
+    if (qrInputRef.current) qrInputRef.current.value = '';
+  }, [updateSetting]);
 
-  // Export/Import
+  // Exportar / Importar
   const handleExport = useCallback(() => {
     const json = exportSettings();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `inefable-config-${new Date().toISOString().slice(0,10)}.json`;
+    a.href = url;
+    a.download = `inefable-config-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }, [exportSettings]);
 
   const handleImport = useCallback(() => {
     const input = document.createElement('input');
-    input.type = 'file'; input.accept = '.json';
+    input.type = 'file';
+    input.accept = '.json';
     input.onchange = (e) => {
       const file = e.target.files?.[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = (ev) => {
         const ok = importSettings(ev.target.result);
-        setImportStatus(ok ? '✅ Configuración importada correctamente' : '❌ Error: archivo inválido');
-        setTimeout(() => setImportStatus(null), 3000);
+        setImportStatus(ok ? '✅ Configuración restaurada con éxito' : '❌ Archivo JSON no válido');
+        setTimeout(() => setImportStatus(null), 3500);
       };
       reader.readAsText(file);
     };
@@ -273,911 +145,688 @@ export default function Ajustes({ isDark, settings: propSettings, onUpdateSettin
       let total = 0;
       for (let key in localStorage) {
         if (localStorage.hasOwnProperty(key)) {
-          total += localStorage[key].length * 2; // UTF-16
+          total += localStorage[key].length * 2;
         }
       }
-      return (total / 1024 / 1024).toFixed(1);
-    } catch { return '?'; }
+      return (total / 1024 / 1024).toFixed(2);
+    } catch {
+      return '0.5';
+    }
   }, []);
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'apariencia': return renderApariencia();
-      case 'panel': return renderPanel();
-      case 'prestamos': return renderPrestamos();
-      case 'flujo': return renderFlujo();
-      case 'video': return renderVideo();
-      case 'empresa': return renderEmpresa();
-      case 'calendario': return renderCalendario();
-      case 'notificaciones': return renderNotificaciones();
-      case 'idioma': return renderIdioma();
-      case 'seguridad': return renderSeguridad();
-      case 'respaldo': return renderRespaldo();
-      case 'rendimiento': return renderRendimiento();
-      case 'ia': return renderIA();
-      case 'sistema': return renderSistema();
-      case 'mantenimiento': return renderMantenimiento();
-      case 'egresos': return renderEgresos();
-      default: return renderApariencia();
-    }
-  };
-
-  // ─── SECCIÓN: APARIENCIA ─────────────────────────────────
-  const renderApariencia = () => (
-    <Seccion icon="Pallete" label="Apariencia" desc="Colores, fondo, barra lateral e imagen de fondo">
-      {/* Modo de fondo */}
-      <Fila label="Modo de fondo" desc="Selecciona el tono base de la interfaz">
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {MODOS_FONDO.map(m => (
-            <div key={m.id} onClick={() => updateSetting('appearanceMode', m.id)}
-              style={{
-                width: '36px', height: '36px', borderRadius: '10px',
-                backgroundColor: m.color, cursor: 'pointer',
-                border: s.appearanceMode === m.id ? '2px solid #a0a0a0' : '2px solid transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.15s',
-              }}>
-              {s.appearanceMode === m.id && <Check size={14} color="#a0a0a0" />}
-            </div>
-          ))}
-        </div>
-      </Fila>
-
-      {/* Color de barra lateral */}
-      <Fila label="Color de barra lateral" desc="Color de fondo del menú lateral">
-        <select value={s.sidebarColor} onChange={e => updateSetting('sidebarColor', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          {SIDEBAR_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
-        </select>
-      </Fila>
-
-      {/* Color de acento */}
-      <Fila label="Color de acento" desc="Color de botones, iconos y elementos activos">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px', width: '220px' }}>
-          {ACCENT_COLORS.map(c => (
-            <div key={c.hex} onClick={() => updateSetting('accentColor', c.hex)}
-              style={{
-                width: '30px', height: '30px', borderRadius: '8px',
-                backgroundColor: c.hex, cursor: 'pointer',
-                border: s.accentColor === c.hex ? '2px solid white' : '2px solid transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-              {s.accentColor === c.hex && <Check size={12} color={c.hex === '#ffffff' ? '#333' : 'white'} />}
-            </div>
-          ))}
-        </div>
-      </Fila>
-
-      {/* Densidad */}
-      <Fila label="Densidad de interfaz" desc="Espaciado entre elementos">
-        <div style={{ display: 'flex', gap: '6px' }}>
-          {DENSIDADES.map(d => (
-            <div key={d.id} onClick={() => updateSetting('interfaceDensity', d.id)}
-              style={{
-                padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px',
-                backgroundColor: s.interfaceDensity === d.id ? '#a0a0a0' : '#222',
-                color: s.interfaceDensity === d.id ? '#000' : '#d4d4d4',
-                border: `1px solid ${s.interfaceDensity === d.id ? '#a0a0a0' : '#333'}`,
-                fontWeight: s.interfaceDensity === d.id ? 600 : 400,
-              }}>
-              {d.label}
-            </div>
-          ))}
-        </div>
-      </Fila>
-
-      {/* Modo de Visualización (Móvil vs Escritorio) */}
-      <Fila label="Modo de Visualización" desc="Forzar interfaz para móvil o escritorio">
-        <div style={{ display: 'flex', gap: '6px' }}>
-          {[
-            { label: 'Automático', source: 'auto', mobile: window.innerWidth < 768 },
-            { label: 'Smartphone', source: 'manual', mobile: true },
-            { label: 'Escritorio', source: 'manual', mobile: false }
-          ].map(opt => {
-            const isSelected = s.mobileModeSource === opt.source && (opt.source === 'auto' || s.isMobileMode === opt.mobile);
-            return (
-              <div key={opt.label} onClick={() => {
-                updateSettings({
-                  mobileModeSource: opt.source,
-                  isMobileMode: opt.mobile
-                });
-              }}
-                style={{
-                  padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px',
-                  backgroundColor: isSelected ? '#a0a0a0' : '#222',
-                  color: isSelected ? '#000' : '#d4d4d4',
-                  border: `1px solid ${isSelected ? '#a0a0a0' : '#333'}`,
-                  fontWeight: isSelected ? 600 : 400,
-                }}>
-                {opt.label}
-              </div>
-            );
-          })}
-        </div>
-      </Fila>
-
-      {/* Tamaño de fuente */}
-      <Fila label="Tamaño de fuente base" desc={`${s.baseFontSize}px — afecta toda la tipografía`}>
-        <input type="range" min={11} max={16} value={s.baseFontSize}
-          onChange={e => updateSetting('baseFontSize', parseInt(e.target.value))}
-          style={{ width: '120px' }} />
-      </Fila>
-
-      {/* Imagen de fondo */}
-      <Fila label="Imagen de fondo" desc="Aparecerá desenfocada detrás de toda la interfaz">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
-          {s.backgroundImage && (
-            <div style={{
-              width: '200px', height: '80px', borderRadius: '8px', overflow: 'hidden',
-              border: '1px solid #333', position: 'relative',
-            }}>
-              <img src={s.backgroundImage} alt="Preview"
-                style={{ width: '100%', height: '100%', objectFit: 'cover', filter: `blur(${s.backgroundBlur * 0.3}px)` }} />
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <label style={{
-              padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px', fontWeight: 500,
-              backgroundColor: '#333', color: '#d4d4d4', border: '1px solid #444',
-              display: 'flex', alignItems: 'center', gap: '4px',
-            }}>
-              <Upload size={12} /> Subir Imagen
-              <input type="file" accept="image/*" onChange={handleBgImageUpload} ref={ref => fileInputRef.current = ref} style={{ display: 'none' }} />
-            </label>
-            {s.backgroundImage && (
-              <button onClick={handleRemoveBg}
-                style={{
-                  padding: '6px 12px', borderRadius: '8px', border: '1px solid #444',
-                  backgroundColor: '#222', color: '#ef4444', fontSize: '10px', cursor: 'pointer',
-                }}>
-                Eliminar
-              </button>
-            )}
-          </div>
-        </div>
-      </Fila>
-
-      {/* Slider de desenfoque */}
-      {s.backgroundImage && (
-        <Fila label="Desenfoque" desc={`${s.backgroundBlur}%`}>
-          <input type="range" min={50} max={100} value={s.backgroundBlur}
-            onChange={e => updateSetting('backgroundBlur', parseInt(e.target.value))}
-            style={{ width: '120px' }} />
-        </Fila>
-      )}
-
-      {/* Animaciones */}
-      <Fila label="Animaciones" desc="Transiciones y efectos visuales">
-        <Toggle value={s.enableAnimations} onChange={v => updateSetting('enableAnimations', v)} />
-      </Fila>
-
-      {/* Zoom */}
-      <Fila label="Zoom de interfaz" desc={`${s.zoomLevel}%`}>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {ZOOM_OPTIONS.map(z => (
-            <div key={z} onClick={() => updateSetting('zoomLevel', z)}
-              style={{
-                padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '9px',
-                backgroundColor: s.zoomLevel === z ? '#a0a0a0' : '#222',
-                color: s.zoomLevel === z ? '#000' : '#d4d4d4',
-              }}>
-              {z}%
-            </div>
-          ))}
-        </div>
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: PANEL PRINCIPAL ────────────────────────────
-  const renderPanel = () => (
-    <Seccion icon="Layout" label="Panel Principal" desc="Widgets del dashboard y vista predeterminada">
-      <Fila label="Vista predeterminada" desc="Pantalla que se muestra al abrir la app">
-        <select value={s.defaultView} onChange={e => updateSetting('defaultView', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          {DEFAULT_VIEWS.map(v => <option key={v.id} value={v.id}>{v.label}</option>)}
-        </select>
-      </Fila>
-
-      <p style={{ fontSize: '10px', fontWeight: 600, color: '#707070', margin: '12px 0 8px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-        Widgets visibles
-      </p>
-      {WIDGETS_DISPONIBLES.map(w => {
-        const isActive = (s.dashboardWidgets || []).includes(w.id);
-        return (
-          <Fila key={w.id} label={w.label}>
-            <Toggle value={isActive} onChange={() => {
-              const current = s.dashboardWidgets || [];
-              if (isActive) updateSetting('dashboardWidgets', current.filter(i => i !== w.id));
-              else updateSetting('dashboardWidgets', [...current, w.id]);
-            }} />
-          </Fila>
-        );
-      })}
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: PRÉSTAMOS ─────────────────────────────────
-  const renderPrestamos = () => (
-    <Seccion icon="Dollar" label="Préstamos" desc="Defaults, cobros, recordatorios y QR de pago">
-      <Fila label="Interés predeterminado" desc="% mensual (default 5%)">
-        <input type="number" value={s.loanDefaultInterest} min={0} max={100} step={0.5}
-          onChange={e => updateSetting('loanDefaultInterest', parseFloat(e.target.value) || 5)}
-          style={{
-            width: '70px', padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-            textAlign: 'center', fontFamily: 'monospace',
-          }} />
-      </Fila>
-
-      <Fila label="Plazo predeterminado" desc="Meses para nuevo préstamo">
-        <select value={s.loanDefaultTerm} onChange={e => updateSetting('loanDefaultTerm', parseInt(e.target.value))}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          {LOAN_TERMS.map(m => <option key={m} value={m}>{m} mes{m !== 1 ? 'es' : ''}</option>)}
-        </select>
-      </Fila>
-
-      <Fila label="Moneda predeterminada">
-        <select value={s.loanDefaultCurrency} onChange={e => updateSetting('loanDefaultCurrency', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="BOB">BOB (Bs.)</option>
-          <option value="USD">USD ($)</option>
-        </select>
-      </Fila>
-
-      <Fila label="Días para recordatorio" desc="Cuántos días antes del vencimiento se alerta">
-        <input type="number" value={s.loanReminderDays} min={0} max={30}
-          onChange={e => updateSetting('loanReminderDays', parseInt(e.target.value) || 3)}
-          style={{
-            width: '60px', padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-            textAlign: 'center', fontFamily: 'monospace',
-          }} />
-      </Fila>
-
-      <Fila label="Tasa de mora diaria" desc="% de interés adicional por día de atraso">
-        <input type="number" value={s.loanMoraRate} min={0} max={50} step={0.5}
-          onChange={e => updateSetting('loanMoraRate', parseFloat(e.target.value) || 5)}
-          style={{
-            width: '60px', padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-            textAlign: 'center', fontFamily: 'monospace',
-          }} />
-      </Fila>
-
-      <Fila label="Modalidad predeterminada">
-        <select value={s.loanDefaultType} onChange={e => updateSetting('loanDefaultType', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="mensual">Mensual (Interés)</option>
-          <option value="diario">Diario (Amortización)</option>
-        </select>
-      </Fila>
-
-      {/* Cuenta bancaria */}
-      <Fila label="Cuenta bancaria" desc="Para transferencias y QR">
-        <input type="text" value={s.loanBankAccount}
-          onChange={e => updateSetting('loanBankAccount', e.target.value)}
-          placeholder="BCP: 123-456789-0-00 - Carlos Joel"
-          style={{
-            width: '220px', padding: '6px 10px', fontSize: '10px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }} />
-      </Fila>
-
-      {/* QR de pago */}
-      <Fila label="Imagen QR" desc="Código QR para depósitos">
-        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-          {s.loanQrImage && (
-            <div style={{
-              width: '48px', height: '48px', borderRadius: '6px', overflow: 'hidden', border: '1px solid #333',
-            }}>
-              <img src={s.loanQrImage} alt="QR" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </div>
-          )}
-          <label style={{
-            padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px',
-            backgroundColor: '#333', color: '#d4d4d4', border: '1px solid #444',
-          }}>
-            {s.loanQrImage ? 'Cambiar' : 'Subir QR'}
-            <input type="file" accept="image/*" onChange={handleQrUpload} style={{ display: 'none' }} />
-          </label>
-          {s.loanQrImage && (
-            <button onClick={handleRemoveQr}
-              style={{
-                padding: '6px 8px', borderRadius: '8px', border: '1px solid #444',
-                backgroundColor: '#222', color: '#ef4444', fontSize: '10px', cursor: 'pointer',
-              }}>
-              <X size={12} />
-            </button>
-          )}
-        </div>
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: FLUJO DE TRABAJO ───────────────────────────
-  const renderFlujo = () => (
-    <Seccion icon="File" label="Flujo de Trabajo" desc="Editor de documentos y plantillas">
-      <Fila label="Fuente predeterminada">
-        <select value={s.workDefaultFont} onChange={e => updateSetting('workDefaultFont', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-            fontFamily: s.workDefaultFont,
-          }}>
-          {FONT_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
-        </select>
-      </Fila>
-
-      <Fila label="Tamaño de fuente" desc="Tamaño por defecto del editor">
-        <select value={s.workDefaultSize} onChange={e => updateSetting('workDefaultSize', parseInt(e.target.value))}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          {WORK_SIZE_OPTIONS.map(sz => <option key={sz} value={sz}>{sz}px</option>)}
-        </select>
-      </Fila>
-
-      <Fila label="Márgenes predeterminados">
-        <div style={{ display: 'flex', gap: '6px' }}>
-          {MARGIN_OPTIONS.map(m => (
-            <div key={m.id} onClick={() => updateSetting('workDefaultMargins', m.id)}
-              style={{
-                padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px',
-                backgroundColor: s.workDefaultMargins === m.id ? '#a0a0a0' : '#222',
-                color: s.workDefaultMargins === m.id ? '#000' : '#d4d4d4',
-              }}>
-              {m.label}
-            </div>
-          ))}
-        </div>
-      </Fila>
-
-      <Fila label="Orientación predeterminada">
-        <div style={{ display: 'flex', gap: '6px' }}>
-          {[
-            { id: 'vertical', label: 'Vertical' },
-            { id: 'horizontal', label: 'Horizontal' },
-          ].map(o => (
-            <div key={o.id} onClick={() => updateSetting('workDefaultOrientation', o.id)}
-              style={{
-                padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px',
-                backgroundColor: s.workDefaultOrientation === o.id ? '#a0a0a0' : '#222',
-                color: s.workDefaultOrientation === o.id ? '#000' : '#d4d4d4',
-              }}>
-              {o.label}
-            </div>
-          ))}
-        </div>
-      </Fila>
-
-      <Fila label="Color de página predeterminado">
-        <div style={{ display: 'flex', gap: '6px' }}>
-          {[
-            { id: 'dark', label: 'Oscuro' },
-            { id: 'light', label: 'Claro' },
-          ].map(o => (
-            <div key={o.id} onClick={() => updateSetting('workDefaultPageColor', o.id)}
-              style={{
-                padding: '6px 12px', borderRadius: '8px', cursor: 'pointer', fontSize: '10px',
-                backgroundColor: s.workDefaultPageColor === o.id ? '#a0a0a0' : '#222',
-                color: s.workDefaultPageColor === o.id ? '#000' : '#d4d4d4',
-              }}>
-              {o.label}
-            </div>
-          ))}
-        </div>
-      </Fila>
-
-      <Fila label="Auto-guardado">
-        <Toggle value={s.workAutosave} onChange={v => updateSetting('workAutosave', v)} />
-      </Fila>
-
-      {s.workAutosave && (
-        <Fila label="Intervalo de auto-guardado" desc="Cada N minutos">
-          <div style={{ display: 'flex', gap: '4px' }}>
-            {AUTOSAVE_INTERVALS.map(i => (
-              <div key={i} onClick={() => updateSetting('workAutosaveInterval', i)}
-                style={{
-                  padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '9px',
-                  backgroundColor: s.workAutosaveInterval === i ? '#a0a0a0' : '#222',
-                  color: s.workAutosaveInterval === i ? '#000' : '#d4d4d4',
-                }}>
-                {i} min
-              </div>
-            ))}
-          </div>
-        </Fila>
-      )}
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: EDITOR DE VIDEO ───────────────────────────
-  const renderVideo = () => (
-    <Seccion icon="Video" label="Editor de Video" desc="Configuración de plantillas Adobe">
-      <Fila label="Ruta de plantillas" desc="Directorio donde están las plantillas .prproj y .aep">
-        <input type="text" value={s.videoTemplatesPath}
-          onChange={e => updateSetting('videoTemplatesPath', e.target.value)}
-          style={{
-            width: '250px', padding: '6px 10px', fontSize: '10px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none', fontFamily: 'monospace',
-          }} />
-      </Fila>
-
-      <Fila label="Resolución predeterminada">
-        <select value={s.videoDefaultResolution} onChange={e => updateSetting('videoDefaultResolution', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          {VIDEO_RESOLUTIONS.map(r => <option key={r} value={r}>{r}</option>)}
-        </select>
-      </Fila>
-
-      <Fila label="Nombres de carpetas" desc="Nombres de las carpetas que se crean en cada proyecto">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          {s.videoFolderNames.map((name, idx) => (
-            <input key={idx} type="text" value={name}
-              onChange={e => {
-                const newNames = [...s.videoFolderNames];
-                newNames[idx] = e.target.value;
-                updateSetting('videoFolderNames', newNames);
-              }}
-              style={{
-                width: '200px', padding: '4px 8px', fontSize: '9px', borderRadius: '6px',
-                backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-                fontFamily: 'monospace',
-              }} />
-          ))}
-        </div>
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: EMPRESA ───────────────────────────────────
-  const renderEmpresa = () => (
-    <Seccion icon="Building" label="Empresa" desc="Datos fiscales y facturación">
-      {[
-        { key: 'businessName', label: 'Nombre del negocio/estudio', placeholder: 'Ej: Inefable Studio', type: 'text' },
-        { key: 'businessNit', label: 'NIT / RUC', placeholder: 'Ej: 123456789', type: 'text' },
-        { key: 'businessAddress', label: 'Dirección comercial', placeholder: 'Ej: Av. Siempre Viva 742', type: 'text' },
-        { key: 'businessPhone', label: 'Teléfono comercial', placeholder: 'Ej: 71234567', type: 'text' },
-      ].map(f => (
-        <Fila key={f.key} label={f.label}>
-          <input type={f.type} value={s[f.key]} placeholder={f.placeholder}
-            onChange={e => updateSetting(f.key, e.target.value)}
-            style={{
-              width: '220px', padding: '6px 10px', fontSize: '10px', borderRadius: '8px',
-              backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-            }} />
-        </Fila>
-      ))}
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: EGRESOS ────────────────────────────────────
-  const renderEgresos = () => (
-    <Seccion icon="Wallet" label="Egresos" desc="Categorías y seguimiento de gastos">
-      <p style={{ fontSize: '10px', fontWeight: 600, color: '#707070', margin: '0 0 8px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-        Categorías predefinidas (próximamente)
-      </p>
-      <p style={{ fontSize: '10px', color: '#555', margin: 0 }}>
-        La gestión de categorías de egresos estará disponible en la sección correspondiente.
-      </p>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: CALENDARIO ────────────────────────────────
-  const renderCalendario = () => (
-    <Seccion icon="Calendar" label="Calendario" desc="Configuración de vista y sincronización">
-      <Fila label="Vista predeterminada">
-        <select value={s.calendarDefaultView} onChange={e => updateSetting('calendarDefaultView', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="month">Mes</option>
-          <option value="week">Semana</option>
-          <option value="day">Día</option>
-          <option value="agenda">Agenda</option>
-        </select>
-      </Fila>
-
-      <Fila label="Semana comienza en">
-        <select value={s.calendarWeekStart} onChange={e => updateSetting('calendarWeekStart', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="monday">Lunes</option>
-          <option value="sunday">Domingo</option>
-        </select>
-      </Fila>
-
-      <Fila label="Mostrar cobros en calendario">
-        <Toggle value={s.calendarShowPayments} onChange={v => updateSetting('calendarShowPayments', v)} />
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: NOTIFICACIONES ────────────────────────────
-  const renderNotificaciones = () => (
-    <Seccion icon="Bell" label="Notificaciones" desc="Push, sonidos y toasts">
-      <Fila label="Notificaciones de escritorio" desc="Usa la Notification API del navegador">
-        <Toggle value={s.notificationsDesktop} onChange={v => updateSetting('notificationsDesktop', v)} />
-      </Fila>
-
-      <Fila label="Sonidos" desc="Reproducir sonido al recibir notificación">
-        <Toggle value={s.notificationsSound} onChange={v => updateSetting('notificationsSound', v)} />
-      </Fila>
-
-      {s.notificationsSound && (
-        <Fila label="Tipo de sonido">
-          <select value={s.notificationsSoundType} onChange={e => updateSetting('notificationsSoundType', e.target.value)}
-            style={{
-              padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-              backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-            }}>
-            {SOUND_TYPES.map(st => <option key={st} value={st}>{st}</option>)}
-          </select>
-        </Fila>
-      )}
-
-      <Fila label="Posición del toast">
-        <select value={s.toastPosition} onChange={e => updateSetting('toastPosition', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          {TOAST_POSITIONS.map(tp => <option key={tp.id} value={tp.id}>{tp.label}</option>)}
-        </select>
-      </Fila>
-
-      <Fila label="Duración del toast">
-        <div style={{ display: 'flex', gap: '4px' }}>
-          {TOAST_DURATIONS.map(d => (
-            <div key={d} onClick={() => updateSetting('toastDuration', d)}
-              style={{
-                padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '9px',
-                backgroundColor: s.toastDuration === d ? '#a0a0a0' : '#222',
-                color: s.toastDuration === d ? '#000' : '#d4d4d4',
-              }}>
-              {d / 1000}s
-            </div>
-          ))}
-        </div>
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: IDIOMA Y REGIÓN ──────────────────────────
-  const renderIdioma = () => (
-    <Seccion icon="Languages" label="Idioma y Región" desc="Idioma, moneda y zona horaria">
-      <Fila label="Idioma de la interfaz">
-        <select value={s.language} onChange={e => updateSetting('language', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="es">Español</option>
-          <option value="en">English</option>
-        </select>
-      </Fila>
-
-      <Fila label="Formato de fecha">
-        <select value={s.dateFormat} onChange={e => updateSetting('dateFormat', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="DD/MM/AAAA">DD/MM/AAAA</option>
-          <option value="MM/DD/AAAA">MM/DD/AAAA</option>
-          <option value="AAAA-MM-DD">AAAA-MM-DD</option>
-        </select>
-      </Fila>
-
-      <Fila label="Zona horaria">
-        <select value={s.timezone} onChange={e => updateSetting('timezone', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="America/La_Paz">América/La Paz (UTC-4)</option>
-          <option value="America/Asuncion">América/Asunción (UTC-4)</option>
-          <option value="America/Lima">América/Lima (UTC-5)</option>
-          <option value="America/Bogota">América/Bogotá (UTC-5)</option>
-          <option value="America/Mexico_City">América/Ciudad de México (UTC-6)</option>
-          <option value="America/Santiago">América/Santiago (UTC-3)</option>
-          <option value="America/Buenos_Aires">América/Buenos Aires (UTC-3)</option>
-        </select>
-      </Fila>
-
-      <Fila label="Símbolo de moneda">
-        <select value={s.currencySymbol} onChange={e => updateSetting('currencySymbol', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="Bs.">Bs. (Boliviano)</option>
-          <option value="$">$ (Dólar)</option>
-          <option value="Bs">Bs</option>
-        </select>
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: SEGURIDAD ─────────────────────────────────
-  const renderSeguridad = () => (
-    <Seccion icon="Lock" label="Seguridad" desc="PIN, bloqueo y datos sensibles">
-      <Fila label="PIN de acceso" desc="Código numérico para desbloquear la app">
-        <input type="password" value={s.pinCode} maxLength={8}
-          onChange={e => updateSetting('pinCode', e.target.value.replace(/\D/g, '').slice(0, 8))}
-          placeholder="••••"
-          style={{
-            width: '100px', padding: '6px 10px', fontSize: '14px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-            textAlign: 'center', fontFamily: 'monospace',
-          }} />
-      </Fila>
-
-      <Fila label="Bloqueo automático" desc="Tiempo de inactividad antes de bloquear">
-        <select value={s.autoLockMinutes} onChange={e => updateSetting('autoLockMinutes', parseInt(e.target.value))}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value={0}>Desactivado</option>
-          <option value={1}>1 minuto</option>
-          <option value={5}>5 minutos</option>
-          <option value={15}>15 minutos</option>
-        </select>
-      </Fila>
-
-      <Fila label="Ocultar datos sensibles" desc="Reemplazar montos con ••• en vistas generales">
-        <Toggle value={s.hideSensitiveData} onChange={v => updateSetting('hideSensitiveData', v)} />
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: RESPALDO Y SINCRONIZACIÓN ─────────────────
-  const renderRespaldo = () => (
-    <Seccion icon="Download" label="Respaldo y Sincronización" desc="Exportar e importar configuración">
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-        <button onClick={handleExport}
-          style={{
-            flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #333',
-            backgroundColor: '#222', color: '#d4d4d4', cursor: 'pointer', fontSize: '11px', fontWeight: 600,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-          }}>
-          <Download size={14} /> Exportar configuración
-        </button>
-        <button onClick={handleImport}
-          style={{
-            flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #333',
-            backgroundColor: '#222', color: '#d4d4d4', cursor: 'pointer', fontSize: '11px', fontWeight: 600,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-          }}>
-          <Upload size={14} /> Importar configuración
-        </button>
-      </div>
-      {importStatus && (
-        <p style={{ fontSize: '10px', color: importStatus.includes('✅') ? '#4ec9b0' : '#ef4444', margin: 0 }}>
-          {importStatus}
-        </p>
-      )}
-      <p style={{ fontSize: '10px', color: '#555', margin: '8px 0 0' }}>
-        El archivo exportado contiene TODA tu configuración personalizada. Puedes importarlo en otro dispositivo.
-      </p>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: RENDIMIENTO ───────────────────────────────
-  const renderRendimiento = () => (
-    <Seccion icon="Zap" label="Rendimiento" desc="Caché, animaciones y modo de rendimiento">
-      <Fila label="Modo de rendimiento" desc="Balance entre rendimiento y efectos visuales">
-        <select value={s.interfaceDensity} onChange={e => updateSetting('interfaceDensity', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          {DENSIDADES.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}
-        </select>
-      </Fila>
-
-      <Fila label="Caché de datos" desc="Cachear respuestas de Supabase en localStorage">
-        <Toggle value={true} onChange={() => {}} />
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: IA ────────────────────────────────────────
-  const renderIA = () => (
-    <Seccion icon="Cpu" label="Inteligencia Artificial" desc="Proveedores y modelos">
-      <Fila label="Proveedor de IA">
-        <select value={s.aiProvider} onChange={e => updateSetting('aiProvider', e.target.value)}
-          style={{
-            padding: '6px 10px', fontSize: '11px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-          }}>
-          <option value="gemini">Google Gemini</option>
-          <option value="deepseek">DeepSeek</option>
-          <option value="openrouter">OpenRouter</option>
-        </select>
-      </Fila>
-
-      {['gemini', 'deepseek', 'openrouter'].map(p => (
-        s.aiProvider === p && (
-          <Fila key={p} label={`API Key (${p})`} desc="Tu clave de API">
-            <input type="password" value={s[`${p}Key`] || ''}
-              onChange={e => updateSetting(`${p}Key`, e.target.value)}
-              placeholder={`Ingresa tu API Key de ${p}...`}
-              style={{
-                width: '250px', padding: '6px 10px', fontSize: '10px', borderRadius: '8px',
-                backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-              }} />
-          </Fila>
-        )
-      ))}
-
-      <Fila label="Temperatura" desc="Creatividad del modelo (0.0 = preciso, 2.0 = creativo)">
-        <input type="range" min={0} max={20} value={Math.round(s.aiTemperature * 10)}
-          onChange={e => updateSetting('aiTemperature', parseFloat((e.target.value / 10).toFixed(1)))}
-          style={{ width: '120px' }} />
-        <span style={{ fontSize: '10px', color: '#707070', width: '24px', textAlign: 'center' }}>
-          {s.aiTemperature.toFixed(1)}
-        </span>
-      </Fila>
-
-      <Fila label="Máximo de tokens" desc="Límite de respuesta">
-        <input type="number" value={s.aiMaxTokens} min={256} max={8192} step={256}
-          onChange={e => updateSetting('aiMaxTokens', parseInt(e.target.value) || 2048)}
-          style={{
-            width: '80px', padding: '6px 10px', fontSize: '10px', borderRadius: '8px',
-            backgroundColor: '#222', border: '1px solid #2e2e30', color: '#d4d4d4', outline: 'none',
-            textAlign: 'center', fontFamily: 'monospace',
-          }} />
-      </Fila>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: SISTEMA ───────────────────────────────────
-  const renderSistema = () => (
-    <Seccion icon="Info" label="Sistema" desc="Versión, entorno y actualizaciones">
-      <div style={{ display: 'grid', gap: '8px' }}>
-        {[
-          { label: 'Versión de la app', value: '1.1.0' },
-          { label: 'Entorno', value: typeof window !== 'undefined' && navigator.userAgent.includes('Electron') ? 'Desktop (Electron)' : 'Web (Navegador)' },
-          { label: 'ID de sesión', value: Math.random().toString(36).substring(2, 10) },
-        ].map(item => (
-          <div key={item.label} style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '6px 0', borderBottom: '1px solid #2a2a2a',
-          }}>
-            <span style={{ fontSize: '10px', color: '#707070' }}>{item.label}</span>
-            <span style={{ fontSize: '10px', color: '#d4d4d4', fontFamily: 'monospace' }}>{item.value}</span>
-          </div>
-        ))}
-      </div>
-      <div style={{ marginTop: '12px', padding: '10px', borderRadius: '8px', backgroundColor: '#222', border: '1px solid #333' }}>
-        <p style={{ margin: 0, fontSize: '10px', color: '#555' }}>
-          <Info size={10} style={{ display: 'inline', marginRight: '4px' }} />
-          Las actualizaciones se gestionan desde GitHub. Conecta tu repositorio para recibir notificaciones de nuevas versiones.
-        </p>
-      </div>
-    </Seccion>
-  );
-
-  // ─── SECCIÓN: MANTENIMIENTO ────────────────────────────
-  const renderMantenimiento = () => (
-    <Seccion icon="Trash" label="Mantenimiento" desc="Limpieza de datos y diagnóstico">
-      <div style={{ marginBottom: '12px' }}>
-        <p style={{ fontSize: '10px', fontWeight: 600, color: '#707070', margin: '0 0 4px', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-          Espacio utilizado
-        </p>
-        <div style={{
-          height: '6px', borderRadius: '3px', backgroundColor: '#222', overflow: 'hidden', marginBottom: '4px',
-        }}>
-          <div style={{
-            height: '100%', borderRadius: '3px', backgroundColor: '#4ec9b0',
-            width: `${Math.min(parseFloat(storageUsed) / 5 * 100, 100)}%`,
-          }} />
-        </div>
-        <p style={{ margin: 0, fontSize: '9px', color: '#707070', fontFamily: 'monospace' }}>
-          {storageUsed} MB de ~5 MB utilizados
-        </p>
-      </div>
-
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-        <button onClick={() => { localStorage.clear(); window.location.reload(); }}
-          style={{
-            flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #ef444440',
-            backgroundColor: '#ef444410', color: '#ef4444', cursor: 'pointer', fontSize: '11px', fontWeight: 600,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-          }}>
-          <Trash2 size={14} /> Limpiar todo
-        </button>
-        <button onClick={() => { resetSettings(); }}
-          style={{
-            flex: 1, padding: '10px', borderRadius: '10px', border: '1px solid #333',
-            backgroundColor: '#222', color: '#d4d4d4', cursor: 'pointer', fontSize: '11px', fontWeight: 600,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-          }}>
-          <RotateCcw size={14} /> Valores de fábrica
-        </button>
-      </div>
-    </Seccion>
-  );
-
-  // ─── RENDER PRINCIPAL ───────────────────────────────────
   return (
-    <div style={{
-      width: '100%', padding: '32px',
-      color: '#d4d4d4',
-    }}>
-      {/* Header */}
-      <div style={{ marginBottom: '28px' }}>
-        <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#d4d4d4', margin: '0 0 4px', letterSpacing: '-0.02em' }}>
-          Panel de Control
-        </h2>
-        <p style={{ fontSize: '11px', color: '#707070', margin: 0 }}>
-          Personaliza cada aspecto de la aplicación — los cambios se guardan automáticamente
-        </p>
-      </div>
+    <div className="w-full max-w-7xl mx-auto py-4 px-2 sm:px-6 space-y-6 animate-in fade-in duration-300">
+      
+      {/* ── CABECERA PRINCIPAL EJECUTIVA ─────────────────────────────────── */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/[0.08]">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-white/[0.06] border border-white/[0.1] text-white">
+              <Zap size={18} className="text-amber-400" />
+            </span>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white m-0">
+              Centro de Configuración & Preferencias
+            </h1>
+          </div>
+          <p className="text-xs text-neutral-400 mt-1">
+            Personaliza la interfaz, motores de IA, parámetros financieros y respaldos de Inefable Cloud
+          </p>
+        </div>
 
-      <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
-        {/* Sidebar de navegación */}
-        <div style={{
-          width: '240px', flexShrink: 0, position: 'sticky', top: '32px',
-          display: 'flex', flexDirection: 'column', gap: '2px',
-        }}>
-          {SECCIONES.map(sec => {
-            const Icon = ICONS[sec.icon] || Info;
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={handleExport}
+            className="btn-action-pill flex items-center gap-1.5 text-xs py-2 px-3.5"
+            title="Exportar respaldo de configuración"
+          >
+            <Download size={13} /> Exportar JSON
+          </button>
+          <button
+            onClick={handleImport}
+            className="btn-action-pill flex items-center gap-1.5 text-xs py-2 px-3.5"
+            title="Importar respaldo"
+          >
+            <Upload size={13} /> Importar JSON
+          </button>
+        </div>
+      </header>
+
+      {importStatus && (
+        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold animate-in fade-in">
+          {importStatus}
+        </div>
+      )}
+
+      {/* ── GRID PRINCIPAL: NAVEGACIÓN + CONTENIDO ───────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* NAVEGADOR DE SECCIONES LATERAL */}
+        <aside className="lg:col-span-4 space-y-1.5 bg-white/[0.02] border border-white/[0.06] p-3 rounded-2xl">
+          <span className="text-[9px] font-black uppercase tracking-widest text-neutral-500 px-3 py-1.5 block">
+            Módulos del Sistema
+          </span>
+          {SECCIONES_PROFESIONALES.map(sec => {
+            const Icon = sec.icon;
             const isActive = activeSection === sec.id;
             return (
-              <div key={sec.id} onClick={() => setActiveSection(sec.id)}
-                style={{
-                  padding: '8px 12px', borderRadius: '8px', cursor: 'pointer',
-                  backgroundColor: isActive ? '#a0a0a010' : 'transparent',
-                  borderLeft: isActive ? '2px solid #a0a0a0' : '2px solid transparent',
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  transition: 'all 0.15s',
-                }}>
-                <Icon size={14} color={isActive ? '#a0a0a0' : '#555'} />
-                <div>
-                  <p style={{
-                    margin: 0, fontSize: '10px', fontWeight: isActive ? 600 : 400,
-                    color: isActive ? '#d4d4d4' : '#707070',
-                  }}>
-                    {sec.label}
-                  </p>
-                  <p style={{ margin: 0, fontSize: '8px', color: '#555' }}>{sec.desc}</p>
+              <button
+                key={sec.id}
+                onClick={() => setActiveSection(sec.id)}
+                className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition-all duration-200 ${
+                  isActive
+                    ? 'bg-white/[0.08] text-white border border-white/[0.15] shadow-lg shadow-black/20'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.03] border border-transparent'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    isActive ? 'bg-amber-400/20 text-amber-300' : 'bg-white/[0.04] text-neutral-400'
+                  }`}>
+                    <Icon size={16} />
+                  </div>
+                  <div className="truncate">
+                    <p className="text-xs font-bold m-0 leading-tight">{sec.label}</p>
+                    <p className="text-[10px] text-neutral-500 m-0 truncate mt-0.5">{sec.desc}</p>
+                  </div>
                 </div>
-              </div>
+                {sec.badge && (
+                  <span className="text-[8px] font-black tracking-wider px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                    {sec.badge}
+                  </span>
+                )}
+              </button>
             );
           })}
-        </div>
 
-        {/* Contenido */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {renderContent()}
-        </div>
+          <div className="pt-4 mt-4 border-t border-white/[0.06] px-3">
+            <div className="flex justify-between items-center text-[10px] text-neutral-500">
+              <span>Almacenamiento Local:</span>
+              <span className="text-neutral-300 font-mono font-bold">{storageUsed} MB</span>
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-neutral-500 mt-1">
+              <span>Versión Cloud:</span>
+              <span className="text-neutral-300 font-mono font-bold">1.1.0 Pro</span>
+            </div>
+          </div>
+        </aside>
+
+        {/* PANEL DE DETALLE / CONTENIDO ACTIVO */}
+        <main className="lg:col-span-8 space-y-6 bg-white/[0.02] border border-white/[0.06] p-5 sm:p-7 rounded-2xl shadow-2xl">
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SECCIÓN 1: INTELIGENCIA ARTIFICIAL (GEMINI / DEEPSEEK)
+              ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'ia' && (
+            <div className="space-y-6 animate-in fade-in">
+              <div className="pb-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
+                  <Bot size={18} className="text-purple-400" /> Motores de Inteligencia Artificial
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Configura y valida en tiempo real tu conexión con Google Gemini AI Studio o DeepSeek
+                </p>
+              </div>
+
+              {/* Selector de Proveedor */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block">
+                  Proveedor de IA Activo
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {[
+                    { id: 'gemini', name: 'Google Gemini (AI Studio)', desc: 'Recomendado · Rápido y Estable', color: '#a855f7' },
+                    { id: 'deepseek', name: 'DeepSeek AI', desc: 'V3 & Razonamiento R1', color: '#0ea5e9' }
+                  ].map(p => {
+                    const isSelected = (s.aiProvider || 'gemini') === p.id;
+                    return (
+                      <div
+                        key={p.id}
+                        onClick={() => updateSetting('aiProvider', p.id)}
+                        className={`p-4 rounded-xl cursor-pointer border transition-all ${
+                          isSelected
+                            ? 'bg-white/[0.08] border-purple-500/50 shadow-md shadow-purple-500/10'
+                            : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-white">{p.name}</span>
+                          {isSelected && <CheckCircle2 size={16} className="text-purple-400" />}
+                        </div>
+                        <span className="text-[10px] text-neutral-400 mt-1 block">{p.desc}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Parámetros específicos según proveedor */}
+              {s.aiProvider === 'deepseek' ? (
+                <div className="space-y-4 p-4 rounded-xl bg-blue-500/[0.03] border border-blue-500/10">
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                      Modelo DeepSeek
+                    </label>
+                    <select
+                      value={s.deepseekModel || 'deepseek-chat'}
+                      onChange={e => updateSetting('deepseekModel', e.target.value)}
+                      className="w-full text-xs font-semibold"
+                    >
+                      <option value="deepseek-chat">deepseek-chat (DeepSeek-V3 General)</option>
+                      <option value="deepseek-reasoner">deepseek-reasoner (DeepSeek-R1 Razonamiento)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+                        API Key DeepSeek
+                      </label>
+                      <a
+                        href="https://platform.deepseek.com/api_keys"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] text-blue-400 hover:underline flex items-center gap-1"
+                      >
+                        Obtener clave <ExternalLink size={10} />
+                      </a>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showApiKey ? "text" : "password"}
+                        value={s.deepseekKey || ''}
+                        onChange={e => updateSetting('deepseekKey', e.target.value.trim())}
+                        placeholder="sk-..."
+                        className="w-full text-xs pr-10 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
+                      >
+                        {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4 p-4 rounded-xl bg-purple-500/[0.03] border border-purple-500/10">
+                  <div>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                      Modelo Oficial de Google AI Studio
+                    </label>
+                    <select
+                      value={s.geminiModel || 'gemini-1.5-flash'}
+                      onChange={e => updateSetting('geminiModel', e.target.value)}
+                      className="w-full text-xs font-semibold"
+                    >
+                      <option value="gemini-1.5-flash">gemini-1.5-flash (Recomendado · Ultra Rápido & Gratuito)</option>
+                      <option value="gemini-2.0-flash">gemini-2.0-flash (Próxima Generación Flash)</option>
+                      <option value="gemini-1.5-pro">gemini-1.5-pro (Máxima Capacidad de Razonamiento)</option>
+                      <option value="gemini-1.5-flash-8b">gemini-1.5-flash-8b (Ultra Ligero)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+                        API Key de Google AI Studio
+                      </label>
+                      <a
+                        href="https://aistudio.google.com/app/apikey"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[10px] text-purple-400 hover:underline flex items-center gap-1"
+                      >
+                        Generar API Key en Google AI Studio <ExternalLink size={10} />
+                      </a>
+                    </div>
+                    <div className="relative">
+                      <input
+                        type={showApiKey ? "text" : "password"}
+                        value={s.geminiKey || ''}
+                        onChange={e => updateSetting('geminiKey', e.target.value.trim())}
+                        placeholder="AIzaSy..."
+                        className="w-full text-xs pr-10 font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowApiKey(!showApiKey)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
+                      >
+                        {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Botón de Test de Conexión en Tiempo Real */}
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={handleTestAiConnection}
+                  disabled={testingAi}
+                  className="btn-action-pill btn-action-pill-primary w-full py-3 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2"
+                >
+                  {testingAi ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" /> Verificando conexión con {s.aiProvider === 'deepseek' ? 'DeepSeek' : 'Google AI Studio'}...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={14} /> Probar Conexión en Vivo
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Resultado del Test */}
+              {aiTestResult && (
+                <div className={`p-4 rounded-xl border text-xs animate-in zoom-in-95 duration-200 ${
+                  aiTestResult.success
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                }`}>
+                  <div className="flex items-center gap-2 font-bold mb-1">
+                    {aiTestResult.success ? <CheckCircle2 size={16} className="text-emerald-400" /> : <AlertTriangle size={16} className="text-rose-400" />}
+                    <span>{aiTestResult.success ? 'Conexión Exitosa' : 'Fallo de Conexión'}</span>
+                  </div>
+                  <p className="text-[11px] m-0 text-white/90 leading-relaxed">{aiTestResult.message}</p>
+                </div>
+              )}
+
+              {/* Parámetros Avanzados: Temperatura & Tokens */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/[0.06]">
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-neutral-400 font-bold uppercase text-[9px]">Temperatura Creativa</span>
+                    <span className="text-white font-mono">{s.aiTemperature || 0.7}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={s.aiTemperature || 0.7}
+                    onChange={e => updateSetting('aiTemperature', parseFloat(e.target.value))}
+                    className="w-full accent-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-neutral-400 font-bold uppercase text-[9px]">Límite de Tokens</span>
+                    <span className="text-white font-mono">{s.aiMaxTokens || 2048}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="512"
+                    max="4096"
+                    step="256"
+                    value={s.aiMaxTokens || 2048}
+                    onChange={e => updateSetting('aiMaxTokens', parseInt(e.target.value))}
+                    className="w-full accent-purple-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SECCIÓN 2: APARIENCIA & TEMA
+              ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'apariencia' && (
+            <div className="space-y-6 animate-in fade-in">
+              <div className="pb-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
+                  <Palette size={18} className="text-amber-400" /> Apariencia & Personalización Visual
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Ajusta los tonos oscuros, el color de acento corporativo y la densidad visual
+                </p>
+              </div>
+
+              {/* Tono de Fondo */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-2">
+                  Tono Base de Fondo
+                </label>
+                <div className="grid grid-cols-3 gap-3">
+                  {MODOS_FONDO.map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => updateSetting('appearanceMode', m.id)}
+                      className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
+                        s.appearanceMode === m.id
+                          ? 'border-amber-400 bg-white/[0.06]'
+                          : 'border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <div className="w-6 h-6 rounded-full border border-white/20" style={{ backgroundColor: m.color }} />
+                      <span className="text-xs font-bold text-white">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Paleta de Color de Acento */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-2">
+                  Color de Acento Principal
+                </label>
+                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {ACCENT_COLORS.map(c => (
+                    <button
+                      key={c.hex}
+                      onClick={() => updateSetting('accentColor', c.hex)}
+                      className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                        s.accentColor === c.hex ? 'border-white bg-white/[0.1]' : 'border-white/[0.06] hover:bg-white/[0.04]'
+                      }`}
+                    >
+                      <div className="w-5 h-5 rounded-lg shadow-sm" style={{ backgroundColor: c.hex }} />
+                      <span className="text-[9px] font-semibold text-neutral-300 truncate w-full text-center">{c.name.split(' ')[0]}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Wallpaper Personalizado */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <label className="text-xs font-bold text-white block">Wallpaper de Fondo</label>
+                    <p className="text-[10px] text-neutral-400 m-0">Aplica un difuminado cinematográfico detrás del contenido</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <label className="btn-action-pill cursor-pointer text-xs py-1.5 px-3">
+                      <Upload size={12} /> Subir Imagen
+                      <input type="file" accept="image/*" onChange={handleBgImageUpload} ref={fileInputRef} className="hidden" />
+                    </label>
+                    {s.backgroundImage && (
+                      <button onClick={handleRemoveBg} className="btn-action-pill btn-action-pill-danger text-xs py-1.5 px-3">
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {s.backgroundImage && (
+                  <div className="h-20 w-full rounded-lg overflow-hidden border border-white/10 relative">
+                    <img src={s.backgroundImage} alt="Wallpaper" className="w-full h-full object-cover blur-sm" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SECCIÓN 3: PRÉSTAMOS & FINANZAS
+              ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'prestamos' && (
+            <div className="space-y-6 animate-in fade-in">
+              <div className="pb-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
+                  <DollarSign size={18} className="text-emerald-400" /> Parámetros de Préstamos & Cobranza
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Valores iniciales automáticos al registrar nuevos préstamos y QR de cobro
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                    Moneda Predeterminada
+                  </label>
+                  <select
+                    value={s.loanDefaultCurrency || 'BOB'}
+                    onChange={e => updateSetting('loanDefaultCurrency', e.target.value)}
+                    className="w-full text-xs font-semibold"
+                  >
+                    <option value="BOB">BOB (Bolivianos - Bs)</option>
+                    <option value="USD">USD (Dólares Americanos - $)</option>
+                    <option value="EUR">EUR (Euros - €)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                    Tasa de Interés Sugerida (% Mensual)
+                  </label>
+                  <input
+                    type="number"
+                    value={s.loanDefaultRate || 10}
+                    onChange={e => updateSetting('loanDefaultRate', parseFloat(e.target.value) || 0)}
+                    className="w-full text-xs font-bold"
+                  />
+                </div>
+              </div>
+
+              {/* QR de Cobro Bancario */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <label className="text-xs font-bold text-white block">Código QR de Cobro Bancario</label>
+                    <p className="text-[10px] text-neutral-400 m-0">Se mostrará en los recibos y al cobrar cuotas</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <label className="btn-action-pill cursor-pointer text-xs py-1.5 px-3">
+                      <Upload size={12} /> Cargar QR
+                      <input type="file" accept="image/*" onChange={handleQrUpload} ref={qrInputRef} className="hidden" />
+                    </label>
+                    {s.loanQrImage && (
+                      <button onClick={handleRemoveQr} className="btn-action-pill btn-action-pill-danger text-xs py-1.5 px-3">
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {s.loanQrImage && (
+                  <div className="w-24 h-24 rounded-lg overflow-hidden border border-white/10 p-1 bg-white">
+                    <img src={s.loanQrImage} alt="QR de Pago" className="w-full h-full object-contain" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SECCIÓN 4: EGRESOS & PRESUPUESTO
+              ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'egresos' && (
+            <div className="space-y-6 animate-in fade-in">
+              <div className="pb-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
+                  <Wallet size={18} className="text-rose-400" /> Control de Egresos & Suscripciones
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Presupuesto objetivo mensual y días de aviso para renovación
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                    Presupuesto Mensual Objetivo (BOB)
+                  </label>
+                  <input
+                    type="number"
+                    value={s.monthlyBudget || 2500}
+                    onChange={e => {
+                      const v = parseFloat(e.target.value) || 0;
+                      updateSetting('monthlyBudget', v);
+                      localStorage.setItem('inefable_monthly_budget', v.toString());
+                    }}
+                    className="w-full text-xs font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                    Días de Anticipación para Alertas
+                  </label>
+                  <select
+                    value={s.reminderDays || '3'}
+                    onChange={e => updateSetting('reminderDays', e.target.value)}
+                    className="w-full text-xs font-semibold"
+                  >
+                    <option value="1">1 día antes</option>
+                    <option value="3">3 días antes</option>
+                    <option value="5">5 días antes</option>
+                    <option value="7">7 días antes</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SECCIÓN 5: EMPRESA & FACTURACIÓN
+              ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'empresa' && (
+            <div className="space-y-6 animate-in fade-in">
+              <div className="pb-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
+                  <Building2 size={18} className="text-blue-400" /> Identidad Comercial & Facturación
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Datos que aparecen en reportes, inventarios y comprobantes
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                    Razón Social / Nombre Comercial
+                  </label>
+                  <input
+                    type="text"
+                    value={s.companyName || 'Inefable Corp'}
+                    onChange={e => updateSetting('companyName', e.target.value)}
+                    className="w-full text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                    NIT / Número Tributario
+                  </label>
+                  <input
+                    type="text"
+                    value={s.companyNit || ''}
+                    onChange={e => updateSetting('companyNit', e.target.value)}
+                    placeholder="Ej. 102938475"
+                    className="w-full text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SECCIÓN 6: NOTIFICACIONES
+              ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'notificaciones' && (
+            <div className="space-y-6 animate-in fade-in">
+              <div className="pb-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
+                  <Bell size={18} className="text-amber-400" /> Centro de Alertas & Notificaciones
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Configuración de notificaciones visuales y sincronización
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-white m-0">Alertas de Vencimiento de Préstamos</p>
+                    <p className="text-[10px] text-neutral-400 m-0">Notificar cobros pendientes en la barra de menú</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={s.loanNotifications !== false}
+                    onChange={e => updateSetting('loanNotifications', e.target.checked)}
+                    className="accent-amber-500 w-4 h-4"
+                  />
+                </div>
+
+                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-white m-0">Alertas de Suscripciones & Servicios</p>
+                    <p className="text-[10px] text-neutral-400 m-0">Avisar con anticipación antes de la fecha de débito</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={s.serviceNotifications !== false}
+                    onChange={e => updateSetting('serviceNotifications', e.target.checked)}
+                    className="accent-amber-500 w-4 h-4"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══════════════════════════════════════════════════════════════════
+              SECCIÓN 7: SEGURIDAD & RESPALDO
+              ══════════════════════════════════════════════════════════════════ */}
+          {activeSection === 'respaldo' && (
+            <div className="space-y-6 animate-in fade-in">
+              <div className="pb-4 border-b border-white/[0.06]">
+                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
+                  <Shield size={18} className="text-emerald-400" /> Seguridad, Cuenta & Respaldo
+                </h3>
+                <p className="text-xs text-neutral-400 mt-1">
+                  Administración de sesiones, exportación completa y restauración de fábrica
+                </p>
+              </div>
+
+              {/* Cuenta de Google */}
+              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border border-white/20">
+                    {googleUser?.picture ? (
+                      <img src={googleUser.picture} alt="Avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      <Globe size={18} className="text-neutral-400" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-white m-0">{googleUser?.name || 'Usuario Inefable'}</p>
+                    <p className="text-[10px] text-neutral-400 m-0">{googleUser?.email || 'Google Workspace Conectado'}</p>
+                  </div>
+                </div>
+                {onLogout && (
+                  <button onClick={onLogout} className="btn-action-pill btn-action-pill-danger text-xs py-1.5 px-3">
+                    <LogOut size={12} /> Cerrar Sesión
+                  </button>
+                )}
+              </div>
+
+              {/* Restauración de Fábrica */}
+              <div className="p-4 rounded-xl bg-rose-500/[0.03] border border-rose-500/20 space-y-2">
+                <div className="flex items-center gap-2 text-rose-400 font-bold text-xs">
+                  <AlertTriangle size={15} /> Zona de Peligro: Restablecer Preferencias
+                </div>
+                <p className="text-[10px] text-neutral-400 m-0">
+                  Regresa todos los colores, claves y configuraciones a los valores predeterminados de fábrica.
+                </p>
+                <button
+                  onClick={() => {
+                    if (window.confirm("¿Seguro que deseas restablecer todas las preferencias del panel?")) {
+                      resetSettings();
+                    }
+                  }}
+                  className="btn-action-pill btn-action-pill-danger text-xs py-2 px-3.5 mt-2"
+                >
+                  <RotateCcw size={12} /> Restablecer Configuración
+                </button>
+              </div>
+            </div>
+          )}
+
+        </main>
       </div>
+
     </div>
   );
 }

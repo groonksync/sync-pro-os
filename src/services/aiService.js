@@ -71,30 +71,47 @@ async function queryOpenRouter(apiKey, model, messages) {
   return data.choices[0].message.content
 }
 
+async function listAvailableGeminiModels(apiKey) {
+  try {
+    const cleanKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
+    if (!cleanKey) return [];
+    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`;
+    const res = await fetchWithTimeout(url, { method: 'GET' }, 8000);
+    const data = await res.json();
+    if (data.models && Array.isArray(data.models)) {
+      return data.models
+        .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''));
+    }
+  } catch (e) {
+    console.warn('No se pudo listar modelos de Google dinámicamente:', e);
+  }
+  return [];
+}
+
 async function queryGemini(apiKey, model, messages) {
   const error = validateKey(apiKey, 'Gemini');
   if (error) return error;
 
-  const cleanKey = apiKey.trim();
+  const cleanKey = apiKey.trim().replace(/^["']|["']$/g, '');
 
-  // Modelos oficiales vigentes en Google AI Studio (2025/2026)
-  const validModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b'];
+  // 1. Obtener modelos dinámicos reconocidos por la clave del usuario
+  const remoteModels = await listAvailableGeminiModels(cleanKey);
+  const defaultModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b', 'gemini-1.0-pro'];
   
-  let targetModel = 'gemini-1.5-flash';
+  const pool = [];
   if (model) {
-    const sanitized = model.replace(/^models\//, '').toLowerCase();
-    if (validModels.includes(sanitized)) {
-      targetModel = sanitized;
-    }
+    pool.push(model.replace(/^models\//, '').trim());
   }
+  pool.push(...remoteModels);
+  pool.push(...defaultModels);
 
-  // Orden de reintentos
-  const modelsToTry = [targetModel, ...validModels.filter(m => m !== targetModel)];
+  // Evitar nombres deprecados
+  const modelsToTry = [...new Set(pool)].filter(m => m && !['gemini-pro', 'gemini-1.0-pro-001'].includes(m));
 
   const systemMsg = messages.find(m => m.role === 'system')?.content || '';
   const userMsg = messages.filter(m => m.role === 'user').pop()?.content || 'Hola';
 
-  // Historial de mensajes para contexto continuo
   const historyText = messages
     .filter(m => m.role !== 'system')
     .slice(0, -1)
@@ -107,42 +124,13 @@ async function queryGemini(apiKey, model, messages) {
 
   let lastError = null;
 
-  // 1. Intento primario: SDK Oficial @google/generative-ai
-  try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(cleanKey);
-
-    for (const mName of modelsToTry) {
-      try {
-        const geminiModel = genAI.getGenerativeModel({
-          model: mName,
-          systemInstruction: systemMsg ? systemMsg : undefined,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 2048,
-          }
-        });
-
-        const result = await geminiModel.generateContent(promptToSend);
-        const response = await result.response;
-        const text = response.text();
-        if (text) return text;
-      } catch (sdkModelErr) {
-        lastError = sdkModelErr;
-      }
-    }
-  } catch (sdkImportErr) {
-    lastError = sdkImportErr;
-  }
-
-  // 2. Intento secundario: REST API Directa de Google AI Studio (v1beta)
+  // 1. Intento primario: Google Generative Language REST API (v1beta)
   for (const mName of modelsToTry) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${mName}:generateContent?key=${cleanKey}`;
       const payload = {
         contents: [
           {
-            role: 'user',
             parts: [{ text: promptToSend }]
           }
         ],
@@ -176,7 +164,31 @@ async function queryGemini(apiKey, model, messages) {
     }
   }
 
-  throw lastError || new Error('No se pudo comunicar con Google Gemini.');
+  // 2. Intento de respaldo con SDK oficial @google/generative-ai
+  try {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(cleanKey);
+    for (const mName of modelsToTry.slice(0, 3)) {
+      try {
+        const geminiModel = genAI.getGenerativeModel({
+          model: mName,
+          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+        });
+        const result = await geminiModel.generateContent(
+          systemMsg ? `${systemMsg}\n\n${promptToSend}` : promptToSend
+        );
+        const response = await result.response;
+        const text = response.text();
+        if (text) return text;
+      } catch (sdkErr) {
+        lastError = sdkErr;
+      }
+    }
+  } catch (sdkImportErr) {
+    lastError = sdkImportErr;
+  }
+
+  throw lastError || new Error('No se pudo comunicar con Google Gemini. Verifica que tu API Key sea válida.');
 }
 
 async function queryBalanceDeepSeek(apiKey) {
@@ -311,6 +323,49 @@ export const aiService = {
       return await queryGemini(settings.geminiKey, settings.geminiModel || '', messages)
     } catch (e) {
       return `❌ ${sanitizeError(e, provider)}`
+    }
+  },
+
+  testConnection: async (provider, apiKey, model) => {
+    try {
+      if (!apiKey || !apiKey.trim()) {
+        return { success: false, message: 'La clave API está vacía.' };
+      }
+      if (provider === 'gemini') {
+        const models = await listAvailableGeminiModels(apiKey);
+        const res = await queryGemini(apiKey, model || 'gemini-1.5-flash', [
+          { role: 'user', content: 'Responde únicamente con la palabra OK' }
+        ]);
+        if (res && !res.startsWith('❌')) {
+          return {
+            success: true,
+            message: `Conexión exitosa. Modelos disponibles: ${models.length > 0 ? models.slice(0, 3).join(', ') : 'gemini-1.5-flash'}`,
+            models
+          };
+        }
+        return { success: false, message: res };
+      }
+      if (provider === 'deepseek') {
+        const res = await queryDeepSeek(apiKey, model || 'deepseek-chat', [
+          { role: 'user', content: 'Responde únicamente con la palabra OK' }
+        ]);
+        if (res && !res.startsWith('❌')) {
+          return { success: true, message: 'Conexión exitosa con DeepSeek API.' };
+        }
+        return { success: false, message: res };
+      }
+      if (provider === 'openrouter') {
+        const res = await queryOpenRouter(apiKey, model || 'google/gemini-2.5-flash', [
+          { role: 'user', content: 'Responde únicamente con la palabra OK' }
+        ]);
+        if (res && !res.startsWith('❌')) {
+          return { success: true, message: 'Conexión exitosa con OpenRouter API.' };
+        }
+        return { success: false, message: res };
+      }
+      return { success: false, message: 'Proveedor no reconocido.' };
+    } catch (e) {
+      return { success: false, message: e.message || String(e) };
     }
   }
 }
