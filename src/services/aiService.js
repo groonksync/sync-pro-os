@@ -217,6 +217,33 @@ async function queryBalanceOpenRouter(apiKey) {
   return '0.00'
 }
 
+function cleanAiResponse(text) {
+  if (!text) return '';
+  let cleaned = text.trim();
+
+  // Filtrar posibles ecos de razonamiento o plantillas en inglés
+  if (cleaned.includes('User says:') || cleaned.includes('Context: I am') || cleaned.includes('Goal: Respond') || cleaned.includes('Current View:')) {
+    const matchQuote = cleaned.match(/"([^"]{10,})"/);
+    if (matchQuote && matchQuote[1]) {
+      cleaned = matchQuote[1];
+    } else {
+      const lines = cleaned.split('\n').filter(l => 
+        !l.startsWith('User says:') && 
+        !l.startsWith('Context:') && 
+        !l.startsWith('Goal:') && 
+        !l.startsWith('Greeting:') && 
+        !l.startsWith('Language:') && 
+        !l.startsWith('Offer assistance:') && 
+        !l.startsWith('Current View:') &&
+        !l.startsWith('No JSON needed')
+      );
+      cleaned = lines.join('\n').trim();
+    }
+  }
+
+  return cleaned;
+}
+
 export const aiService = {
   fetchBalance: async (settings) => {
     const provider = settings.aiProvider || 'gemini'
@@ -245,26 +272,19 @@ export const aiService = {
     const provider = s.aiProvider || 'gemini'
     const activeView = context.activeView || 'General'
 
-    const systemPrompt = `
-      Eres "Agente", tu asistente personal y amigo.
-      
-      ACCIONES (JSON MANDATORIO AL FINAL):
-      - CREAR_RECORDATORIO: { "action": "CREATE_REMINDER", "data": { "titulo", "monto", "nombre_contacto", "recurrencia", "fecha", "fecha_fin", "categoria": "Tarea|Compra|Idea|Nota", "subtareas": ["item1", "item2"] } }
-      - CREAR_PRODUCTO: { "action": "CREATE_PRODUCT", "data": { "nombre", "precio_venta", "stock_actual" } }
-      - CREAR_PRESTAMO: { "action": "CREATE_LOAN", "data": { "nombre", "capital", "interes", "inicio", "fin" } }
-      - CREAR_EGRESO: { "action": "CREATE_EXPENSE", "data": { "nombre", "monto", "fecha_pago", "metodo", "contacto", "notas" } }
-      - CREAR_NOTA: { "action": "CREATE_NOTE", "data": { "titulo", "icono", "contenido_texto" } }
-      - BUSCAR_DRIVE: { "action": "SEARCH_DRIVE", "query": "nombre" }
-      
-      REGLAS CRÍTICAS:
-      1. SI LA VISTA ACTUAL ES "Recordatorios", PRIORIZA "CREAR_RECORDATORIO".
-      2. Usa la categoría "Nota" para apuntes personales o reflexiones.
-      3. NUNCA muestres el código JSON al usuario.
-      4. TODO JSON debe ir envuelto estrictamente entre estos marcadores: [[[ACTION{tu_json_aqui}]]].
-      5. Responde de forma amigable, directa y muy clara.
+    const systemPrompt = `Eres "Agente", el asistente inteligente, rápido y amigable de la aplicación Inefable.
 
-      SISTEMA: ${JSON.stringify(context)}
-    `
+REGLAS DE COMUNICACIÓN OBLIGATORIAS:
+1. Responde SIEMPRE y ÚNICAMENTE en español.
+2. Sé directo, conciso y cordial (para saludos o preguntas sencillas responde en 1 o 2 oraciones).
+3. NUNCA escribas tu razonamiento, ni notas de contexto, ni repitas lo que el usuario dijo, ni uses palabras en inglés.
+4. Vista actual del usuario: ${activeView}.
+
+ACCIONES AUTOMATIZADAS (solo si el usuario pide explícitamente crear algo, adjunta el JSON exacto al final entre [[[ACTION{...}]]]):
+- CREAR RECORDATORIO: [[[ACTION{"action":"CREATE_REMINDER","data":{"titulo":"...","monto":0,"fecha":"YYYY-MM-DD"}}]]]
+- REGISTRAR PRÉSTAMO: [[[ACTION{"action":"CREATE_LOAN","data":{"nombre":"...","capital":1000,"interes":10}}]]]
+- REGISTRAR GASTO/EGRESO: [[[ACTION{"action":"CREATE_EXPENSE","data":{"nombre":"...","monto":50,"fecha_pago":"YYYY-MM-DD"}}]]]
+- CREAR PRODUCTO: [[[ACTION{"action":"CREATE_PRODUCT","data":{"nombre":"...","precio_venta":100,"stock_actual":1}}]]]`;
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -273,23 +293,24 @@ export const aiService = {
     ]
 
     try {
+      let rawResponse = '';
       if (provider === 'deepseek') {
-        return await queryDeepSeek(
+        rawResponse = await queryDeepSeek(
           s.deepseekKey,
           s.deepseekModel || 'deepseek-chat',
           messages
-        )
-      }
-
-      if (provider === 'openrouter') {
-        return await queryOpenRouter(
+        );
+      } else if (provider === 'openrouter') {
+        rawResponse = await queryOpenRouter(
           s.openrouterKey,
           s.openrouterModel || 'google/gemini-2.5-flash',
           messages
-        )
+        );
+      } else {
+        rawResponse = await queryGemini(s.geminiKey, s.geminiModel || '', messages);
       }
 
-      return await queryGemini(s.geminiKey, s.geminiModel || '', messages)
+      return cleanAiResponse(rawResponse);
     } catch (e) {
       return `❌ ${sanitizeError(e, provider)}`
     }
@@ -304,23 +325,23 @@ export const aiService = {
     ]
 
     try {
+      let rawResponse = '';
       if (provider === 'deepseek') {
-        return await queryDeepSeek(
+        rawResponse = await queryDeepSeek(
           settings.deepseekKey,
           settings.deepseekModel || 'deepseek-chat',
           messages
-        )
-      }
-
-      if (provider === 'openrouter') {
-        return await queryOpenRouter(
+        );
+      } else if (provider === 'openrouter') {
+        rawResponse = await queryOpenRouter(
           settings.openrouterKey,
           settings.openrouterModel || 'google/gemini-2.5-flash',
           messages
-        )
+        );
+      } else {
+        rawResponse = await queryGemini(settings.geminiKey, settings.geminiModel || '', messages);
       }
-
-      return await queryGemini(settings.geminiKey, settings.geminiModel || '', messages)
+      return cleanAiResponse(rawResponse);
     } catch (e) {
       return `❌ ${sanitizeError(e, provider)}`
     }
