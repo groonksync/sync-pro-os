@@ -315,54 +315,44 @@ const Sidebar = ({
                       alignItems: 'center',
                       justifyContent: isCollapsed ? 'center' : 'space-between',
                       gap: 10,
-                      padding: isCollapsed ? '8px' : '7px 10px',
-                      borderRadius: 10,
-                      border: 'none',
-                      background: active ? t.accentSoft : 'transparent',
-                      color: active ? t.accent : t.textMuted,
+                      padding: isCollapsed ? '9px' : '8px 12px',
+                      borderRadius: 12,
+                      border: active ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid transparent',
+                      background: active ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
+                      color: active ? '#34d399' : t.textMuted,
                       cursor: 'pointer',
-                      transition: 'background 0.18s ease, color 0.18s ease, transform 0.18s ease',
+                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                       position: 'relative',
+                      boxShadow: active ? '0 0 16px rgba(16, 185, 129, 0.15)' : 'none',
                     }}
                     onMouseOver={e => {
                       if (!active) {
                         e.currentTarget.style.background = t.hover;
                         e.currentTarget.style.color = t.textSecondary;
+                        e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)';
                       }
                     }}
                     onMouseOut={e => {
                       if (!active) {
                         e.currentTarget.style.background = 'transparent';
                         e.currentTarget.style.color = t.textMuted;
+                        e.currentTarget.style.borderColor = 'transparent';
                       }
                     }}
                   >
-                    {active && (
-                      <div style={{
-                        position: 'absolute', left: -4, top: '20%', bottom: '20%',
-                        width: 3, borderRadius: 9999,
-                        background: t.accent,
-                        boxShadow: `0 0 6px ${t.accent}40`,
-                        animation: 'sidebarIndicator 0.25s cubic-bezier(0.16,1,0.3,1) forwards',
-                      }} />
-                    )}
-
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                       <div style={{
                         width: 28, height: 28, borderRadius: 8, flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: active
-                          ? (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)')
-                          : 'transparent',
-                        transition: 'background 0.18s ease',
+                        color: active ? '#34d399' : t.textMuted,
                       }}>
-                        <item.icon size={15} strokeWidth={active ? 2.2 : 1.8} />
+                        <item.icon size={16} strokeWidth={active ? 2.2 : 1.7} />
                       </div>
                       {!isCollapsed && (
                         <span style={{
                           fontSize: 12, fontWeight: active ? 600 : 450,
                           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                          letterSpacing: '-0.005em',
+                          letterSpacing: '-0.01em',
                           fontFamily: "'Geist', 'Inter', sans-serif",
                         }}>
                           {item.label}
@@ -374,9 +364,9 @@ const Sidebar = ({
                       <span style={{
                         fontSize: 9, fontWeight: 700, padding: '2px 7px',
                         borderRadius: 9999, flexShrink: 0,
-                        background: active ? t.accentSoft : t.surface,
-                        color: active ? t.accent : t.textDim,
-                        border: `1px solid ${active ? t.borderLight : t.border}`,
+                        background: active ? 'rgba(16, 185, 129, 0.2)' : t.surface,
+                        color: active ? '#34d399' : t.textDim,
+                        border: `1px solid ${active ? 'rgba(16, 185, 129, 0.4)' : t.border}`,
                         fontFamily: "'JetBrains Mono', monospace",
                       }}>
                         {count}
@@ -385,11 +375,10 @@ const Sidebar = ({
 
                     {isCollapsed && count != null && count > 0 && (
                       <div style={{
-                        position: 'absolute', top: 3, right: 3,
-                        width: 7, height: 7, borderRadius: 9999,
-                        background: t.accent,
-                        border: `1.5px solid ${t.bg}`,
-                        boxShadow: `0 0 4px ${t.accent}60`,
+                        position: 'absolute', top: 4, right: 4,
+                        width: 6, height: 6, borderRadius: 9999,
+                        background: '#34d399',
+                        boxShadow: '0 0 6px #34d399',
                       }} />
                     )}
                   </button>

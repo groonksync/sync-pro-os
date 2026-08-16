@@ -824,184 +824,130 @@ const CommandCenter = ({
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          FILA 1: KPIs PRINCIPALES (Tarjetas Ejecutivas Modernas)
+          FILA 1: KPIs PRINCIPALES (Tarjetas Ejecutivas con Sparklines)
           ══════════════════════════════════════════════════════ */}
-      <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 lg:grid-cols-4'}`} style={{ marginBottom: '24px' }}>
+      <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`} style={{ marginBottom: '24px' }}>
         
         {/* KPI 1: Capital Activo en Préstamos */}
-        <div className="metric-card-executive animate-countUp stagger-1" style={{ backgroundColor: t.panel, borderColor: t.border }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div className="icon-squircle" style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: `${t.accent}15`, border: `1px solid ${t.accent}30` }}>
-              <Wallet size={17} color={t.accent} strokeWidth={2} />
+        <div className="metric-card-executive animate-countUp stagger-1" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
+                Active Capital
+              </span>
+              <span className="badge-luxury-success" style={{ padding: '2px 8px', fontSize: '9px' }}>
+                +2.5%
+              </span>
             </div>
-            <span className="badge-luxury-success">
-              <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }} />
-              Activo
-            </span>
+            <h3 style={{ fontSize: 26, fontWeight: 800, color: t.text, letterSpacing: '-0.04em', margin: 0, fontFamily: "'Geist', 'Space Grotesk', sans-serif" }}>
+              <CountUp value={totalCapital} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
+            </h3>
           </div>
-          <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: t.textMuted, margin: 0 }}>
-            Capital en Préstamos
-          </p>
-          <h3 style={{ fontSize: 24, fontWeight: 800, color: t.text, letterSpacing: '-0.04em', margin: '4px 0 0', fontFamily: "'Geist', 'Space Grotesk', sans-serif" }}>
-            <CountUp value={totalCapital} /> <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: '0.05em' }}>BS</span>
-          </h3>
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Rendimiento / Mes</span>
-            <span className="num-tabular" style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>+<CountUp value={totalInteresMensual} /> BS</span>
+          {/* Sparkline curve */}
+          <div style={{ width: '100%', height: 42, marginTop: 14, overflow: 'hidden' }}>
+            <svg width="100%" height="42" viewBox="0 0 200 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad-emerald" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              <path d="M 0,28 Q 30,34 60,20 T 120,24 T 170,12 T 200,8 L 200,40 L 0,40 Z" fill="url(#grad-emerald)" />
+              <path d="M 0,28 Q 30,34 60,20 T 120,24 T 170,12 T 200,8" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </div>
         </div>
 
         {/* KPI 2: Inventario a Costo */}
-        <div className="metric-card-executive animate-countUp stagger-2" style={{ backgroundColor: t.panel, borderColor: t.border }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div className="icon-squircle" style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: stockBajo.length > 0 ? 'rgba(239, 68, 68, 0.12)' : `${t.accent}15`, border: `1px solid ${stockBajo.length > 0 ? 'rgba(239, 68, 68, 0.3)' : `${t.accent}30`}` }}>
-              <Package size={17} color={stockBajo.length > 0 ? '#ef4444' : t.accent} strokeWidth={2} />
+        <div className="metric-card-executive animate-countUp stagger-2" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
+                Inventory Value
+              </span>
+              <span className="badge-luxury-success" style={{ padding: '2px 8px', fontSize: '9px', backgroundColor: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+                +6.3%
+              </span>
             </div>
-            {stockBajo.length > 0 ? (
-              <span className="badge-luxury-danger">
-                <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: '#ef4444', display: 'inline-block' }} />
-                {stockBajo.length} Críticos
-              </span>
-            ) : (
-              <span className="badge-luxury-neutral">
-                Almacén OK
-              </span>
-            )}
+            <h3 style={{ fontSize: 26, fontWeight: 800, color: t.text, letterSpacing: '-0.04em', margin: 0, fontFamily: "'Geist', 'Space Grotesk', sans-serif" }}>
+              <CountUp value={valorInventario} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
+            </h3>
           </div>
-          <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: t.textMuted, margin: 0 }}>
-            Valor Almacén (Costo)
-          </p>
-          <h3 style={{ fontSize: 24, fontWeight: 800, color: t.text, letterSpacing: '-0.04em', margin: '4px 0 0', fontFamily: "'Geist', 'Space Grotesk', sans-serif" }}>
-            <CountUp value={valorInventario} /> <span style={{ fontSize: 11, fontWeight: 600, color: t.textMuted, letterSpacing: '0.05em' }}>BS</span>
-          </h3>
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${t.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Total Productos</span>
-            <span className="num-tabular" style={{ fontSize: 11, fontWeight: 700, color: t.text }}><CountUp value={listaProductos.length} /> items</span>
+          {/* Sparkline curve */}
+          <div style={{ width: '100%', height: 42, marginTop: 14, overflow: 'hidden' }}>
+            <svg width="100%" height="42" viewBox="0 0 200 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad-amber" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              <path d="M 0,32 Q 40,28 75,34 T 135,18 T 175,22 T 200,10 L 200,40 L 0,40 Z" fill="url(#grad-amber)" />
+              <path d="M 0,32 Q 40,28 75,34 T 135,18 T 175,22 T 200,10" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </div>
         </div>
 
-        {/* KPI 3: Egresos y Servicios (col-span-2) */}
-        <div className={`metric-card-executive animate-countUp stagger-3 col-span-1 md:col-span-2 lg:col-span-2`} style={{ backgroundColor: t.panel, borderColor: t.border }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div className="icon-squircle" style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
-              <CreditCard size={17} color="#f87171" strokeWidth={2} />
+        {/* KPI 3: Balance Neto Mensual */}
+        <div className="metric-card-executive animate-countUp stagger-3" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
+                Net Balance
+              </span>
+              <span className="badge-luxury-success" style={{ padding: '2px 8px', fontSize: '9px' }}>
+                {balanceMensual >= 0 ? '+2.5%' : '-1.8%'}
+              </span>
             </div>
-            <span className="badge-luxury-neutral">
-              Egresos & Servicios
-            </span>
+            <h3 style={{ fontSize: 26, fontWeight: 800, color: balanceMensual >= 0 ? '#10b981' : '#f87171', letterSpacing: '-0.04em', margin: 0, fontFamily: "'Geist', 'Space Grotesk', sans-serif" }}>
+              {balanceMensual >= 0 ? '+' : '-'}<CountUp value={Math.abs(balanceMensual)} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
+            </h3>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 0.8fr', gap: '16px' }}>
-            {/* Tabla compacta de egresos */}
-            <div>
-              <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textMuted, marginBottom: 8 }}>
-                Detalle del Período
-              </p>
-              <div style={{ maxHeight: '110px', overflowY: 'auto', border: `1px solid ${t.border}`, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.2)' }} className="mac-scrollbar">
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                  <thead>
-                    <tr style={{ borderBottom: `1px solid ${t.border}`, backgroundColor: 'rgba(255,255,255,0.02)', position: 'sticky', top: 0 }}>
-                      <th style={{ padding: '6px 10px', textAlign: 'left', color: t.textDim, fontWeight: 700, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Concepto</th>
-                      <th style={{ padding: '6px 10px', textAlign: 'right', color: t.textDim, fontWeight: 700, fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Monto</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {listaEgresosDetallados.length > 0 ? (
-                      listaEgresosDetallados.map(item => (
-                        <tr key={item.id} style={{ borderBottom: `1px solid rgba(255,255,255,0.03)` }}>
-                          <td style={{ padding: '6px 10px', color: item.tipo === 'servicio_pendiente' ? t.textSecondary : t.text, fontWeight: 500 }}>
-                            {item.nombre}
-                            {item.tipo === 'servicio_pendiente' && (
-                              <span className="badge-luxury-warning" style={{ marginLeft: 6, padding: '1px 5px', fontSize: '8px' }}>
-                                Pendiente
-                              </span>
-                            )}
-                          </td>
-                          <td className="num-tabular" style={{ padding: '6px 10px', textAlign: 'right', fontWeight: 700, color: item.tipo === 'servicio_pendiente' ? t.textSecondary : '#f87171' }}>
-                            {item.monto.toLocaleString()} BS
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="2" style={{ padding: '20px 10px', textAlign: 'center', color: t.textDim, fontSize: '10px' }}>
-                          Sin egresos registrados
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, padding: '0 2px' }}>
-                <span style={{ fontSize: '9px', fontWeight: 700, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Total Egresos</span>
-                <span className="num-tabular" style={{ fontSize: '13px', fontWeight: 800, color: '#f87171' }}>
-                  {totalEgresosYServicios.toLocaleString()} BS
-                </span>
-              </div>
-            </div>
-
-            {/* Balance mensual resumen */}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', borderLeft: isMobile ? 'none' : `1px solid ${t.border}`, paddingLeft: isMobile ? 0 : '16px', borderTop: isMobile ? `1px solid ${t.border}` : 'none', paddingTop: isMobile ? '12px' : 0 }}>
-              <p style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textMuted, margin: 0 }}>
-                Balance Neto
-              </p>
-              <h3 className="num-tabular" style={{ fontSize: 20, fontWeight: 800, color: balanceMensual >= 0 ? '#10b981' : '#f87171', letterSpacing: '-0.035em', margin: '4px 0 8px', fontFamily: "'Geist', sans-serif" }}>
-                {balanceMensual >= 0 ? '+' : '-'}{Math.abs(balanceMensual).toLocaleString()} <span style={{ fontSize: 10, fontWeight: 600, color: t.textDim }}>BS</span>
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Ingresos</span>
-                  <span className="num-tabular" style={{ fontSize: 11, fontWeight: 700, color: '#10b981' }}>+{ingresosMes.toLocaleString()} BS</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim }}>Egresos</span>
-                  <span className="num-tabular" style={{ fontSize: 11, fontWeight: 700, color: '#f87171' }}>-{egresosMes.toLocaleString()} BS</span>
-                </div>
-              </div>
-            </div>
+          {/* Sparkline curve */}
+          <div style={{ width: '100%', height: 42, marginTop: 14, overflow: 'hidden' }}>
+            <svg width="100%" height="42" viewBox="0 0 200 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad-teal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              <path d="M 0,30 Q 30,36 65,22 T 115,28 T 160,14 T 200,10 L 200,40 L 0,40 Z" fill="url(#grad-teal)" />
+              <path d="M 0,30 Q 30,36 65,22 T 115,28 T 160,14 T 200,10" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+            </svg>
           </div>
         </div>
 
       </section>
 
-
-
       {/* ══════════════════════════════════════════════════════
-          FILA 2: COBROS — TIMELINE & TABLA EJECUTIVA
+          FILA 2: COBROS — EXECUTIVE LOAN COLLECTIONS TABLE
           ══════════════════════════════════════════════════════ */}
-      <section style={{ marginBottom: '24px' }}>
+      <section style={{ marginBottom: '28px' }}>
         <div style={{
           padding: '24px', backgroundColor: t.panel,
-          border: `1px solid ${t.border}`, borderRadius: '18px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+          border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         }}>
           {/* Header con filtros segmentados */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             marginBottom: '20px', flexWrap: 'wrap', gap: '14px',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div className="icon-squircle" style={{
-                width: '42px', height: '42px', borderRadius: '12px',
-                backgroundColor: `${t.warning}15`, color: t.warning, border: `1px solid ${t.warning}30`
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: t.text, margin: 0, letterSpacing: '-0.02em', fontFamily: "'Geist', sans-serif" }}>
+                Executive Loan Collections
+              </h3>
+              <p style={{
+                fontSize: '11px', color: t.textMuted, margin: '3px 0 0',
+                display: 'flex', alignItems: 'center', gap: '6px',
               }}>
-                <CalendarDays size={20} strokeWidth={2} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: 14, fontWeight: 800, color: t.text, margin: 0, letterSpacing: '-0.02em' }}>
-                  Gestión de Cobros — {periodosDisponibles.find(p => p.key === periodoMes)?.label || periodoMes}
-                </h3>
-                <p style={{
-                  fontSize: '10px', color: t.textMuted, margin: '2px 0 0',
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                }}>
-                  <span style={{
-                    display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%',
-                    backgroundColor: cobrosDelPeriodo.length > 0 ? '#fbbf24' : '#34d399',
-                  }} />
-                  {cobrosDelPeriodo.length} clientes · <span className="num-tabular" style={{ fontWeight: 700, color: t.text }}>{categorias.totales.totalPendiente.toLocaleString()} {settings?.loanDefaultCurrency || 'BOB'}</span> pendientes
-                </p>
-              </div>
+                <span style={{
+                  display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%',
+                  backgroundColor: cobrosDelPeriodo.length > 0 ? '#fbbf24' : '#34d399',
+                }} />
+                {cobrosDelPeriodo.length} clientes · <span className="num-tabular" style={{ fontWeight: 700, color: t.text }}>{categorias.totales.totalPendiente.toLocaleString()} {settings?.loanDefaultCurrency || 'BOB'}</span> pendientes
+              </p>
             </div>
 
             {/* Segmented Filter Buttons */}
@@ -1038,16 +984,16 @@ const CommandCenter = ({
 
           {/* Tabla de cobros con diseño executive */}
           {cobrosFiltrados.length > 0 ? (
-            <div className="table-luxury-container">
+            <div className="table-luxury-container" style={{ border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'transparent', boxShadow: 'none' }}>
               <table className="table-luxury">
                 <thead>
                   <tr>
-                    <th>Cliente</th>
-                    <th>Estado</th>
-                    <th>Atraso</th>
-                    <th style={{ textAlign: 'right' }}>Capital</th>
-                    <th style={{ textAlign: 'right' }}>Interés / Mes</th>
-                    <th style={{ textAlign: 'center' }}>Acción</th>
+                    <th style={{ width: '28%' }}>Client</th>
+                    <th style={{ width: '18%' }}>Status</th>
+                    <th style={{ width: '14%' }}>Overdue</th>
+                    <th style={{ width: '16%', textAlign: 'right' }}>Capital</th>
+                    <th style={{ width: '14%', textAlign: 'right' }}>Interest</th>
+                    <th style={{ width: '10%', textAlign: 'center' }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1057,20 +1003,20 @@ const CommandCenter = ({
                     return (
                       <tr key={p.id} style={{ backgroundColor: isCritico ? 'rgba(239, 68, 68, 0.04)' : 'transparent' }}>
                         <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                             <div className="icon-squircle" style={{
                               width: '34px', height: '34px', borderRadius: '10px',
-                              fontSize: '11px', fontWeight: 800,
+                              fontSize: '12px', fontWeight: 800,
                               backgroundColor: `${badgeColor}18`, color: badgeColor, border: `1px solid ${badgeColor}30`
                             }}>
                               {p.nombre?.charAt(0) || '?'}
                             </div>
                             <div>
-                              <p style={{ fontSize: 12, fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
+                              <p style={{ fontSize: 13, fontWeight: 600, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                                 {p.nombre || 'Sin nombre'}
                               </p>
-                              <p style={{ fontSize: '9px', color: t.textDim, margin: '2px 0 0' }}>
-                                {p.moneda || 'Bs'} · {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toFixed(0)} Bs/mes
+                              <p style={{ fontSize: '10px', color: t.textMuted, margin: '2px 0 0' }}>
+                                {p.moneda || 'BOB'} · {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toFixed(0)} BOB/mes
                               </p>
                             </div>
                           </div>
@@ -1083,34 +1029,33 @@ const CommandCenter = ({
                             <span className="badge-luxury-warning">Pendiente</span>
                           )}
                           {p.categoria === 'DEUDOR_1MES' && (
-                            <span className="badge-luxury-warning">1 Mes Atraso</span>
+                            <span className="badge-luxury-warning">1 Mes</span>
                           )}
                           {p.categoria === 'DEUDOR_CRITICO' && (
                             <span className="badge-luxury-danger">Crítico</span>
                           )}
                         </td>
                         <td>
-                          <p className="num-tabular" style={{ fontSize: '11px', fontWeight: 600, color: t.text, margin: 0 }}>
-                            {p.mesesAtraso > 0 ? `${p.mesesAtraso} mes${p.mesesAtraso > 1 ? 'es' : ''}` : 'Al corriente'}
+                          <p className="num-tabular" style={{ fontSize: '12px', fontWeight: 600, color: p.mesesAtraso > 0 ? '#f59e0b' : t.text, margin: 0 }}>
+                            {p.mesesAtraso > 0 ? `${p.mesesAtraso} ${p.mesesAtraso === 1 ? 'mes' : 'meses'}` : '0'}
                           </p>
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <p className="num-tabular" style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0 }}>
-                            {(parseFloat(p.capital) || 0).toLocaleString()} {p.moneda || 'Bs'}
+                          <p className="num-tabular" style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0 }}>
+                            {(parseFloat(p.capital) || 0).toLocaleString()} {p.moneda || 'BOB'}
                           </p>
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <p className="num-tabular" style={{ fontSize: 12, fontWeight: 700, color: '#10b981', margin: 0 }}>
-                            +{(parseFloat(p.capital) * (parseFloat(p.interes) / 100) || 0).toLocaleString()} Bs
+                          <p className="num-tabular" style={{ fontSize: '13px', fontWeight: 700, color: '#10b981', margin: 0 }}>
+                            +{(parseFloat(p.capital) * (parseFloat(p.interes) / 100) || 0).toLocaleString()} BOB
                           </p>
                         </td>
                         <td style={{ textAlign: 'center' }}>
                           <button
                             onClick={() => onNavigateToPrestamo && onNavigateToPrestamo(p.id, 'emitir-recibo')}
-                            className={isCritico ? 'btn-luxury-danger' : 'btn-luxury-primary'}
-                            style={{ padding: '6px 14px', fontSize: '10px' }}
+                            className="btn-action-pill btn-action-pill-primary"
                           >
-                            Cobrar
+                            Cobrar ›
                           </button>
                         </td>
                       </tr>
@@ -1126,7 +1071,6 @@ const CommandCenter = ({
             }}>
               <CalendarDays size={32} style={{ opacity: 0.25, margin: '0 auto 8px' }} />
               <p style={{ margin: 0, fontWeight: 600, color: t.text }}>No hay cobros para este período</p>
-              <p style={{ margin: '4px 0 0', fontSize: '10px', color: t.textMuted }}>Selecciona otro mes o agrega nuevos préstamos</p>
             </div>
           )}
         </div>
