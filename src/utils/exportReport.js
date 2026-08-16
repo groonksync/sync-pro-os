@@ -102,13 +102,16 @@ export function exportEgresosCSV(egresos, titulo = '') {
  * Exporta un reporte PDF ejecutivo con KPIs y tabla de cobros.
  * @param {Object} estado - Estado completo del CommandCenter
  */
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+/**
+ * Exporta un reporte PDF ejecutivo con KPIs y tabla de cobros.
+ * @param {Object} estado - Estado completo del CommandCenter
+ */
 export async function exportPDF(estado) {
   try {
-    const { default: jsPDF } = await import('jspdf');
-    await import('jspdf-autotable');
-    
     const doc = new jsPDF();
-    const accentColor = [245, 158, 11]; // Amber
     const hoy = new Date();
     const fechaStr = hoy.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
     
@@ -128,7 +131,7 @@ export async function exportPDF(estado) {
     doc.text(`Inefable`, 180, 32, { align: 'right' });
     
     // --- KPIs ---
-    const { totalCapital, totalInteresMensual, valorInventario, totalPendiente, stockBajoCount, mesActual } = estado;
+    const { totalCapital, totalInteresMensual, valorInventario, totalPendiente, mesActual } = estado || {};
     
     doc.setFillColor(245, 245, 245);
     doc.rect(20, 55, 80, 25, 'F');
@@ -169,25 +172,26 @@ export async function exportPDF(estado) {
     doc.text(`${(totalPendiente || 0).toLocaleString()} Bs`, 110, 105);
     
     // --- TABLA DE COBROS ---
-    const cobros = estado.porCobrar || [];
+    const cobros = estado?.porCobrar || [];
+    let endY = 135;
     
     if (cobros.length > 0) {
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(0, 0, 0);
-      doc.text('COBROS PENDIENTES', 20, 130);
+      doc.text('COBROS PENDIENTES', 20, 125);
       
       const tableData = cobros.map(c => [
         c.nombre || 'Sin nombre',
-        c.categoria || 'N/A',
+        c.categoria || 'General',
         c.inicio ? new Date(c.inicio).toLocaleDateString('es-ES') : 'N/A',
         `${(parseFloat(c.capital || 0) * (parseFloat(c.interes || 0) / 100)).toFixed(0)} Bs`,
-        c.dialog?.nivel || 'N/A',
+        c.dialog?.nivel || 'Al Día',
       ]);
       
-      doc.autoTable({
-        startY: 135,
-        head: [['Prestamista', 'Categoría', 'Inicio', 'Cuota Mensual', 'Riesgo']],
+      autoTable(doc, {
+        startY: 130,
+        head: [['Prestatario', 'Categoría', 'Inicio', 'Cuota Mensual', 'Estado']],
         body: tableData,
         headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
         bodyStyles: { fontSize: 8 },
@@ -196,14 +200,14 @@ export async function exportPDF(estado) {
         },
         alternateRowStyles: { fillColor: [245, 245, 245] },
       });
+      endY = (doc.lastAutoTable?.finalY || 135) + 15;
     }
     
     // --- FOOTER ---
-    const footerY = doc.lastAutoTable?.finalY + 15 || 180;
     doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
-    doc.text(`Generado automáticamente por Inefable - ${fechaStr}`, 105, footerY, { align: 'center' });
-    doc.text(`${cobros.length} cobros pendientes • ${estado.stockBajoCount || 0} productos con stock bajo`, 105, footerY + 6, { align: 'center' });
+    doc.text(`Generado automáticamente por Inefable - ${fechaStr}`, 105, endY, { align: 'center' });
+    doc.text(`${cobros.length} cobros registrados • ${estado?.stockBajoCount || 0} productos con stock bajo`, 105, endY + 6, { align: 'center' });
     
     const filename = `Reporte_CC_${fechaStr.replace(/\//g, '-')}.pdf`;
     doc.save(filename);

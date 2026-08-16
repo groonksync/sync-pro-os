@@ -12,6 +12,8 @@ import { getTheme, useTheme } from '../lib/theme';
 import { aiService } from '../services/aiService';
 import { safeDelete } from '../lib/trashService';
 import FinancialWeeklyOverview from '../components/FinancialWeeklyOverview';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Toast = ({ message, show, onClose, isDark, t }) => {
   useEffect(() => {
@@ -1102,8 +1104,6 @@ REGLAS DE FORMATO Y ESTILO:
   const confirmExportPDF = async () => {
     setIsPdfModalOpen(false);
     try {
-      const { default: jsPDF } = await import('jspdf');
-      const { default: autoTable } = await import('jspdf-autotable');
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();

@@ -1,6 +1,6 @@
 
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 /**
  * Genera un PDF profesional de factura/recibo
@@ -57,7 +57,7 @@ export const generateInefableInvoice = (client, meeting, item, studioName = 'Ine
     ]
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 100,
     head: [['CONCEPTO', 'DESCRIPCIÓN', 'CANT.', 'PRECIO', 'TOTAL']],
     body: tableData,
@@ -69,7 +69,7 @@ export const generateInefableInvoice = (client, meeting, item, studioName = 'Ine
   });
 
   // --- TOTALES ---
-  const finalY = doc.lastAutoTable.finalY + 10;
+  const finalY = (doc.lastAutoTable?.finalY || 100) + 10;
   doc.setFont('helvetica', 'bold');
   doc.text('TOTAL A PAGAR:', 140, finalY + 10);
   doc.setFontSize(16);
