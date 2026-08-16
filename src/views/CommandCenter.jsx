@@ -856,10 +856,7 @@ const CommandCenter = ({
           boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         }}>
           {/* Header con filtros segmentados */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: '20px', flexWrap: 'wrap', gap: '14px',
-          }}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3.5 w-full">
             <div>
               <h3 style={{ fontSize: 15, fontWeight: 800, color: t.text, margin: 0, letterSpacing: '-0.02em', fontFamily: "'Geist', sans-serif" }}>
                 Executive Loan Collections
@@ -877,7 +874,7 @@ const CommandCenter = ({
             </div>
 
             {/* Segmented Filter Buttons */}
-            <div className="tab-segmented-wrap">
+            <div className="tab-segmented-wrap w-full sm:w-auto">
               <button
                 onClick={() => setFiltroCategoria(null)}
                 className={`tab-segmented-btn ${filtroCategoria === null ? 'active' : ''}`}

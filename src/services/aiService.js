@@ -72,34 +72,94 @@ async function queryOpenRouter(apiKey, model, messages) {
 }
 
 async function queryGemini(apiKey, model, messages) {
-  const error = validateKey(apiKey, 'Gemini')
-  if (error) return error
+  const error = validateKey(apiKey, 'Gemini');
+  if (error) return error;
 
-  const { GoogleGenerativeAI } = await import('@google/generative-ai')
-  const genAI = new GoogleGenerativeAI(apiKey.trim())
+  const cleanKey = apiKey.trim();
 
-  const systemMsg = messages.find(m => m.role === 'system')?.content || ''
-  const userMsg = messages.find(m => m.role === 'user')?.content || ''
+  // Modelos modernos soportados por Google API
+  const candidateModels = [];
+  if (model && !['gemini-pro', 'gemini-1.0-pro', 'gemini-1.0-pro-001'].includes(model.toLowerCase())) {
+    candidateModels.push(model.replace(/^models\//, ''));
+  }
+  // Modelos oficiales vigentes en orden de velocidad y cuota
+  candidateModels.push('gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro');
 
-  const modelsToTry = model
-    ? [model]
-    : ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-1.0-pro']
+  const modelsToTry = [...new Set(candidateModels)];
 
-  let lastError = null
+  const systemMsg = messages.find(m => m.role === 'system')?.content || '';
+  const userMsg = messages.filter(m => m.role === 'user').pop()?.content || 'Hola';
+
+  // 1. Intento primario: Google Generative Language REST API (ultra-estable sin bloqueos de versión)
+  const contents = [];
+  messages.forEach(m => {
+    if (m.role === 'user') {
+      contents.push({ role: 'user', parts: [{ text: m.content }] });
+    } else if (m.role === 'assistant') {
+      contents.push({ role: 'model', parts: [{ text: m.content }] });
+    }
+  });
+  if (contents.length === 0) {
+    contents.push({ role: 'user', parts: [{ text: userMsg }] });
+  }
+
+  let lastError = null;
   for (const mName of modelsToTry) {
     try {
-      const geminiModel = genAI.getGenerativeModel({ model: mName })
-      const result = await geminiModel.generateContent(
-        systemMsg ? `INSTRUCCIÓN: ${systemMsg}\n\nMENSAJE: ${userMsg}` : userMsg
-      )
-      const response = await result.response
-      const text = response.text()
-      if (text) return text
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${mName}:generateContent?key=${cleanKey}`;
+      const payload = {
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048
+        }
+      };
+      if (systemMsg) {
+        payload.systemInstruction = {
+          parts: [{ text: systemMsg }]
+        };
+      }
+
+      const res = await fetchWithTimeout(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }, 25000);
+
+      const data = await res.json();
+      if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+        return data.candidates[0].content.parts[0].text;
+      }
+      if (data.error?.message) {
+        lastError = new Error(data.error.message);
+      }
     } catch (e) {
-      lastError = e
+      lastError = e;
     }
   }
-  throw lastError || new Error('Todos los modelos de Gemini fallaron.')
+
+  // 2. Intento secundario: SDK @google/generative-ai con modelos vigentes
+  try {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(cleanKey);
+    for (const mName of ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro']) {
+      try {
+        const geminiModel = genAI.getGenerativeModel({ model: mName });
+        const result = await geminiModel.generateContent(
+          systemMsg ? `INSTRUCCIÓN: ${systemMsg}\n\nMENSAJE: ${userMsg}` : userMsg
+        );
+        const response = await result.response;
+        const text = response.text();
+        if (text) return text;
+      } catch (sdkModelErr) {
+        lastError = sdkModelErr;
+      }
+    }
+  } catch (sdkErr) {
+    lastError = sdkErr;
+  }
+
+  throw lastError || new Error('No se pudo comunicar con los modelos activos de Google Gemini.');
 }
 
 async function queryBalanceDeepSeek(apiKey) {

@@ -1063,7 +1063,16 @@ input.catalog-search-input-field,
   border: 1px solid var(--color-border);
   border-radius: 12px;
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   gap: 2px;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tab-segmented-wrap::-webkit-scrollbar {
+  display: none;
 }
 
 .light-mode .tab-segmented-wrap {
@@ -1084,6 +1093,7 @@ input.catalog-search-input-field,
   cursor: pointer;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab-segmented-btn:hover:not(.active) {
@@ -1118,6 +1128,8 @@ input.catalog-search-input-field,
   background-color: rgba(16, 185, 129, 0.1);
   color: #34d399;
   border: 1px solid rgba(16, 185, 129, 0.25);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-luxury-warning {
@@ -1133,6 +1145,8 @@ input.catalog-search-input-field,
   background-color: rgba(245, 158, 11, 0.1);
   color: #fbbf24;
   border: 1px solid rgba(245, 158, 11, 0.25);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-luxury-danger {
@@ -1148,6 +1162,8 @@ input.catalog-search-input-field,
   background-color: rgba(239, 68, 68, 0.1);
   color: #f87171;
   border: 1px solid rgba(239, 68, 68, 0.25);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-luxury-neutral {
@@ -1163,12 +1179,16 @@ input.catalog-search-input-field,
   background-color: rgba(255, 255, 255, 0.05);
   color: var(--color-text-2);
   border: 1px solid var(--color-border);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* 6. Executive Data Table */
 .table-luxury-container {
   width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
   border-radius: 16px;
   border: 1px solid var(--color-border);
   background-color: var(--color-panel);
@@ -1177,6 +1197,7 @@ input.catalog-search-input-field,
 
 .table-luxury {
   width: 100%;
+  min-width: 560px;
   border-collapse: separate;
   border-spacing: 0;
   text-align: left;
