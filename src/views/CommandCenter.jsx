@@ -15,6 +15,7 @@ import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
 import { generarCronograma } from '../hooks/useAmortizacion';
 import CommandModal from '../components/CommandModal';
 import ResumenIAModal from '../components/ResumenIAModal';
+import FinancialWeeklyOverview from '../components/FinancialWeeklyOverview';
 import { exportCobrosCSV, exportStockBajoCSV, exportPDF } from '../utils/exportReport';
 
 const GoogleLogo = ({ size = 18 }) => <Google.Color size={size} />;
@@ -961,6 +962,28 @@ const CommandCenter = ({
         </div>
 
       </section>
+
+      {/* ══════════════════════════════════════════════════════
+          FILA 1.5: ANÁLISIS FINANCIERO SEMANAL & RESUMEN TRIMESTRAL
+          ══════════════════════════════════════════════════════ */}
+      <FinancialWeeklyOverview
+        isDark={isDark}
+        title="Rendimiento de Cobros por Semana"
+        subtitle="Distribución semanal de cobros e intereses activos"
+        weeklyData={[
+          { week: '1st Week', bars: [195, 160, 180] },
+          { week: '2nd Week', bars: [150, 175, 130] },
+          { week: '3rd Week', bars: [180, 155, 165] },
+          { week: '4th Week', bars: [140, 180, 190] },
+        ]}
+        monthlyCards={[
+          { month: 'CAPITAL ACTIVO', amount: totalCapital, color: '#06b6d4', points: '0,20 15,35 30,15 45,22' },
+          { month: 'VALOR INVENTARIO', amount: valorInventario, color: '#0284c7', points: '0,28 15,15 30,22 45,30' },
+          { month: 'FLUJO PROYECTADO', amount: Math.round(totalCapital * 1.12), color: '#1d4ed8', points: '0,15 15,30 30,28 45,35' },
+        ]}
+        unit="BOB"
+        maxScale={200}
+      />
 
       {/* ══════════════════════════════════════════════════════
           FILA 2: COBROS — EXECUTIVE LOAN COLLECTIONS TABLE

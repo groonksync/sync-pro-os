@@ -519,10 +519,12 @@ const AppContent = () => {
   const getNotificationCount = () => {
     try {
       const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
       const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
-      const lista = Array.isArray(data?.prestamos) ? data.prestamos : [];
+      const listaPrestamos = Array.isArray(data?.prestamos) ? data.prestamos : [];
+      const listaServicios = Array.isArray(servicios) ? servicios : [];
       
-      return lista.filter(p => {
+      const prestamosCount = listaPrestamos.filter(p => {
         if (!p || !p.inicio) return false;
         const pagos = Array.isArray(p.pagos) ? p.pagos : [];
         if (pagos.includes(mesActual)) return false;
@@ -538,6 +540,19 @@ const AppContent = () => {
         const diffDays = Math.ceil((next - hoy) / (1000 * 60 * 60 * 24));
         return diffDays <= 7 && diffDays >= 0; 
       }).length;
+
+      const serviciosCount = listaServicios.filter(s => {
+        if (!s || !s.fecha_pago || s.estado_suscripcion === 'En Pausa') return false;
+        const [y, m, d] = (s.fecha_pago || '').split('-').map(Number);
+        if (!y || !m || !d) return false;
+        const next = new Date(y, m - 1, d);
+        next.setHours(0, 0, 0, 0);
+        const diffDays = Math.ceil((next - hoy) / (1000 * 60 * 60 * 24));
+        const recordatorio = parseInt(s.dias_recordatorio, 10) || 3;
+        return diffDays <= recordatorio && diffDays >= -30;
+      }).length;
+
+      return prestamosCount + serviciosCount;
     } catch (e) {
       return 0;
     }
