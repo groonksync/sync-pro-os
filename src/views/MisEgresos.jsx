@@ -570,13 +570,13 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           </div>
         </div>
 
-        {/* ── TARJETAS MÉTRICAS EJECUTIVAS (Linear Style con Sparklines) ──── */}
-        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`}>
+        {/* ── TARJETAS MÉTRICAS EJECUTIVAS (Linear Style con Sparklines Animadas) ──── */}
+        <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`}>
           
           {/* Tarjeta 1: Total Gastado */}
           <div className="metric-card-executive animate-countUp stagger-1" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary }}>Egresos del Mes</span>
                 <span className="badge-luxury-neutral" style={{ padding: '2px 8px', fontSize: '9px' }}>
                   {budgetPercent}% Presupuesto
@@ -586,16 +586,36 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 <CountUp value={totalEgresosMes} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted }}>BOB</span>
               </h3>
             </div>
-            <div style={{ width: '100%', height: 38, marginTop: 12, overflow: 'hidden' }}>
-              <svg width="100%" height="38" viewBox="0 0 200 40" preserveAspectRatio="none">
+            {/* Animated Smooth Sparkline Curve */}
+            <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
+              <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
                 <defs>
-                  <linearGradient id="grad-red-egresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ef4444" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
+                  <linearGradient id="grad-egresos-red" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity="0.35" />
+                    <stop offset="60%" stopColor="#ef4444" stopOpacity="0.08" />
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity="0" />
                   </linearGradient>
+                  <filter id="glow-egresos-red" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#ef4444" floodOpacity="0.4" />
+                  </filter>
                 </defs>
-                <path d="M 0,35 Q 40,25 80,30 T 140,16 T 200,12 L 200,40 L 0,40 Z" fill="url(#grad-red-egresos)" />
-                <path d="M 0,35 Q 40,25 80,30 T 140,16 T 200,12" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M 0,52 C 50,52 80,38 125,44 C 170,50 200,24 240,30 C 270,34 288,18 300,20 L 300,65 L 0,65 Z"
+                  fill="url(#grad-egresos-red)"
+                  className="sparkline-animated-fill"
+                />
+                <path
+                  d="M 0,52 C 50,52 80,38 125,44 C 170,50 200,24 240,30 C 270,34 288,18 300,20"
+                  fill="none"
+                  stroke="#ef4444"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#glow-egresos-red)"
+                  className="sparkline-animated-path"
+                />
+                <circle cx="298" cy="20" r="3" fill="#ef4444" />
+                <circle cx="298" cy="20" r="6" fill="#ef4444" opacity="0.3" />
               </svg>
             </div>
           </div>
@@ -603,7 +623,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           {/* Tarjeta 2: Pendiente / Vencimientos */}
           <div className="metric-card-executive animate-countUp stagger-2" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary }}>Por Pagar (Pendientes)</span>
                 <span className="badge-luxury-warning" style={{ padding: '2px 8px', fontSize: '9px' }}>
                   {serviciosPendientes.length} servicios
@@ -613,16 +633,36 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 <CountUp value={totalPendienteMes} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted }}>BOB</span>
               </h3>
             </div>
-            <div style={{ width: '100%', height: 38, marginTop: 12, overflow: 'hidden' }}>
-              <svg width="100%" height="38" viewBox="0 0 200 40" preserveAspectRatio="none">
+            {/* Animated Smooth Sparkline Curve */}
+            <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
+              <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
                 <defs>
-                  <linearGradient id="grad-amber-egresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.0" />
+                  <linearGradient id="grad-egresos-amber" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.35" />
+                    <stop offset="60%" stopColor="#fbbf24" stopOpacity="0.08" />
+                    <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
                   </linearGradient>
+                  <filter id="glow-egresos-amber" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#fbbf24" floodOpacity="0.4" />
+                  </filter>
                 </defs>
-                <path d="M 0,28 Q 35,35 75,20 T 135,28 T 200,8 L 200,40 L 0,40 Z" fill="url(#grad-amber-egresos)" />
-                <path d="M 0,28 Q 35,35 75,20 T 135,28 T 200,8" fill="none" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M 0,46 C 45,46 75,32 115,38 C 155,44 190,22 230,28 C 265,32 285,14 300,16 L 300,65 L 0,65 Z"
+                  fill="url(#grad-egresos-amber)"
+                  className="sparkline-animated-fill"
+                />
+                <path
+                  d="M 0,46 C 45,46 75,32 115,38 C 155,44 190,22 230,28 C 265,32 285,14 300,16"
+                  fill="none"
+                  stroke="#fbbf24"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#glow-egresos-amber)"
+                  className="sparkline-animated-path"
+                />
+                <circle cx="298" cy="16" r="3" fill="#fbbf24" />
+                <circle cx="298" cy="16" r="6" fill="#fbbf24" opacity="0.3" />
               </svg>
             </div>
           </div>
@@ -630,7 +670,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           {/* Tarjeta 3: Aportes / Ahorro */}
           <div className="metric-card-executive animate-countUp stagger-3" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                 <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary }}>Aportes de Co-pagadores</span>
                 <span className="badge-luxury-success" style={{ padding: '2px 8px', fontSize: '9px' }}>
                   Ahorro Activo
@@ -640,16 +680,36 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 +<CountUp value={totalAportesProyectados} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted }}>BOB</span>
               </h3>
             </div>
-            <div style={{ width: '100%', height: 38, marginTop: 12, overflow: 'hidden' }}>
-              <svg width="100%" height="38" viewBox="0 0 200 40" preserveAspectRatio="none">
+            {/* Animated Smooth Sparkline Curve */}
+            <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
+              <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
                 <defs>
-                  <linearGradient id="grad-emerald-egresos" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#34d399" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#34d399" stopOpacity="0.0" />
+                  <linearGradient id="grad-egresos-emerald" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#34d399" stopOpacity="0.35" />
+                    <stop offset="60%" stopColor="#34d399" stopOpacity="0.08" />
+                    <stop offset="100%" stopColor="#34d399" stopOpacity="0" />
                   </linearGradient>
+                  <filter id="glow-egresos-emerald" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#34d399" floodOpacity="0.4" />
+                  </filter>
                 </defs>
-                <path d="M 0,32 Q 45,18 90,26 T 150,14 T 200,6 L 200,40 L 0,40 Z" fill="url(#grad-emerald-egresos)" />
-                <path d="M 0,32 Q 45,18 90,26 T 150,14 T 200,6" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M 0,50 C 50,50 85,34 130,40 C 175,46 205,22 245,28 C 275,32 288,14 300,16 L 300,65 L 0,65 Z"
+                  fill="url(#grad-egresos-emerald)"
+                  className="sparkline-animated-fill"
+                />
+                <path
+                  d="M 0,50 C 50,50 85,34 130,40 C 175,46 205,22 245,28 C 275,32 288,14 300,16"
+                  fill="none"
+                  stroke="#34d399"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#glow-egresos-emerald)"
+                  className="sparkline-animated-path"
+                />
+                <circle cx="298" cy="16" r="3" fill="#34d399" />
+                <circle cx="298" cy="16" r="6" fill="#34d399" opacity="0.3" />
               </svg>
             </div>
           </div>

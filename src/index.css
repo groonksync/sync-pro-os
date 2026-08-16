@@ -1321,15 +1321,61 @@ input.catalog-search-input-field,
   box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
 }
 
-.btn-action-pill-danger {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #f87171;
-}
-
 .btn-action-pill-danger:hover {
   background: #ef4444;
   border-color: #ef4444;
   color: #FFFFFF;
   box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+}
+
+/* 10. Executive Sparkline Animations */
+@keyframes sparklineDraw {
+  0% {
+    stroke-dashoffset: 500;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes sparklineFillFade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.sparkline-animated-path {
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  animation: sparklineDraw 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.sparkline-animated-fill {
+  animation: sparklineFillFade 1.1s ease-out forwards;
+}
+
+/* 11. iPhone and Mobile Ergonomics */
+.safe-bottom-mobile {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+@media (max-width: 768px) {
+  .metric-card-executive {
+    padding: 18px 16px;
+    border-radius: 16px;
+  }
+  .table-luxury-container {
+    border-radius: 14px;
+  }
+  .table-luxury th, .table-luxury td {
+    padding: 10px 12px;
+  }
 }

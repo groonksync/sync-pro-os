@@ -824,14 +824,14 @@ const CommandCenter = ({
       </div>
 
       {/* ══════════════════════════════════════════════════════
-          FILA 1: KPIs PRINCIPALES (Tarjetas Ejecutivas con Sparklines)
+          FILA 1: KPIs PRINCIPALES (Tarjetas Ejecutivas con Sparklines Animadas)
           ══════════════════════════════════════════════════════ */}
-      <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-3'}`} style={{ marginBottom: '24px' }}>
+      <section className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'}`} style={{ marginBottom: '28px' }}>
         
         {/* KPI 1: Capital Activo en Préstamos */}
         <div className="metric-card-executive animate-countUp stagger-1" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
                 Active Capital
               </span>
@@ -843,17 +843,36 @@ const CommandCenter = ({
               <CountUp value={totalCapital} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
             </h3>
           </div>
-          {/* Sparkline curve */}
-          <div style={{ width: '100%', height: 42, marginTop: 14, overflow: 'hidden' }}>
-            <svg width="100%" height="42" viewBox="0 0 200 40" preserveAspectRatio="none">
+          {/* Animated Smooth Sparkline Curve */}
+          <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
+            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
               <defs>
-                <linearGradient id="grad-emerald" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                <linearGradient id="grad-active-cap" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+                  <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
                 </linearGradient>
+                <filter id="glow-cap" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#10b981" floodOpacity="0.4" />
+                </filter>
               </defs>
-              <path d="M 0,28 Q 30,34 60,20 T 120,24 T 170,12 T 200,8 L 200,40 L 0,40 Z" fill="url(#grad-emerald)" />
-              <path d="M 0,28 Q 30,34 60,20 T 120,24 T 170,12 T 200,8" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M 0,48 C 50,48 75,32 120,38 C 165,44 195,20 235,26 C 265,30 285,15 300,16 L 300,65 L 0,65 Z"
+                fill="url(#grad-active-cap)"
+                className="sparkline-animated-fill"
+              />
+              <path
+                d="M 0,48 C 50,48 75,32 120,38 C 165,44 195,20 235,26 C 265,30 285,15 300,16"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#glow-cap)"
+                className="sparkline-animated-path"
+              />
+              <circle cx="298" cy="16" r="3" fill="#10b981" />
+              <circle cx="298" cy="16" r="6" fill="#10b981" opacity="0.3" />
             </svg>
           </div>
         </div>
@@ -861,7 +880,7 @@ const CommandCenter = ({
         {/* KPI 2: Inventario a Costo */}
         <div className="metric-card-executive animate-countUp stagger-2" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
                 Inventory Value
               </span>
@@ -873,17 +892,36 @@ const CommandCenter = ({
               <CountUp value={valorInventario} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
             </h3>
           </div>
-          {/* Sparkline curve */}
-          <div style={{ width: '100%', height: 42, marginTop: 14, overflow: 'hidden' }}>
-            <svg width="100%" height="42" viewBox="0 0 200 40" preserveAspectRatio="none">
+          {/* Animated Smooth Sparkline Curve */}
+          <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
+            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
               <defs>
-                <linearGradient id="grad-amber" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.0" />
+                <linearGradient id="grad-inv-val" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.35" />
+                  <stop offset="60%" stopColor="#f59e0b" stopOpacity="0.08" />
+                  <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
                 </linearGradient>
+                <filter id="glow-inv" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#f59e0b" floodOpacity="0.4" />
+                </filter>
               </defs>
-              <path d="M 0,32 Q 40,28 75,34 T 135,18 T 175,22 T 200,10 L 200,40 L 0,40 Z" fill="url(#grad-amber)" />
-              <path d="M 0,32 Q 40,28 75,34 T 135,18 T 175,22 T 200,10" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M 0,52 C 45,50 80,48 125,52 C 170,56 200,32 240,24 C 270,18 288,26 300,18 L 300,65 L 0,65 Z"
+                fill="url(#grad-inv-val)"
+                className="sparkline-animated-fill"
+              />
+              <path
+                d="M 0,52 C 45,50 80,48 125,52 C 170,56 200,32 240,24 C 270,18 288,26 300,18"
+                fill="none"
+                stroke="#f59e0b"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#glow-inv)"
+                className="sparkline-animated-path"
+              />
+              <circle cx="298" cy="18" r="3" fill="#f59e0b" />
+              <circle cx="298" cy="18" r="6" fill="#f59e0b" opacity="0.3" />
             </svg>
           </div>
         </div>
@@ -891,7 +929,7 @@ const CommandCenter = ({
         {/* KPI 3: Balance Neto Mensual */}
         <div className="metric-card-executive animate-countUp stagger-3" style={{ backgroundColor: t.panel, borderColor: 'rgba(255,255,255,0.07)' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 11, fontWeight: 600, color: t.textSecondary, letterSpacing: '-0.01em' }}>
                 Net Balance
               </span>
@@ -903,17 +941,36 @@ const CommandCenter = ({
               {balanceMensual >= 0 ? '+' : '-'}<CountUp value={Math.abs(balanceMensual)} /> <span style={{ fontSize: 13, fontWeight: 600, color: t.textMuted, letterSpacing: '0.02em' }}>BOB</span>
             </h3>
           </div>
-          {/* Sparkline curve */}
-          <div style={{ width: '100%', height: 42, marginTop: 14, overflow: 'hidden' }}>
-            <svg width="100%" height="42" viewBox="0 0 200 40" preserveAspectRatio="none">
+          {/* Animated Smooth Sparkline Curve */}
+          <div style={{ width: '100%', height: 54, marginTop: 14, position: 'relative' }}>
+            <svg width="100%" height="100%" viewBox="0 0 300 65" preserveAspectRatio="none" style={{ overflow: 'visible' }}>
               <defs>
-                <linearGradient id="grad-teal" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#10b981" stopOpacity="0.0" />
+                <linearGradient id="grad-net-bal" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#10b981" stopOpacity="0.35" />
+                  <stop offset="60%" stopColor="#10b981" stopOpacity="0.08" />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity="0" />
                 </linearGradient>
+                <filter id="glow-net" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#10b981" floodOpacity="0.4" />
+                </filter>
               </defs>
-              <path d="M 0,30 Q 30,36 65,22 T 115,28 T 160,14 T 200,10 L 200,40 L 0,40 Z" fill="url(#grad-teal)" />
-              <path d="M 0,30 Q 30,36 65,22 T 115,28 T 160,14 T 200,10" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" />
+              <path
+                d="M 0,50 C 40,50 75,34 120,40 C 160,46 190,26 230,30 C 265,34 285,16 300,18 L 300,65 L 0,65 Z"
+                fill="url(#grad-net-bal)"
+                className="sparkline-animated-fill"
+              />
+              <path
+                d="M 0,50 C 40,50 75,34 120,40 C 160,46 190,26 230,30 C 265,34 285,16 300,18"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                filter="url(#glow-net)"
+                className="sparkline-animated-path"
+              />
+              <circle cx="298" cy="18" r="3" fill="#10b981" />
+              <circle cx="298" cy="18" r="6" fill="#10b981" opacity="0.3" />
             </svg>
           </div>
         </div>

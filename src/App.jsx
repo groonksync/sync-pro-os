@@ -704,8 +704,8 @@ const AppContent = () => {
           }} 
         />
         
-        <main className={`flex-1 h-full ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out pb-20 md:pb-0`}>
-          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} ${activeTab === 'ajustes' ? '' : 'max-w-[2000px] mx-auto'} transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'ajustes' ? 'px-0 py-0' : 'px-4 py-4 md:px-6 md:py-8 lg:px-16 lg:py-12')}`}>
+        <main className={`flex-1 h-full ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out pb-24 md:pb-0 safe-bottom-mobile`}>
+          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} ${activeTab === 'ajustes' ? '' : 'max-w-[2000px] mx-auto'} transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'ajustes' ? 'px-0 py-0' : 'px-3 py-3 md:px-6 md:py-8 lg:px-12 lg:py-10')}`}>
             {renderSafeContent()}
           </div>
         </main>
