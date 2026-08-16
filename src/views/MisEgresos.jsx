@@ -9,7 +9,7 @@ import {
   BarChart2, FileText, CheckCircle2, Bookmark, Flame, AlertTriangle,
   ArrowRight, Download, Users, User, Tv, Cpu, Cloud, ShoppingCart,
   Activity, HelpCircle, Save, Percent, PlusCircle, ExternalLink,
-  Play, Pause, Link, Bell, CheckSquare
+  Play, Pause, Link, Bell, CheckSquare, Wifi, Bot, Building2, Landmark
 } from 'lucide-react';
 import { exportEgresosCSV } from '../utils/exportReport';
 import FinancialWeeklyOverview from '../components/FinancialWeeklyOverview';
@@ -41,16 +41,74 @@ const CountUp = ({ value, duration = 800 }) => {
 
 // ── CATEGORÍAS PRECONFIGURADAS DE SERVICIOS / SUSCRIPCIONES ──────────────
 const SERVICIO_CATEGORIAS = [
-  { label: 'Streaming', icon: Tv, color: '#f43f5e' },
-  { label: 'IA / Productividad', icon: Cpu, color: '#8b5cf6' },
-  { label: 'Cloud / Hosting', icon: Cloud, color: '#38bdf8' },
-  { label: 'Servicios Básicos', icon: Zap, color: '#fbbf24' },
-  { label: 'Compras / Equipamiento', icon: ShoppingCart, color: '#2dd4bf' },
-  { label: 'Personal / Salud', icon: Activity, color: '#e879f9' },
-  { label: 'Otro', icon: HelpCircle, color: '#94a3b8' }
+  { label: 'IA / Productividad', icon: Cpu, color: '#a855f7', bg: 'rgba(168, 85, 247, 0.14)', border: 'rgba(168, 85, 247, 0.3)' },
+  { label: 'Streaming / Cine', icon: Tv, color: '#f43f5e', bg: 'rgba(244, 63, 94, 0.14)', border: 'rgba(244, 63, 94, 0.3)' },
+  { label: 'Telecom / Internet', icon: Wifi, color: '#06b6d4', bg: 'rgba(6, 182, 212, 0.14)', border: 'rgba(6, 182, 212, 0.3)' },
+  { label: 'Impuestos / Finanzas', icon: ShieldCheck, color: '#10b981', bg: 'rgba(16, 185, 129, 0.14)', border: 'rgba(16, 185, 129, 0.3)' },
+  { label: 'Cloud / Hosting', icon: Cloud, color: '#38bdf8', bg: 'rgba(56, 189, 248, 0.14)', border: 'rgba(56, 189, 248, 0.3)' },
+  { label: 'Servicios Básicos', icon: Zap, color: '#fbbf24', bg: 'rgba(251, 191, 36, 0.14)', border: 'rgba(251, 191, 36, 0.3)' },
+  { label: 'Compras / Equipamiento', icon: ShoppingCart, color: '#14b8a6', bg: 'rgba(20, 184, 166, 0.14)', border: 'rgba(20, 184, 166, 0.3)' },
+  { label: 'Personal / Salud', icon: Activity, color: '#ec4899', bg: 'rgba(236, 72, 153, 0.14)', border: 'rgba(236, 72, 153, 0.3)' },
+  { label: 'Otro', icon: Bookmark, color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.14)', border: 'rgba(148, 163, 184, 0.3)' }
 ];
 
 const catServicioConfig = Object.fromEntries(SERVICIO_CATEGORIAS.map(c => [c.label, c]));
+
+// Detector y normalizador inteligente de categorías
+const resolveServiceCategory = (catName, serviceName = '') => {
+  const normCat = (catName || '').toLowerCase().trim();
+  const normName = (serviceName || '').toLowerCase().trim();
+
+  // 1. Coincidencia directa con etiquetas estándar
+  for (const c of SERVICIO_CATEGORIAS) {
+    if (c.label.toLowerCase() === normCat) return c.label;
+  }
+
+  // 2. Coincidencia por palabras clave en categoría
+  if (normCat.includes('ia') || normCat.includes('inteligencia') || normCat.includes('productividad') || normCat.includes('ai') || normCat.includes('gpt') || normCat.includes('claude')) {
+    return 'IA / Productividad';
+  }
+  if (normCat.includes('stream') || normCat.includes('cine') || normCat.includes('musica') || normCat.includes('video') || normCat.includes('tv') || normCat.includes('netflix') || normCat.includes('spotify')) {
+    return 'Streaming / Cine';
+  }
+  if (normCat.includes('telecom') || normCat.includes('internet') || normCat.includes('fibra') || normCat.includes('wifi') || normCat.includes('entel') || normCat.includes('tigo') || normCat.includes('viva') || normCat.includes('celular') || normCat.includes('telefono')) {
+    return 'Telecom / Internet';
+  }
+  if (normCat.includes('impuesto') || normCat.includes('nit') || normCat.includes('finanz') || normCat.includes('banco') || normCat.includes('tribut') || normCat.includes('contad') || normCat.includes('afp')) {
+    return 'Impuestos / Finanzas';
+  }
+  if (normCat.includes('cloud') || normCat.includes('host') || normCat.includes('servidor') || normCat.includes('vps') || normCat.includes('aws') || normCat.includes('dominio') || normCat.includes('web')) {
+    return 'Cloud / Hosting';
+  }
+  if (normCat.includes('basico') || normCat.includes('luz') || normCat.includes('agua') || normCat.includes('gas') || normCat.includes('hogar') || normCat.includes('electric')) {
+    return 'Servicios Básicos';
+  }
+  if (normCat.includes('compra') || normCat.includes('equipo') || normCat.includes('hardware') || normCat.includes('oficina') || normCat.includes('tienda')) {
+    return 'Compras / Equipamiento';
+  }
+  if (normCat.includes('personal') || normCat.includes('salud') || normCat.includes('gym') || normCat.includes('gimnasio') || normCat.includes('medico') || normCat.includes('deporte')) {
+    return 'Personal / Salud';
+  }
+
+  // 3. Inferencia por nombre del servicio si la categoría es genérica o vacía
+  if (normName.includes('chatgpt') || normName.includes('openai') || normName.includes('claude') || normName.includes('midjourney') || normName.includes('gemini') || normName.includes('deepseek') || normName.includes('copilot') || normName.includes('cursor') || normName.includes('ia') || normName.includes('notion')) {
+    return 'IA / Productividad';
+  }
+  if (normName.includes('entel') || normName.includes('tigo') || normName.includes('viva') || normName.includes('internet') || normName.includes('fibra') || normName.includes('wifi')) {
+    return 'Telecom / Internet';
+  }
+  if (normName.includes('nit') || normName.includes('impuesto') || normName.includes('sin') || normName.includes('banco') || normName.includes('afp') || normName.includes('tributo')) {
+    return 'Impuestos / Finanzas';
+  }
+  if (normName.includes('netflix') || normName.includes('spotify') || normName.includes('disney') || normName.includes('hbo') || normName.includes('max') || normName.includes('prime') || normName.includes('youtube') || normName.includes('apple tv') || normName.includes('crunchyroll')) {
+    return 'Streaming / Cine';
+  }
+  if (normName.includes('hosting') || normName.includes('cloud') || normName.includes('vps') || normName.includes('aws') || normName.includes('vercel') || normName.includes('supabase') || normName.includes('domain') || normName.includes('dominio')) {
+    return 'Cloud / Hosting';
+  }
+
+  return 'Otro';
+};
 
 // Helper para parsear fecha local sin desfase UTC
 const parseLocalDate = (dateStr) => {
@@ -85,9 +143,21 @@ const unpackService = (service) => {
     } catch (e) {}
   }
 
+  // 3. Limpiar tags legacy en notas como [Categoría: ...]
+  if (cleanNotas.includes('[Categoría:')) {
+    const catMatch = cleanNotas.match(/\[Categoría:\s*(.*?)\]/i);
+    if (catMatch && catMatch[1] && !customMeta.categoria) {
+      customMeta.categoria = catMatch[1];
+    }
+    cleanNotas = cleanNotas.replace(/\[Categoría:.*?\]/i, '').trim();
+  }
+
+  const rawCat = service.categoria || customMeta.categoria || '';
+  const resolvedCategory = resolveServiceCategory(rawCat, service.nombre);
+
   return {
     ...service,
-    categoria: service.categoria || customMeta.categoria || 'Streaming',
+    categoria: resolvedCategory,
     fecha_inicio: service.fecha_inicio || customMeta.fecha_inicio || service.fecha_pago || new Date().toISOString().split('T')[0],
     es_ilimitado: service.es_ilimitado !== undefined ? service.es_ilimitado : (customMeta.es_ilimitado !== undefined ? customMeta.es_ilimitado : true),
     fecha_fin: service.fecha_fin || customMeta.fecha_fin || '',
@@ -143,7 +213,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     es_ilimitado: true,
     fecha_fin: '',
     metodo: 'Tarjeta',
-    categoria: 'Streaming',
+    categoria: 'IA / Productividad',
     tipo: 'Mensual',
     dias_recordatorio: '3',
     estado_suscripcion: 'Activa',
@@ -330,14 +400,15 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   const categoryBreakdown = useMemo(() => {
     const map = {};
     egresosMesActual.forEach(e => {
-      const cat = e.categoria || 'Otros';
+      const cat = e.categoria || 'Otro';
       map[cat] = (map[cat] || 0) + (parseFloat(e.monto) || 0);
     });
     const total = Object.values(map).reduce((s, v) => s + v, 0) || 1;
     return Object.entries(map).map(([catName, amount]) => {
-      const conf = catServicioConfig[catName] || { icon: HelpCircle, color: '#94a3b8' };
+      const resolved = resolveServiceCategory(catName);
+      const conf = catServicioConfig[resolved] || { icon: Bookmark, color: '#94a3b8' };
       return {
-        name: catName,
+        name: resolved,
         amount,
         percentage: Math.round((amount / total) * 100),
         color: conf.color,
@@ -424,7 +495,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       es_ilimitado: true,
       fecha_fin: '',
       metodo: 'Tarjeta',
-      categoria: 'Streaming',
+      categoria: 'IA / Productividad',
       tipo: 'Mensual',
       dias_recordatorio: '3',
       estado_suscripcion: 'Activa',
@@ -436,21 +507,23 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
   };
 
   const handleOpenEditService = (service) => {
-    setEditingService(service);
+    const s = unpackService(service);
+    const cat = resolveServiceCategory(s.categoria, s.nombre);
+    setEditingService(s);
     setServiceForm({
-      nombre: service.nombre || '',
-      monto: service.monto || '',
-      fecha_inicio: service.fecha_inicio || service.fecha_pago || new Date().toISOString().split('T')[0],
-      es_ilimitado: service.es_ilimitado !== false,
-      fecha_fin: service.fecha_fin || '',
-      metodo: service.metodo || 'Tarjeta',
-      categoria: service.categoria || 'Streaming',
-      tipo: service.tipo || 'Mensual',
-      dias_recordatorio: service.dias_recordatorio || '3',
-      estado_suscripcion: service.estado_suscripcion || 'Activa',
-      url_servicio: service.url_servicio || '',
-      notas: service.notas || '',
-      contribuciones: Array.isArray(service.contribuciones) ? service.contribuciones.map(c => ({
+      nombre: s.nombre || '',
+      monto: s.monto || '',
+      fecha_inicio: s.fecha_inicio || s.fecha_pago || new Date().toISOString().split('T')[0],
+      es_ilimitado: s.es_ilimitado !== false,
+      fecha_fin: s.fecha_fin || '',
+      metodo: s.metodo || 'Tarjeta',
+      categoria: cat,
+      tipo: s.tipo || 'Mensual',
+      dias_recordatorio: s.dias_recordatorio || '3',
+      estado_suscripcion: s.estado_suscripcion || 'Activa',
+      url_servicio: s.url_servicio || '',
+      notas: s.notas || '',
+      contribuciones: Array.isArray(s.contribuciones) ? s.contribuciones.map(c => ({
         id: c.id || Math.random().toString(),
         nombre: c.nombre || '',
         monto: c.monto || '',
@@ -503,6 +576,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     if (!serviceForm.nombre || !serviceForm.monto || !serviceForm.fecha_inicio) return;
     setServiceLoading(true);
 
+    // Resolver y normalizar categoría
+    const resolvedCat = resolveServiceCategory(serviceForm.categoria, serviceForm.nombre);
+
     // Calcular el próximo vencimiento mensual automático basado en la fecha de inicio
     const start = parseLocalDate(serviceForm.fecha_inicio);
     const billingDay = start.getDate();
@@ -525,7 +601,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       fecha_fin: serviceForm.es_ilimitado ? null : (serviceForm.fecha_fin || null),
       fecha_pago: computedFechaPago,
       metodo: serviceForm.metodo,
-      categoria: serviceForm.categoria,
+      categoria: resolvedCat,
       tipo: serviceForm.tipo,
       dias_recordatorio: serviceForm.dias_recordatorio,
       estado_suscripcion: serviceForm.estado_suscripcion,
@@ -543,7 +619,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     try {
       const localStore = JSON.parse(localStorage.getItem('inefable_servicios_meta') || '{}');
       localStore[serviceId] = {
-        categoria: fullService.categoria,
+        categoria: resolvedCat,
         fecha_inicio: fullService.fecha_inicio,
         es_ilimitado: fullService.es_ilimitado,
         fecha_fin: fullService.fecha_fin,
@@ -573,7 +649,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
         
         // Empaquetar metadata extendida en notas
         const metaTag = `[META:${encodeURIComponent(JSON.stringify({
-          categoria: fullService.categoria,
+          categoria: resolvedCat,
           fecha_inicio: fullService.fecha_inicio,
           es_ilimitado: fullService.es_ilimitado,
           fecha_fin: fullService.fecha_fin,
@@ -869,7 +945,8 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               ) : (
                 <div className="space-y-3">
                   {activeServicios.map(s => {
-                    const cat = catServicioConfig[s.categoria] || { icon: HelpCircle, color: '#94a3b8' };
+                    const catKey = resolveServiceCategory(s.categoria, s.nombre);
+                    const cat = catServicioConfig[catKey] || { label: catKey || 'Servicio', icon: Bookmark, color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.14)', border: 'rgba(148, 163, 184, 0.3)' };
                     const IconComp = cat.icon;
                     const venc = getEstadoPago(s.fecha_pago || s.fecha_inicio);
                     const contribs = Array.isArray(s.contribuciones) ? s.contribuciones : [];
@@ -893,19 +970,29 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                         onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; }}
                         onMouseLeave={e => { e.currentTarget.style.borderColor = isPaused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)'; }}
                       >
-                        {/* Identificador & Avatar */}
+                        {/* Identificador & Avatar con color de categoría */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
                           <div className="icon-squircle" style={{
-                            width: '42px', height: '42px', borderRadius: '12px',
-                            backgroundColor: `${cat.color}15`, color: cat.color, border: `1px solid ${cat.color}30`, flexShrink: 0
+                            width: '44px', height: '44px', borderRadius: '13px',
+                            backgroundColor: cat.bg, color: cat.color, border: `1px solid ${cat.border}`, flexShrink: 0
                           }}>
-                            <IconComp size={18} strokeWidth={2} />
+                            <IconComp size={20} strokeWidth={2.2} />
                           </div>
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                               <h4 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                                 {s.nombre}
                               </h4>
+
+                              {/* Badge de Categoría con Color Distinctivo */}
+                              <span style={{
+                                fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px',
+                                backgroundColor: cat.bg, color: cat.color, border: `1px solid ${cat.border}`,
+                                display: 'inline-flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase', letterSpacing: '0.04em'
+                              }}>
+                                <IconComp size={10} strokeWidth={2.5} />
+                                {cat.label}
+                              </span>
                               
                               {/* Estado de Suscripción */}
                               {isPaused ? (
@@ -1404,7 +1491,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                     type="text"
                     value={serviceForm.nombre}
                     onChange={e => setServiceForm(prev => ({ ...prev, nombre: e.target.value }))}
-                    placeholder="Ej. Netflix, ChatGPT Plus, Midjourney"
+                    placeholder="Ej. ChatGPT Plus, Netflix, Entel Fibra, NIT"
                     className="w-full text-xs"
                     required
                   />
@@ -1429,7 +1516,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   <select
                     value={serviceForm.categoria}
                     onChange={e => setServiceForm(prev => ({ ...prev, categoria: e.target.value }))}
-                    className="w-full text-xs"
+                    className="w-full text-xs font-semibold"
                   >
                     {SERVICIO_CATEGORIAS.map(cat => (
                       <option key={cat.label} value={cat.label}>{cat.label}</option>
