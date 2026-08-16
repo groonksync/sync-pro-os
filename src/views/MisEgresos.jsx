@@ -87,6 +87,7 @@ const unpackService = (service) => {
 
   return {
     ...service,
+    categoria: service.categoria || customMeta.categoria || 'Streaming',
     fecha_inicio: service.fecha_inicio || customMeta.fecha_inicio || service.fecha_pago || new Date().toISOString().split('T')[0],
     es_ilimitado: service.es_ilimitado !== undefined ? service.es_ilimitado : (customMeta.es_ilimitado !== undefined ? customMeta.es_ilimitado : true),
     fecha_fin: service.fecha_fin || customMeta.fecha_fin || '',
@@ -480,6 +481,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       const { error } = await supabase.from('servicios').update({ estado_suscripcion: nuevoEstado }).eq('id', service.id);
       if (error) {
         const metaTag = `[META:${encodeURIComponent(JSON.stringify({
+          categoria: service.categoria,
           fecha_inicio: service.fecha_inicio,
           es_ilimitado: service.es_ilimitado,
           fecha_fin: service.fecha_fin,
@@ -541,6 +543,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
     try {
       const localStore = JSON.parse(localStorage.getItem('inefable_servicios_meta') || '{}');
       localStore[serviceId] = {
+        categoria: fullService.categoria,
         fecha_inicio: fullService.fecha_inicio,
         es_ilimitado: fullService.es_ilimitado,
         fecha_fin: fullService.fecha_fin,
@@ -570,6 +573,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
         
         // Empaquetar metadata extendida en notas
         const metaTag = `[META:${encodeURIComponent(JSON.stringify({
+          categoria: fullService.categoria,
           fecha_inicio: fullService.fecha_inicio,
           es_ilimitado: fullService.es_ilimitado,
           fecha_fin: fullService.fecha_fin,
