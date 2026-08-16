@@ -59,13 +59,54 @@ const parseLocalDate = (dateStr) => {
   return new Date(y, m - 1, d || 1);
 };
 
+// Helper para desempaquetar metadata extendida de servicios
+const unpackService = (service) => {
+  if (!service) return service;
+  let customMeta = {};
+  
+  // 1. Leer de localStorage
+  try {
+    const localStore = JSON.parse(localStorage.getItem('inefable_servicios_meta') || '{}');
+    if (localStore[service.id]) {
+      customMeta = localStore[service.id];
+    }
+  } catch (e) {}
+
+  // 2. Extraer de notas si viene serializado
+  let cleanNotas = service.notas || '';
+  if (cleanNotas.includes('[META:')) {
+    try {
+      const match = cleanNotas.match(/\[META:(.*?)\]/);
+      if (match && match[1]) {
+        const parsed = JSON.parse(decodeURIComponent(match[1]));
+        customMeta = { ...parsed, ...customMeta };
+        cleanNotas = cleanNotas.replace(/\[META:.*?\]/, '').trim();
+      }
+    } catch (e) {}
+  }
+
+  return {
+    ...service,
+    fecha_inicio: service.fecha_inicio || customMeta.fecha_inicio || service.fecha_pago || new Date().toISOString().split('T')[0],
+    es_ilimitado: service.es_ilimitado !== undefined ? service.es_ilimitado : (customMeta.es_ilimitado !== undefined ? customMeta.es_ilimitado : true),
+    fecha_fin: service.fecha_fin || customMeta.fecha_fin || '',
+    url_servicio: service.url_servicio || customMeta.url_servicio || '',
+    estado_suscripcion: service.estado_suscripcion || customMeta.estado_suscripcion || 'Activa',
+    dias_recordatorio: service.dias_recordatorio || customMeta.dias_recordatorio || '3',
+    contribuciones: Array.isArray(service.contribuciones) ? service.contribuciones : (Array.isArray(customMeta.contribuciones) ? customMeta.contribuciones : []),
+    notas: cleanNotas
+  };
+};
+
 const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, isDark = true, settings }) => {
   const t = useTheme(isDark);
   const isMobile = settings?.isMobileMode;
   
-  // Listas sincronizadas
+  // Listas sincronizadas y procesadas
   const egresos = useMemo(() => Array.isArray(data?.egresos) ? data.egresos : [], [data?.egresos]);
-  const activeServicios = useMemo(() => Array.isArray(servicios) ? servicios : [], [servicios]);
+  const activeServicios = useMemo(() => {
+    return (Array.isArray(servicios) ? servicios : []).map(unpackService);
+  }, [servicios]);
 
   // Pestañas: 'servicios' | 'presupuesto' | 'historial'
   const [activeTab, setActiveTab] = useState('servicios');
@@ -315,10 +356,11 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       
       const ciclo = s.tipo || 'Mensual';
       let multiplicadorAnual = 12;
-      if (ciclo === 'Trimestral') multiplicadorAnual = 4;
-      if (ciclo === 'Semestral') multiplicadorAnual = 2;
-      if (ciclo === 'Anual') multiplicadorAnual = 1;
-      if (ciclo === 'Pago Único') multiplicadorAnual = 0;
+      if (ciclo === 'Bimestral') multiplicadorAnual = 6;
+      else if (ciclo === 'Trimestral') multiplicadorAnual = 4;
+      else if (ciclo === 'Semestral') multiplicadorAnual = 2;
+      else if (ciclo === 'Anual') multiplicadorAnual = 1;
+      else if (ciclo === 'Pago Único') multiplicadorAnual = 0;
 
       return sum + (net * multiplicadorAnual);
     }, 0);
@@ -419,11 +461,35 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
   const handleToggleServiceStatus = async (service) => {
     const nuevoEstado = service.estado_suscripcion === 'En Pausa' ? 'Activa' : 'En Pausa';
+    const updatedService = { ...service, estado_suscripcion: nuevoEstado };
+    
+    // 1. Guardar en localStorage
     try {
-      if (setServicios) {
-        setServicios(activeServicios.map(s => s.id === service.id ? { ...s, estado_suscripcion: nuevoEstado } : s));
+      const localStore = JSON.parse(localStorage.getItem('inefable_servicios_meta') || '{}');
+      localStore[service.id] = { ...(localStore[service.id] || {}), estado_suscripcion: nuevoEstado };
+      localStorage.setItem('inefable_servicios_meta', JSON.stringify(localStore));
+    } catch (e) {}
+
+    // 2. Estado local
+    if (setServicios) {
+      setServicios(activeServicios.map(s => s.id === service.id ? updatedService : s));
+    }
+
+    // 3. Supabase con fallback
+    try {
+      const { error } = await supabase.from('servicios').update({ estado_suscripcion: nuevoEstado }).eq('id', service.id);
+      if (error) {
+        const metaTag = `[META:${encodeURIComponent(JSON.stringify({
+          fecha_inicio: service.fecha_inicio,
+          es_ilimitado: service.es_ilimitado,
+          fecha_fin: service.fecha_fin,
+          url_servicio: service.url_servicio,
+          estado_suscripcion: nuevoEstado,
+          dias_recordatorio: service.dias_recordatorio,
+          contribuciones: service.contribuciones
+        }))}]`;
+        await supabase.from('servicios').update({ notas: `${service.notas || ''} ${metaTag}`.trim() }).eq('id', service.id);
       }
-      await supabase.from('servicios').update({ estado_suscripcion: nuevoEstado }).eq('id', service.id);
       if (onRefresh) await onRefresh();
     } catch (err) {
       console.error("Error al cambiar estado:", err);
@@ -446,8 +512,10 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       nextBilling = new Date(hoyRef.getFullYear(), hoyRef.getMonth() + 1, billingDay);
     }
     const computedFechaPago = nextBilling.toISOString().split('T')[0];
+    const serviceId = editingService ? editingService.id : crypto.randomUUID();
 
-    const payload = {
+    const fullService = {
+      id: serviceId,
       nombre: serviceForm.nombre.trim(),
       monto: parseFloat(serviceForm.monto) || 0,
       fecha_inicio: serviceForm.fecha_inicio,
@@ -469,21 +537,68 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       }))
     };
 
+    // 1. Guardar en localStorage para persistencia y disponibilidad garantizada
     try {
+      const localStore = JSON.parse(localStorage.getItem('inefable_servicios_meta') || '{}');
+      localStore[serviceId] = {
+        fecha_inicio: fullService.fecha_inicio,
+        es_ilimitado: fullService.es_ilimitado,
+        fecha_fin: fullService.fecha_fin,
+        url_servicio: fullService.url_servicio,
+        estado_suscripcion: fullService.estado_suscripcion,
+        dias_recordatorio: fullService.dias_recordatorio,
+        contribuciones: fullService.contribuciones
+      };
+      localStorage.setItem('inefable_servicios_meta', JSON.stringify(localStore));
+    } catch (e) {}
+
+    // 2. Actualizar estado local inmediatamente
+    if (setServicios) {
       if (editingService) {
-        const updated = activeServicios.map(s => s.id === editingService.id ? { ...s, ...payload } : s);
-        setServicios(updated);
-        await supabase.from('servicios').update(payload).eq('id', editingService.id);
+        setServicios(activeServicios.map(s => s.id === serviceId ? fullService : s));
       } else {
-        const newId = crypto.randomUUID();
-        const item = { ...payload, id: newId };
-        setServicios([...activeServicios, item]);
-        await supabase.from('servicios').insert([item]);
+        setServicios([...activeServicios, fullService]);
       }
+    }
+
+    // 3. Persistir en Supabase con fallback resiliente
+    try {
+      const { error: fullError } = await supabase.from('servicios').upsert([fullService]);
+      
+      if (fullError) {
+        console.warn("Columna no existente en Supabase, aplicando serialización compatible:", fullError.message);
+        
+        // Empaquetar metadata extendida en notas
+        const metaTag = `[META:${encodeURIComponent(JSON.stringify({
+          fecha_inicio: fullService.fecha_inicio,
+          es_ilimitado: fullService.es_ilimitado,
+          fecha_fin: fullService.fecha_fin,
+          url_servicio: fullService.url_servicio,
+          estado_suscripcion: fullService.estado_suscripcion,
+          dias_recordatorio: fullService.dias_recordatorio,
+          contribuciones: fullService.contribuciones
+        }))}]`;
+
+        const fallbackPayload = {
+          id: serviceId,
+          nombre: fullService.nombre,
+          monto: fullService.monto,
+          fecha_pago: fullService.fecha_pago,
+          metodo: fullService.metodo,
+          tipo: fullService.tipo,
+          notas: `${fullService.notas} ${metaTag}`.trim()
+        };
+
+        const { error: fallbackError } = await supabase.from('servicios').upsert([fallbackPayload]);
+        if (fallbackError) throw fallbackError;
+      }
+
       setShowServiceModal(false);
       if (onRefresh) await onRefresh();
     } catch (err) {
       console.error("Error al guardar servicio:", err);
+      alert("Aviso: Se guardó en el almacenamiento local pero la base de datos reportó: " + err.message);
+      setShowServiceModal(false);
     } finally {
       setServiceLoading(false);
     }
@@ -505,7 +620,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       const fActual = parseLocalDate(service.fecha_pago || hoyStr);
       const ciclo = service.tipo || 'Mensual';
       
-      if (ciclo === 'Trimestral') {
+      if (ciclo === 'Bimestral') {
+        fActual.setMonth(fActual.getMonth() + 2);
+      } else if (ciclo === 'Trimestral') {
         fActual.setMonth(fActual.getMonth() + 3);
       } else if (ciclo === 'Semestral') {
         fActual.setMonth(fActual.getMonth() + 6);
@@ -544,12 +661,20 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       if (onRefresh) await onRefresh();
     } catch (err) {
       console.error("Error al registrar pago de servicio:", err);
+      alert("Error al registrar pago de servicio: " + err.message);
     }
   };
 
   const handleDeleteService = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar esta suscripción?")) return;
     try {
+      // Borrar de localStorage
+      try {
+        const localStore = JSON.parse(localStorage.getItem('inefable_servicios_meta') || '{}');
+        delete localStore[id];
+        localStorage.setItem('inefable_servicios_meta', JSON.stringify(localStore));
+      } catch (e) {}
+
       if (setServicios) {
         setServicios(activeServicios.filter(s => s.id !== id));
       }
@@ -1316,6 +1441,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                     className="w-full text-xs"
                   >
                     <option value="Mensual">Mensual (Cada mes)</option>
+                    <option value="Bimestral">Bimestral (Cada 2 meses)</option>
                     <option value="Trimestral">Trimestral (Cada 3 meses)</option>
                     <option value="Semestral">Semestral (Cada 6 meses)</option>
                     <option value="Anual">Anual (Cada año)</option>
