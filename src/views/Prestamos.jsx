@@ -11,7 +11,7 @@ import { getTheme, useTheme } from '../lib/theme';
 import FormularioPrestamo from '../components/FormularioPrestamo';
 import ErrorBoundary from '../components/ErrorBoundary';
 import FinancialWeeklyOverview from '../components/FinancialWeeklyOverview';
-import { useAmortizacion, useAmortizacionGlobal, generarCronograma, generarCronogramaDiario, calcularResumen, proyectarSiguientes } from '../hooks/useAmortizacion';
+import { useAmortizacion, useAmortizacionGlobal, generarCronograma, generarCronogramaDiario, calcularResumen, calcularResumenDiario, proyectarSiguientes } from '../hooks/useAmortizacion';
 import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
