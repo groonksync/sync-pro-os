@@ -1054,9 +1054,26 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
   const handleFormSave = async (savedRecord) => {
     setShowForm(false);
     setEditPrestamo(null);
-    if (setData) {
+
+    if (savedRecord && setData) {
+      setData(prev => {
+        const currentList = Array.isArray(prev?.prestamos) ? prev.prestamos : [];
+        const exists = currentList.some(p => p.id === savedRecord.id);
+        const updatedList = exists
+          ? currentList.map(p => p.id === savedRecord.id ? { ...p, ...savedRecord } : p)
+          : [savedRecord, ...currentList];
+        return { ...prev, prestamos: updatedList };
+      });
+      if (activePrestamo && activePrestamo.id === savedRecord.id) {
+        setActivePrestamo(prev => ({ ...prev, ...savedRecord }));
+      }
+    }
+
+    try {
       const { data: refreshed } = await supabase.from('prestamos').select('*');
-      if (refreshed) setData(prev => ({ ...prev, prestamos: refreshed }));
+      if (refreshed && setData) setData(prev => ({ ...prev, prestamos: refreshed }));
+    } catch (err) {
+      console.warn('No se pudo refrescar lista de préstamos:', err);
     }
     showToast('✅ Préstamo guardado correctamente');
 
@@ -1157,14 +1174,14 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
     } finally { setLoading(false); }
   };
 
-  const togglePago = (mes) => {
+  const togglePago = async (mes) => {
     if (!activePrestamo) return;
     const current = Array.isArray(activePrestamo.pagos) ? activePrestamo.pagos : [];
     const esRecibido = getTipoPrestamo(activePrestamo) === 'recibido';
 
+    let newPagos;
     if (esRecibido) {
       const mesReservado = `${mes}_reservado`;
-      let newPagos;
       const hasPaid = current.some(m => m === mes || m === `${mes}_ocultado`);
       const hasReserved = current.some(m => m === mesReservado || m === `${mes}_reservado_ocultado`);
       
@@ -1175,11 +1192,30 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
       } else {
         newPagos = [...current, mesReservado];
       }
-      setActivePrestamo({ ...activePrestamo, pagos: newPagos });
     } else {
       const hasPaid = current.some(m => m.startsWith(mes));
-      const newPagos = hasPaid ? current.filter(m => !m.startsWith(mes)) : [...current, mes];
-      setActivePrestamo({ ...activePrestamo, pagos: newPagos });
+      newPagos = hasPaid ? current.filter(m => !m.startsWith(mes)) : [...current, mes];
+    }
+
+    const updatedPrestamo = { ...activePrestamo, pagos: newPagos };
+    setActivePrestamo(updatedPrestamo);
+
+    // Actualización inmediata en memoria
+    if (setData) {
+      setData(prev => {
+        const list = Array.isArray(prev?.prestamos) ? prev.prestamos : [];
+        return {
+          ...prev,
+          prestamos: list.map(p => p.id === activePrestamo.id ? updatedPrestamo : p)
+        };
+      });
+    }
+
+    // Persistencia directa en base de datos
+    try {
+      await supabase.from('prestamos').update({ pagos: newPagos }).eq('id', activePrestamo.id);
+    } catch (err) {
+      console.warn('Error al auto-guardar pago en base de datos:', err);
     }
   };
 
@@ -1301,9 +1337,10 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
   const moraMap = useMemo(() => {
     const map = {};
     prestamosList.forEach(p => {
-      const cuotas = generarCronograma(p);
-      const resumen = calcularResumen(cuotas);
-      if (resumen.totalMora > 0) map[p.id] = resumen.totalMora;
+      const isDiario = p.tipo_pago === 'diario';
+      const cuotas = isDiario ? generarCronogramaDiario(p) : generarCronograma(p);
+      const resumen = isDiario ? calcularResumenDiario(cuotas) : calcularResumen(cuotas);
+      if (resumen && resumen.totalMora > 0) map[p.id] = resumen.totalMora;
     });
     return map;
   }, [prestamosList]);

@@ -11,7 +11,7 @@ import {
 import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
 import { getTheme, useTheme } from '../lib/theme';
-import { usePrestamoCategorias } from '../hooks/usePrestamoCategorias';
+import { usePrestamoCategorias, calcularCategoriaPrestamo } from '../hooks/usePrestamoCategorias';
 import { generarCronograma } from '../hooks/useAmortizacion';
 import CommandModal from '../components/CommandModal';
 import ResumenIAModal from '../components/ResumenIAModal';
@@ -287,78 +287,18 @@ const CommandCenter = ({
   }).reduce((s, e) => s + Number(e.monto || 0), 0);
   const balanceMensual = ingresosMes - egresosMes;
 
-  // NUEVO: Categorización de cobros del período seleccionado
+  // NUEVO: Categorización unificada de cobros del período seleccionado (soporta mensual y diario)
   const cobrosDelPeriodo = useMemo(() => {
     const [selYear, selMonth] = periodoMes.split('-').map(Number);
     const finDelMesSel = new Date(selYear, selMonth, 0);
 
     return listaPrestamos.map(p => {
       if (!p.inicio) return null;
-      const pagos = Array.isArray(p.pagos) ? p.pagos : [];
-      const inicio = new Date(p.inicio);
-      if (isNaN(inicio.getTime())) return null;
-
-      const topePeriodo = new Date(selYear, selMonth - 1, 31);
-      const mesesEsperados = [];
-      let cursor = new Date(inicio.getFullYear(), inicio.getMonth() + 1, 1);
-      const fin = p.fin ? new Date(p.fin) : null;
-      const tope = fin && fin < topePeriodo ? fin : topePeriodo;
-
-      while (cursor <= tope) {
-        const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
-        mesesEsperados.push(key);
-        cursor.setMonth(cursor.getMonth() + 1);
-      }
-
-      const mesesAdeudados = mesesEsperados.filter(m => !pagos.includes(m));
-      const totalAtraso = mesesAdeudados.length;
-
-      let categoria, dialog;
-      if (totalAtraso === 0) {
-        categoria = 'AL_DIA';
-        dialog = {
-          color: '#22c55e',
-          icono: 'CheckCircle',
-          titulo: 'Al día',
-          mensaje: 'Cliente al día en este periodo.',
-          nivel: 'Bajo',
-        };
-      } else if (totalAtraso === 1) {
-        categoria = 'PENDIENTE';
-        dialog = {
-          color: '#eab308',
-          icono: 'Clock',
-          titulo: 'Pendiente',
-          mensaje: `Debe el mes de ${mesesAdeudados[0]}. Enviar recordatorio.`,
-          nivel: 'Bajo',
-        };
-      } else if (totalAtraso === 2) {
-        categoria = 'DEUDOR_1MES';
-        dialog = {
-          color: '#f97316',
-          icono: 'AlertTriangle',
-          titulo: 'Riesgo medio',
-          mensaje: `Debe 2 meses (${mesesAdeudados.join(', ')}). Contactar.`,
-          nivel: 'Medio',
-        };
-      } else {
-        categoria = 'DEUDOR_CRITICO';
-        dialog = {
-          color: '#ef4444',
-          icono: 'XCircle',
-          titulo: 'Riesgo alto',
-          mensaje: `Debe ${totalAtraso} meses (${mesesAdeudados.join(', ')}). RIESGO CRÍTICO.`,
-          nivel: 'Alto',
-        };
-      }
-
+      const cat = calcularCategoriaPrestamo(p);
+      if (!cat) return null;
       return {
         ...p,
-        categoria,
-        mesesAtraso: totalAtraso,
-        mesesAdeudados,
-        dialog,
-        mesesEsperados
+        ...cat
       };
     }).filter(p => {
       if (!p) return false;
@@ -368,7 +308,7 @@ const CommandCenter = ({
       if (p.fin) {
         const fin = new Date(p.fin);
         const inicioDelMesSel = new Date(selYear, selMonth - 1, 1);
-        if (fin < inicioDelMesSel && p.mesesAtraso === 0) {
+        if (fin < inicioDelMesSel && p.totalAtraso === 0) {
           return false;
         }
       }
@@ -376,7 +316,7 @@ const CommandCenter = ({
     });
   }, [listaPrestamos, periodoMes]);
 
-  // NUEVO: Categorías del periodo seleccionado que reemplazan el const categorias inicial
+  // Categorías del periodo seleccionado
   const categorias = useMemo(() => {
     const alDia = cobrosDelPeriodo.filter(p => p.categoria === 'AL_DIA');
     const pendientes = cobrosDelPeriodo.filter(p => p.categoria === 'PENDIENTE');
@@ -385,27 +325,19 @@ const CommandCenter = ({
     const porCobrar = cobrosDelPeriodo.filter(p => p.categoria !== 'AL_DIA');
 
     const totalPendiente = porCobrar.reduce((sum, p) => {
-      const cap = parseFloat(p.capital) || 0;
-      const int = parseFloat(p.interes) || 0;
-      return sum + (cap * (int / 100));
+      return sum + (p.montoPendiente || (parseFloat(p.capital || 0) * (parseFloat(p.interes || 0) / 100)));
     }, 0);
 
     const totalAlDia = alDia.reduce((sum, p) => {
-      const cap = parseFloat(p.capital) || 0;
-      const int = parseFloat(p.interes) || 0;
-      return sum + (cap * (int / 100));
+      return sum + (p.cuotaUnit || (parseFloat(p.capital || 0) * (parseFloat(p.interes || 0) / 100)));
     }, 0);
 
     const totalDeudor1Mes = deudor1Mes.reduce((sum, p) => {
-      const cap = parseFloat(p.capital) || 0;
-      const int = parseFloat(p.interes) || 0;
-      return sum + (cap * (int / 100));
+      return sum + (p.montoPendiente || (parseFloat(p.capital || 0) * (parseFloat(p.interes || 0) / 100)));
     }, 0);
 
     const totalDeudorCritico = deudorCritico.reduce((sum, p) => {
-      const cap = parseFloat(p.capital) || 0;
-      const int = parseFloat(p.interes) || 0;
-      return sum + (cap * (int / 100));
+      return sum + (p.montoPendiente || (parseFloat(p.capital || 0) * (parseFloat(p.interes || 0) / 100)));
     }, 0);
 
     return {

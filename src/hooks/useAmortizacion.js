@@ -307,12 +307,15 @@ function calcularEstadisticas(prestamos) {
     capitalActivo += cap;
     rendimientoMensual += Math.round(cap * (interes / 100));
 
-    const cuotas = generarCronograma(p);
-    const resumen = calcularResumen(cuotas);
+    const isDiario = p.tipo_pago === 'diario';
+    const cuotas = isDiario ? generarCronogramaDiario(p) : generarCronograma(p);
+    const resumen = isDiario ? calcularResumenDiario(cuotas) : calcularResumen(cuotas);
     if (resumen) {
-      totalMora += resumen.totalMora;
-      if (resumen.cuotasVencidas > 0) prestamosVencidos++;
-      if (resumen.cuotasVencidas === 0 && resumen.cuotasPagadas > 0) prestamosAlDia++;
+      totalMora += resumen.totalMora || 0;
+      const vencidas = isDiario ? (resumen.diasVencidos || 0) : (resumen.cuotasVencidas || 0);
+      const pagadas = isDiario ? (resumen.diasPagados || 0) : (resumen.cuotasPagadas || 0);
+      if (vencidas > 0) prestamosVencidos++;
+      if (vencidas === 0 && pagadas > 0) prestamosAlDia++;
     }
   });
 
@@ -360,9 +363,12 @@ export function useAmortizacionGlobal(prestamos) {
     const stats = calcularEstadisticas(lista);
     const cuotasPorPrestamo = {};
     lista.forEach(p => {
+      const isDiario = p.tipo_pago === 'diario';
+      const cuotas = isDiario ? generarCronogramaDiario(p) : generarCronograma(p);
+      const resumen = isDiario ? calcularResumenDiario(cuotas) : calcularResumen(cuotas);
       cuotasPorPrestamo[p.id] = {
-        cuotas: generarCronograma(p),
-        resumen: calcularResumen(generarCronograma(p)),
+        cuotas,
+        resumen,
       };
     });
     return { stats, cuotasPorPrestamo };
