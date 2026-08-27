@@ -4,7 +4,8 @@ import {
   ExternalLink, User, CreditCard, ArrowRight, ShieldCheck, CalendarDays, CheckCircle2,
   Check, X, AlertCircle, Trash2, AlertTriangle, Edit3, Search, Eye, EyeOff, Clock,
   MoreHorizontal, Filter, Download, Printer, RefreshCw, TrendingUp, Percent,
-  Heart, BarChart3, PieChart, Wallet, Bookmark, Sun, Moon
+  Heart, BarChart3, PieChart, Wallet, Bookmark, Sun, Moon,
+  Zap, Sliders, BadgePercent
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
@@ -684,6 +685,7 @@ const DeleteConfirmModal = ({ target, isDark, onConfirm, onCancel }) => {
 // ─── MODAL AJUSTES Y REESTRUCTURACIÓN DE CONTRATOS ──────────
 const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
   const t = useTheme(isDark);
+  if (!prestamo) return null;
   const [tipoAjuste, setTipoAjuste] = useState('abono_capital');
   const [montoAbono, setMontoAbono] = useState('');
   const [nuevaTasa, setNuevaTasa] = useState(prestamo?.interes?.toString() || '5');
@@ -2027,7 +2029,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
             {viewDisplayMode === 'cards' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {filteredPrestamistas.map(g => {
-                  const primer = g.primerContrato || g.contratos[0];
+                  const primer = g.primerContrato || (Array.isArray(g.contratos) && g.contratos[0]) || null;
                   return (
                     <div
                       key={g.key}
@@ -2079,13 +2081,13 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                         <div>
                           <span className="text-[9px] font-bold uppercase text-neutral-500 tracking-wider">Deuda Activa</span>
                           <p className="text-base font-black font-mono text-white m-0 mt-0.5">
-                            {g.totalAdeudado.toLocaleString()} <span className="text-[10px] font-normal text-neutral-400">BOB</span>
+                            {(g.totalAdeudado || 0).toLocaleString()} <span className="text-[10px] font-normal text-neutral-400">BOB</span>
                           </p>
                         </div>
                         <div className="text-right">
                           <span className="text-[9px] font-bold uppercase text-neutral-500 tracking-wider">Interés Mensual</span>
                           <p className="text-base font-black font-mono text-amber-400 m-0 mt-0.5">
-                            +{Math.round(g.interesMensual).toLocaleString()} <span className="text-[10px] font-normal text-neutral-400">BOB</span>
+                            +{Math.round(g.interesMensual || 0).toLocaleString()} <span className="text-[10px] font-normal text-neutral-400">BOB</span>
                           </p>
                         </div>
                       </div>
@@ -2093,13 +2095,13 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                       {/* Barra de Progreso de Amortización */}
                       <div className="space-y-1.5">
                         <div className="flex justify-between items-center text-[10px] text-neutral-400">
-                          <span>{g.contratos.length} {g.contratos.length === 1 ? 'Contrato' : 'Contratos'}</span>
-                          <span className="font-bold font-mono text-neutral-300">{g.progressAmortizado}% Amortizado</span>
+                          <span>{(g.contratos?.length || 0)} {(g.contratos?.length || 0) === 1 ? 'Contrato' : 'Contratos'}</span>
+                          <span className="font-bold font-mono text-neutral-300">{g.progressAmortizado ?? 100}% Amortizado</span>
                         </div>
                         <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
-                            style={{ width: `${g.progressAmortizado}%` }}
+                            style={{ width: `${g.progressAmortizado ?? 100}%` }}
                           />
                         </div>
                       </div>
@@ -2140,7 +2142,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                                 numero: `REC-${Date.now().toString().slice(-6)}`,
                                 fechaEmision: new Date().toISOString().split('T')[0],
                                 concepto: `Pago de Cuota — ${g.nombre}`,
-                                montoInteres: Math.round(g.interesMensual) || 0,
+                                montoInteres: Math.round(g.interesMensual || 0) || 0,
                                 montoCapital: 0,
                                 montoMora: 0,
                                 montoAjustes: 0,
@@ -2215,7 +2217,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                   </thead>
                   <tbody>
                     {filteredPrestamistas.map(g => {
-                      const primer = g.primerContrato || g.contratos[0];
+                      const primer = g.primerContrato || (Array.isArray(g.contratos) && g.contratos[0]) || null;
                       return (
                         <tr key={g.key} onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
                           style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
@@ -2242,18 +2244,18 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                           </td>
                           <td style={{ padding: '16px 24px', textAlign: 'center' }}>
                             <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>
-                              {g.contratos.length} {g.contratos.length === 1 ? 'contrato' : 'contratos'}
+                              {(g.contratos?.length || 0)} {(g.contratos?.length || 0) === 1 ? 'contrato' : 'contratos'}
                             </span>
                             <div style={{ fontSize: '9px', color: t.textDim, marginTop: '2px' }}>
-                              ({g.contratos.filter(c => c.estado !== 'Finalizado').length} activos)
+                              ({(g.contratos || []).filter(c => c && c.estado !== 'Finalizado').length} activos)
                             </div>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
                             <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                              {g.totalAdeudado.toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>BOB</span>
+                              {(g.totalAdeudado || 0).toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>BOB</span>
                             </p>
                             <p style={{ fontSize: '9px', color: t.textDim, marginTop: '2px', margin: 0 }}>
-                              Interés mensual: +{Math.round(g.interesMensual).toLocaleString()} BOB
+                              Interés mensual: +{Math.round(g.interesMensual || 0).toLocaleString()} BOB
                             </p>
                           </td>
                           <td style={{ padding: '16px 24px', textAlign: 'right' }}>
