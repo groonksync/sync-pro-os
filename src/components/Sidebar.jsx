@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Wallet, Bell, Settings, CreditCard,
   Package, TrendingUp, Activity, Video, Briefcase,
   Landmark, Trash2, ShoppingBag, PanelLeftClose, PanelLeftOpen,
-  Sun, Moon, Building2, Image, Menu, X, Dumbbell
+  Sun, Moon, Building2, Image, Menu, X, Dumbbell, UtensilsCrossed
 } from 'lucide-react';
 import { getTheme, useTheme } from '../lib/theme';
 
@@ -20,7 +20,8 @@ const MENU_GROUPS = [
   {
     label: 'Sistemas',
     items: [
-      { id: 'gimnasio',       label: 'Sistema Gimnasio',    icon: Dumbbell },
+      { id: 'ventas-alimentos', label: 'Venta Alimentos',   icon: UtensilsCrossed },
+      { id: 'gimnasio',         label: 'Sistema Gimnasio',  icon: Dumbbell },
     ],
   },
   {

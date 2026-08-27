@@ -16,6 +16,8 @@ import ClientPortal from './views/ClientPortal';
 import PublicCatalog from './views/PublicCatalog';
 import ConversorWebP from './views/ConversorWebP';
 import SistemaGimnasio from './views/SistemaGimnasio';
+import FieldSalesPortal from './views/FieldSalesPortal';
+import VentasAlimentos from './views/VentasAlimentos';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
@@ -596,6 +598,7 @@ const AppContent = () => {
         case 'pagos': return <MisEgresos data={data} setData={setData} servicios={servicios} setServicios={setServicios} onRefresh={fetchData} isDark={isDarkMode} initialFilterText={egresosSearch} token={googleToken} settings={appSettings} />;
         case 'inventario': return <Inventario settings={appSettings} isDark={isDarkMode} initialSearch={inventarioSearch} />;
         case 'recordatorios': return <Recordatorios settings={appSettings} isDark={isDarkMode} initialSearch={recordatoriosSearch} token={googleToken} />;
+        case 'ventas-alimentos': return <VentasAlimentos isDark={isDarkMode} settings={appSettings} />;
         case 'gimnasio': return <SistemaGimnasio settings={appSettings} isDark={isDarkMode} />;
         case 'conversor-imagenes': return <ConversorWebP settings={appSettings} isDark={isDarkMode} />;
         case 'papelera': return <TrashView settings={appSettings} isDark={isDarkMode} />;
@@ -658,9 +661,12 @@ const AppContent = () => {
 
   // Verificar rutas públicas primero
   const path = window.location.pathname;
+  const searchParams = new URLSearchParams(window.location.search);
   const isPortal = path.startsWith('/portal/');
   const isCatalog = path === '/catalogo' || path === '/catalogo/';
+  const isFieldSales = path === '/ventas-campo' || path === '/ventas-campo/' || path === '/portal-ventas' || searchParams.get('portal') === 'ventas-campo' || window.location.hash === '#/ventas-campo';
 
+  if (isFieldSales) return <FieldSalesPortal />;
   if (isCatalog) return <PublicCatalog />;
   if (isPortal) return <ClientPortal portalId={path.split('/portal/')[1]} />;
 
