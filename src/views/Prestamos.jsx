@@ -1734,59 +1734,19 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
       <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
         {prestamoView === 'list' ? (
           <div className="animate-in fade-in duration-300">
-            <header style={{
-              display: 'flex', flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'space-between', alignItems: isMobile ? 'center' : 'flex-end',
-              gap: '16px', marginBottom: '32px',
-              width: '100%'
-            }}>
-              <div style={{
-                display: 'flex',
-                flexDirection: isMobile ? 'column' : 'row',
-                alignItems: 'center',
-                textAlign: isMobile ? 'center' : 'left',
-                gap: '20px',
-                width: isMobile ? '100%' : 'auto',
-                flexWrap: 'wrap'
-              }}>
-                <div>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
-                    {filtroTipo === 'recibido' ? 'Mis Deudas & Créditos' : 'Cartera de Préstamos'}
-                  </h2>
-                  <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
-                    {filtroTipo === 'recibido' ? 'Control de préstamos bancarios y deudas con terceros' : 'Dashboard Analítico — Gestión de Capital'}
-                  </p>
-                </div>
-                {/* Switcher de Tipo de Préstamo */}
-                <div style={{ display: 'flex', padding: '2px', borderRadius: '10px', backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, margin: isMobile ? '0 auto' : '0' }}>
-                  <button
-                    onClick={() => setFiltroTipo('otorgado')}
-                    style={{
-                      padding: '6px 12px', borderRadius: '8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-                      backgroundColor: filtroTipo === 'otorgado' ? t.accent : 'transparent',
-                      color: filtroTipo === 'otorgado' ? '#000000' : t.textDim
-                    }}
-                  >
-                    Otorgados (A Clientes)
-                  </button>
-                  <button
-                    onClick={() => setFiltroTipo('recibido')}
-                    style={{
-                      padding: '6px 12px', borderRadius: '8px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.03em', border: 'none', cursor: 'pointer', transition: 'all 0.2s',
-                      backgroundColor: filtroTipo === 'recibido' ? t.accent : 'transparent',
-                      color: filtroTipo === 'recibido' ? '#000000' : t.textDim
-                    }}
-                  >
-                    Recibidos (Banco / Deudas)
-                  </button>
-                </div>
+            {/* Cabecera Principal */}
+            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 w-full">
+              <div>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+                  {filtroTipo === 'recibido' ? 'Mis Deudas & Créditos' : 'Cartera de Préstamos'}
+                </h2>
+                <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>
+                  {filtroTipo === 'recibido' ? 'Control de préstamos bancarios y deudas con terceros' : 'Dashboard Analítico — Gestión de Capital y Cobranza'}
+                </p>
               </div>
-              <div style={{
-                display: 'flex',
-                flexDirection: isMobile ? 'column' : 'row',
-                gap: '10px',
-                width: isMobile ? '100%' : 'auto'
-              }}>
+
+              {/* Botones de Acción en Fila Horizontal Unificada */}
+              <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
                 <button
                   onClick={() => {
                     setReciboForm({
@@ -1807,17 +1767,18 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     setPrestamoView('recibos');
                   }}
                   style={{
-                    backgroundColor: 'transparent', color: t.text, border: `1px solid ${t.border}`,
-                    borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
-                    fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                    backgroundColor: t.panel, color: t.text, border: `1px solid ${t.border}`,
+                    borderRadius: '12px', padding: '10px 16px',
+                    fontSize: '11px', fontWeight: 700, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
+                    gap: '6px', transition: 'all 0.2s ease', flex: isMobile ? 1 : 'initial'
                   }}
-                  onMouseEnter={e => e.target.style.backgroundColor = t.hover}
-                  onMouseLeave={e => e.target.style.backgroundColor = 'transparent'}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = t.panel}
                 >
-                  <Printer size={16} /> Emitir Recibo
+                  <Printer size={15} /> Emitir Recibo
                 </button>
+
                 <button 
                   onClick={() => {
                     setEditPrestamo({
@@ -1846,19 +1807,50 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     setShowForm(true);
                   }} 
                   style={{
-                    backgroundColor: t.accent, color: 'white', border: 'none',
-                    borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
-                    fontSize: '11px', fontWeight: 600, cursor: 'pointer',
+                    backgroundColor: t.accent, color: isDark ? '#0A0A0C' : '#FFFFFF', border: 'none',
+                    borderRadius: '12px', padding: '10px 18px',
+                    fontSize: '11px', fontWeight: 800, cursor: 'pointer',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
+                    gap: '6px', transition: 'all 0.2s ease', flex: isMobile ? 1 : 'initial',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
                   }}
-                  onMouseEnter={e => e.target.style.backgroundColor = t.accentHover}
-                  onMouseLeave={e => e.target.style.backgroundColor = t.accent}
+                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.accentHover}
+                  onMouseLeave={e => e.currentTarget.style.backgroundColor = t.accent}
                 >
-                  <Plus size={16} strokeWidth={3} /> Nuevo Registro
+                  <Plus size={15} strokeWidth={3} /> Nuevo Registro
                 </button>
               </div>
             </header>
+
+            {/* Fila Paralela: Selector de Tipo de Cartera */}
+            <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-white/[0.06] flex-wrap">
+              <div className="flex p-1 rounded-xl bg-white/[0.03] border border-white/[0.08] w-full sm:w-auto">
+                <button
+                  onClick={() => setFiltroTipo('otorgado')}
+                  className={`flex-1 sm:flex-initial py-2 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                    filtroTipo === 'otorgado'
+                      ? 'bg-emerald-500 text-neutral-950 shadow-md'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <TrendingUp size={14} /> Otorgados (A Clientes)
+                </button>
+                <button
+                  onClick={() => setFiltroTipo('recibido')}
+                  className={`flex-1 sm:flex-initial py-2 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
+                    filtroTipo === 'recibido'
+                      ? 'bg-sky-500 text-neutral-950 shadow-md'
+                      : 'text-neutral-400 hover:text-white'
+                  }`}
+                >
+                  <Wallet size={14} /> Recibidos (Banco / Deudas)
+                </button>
+              </div>
+              
+              <span className="text-[11px] font-semibold text-neutral-400 hidden sm:inline-block">
+                {filtroTipo === 'recibido' ? 'Control de pasivos y créditos bancarios' : 'Gestión activa de capital colocado e intereses'}
+              </span>
+            </div>
 
             {/* ─── DASHBOBOARD ANALÍTICO ──────────────────────────────── */}
             {/* Panel de Flujo Semanal y Resumen de Cartera */}
@@ -2007,18 +1999,17 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
             {/* Barra de Búsqueda, Filtros Rápidos y Vista (Cards vs Tabla) */}
             <div className="space-y-4 mb-6">
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-                {/* Input de Búsqueda */}
+                {/* Input de Búsqueda Simplificado (Sin Lupa) */}
                 <div className="relative flex-1 max-w-md">
-                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
                   <input
                     type="text"
                     value={searchTermDebtor}
                     onChange={e => setSearchTermDebtor(e.target.value)}
                     placeholder="Buscar por cliente, CI o WhatsApp..."
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-neutral-500 focus:border-emerald-500/60 focus:bg-white/[0.06] outline-none transition-all"
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-neutral-500 focus:border-emerald-500/60 focus:bg-white/[0.06] outline-none transition-all shadow-inner"
                   />
                   {searchTermDebtor && (
-                    <button onClick={() => setSearchTermDebtor('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white">
+                    <button onClick={() => setSearchTermDebtor('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1">
                       <X size={14} />
                     </button>
                   )}
