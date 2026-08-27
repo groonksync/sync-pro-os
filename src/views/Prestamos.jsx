@@ -1881,76 +1881,123 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               maxScale={Math.max(stats.rendimientoMensual * 0.4, 200)}
             />
 
-            {/* KPIs */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : 'repeat(5, 1fr)',
-              gap: '12px', marginBottom: '24px',
-            }}>
+            {/* KPIs en Cuadrícula 2x2 para Reducir Desplazamiento Vertical */}
+            <div className="grid grid-cols-2 gap-3 mb-4">
               <KPICard t={t} icon={DollarSign} label={filtroTipo === 'recibido' ? "Deuda Recibida" : "Capital Activo"} value={stats.capitalActivo.toLocaleString()} moneda="BOB" color={t.accent} />
-              <KPICard t={t} icon={TrendingUp} label={filtroTipo === 'recibido' ? "Interés Mensual a Pagar" : "Rendimiento Mensual"} value={stats.rendimientoMensual.toLocaleString()} moneda="BOB" color="#10b981" />
+              <KPICard t={t} icon={TrendingUp} label={filtroTipo === 'recibido' ? "Interés a Pagar" : "Rendimiento Mes"} value={stats.rendimientoMensual.toLocaleString()} moneda="BOB" color="#10b981" />
               <KPICard t={t} icon={Percent} label="Tasa Promedio" value={stats.tasaPromedio.toFixed(1)} moneda="%" color="#f59e0b" />
               <KPICard t={t} icon={AlertTriangle} label="Mora Acumulada" value={stats.totalMora.toLocaleString()} moneda="BOB" color="#ef4444" />
-              <KPICard t={t} icon={Heart} label={filtroTipo === 'recibido' ? "Índice de Cumplimiento" : "Índice de Salud"} value={stats.indiceSalud.toFixed(0)} moneda="/100" color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
             </div>
 
-            {/* Donut Chart — Distribución de Riesgo (Ancho Completo Adaptativo) */}
+            {/* Widget Visual Integrado: Distribución de Riesgo + Índice de Salud (Compacto) */}
             <div style={{
-              padding: '20px', backgroundColor: t.panel,
+              padding: '16px 18px', backgroundColor: t.panel,
               border: `1px solid ${t.border}`, borderRadius: '16px',
-              display: 'flex', flexDirection: 'column',
-              marginBottom: '24px',
+              marginBottom: '20px',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <PieChart size={16} color={t.accent} />
-                <span style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em', color: t.textDim }}>
-                  Distribución de Riesgo de la Cartera
-                </span>
-              </div>
-              <div style={{
-                display: 'flex',
-                flexDirection: isMobile ? 'column' : 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '32px',
-                flex: 1
-              }}>
-                <div style={{ position: 'relative', width: '96px', height: '96px', flexShrink: 0, margin: isMobile ? '0 auto' : '0' }}>
-                  <svg width="96" height="96" viewBox="0 0 100 100">
-                    {riesgoData.segments.map((seg, idx) => (
-                      <circle
-                        key={idx}
-                        cx="50" cy="50" r="38"
-                        fill="none"
-                        stroke={seg.color}
-                        strokeWidth="12"
-                        strokeDasharray={seg.dashArray}
-                        strokeDashoffset={seg.dashOffset}
-                        transform="rotate(-90 50 50)"
-                        style={{ transition: 'stroke-dasharray 0.5s ease' }}
-                      />
-                    ))}
-                    <circle cx="50" cy="50" r="28" fill={t.panel} />
-                    <text x="50" y="50" textAnchor="middle" dominantBaseline="central"
-                      fill={t.text} fontSize="14" fontWeight="700">
-                      {riesgoData.totalVal}
-                    </text>
-                  </svg>
+              {/* Cabecera del Widget Integrado */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Heart size={15} color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
+                  <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.text }}>
+                    Salud & Distribución de Riesgo
+                  </span>
                 </div>
                 <div style={{
-                  display: 'flex',
-                  flexDirection: isMobile ? 'column' : 'row',
-                  gap: '16px',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flex: 1
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                  padding: '3px 10px', borderRadius: '20px',
+                  backgroundColor: stats.indiceSalud >= 70 ? 'rgba(16, 185, 129, 0.12)' : stats.indiceSalud >= 40 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                  border: `1px solid ${stats.indiceSalud >= 70 ? 'rgba(16, 185, 129, 0.3)' : stats.indiceSalud >= 40 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
                 }}>
+                  <span style={{
+                    fontSize: '11px', fontWeight: 800,
+                    color: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'
+                  }}>
+                    {stats.indiceSalud.toFixed(0)}/100
+                  </span>
+                  <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>
+                    · {stats.indiceSalud >= 80 ? 'Excelente' : stats.indiceSalud >= 60 ? 'Saludable' : stats.indiceSalud >= 40 ? 'En Observación' : 'Riesgo Crítico'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Contenido Visual Integrado */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                {/* Donut SVG + Salud (Columna Izquierda 5/12) */}
+                <div className="md:col-span-5 flex items-center gap-4">
+                  <div style={{ position: 'relative', width: '74px', height: '74px', flexShrink: 0 }}>
+                    <svg width="74" height="74" viewBox="0 0 100 100">
+                      {riesgoData.segments.map((seg, idx) => (
+                        <circle
+                          key={idx}
+                          cx="50" cy="50" r="38"
+                          fill="none"
+                          stroke={seg.color}
+                          strokeWidth="14"
+                          strokeDasharray={seg.dashArray}
+                          strokeDashoffset={seg.dashOffset}
+                          transform="rotate(-90 50 50)"
+                          style={{ transition: 'stroke-dasharray 0.5s ease' }}
+                        />
+                      ))}
+                      <circle cx="50" cy="50" r="26" fill={t.panel} />
+                      <text x="50" y="47" textAnchor="middle" dominantBaseline="central"
+                        fill={t.text} fontSize="15" fontWeight="800">
+                        {riesgoData.totalVal}
+                      </text>
+                      <text x="50" y="60" textAnchor="middle" dominantBaseline="central"
+                        fill={t.textDim} fontSize="8" fontWeight="700">
+                        CONTRATOS
+                      </text>
+                    </svg>
+                  </div>
+
+                  <div className="flex-1 space-y-1">
+                    <div className="flex justify-between items-center text-[10px]">
+                      <span style={{ color: t.textDim, fontWeight: 600 }}>Índice de Salud</span>
+                      <span style={{ fontWeight: 800, color: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444' }}>
+                        {stats.indiceSalud.toFixed(0)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${Math.min(100, Math.max(5, stats.indiceSalud))}%`,
+                          backgroundColor: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'
+                        }}
+                      />
+                    </div>
+                    <p style={{ fontSize: '9px', color: t.textDim, margin: 0, lineHeight: 1.2 }}>
+                      {stats.indiceSalud >= 70 ? '🟢 Cartera al día y cobros puntuales' : stats.indiceSalud >= 40 ? '🟡 Clientes con atrasos a gestionar' : '🔴 Atención prioritaria en mora'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Píldoras de Categorías de Riesgo (Columna Derecha 7/12) */}
+                <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {riesgoData.items.map((item, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '120px', padding: '6px 12px', borderRadius: '8px', backgroundColor: t.isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)', border: `1px solid ${t.border}` }}>
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
+                        borderRadius: '10px',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                        border: `1px solid ${t.border}`,
+                      }}
+                    >
                       <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, flexShrink: 0 }} />
-                      <span style={{ fontSize: '9px', fontWeight: 600, color: t.textDim, flex: 1, textTransform: 'uppercase', letterSpacing: '0.02em' }}>{item.label}</span>
-                      <span style={{ fontSize: '10px', fontWeight: 800, color: t.text, fontFamily: 'monospace' }}>{item.value}</span>
+                      <div className="min-w-0 flex-1">
+                        <p style={{ fontSize: '9px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {item.label}
+                        </p>
+                        <p style={{ fontSize: '13px', fontWeight: 800, color: t.text, margin: 0, lineHeight: 1.1 }}>
+                          {item.value}
+                        </p>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -2106,35 +2153,37 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                         </div>
                       </div>
 
-                      {/* Botones de Acción Rápida (1 Toque) */}
-                      <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between gap-1.5" onClick={e => e.stopPropagation()}>
-                        
-                        {/* ⚡ Cobro Rápido */}
-                        {primer && (
+                      {/* Barra Horizontal Ergonómica de Acciones Rápidas (Uso a 1 Mano) */}
+                      <div className="pt-2 border-t border-white/[0.06]" onClick={e => e.stopPropagation()}>
+                        <div className="grid grid-cols-5 gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.04]">
+                          
+                          {/* ⚡ 1. Cobro Rápido */}
                           <button
-                            onClick={(e) => handleQuickCobro(primer, e)}
+                            disabled={!primer}
+                            onClick={(e) => primer && handleQuickCobro(primer, e)}
                             title="Cobro rápido de periodo actual"
-                            className="py-1.5 px-2.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1 border border-emerald-500/30 transition-all"
+                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 active:scale-95 text-emerald-400 border border-emerald-500/25 transition-all disabled:opacity-30"
                           >
-                            <Zap size={12} /> Cobro
+                            <Zap size={15} strokeWidth={2.5} />
+                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Cobro</span>
                           </button>
-                        )}
 
-                        {/* 💬 WhatsApp Directo */}
-                        {g.telefono && (
+                          {/* 💬 2. WhatsApp Directo */}
                           <button
+                            disabled={!g.telefono}
                             onClick={(e) => handleSendWhatsAppCobro(primer || g, e)}
-                            title="Enviar recordatorio por WhatsApp"
-                            className="py-1.5 px-2.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 text-[11px] font-bold flex items-center gap-1 border border-green-500/20 transition-all"
+                            title={g.telefono ? `Enviar WhatsApp a ${g.nombre}` : 'Sin teléfono'}
+                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-green-500/15 hover:bg-green-500/25 active:scale-95 text-green-400 border border-green-500/25 transition-all disabled:opacity-30"
                           >
-                            <Smartphone size={12} /> WhatsApp
+                            <Smartphone size={15} strokeWidth={2.5} />
+                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">WhatsApp</span>
                           </button>
-                        )}
 
-                        {/* 🧾 Recibo Rápido */}
-                        {primer && (
+                          {/* 🧾 3. Recibo Rápido */}
                           <button
+                            disabled={!primer}
                             onClick={() => {
+                              if (!primer) return;
                               setReciboForm({
                                 prestamistaKey: g.nombre,
                                 contratoId: primer.id,
@@ -2153,51 +2202,53 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                               setPrestamoView('recibos');
                             }}
                             title="Emitir Recibo"
-                            className="py-1.5 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 text-[11px] font-bold flex items-center gap-1 border border-white/[0.08] transition-all"
+                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 active:scale-95 text-sky-400 border border-sky-500/25 transition-all disabled:opacity-30"
                           >
-                            <Printer size={12} /> Recibo
+                            <Printer size={15} strokeWidth={2.5} />
+                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Recibo</span>
                           </button>
-                        )}
 
-                        {/* ⚙️ Ajustar Contrato */}
-                        {primer && (
+                          {/* ⚙️ 4. Ajustar Contrato */}
                           <button
-                            onClick={() => setAjusteTarget(primer)}
+                            disabled={!primer}
+                            onClick={() => primer && setAjusteTarget(primer)}
                             title="Ajustes y Reestructuración"
-                            className="py-1.5 px-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[11px] font-bold flex items-center gap-1 border border-amber-500/20 transition-all"
+                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 active:scale-95 text-amber-400 border border-amber-500/25 transition-all disabled:opacity-30"
                           >
-                            <Sliders size={12} /> Ajustar
+                            <Sliders size={15} strokeWidth={2.5} />
+                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Ajustar</span>
                           </button>
-                        )}
 
-                        {/* ➕ Nuevo Contrato */}
-                        <button
-                          onClick={() => {
-                            setEditPrestamo({
-                              nombre: g.nombre,
-                              ci: g.ci,
-                              telefono: g.telefono,
-                              foto: g.foto,
-                              capital: '',
-                              interes: settings?.loanDefaultInterest || 5,
-                              moneda: settings?.loanDefaultCurrency || 'BOB',
-                              inicio: new Date().toISOString().split('T')[0],
-                              fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                              estado: 'Activo',
-                              tipoGarantia: '',
-                              garantia: '',
-                              drive_contrato: '',
-                              drive_fotos: '',
-                              notes: '',
-                              pagos: []
-                            });
-                            setShowForm(true);
-                          }}
-                          title="Nuevo Contrato para este deudor"
-                          className="py-1.5 px-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-white text-[11px] font-bold flex items-center gap-1 border border-white/[0.1] transition-all"
-                        >
-                          <Plus size={12} />
-                        </button>
+                          {/* ➕ 5. Nuevo Contrato */}
+                          <button
+                            onClick={() => {
+                              setEditPrestamo({
+                                nombre: g.nombre,
+                                ci: g.ci,
+                                telefono: g.telefono,
+                                foto: g.foto,
+                                capital: '',
+                                interes: settings?.loanDefaultInterest || 5,
+                                moneda: settings?.loanDefaultCurrency || 'BOB',
+                                inicio: new Date().toISOString().split('T')[0],
+                                fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                estado: 'Activo',
+                                tipoGarantia: '',
+                                garantia: '',
+                                drive_contrato: '',
+                                drive_fotos: '',
+                                notes: '',
+                                pagos: []
+                              });
+                              setShowForm(true);
+                            }}
+                            title="Nuevo Contrato para este deudor"
+                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] active:scale-95 text-white border border-white/[0.1] transition-all"
+                          >
+                            <Plus size={15} strokeWidth={2.5} />
+                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Nuevo</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );
