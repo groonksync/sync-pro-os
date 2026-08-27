@@ -681,6 +681,240 @@ const DeleteConfirmModal = ({ target, isDark, onConfirm, onCancel }) => {
   );
 };
 
+// ─── MODAL AJUSTES Y REESTRUCTURACIÓN DE CONTRATOS ──────────
+const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
+  const t = useTheme(isDark);
+  const [tipoAjuste, setTipoAjuste] = useState('abono_capital');
+  const [montoAbono, setMontoAbono] = useState('');
+  const [nuevaTasa, setNuevaTasa] = useState(prestamo?.interes?.toString() || '5');
+  const [nuevaFechaFin, setNuevaFechaFin] = useState(prestamo?.fin || '');
+  const [nuevoPlazoMeses, setNuevoPlazoMeses] = useState(prestamo?.plazo_meses?.toString() || '1');
+  const [motivo, setMotivo] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const capitalActual = parseFloat(prestamo?.capital) || 0;
+  const abonoNum = parseFloat(montoAbono) || 0;
+  const nuevoCapitalCalculado = Math.max(0, capitalActual - abonoNum);
+
+  const handleGuardarAjuste = async () => {
+    if (!prestamo?.id) return;
+    setErrorMsg('');
+    setLoading(true);
+
+    try {
+      let updatedPayload = {};
+      let detalleHistorial = '';
+
+      if (tipoAjuste === 'abono_capital') {
+        if (abonoNum <= 0 || abonoNum > capitalActual) {
+          throw new Error(`Ingresa un monto de abono válido entre 1 y ${capitalActual.toLocaleString()} ${prestamo.moneda || 'BOB'}.`);
+        }
+        updatedPayload = {
+          capital: nuevoCapitalCalculado,
+          estado: nuevoCapitalCalculado === 0 ? 'Finalizado' : (prestamo.estado || 'Activo'),
+          notas: `[ABONO: -${abonoNum} ${prestamo.moneda || 'BOB'} el ${new Date().toLocaleDateString('es-BO')}] ${motivo ? `(${motivo})` : ''} ${(prestamo.notas || '').trim()}`.trim()
+        };
+        detalleHistorial = `Abono extraordinario a capital: -${abonoNum} ${prestamo.moneda || 'BOB'}. Nuevo saldo: ${nuevoCapitalCalculado}. ${motivo}`;
+      } else if (tipoAjuste === 'condonar_mora') {
+        updatedPayload = {
+          estado: 'Activo',
+          notas: `[MORA CONDONADA el ${new Date().toLocaleDateString('es-BO')}] ${motivo ? `(${motivo})` : ''} ${(prestamo.notas || '').trim()}`.trim()
+        };
+        detalleHistorial = `Condonación de mora registrada. ${motivo}`;
+      } else if (tipoAjuste === 'modificar_tasa') {
+        const tasaNum = parseFloat(nuevaTasa) || 0;
+        updatedPayload = {
+          interes: tasaNum,
+          notas: `[TASA AJUSTADA a ${tasaNum}% el ${new Date().toLocaleDateString('es-BO')}] ${motivo ? `(${motivo})` : ''} ${(prestamo.notas || '').trim()}`.trim()
+        };
+        detalleHistorial = `Cambio de tasa de interés a ${tasaNum}%. ${motivo}`;
+      } else if (tipoAjuste === 'extender_plazo') {
+        updatedPayload = {
+          fin: nuevaFechaFin,
+          plazo_meses: parseInt(nuevoPlazoMeses) || 1,
+          notas: `[PLAZO EXTENDIDO hasta ${nuevaFechaFin}] ${motivo ? `(${motivo})` : ''} ${(prestamo.notas || '').trim()}`.trim()
+        };
+        detalleHistorial = `Extensión de plazo hasta ${nuevaFechaFin}. ${motivo}`;
+      }
+
+      const { error: updateErr } = await supabase
+        .from('prestamos')
+        .update(updatedPayload)
+        .eq('id', prestamo.id);
+
+      if (updateErr) throw updateErr;
+
+      try {
+        await supabase.from('prestamos_historial').insert([{
+          prestamo_id: prestamo.id,
+          accion: 'AJUSTE_CONTRATO',
+          detalle: detalleHistorial,
+          datos_previos: prestamo
+        }]);
+      } catch (hErr) {
+        console.warn('No se pudo guardar en historial:', hErr);
+      }
+
+      onSave?.({ ...prestamo, ...updatedPayload });
+      onClose();
+    } catch (err) {
+      setErrorMsg(err.message || 'Error al guardar el ajuste.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
+      <div style={{
+        backgroundColor: t.panel, border: `1px solid ${t.border}`,
+        borderRadius: '20px', padding: '24px',
+        maxWidth: '520px', width: '100%',
+        animation: 'scaleIn 0.2s ease-out',
+        boxShadow: '0 25px 60px rgba(0,0,0,0.5)'
+      }}>
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/[0.08]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+              <Sliders size={16} />
+            </div>
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wide text-white m-0">Ajustes & Reestructuración</h3>
+              <p className="text-[11px] text-neutral-400 m-0 mt-0.5">{prestamo.nombre} · {capitalActual.toLocaleString()} {prestamo.moneda || 'BOB'}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-neutral-400 hover:text-white p-1">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06] mb-4">
+          {[
+            { id: 'abono_capital', label: 'Abono Capital' },
+            { id: 'condonar_mora', label: 'Condonar Mora' },
+            { id: 'modificar_tasa', label: 'Cambiar Tasa' },
+            { id: 'extender_plazo', label: 'Extender Plazo' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setTipoAjuste(tab.id)}
+              className={`py-2 px-1.5 rounded-lg text-[10px] font-bold text-center transition-all ${
+                tipoAjuste === tab.id
+                  ? 'bg-amber-500 text-black shadow-md'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          {tipoAjuste === 'abono_capital' && (
+            <div className="space-y-3 p-3.5 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/15">
+              <label className="text-[10px] font-black uppercase tracking-widest text-neutral-300 block">
+                Monto del Abono a Capital ({prestamo.moneda || 'BOB'})
+              </label>
+              <input
+                type="number"
+                inputMode="decimal"
+                value={montoAbono}
+                onChange={e => setMontoAbono(e.target.value)}
+                placeholder="Ej: 1000"
+                className="w-full py-2.5 px-3 rounded-lg bg-black/50 border border-white/[0.1] text-white text-base font-mono font-bold outline-none"
+              />
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="text-neutral-400">Capital Restante:</span>
+                <span className="font-mono font-black text-emerald-400">
+                  {nuevoCapitalCalculado.toLocaleString()} {prestamo.moneda || 'BOB'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {tipoAjuste === 'condonar_mora' && (
+            <div className="p-3.5 rounded-xl bg-blue-500/[0.04] border border-blue-500/15 space-y-2">
+              <p className="text-xs text-neutral-300 m-0">
+                Se limpiará la condición de mora y el estado del contrato volverá a <strong>Activo</strong> para que el cliente pueda continuar con sus pagos regulares.
+              </p>
+            </div>
+          )}
+
+          {tipoAjuste === 'modificar_tasa' && (
+            <div className="space-y-3 p-3.5 rounded-xl bg-amber-500/[0.04] border border-amber-500/15">
+              <label className="text-[10px] font-black uppercase tracking-widest text-neutral-300 block">
+                Nueva Tasa de Interés Mensual (%)
+              </label>
+              <input
+                type="number"
+                step="0.5"
+                value={nuevaTasa}
+                onChange={e => setNuevaTasa(e.target.value)}
+                className="w-full py-2.5 px-3 rounded-lg bg-black/50 border border-white/[0.1] text-amber-400 text-base font-mono font-bold outline-none"
+              />
+              <div className="flex justify-between items-center text-xs pt-1">
+                <span className="text-neutral-400">Nuevo Interés Mensual:</span>
+                <span className="font-mono font-black text-amber-400">
+                  {(capitalActual * ((parseFloat(nuevaTasa) || 0) / 100)).toLocaleString()} {prestamo.moneda || 'BOB'}/mes
+                </span>
+              </div>
+            </div>
+          )}
+
+          {tipoAjuste === 'extender_plazo' && (
+            <div className="space-y-3 p-3.5 rounded-xl bg-purple-500/[0.04] border border-purple-500/15">
+              <label className="text-[10px] font-black uppercase tracking-widest text-neutral-300 block">
+                Nueva Fecha de Vencimiento
+              </label>
+              <input
+                type="date"
+                value={nuevaFechaFin}
+                onChange={e => setNuevaFechaFin(e.target.value)}
+                className="w-full py-2.5 px-3 rounded-lg bg-black/50 border border-white/[0.1] text-white text-xs font-mono font-bold outline-none"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1">
+              Nota / Justificación (Opcional)
+            </label>
+            <input
+              type="text"
+              value={motivo}
+              onChange={e => setMotivo(e.target.value)}
+              placeholder="Ej: Descuento acordado / Renovación"
+              className="w-full py-2 px-3 text-xs rounded-lg bg-black/40 border border-white/[0.08] text-neutral-200 outline-none"
+            />
+          </div>
+
+          {errorMsg && (
+            <p className="text-xs text-red-400 font-bold m-0">{errorMsg}</p>
+          )}
+
+          <div className="flex gap-2.5 pt-3">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 px-4 rounded-xl border border-white/[0.1] bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 text-xs font-bold transition-all"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleGuardarAjuste}
+              disabled={loading}
+              className="flex-1 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 transition-all disabled:opacity-50"
+            >
+              {loading ? 'Aplicando...' : 'Aplicar Ajuste'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── MODAL PRESTAMO (WIZARD) ─────────────────────────────────
 const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
   const t = useTheme(isDark);
@@ -730,7 +964,11 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
   const [showForm, setShowForm] = useState(false);
   const [editPrestamo, setEditPrestamo] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const isMobile = settings?.isMobileMode;
+  const [ajusteTarget, setAjusteTarget] = useState(null);
+  const [filtroRapidoEstado, setFiltroRapidoEstado] = useState('todos'); // 'todos' | 'activos' | 'mora' | 'finalizados'
+  const [searchTermDebtor, setSearchTermDebtor] = useState('');
+  const [viewDisplayMode, setViewDisplayMode] = useState('cards'); // 'cards' | 'table'
+  const isMobile = settings?.isMobileMode || (typeof window !== 'undefined' && window.innerWidth < 1024);
   
   // Estados para Emisión de Recibos
   const [reciboForm, setReciboForm] = useState({
@@ -927,6 +1165,76 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
     const doc = generateReciboPDF(mockReciboForm, receiptItem.prestamo, reciboDarkMode);
     const fileName = `${mockReciboForm.numero}_${receiptItem.clientName}.pdf`;
     handleShareOrSavePDF(doc, fileName, receiptItem.clientName);
+  };
+
+  // Cobro rápido en 1 toque para préstamos mensuales o diarios
+  const handleQuickCobro = async (prestamo, e) => {
+    if (e) e.stopPropagation();
+    try {
+      setLoading(true);
+      const isDiario = prestamo.tipo_pago === 'diario';
+      const hoy = new Date();
+      const currentPeriodKey = isDiario 
+        ? `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}-${String(hoy.getDate()).padStart(2, '0')}`
+        : `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+      
+      const currentPagos = Array.isArray(prestamo.pagos) ? prestamo.pagos : [];
+      let newPagos;
+      let actionMsg = '';
+      
+      if (currentPagos.includes(currentPeriodKey) || currentPagos.includes(`${currentPeriodKey}_reservado`)) {
+        newPagos = currentPagos.filter(k => k !== currentPeriodKey && k !== `${currentPeriodKey}_reservado` && k !== `${currentPeriodKey}_ocultado`);
+        actionMsg = `Pago de ${currentPeriodKey} desmarcado`;
+      } else {
+        newPagos = [...currentPagos, currentPeriodKey];
+        actionMsg = `✅ Pago de ${currentPeriodKey} registrado exitosamente`;
+      }
+
+      const { error } = await supabase
+        .from('prestamos')
+        .update({ pagos: newPagos })
+        .eq('id', prestamo.id);
+
+      if (error) throw error;
+
+      if (setData && data?.prestamos) {
+        const updatedList = data.prestamos.map(p => p.id === prestamo.id ? { ...p, pagos: newPagos } : p);
+        setData(prev => ({ ...prev, prestamos: updatedList }));
+      }
+      if (activePrestamo && activePrestamo.id === prestamo.id) {
+        setActivePrestamo(prev => ({ ...prev, pagos: newPagos }));
+      }
+
+      showToast(actionMsg);
+    } catch (err) {
+      showToast(`Error al procesar cobro: ${err.message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Recordatorio automático por WhatsApp
+  const handleSendWhatsAppCobro = (p, e) => {
+    if (e) e.stopPropagation();
+    const tel = (p.telefono || '').replace(/[^0-9]/g, '');
+    if (!tel) {
+      showToast('⚠️ Este cliente no tiene número de WhatsApp registrado.', 'error');
+      return;
+    }
+    const cleanPhone = tel.startsWith('591') ? tel : `591${tel}`;
+    const capital = parseFloat(p.capital) || 0;
+    const tasa = parseFloat(p.interes) || 5;
+    const isDiario = p.tipo_pago === 'diario';
+    const cuotaMonto = isDiario 
+      ? Math.round((capital + (capital * (tasa / 100) * (p.plazo_meses || 1))) / ((p.plazo_meses || 1) * 30)) 
+      : Math.round(capital * (tasa / 100));
+
+    const cuenta = p.cuenta_bancaria || settings?.loanBankAccount || '';
+    const cuentaTexto = cuenta ? `\n💳 *Cuenta / Transferencia:* ${cuenta}` : '';
+    const mensaje = `Hola *${p.nombre}*, un cordial saludo de *${settings?.studioName || 'Inefable'}*.\n\nTe recordamos que la cuota de tu préstamo por un monto de *${cuotaMonto.toLocaleString()} ${p.moneda || 'BOB'}* está programada.${cuentaTexto}\n\nPor favor envíanos el comprobante una vez realizada la transferencia. ¡Muchas gracias!`;
+    
+    const url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
   };
 
   const showToast = (message, type = 'success') => {
@@ -1262,6 +1570,8 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
           contratos: [],
           totalAdeudado: 0,
           totalCapital: 0,
+          interesMensual: 0,
+          primerContrato: p,
           estado: 'Finalizado'
         };
       }
@@ -1272,9 +1582,12 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
       if (!groups[key].foto && p.foto) groups[key].foto = p.foto;
       
       const cap = parseFloat(p.capital) || 0;
+      const interes = parseFloat(p.interes) || 0;
       groups[key].totalCapital += cap;
       if (p.estado !== 'Finalizado') {
         groups[key].totalAdeudado += cap;
+        groups[key].interesMensual += (cap * (interes / 100));
+        groups[key].primerContrato = p;
       }
     });
 
@@ -1287,10 +1600,29 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
       } else {
         g.estado = 'Finalizado';
       }
+      g.progressAmortizado = g.totalCapital > 0 
+        ? Math.min(100, Math.round(((g.totalCapital - g.totalAdeudado) / g.totalCapital) * 100))
+        : 100;
     });
 
     return Object.values(groups);
   }, [prestamosList]);
+
+  const filteredPrestamistas = useMemo(() => {
+    return prestamistasGrouped.filter(g => {
+      if (searchTermDebtor.trim()) {
+        const query = searchTermDebtor.toLowerCase().trim();
+        const matchesName = (g.nombre || '').toLowerCase().includes(query);
+        const matchesCi = (g.ci || '').toLowerCase().includes(query);
+        const matchesPhone = (g.telefono || '').toLowerCase().includes(query);
+        if (!matchesName && !matchesCi && !matchesPhone) return false;
+      }
+      if (filtroRapidoEstado === 'activos' && g.estado !== 'Activo') return false;
+      if (filtroRapidoEstado === 'mora' && g.estado !== 'En Mora') return false;
+      if (filtroRapidoEstado === 'finalizados' && g.estado !== 'Finalizado') return false;
+      return true;
+    });
+  }, [prestamistasGrouped, searchTermDebtor, filtroRapidoEstado]);
 
   // ─── HOOKS DEL DASHBOARD ─────────────────────────────────
   const { stats } = useAmortizacionGlobal(prestamosList);
@@ -1375,6 +1707,25 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
           isDark={isDark}
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      {/* Modal Ajustes y Reestructuración de Contratos */}
+      {ajusteTarget && (
+        <AjusteContratoModal
+          isDark={isDark}
+          prestamo={ajusteTarget}
+          onClose={() => setAjusteTarget(null)}
+          onSave={(updatedRecord) => {
+            if (setData && data?.prestamos) {
+              const updatedList = data.prestamos.map(p => p.id === updatedRecord.id ? updatedRecord : p);
+              setData(prev => ({ ...prev, prestamos: updatedList }));
+            }
+            if (activePrestamo && activePrestamo.id === updatedRecord.id) {
+              setActivePrestamo(updatedRecord);
+            }
+            showToast('⚙️ Contrato reestructurado y actualizado con éxito');
+          }}
         />
       )}
 
@@ -1604,179 +1955,356 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               </div>
             </div>
 
-            {/* Tabla/Cards con botón eliminar */}
-            <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
-              {!isMobile ? (
+            {/* Barra de Búsqueda, Filtros Rápidos y Vista (Cards vs Tabla) */}
+            <div className="space-y-4 mb-6">
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                {/* Input de Búsqueda */}
+                <div className="relative flex-1 max-w-md">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                  <input
+                    type="text"
+                    value={searchTermDebtor}
+                    onChange={e => setSearchTermDebtor(e.target.value)}
+                    placeholder="Buscar por cliente, CI o WhatsApp..."
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-neutral-500 focus:border-emerald-500/60 focus:bg-white/[0.06] outline-none transition-all"
+                  />
+                  {searchTermDebtor && (
+                    <button onClick={() => setSearchTermDebtor('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Switcher de Vista: Tarjetas vs Tabla */}
+                <div className="flex items-center gap-2 self-end md:self-auto">
+                  <div className="flex p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                    <button
+                      onClick={() => setViewDisplayMode('cards')}
+                      className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        viewDisplayMode === 'cards' ? 'bg-white/[0.12] text-white shadow-sm' : 'text-neutral-400 hover:text-white'
+                      }`}
+                      title="Vista Móvil / Tarjetas Inteligentes"
+                    >
+                      <BarChart3 size={14} /> Tarjetas
+                    </button>
+                    <button
+                      onClick={() => setViewDisplayMode('table')}
+                      className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        viewDisplayMode === 'table' ? 'bg-white/[0.12] text-white shadow-sm' : 'text-neutral-400 hover:text-white'
+                      }`}
+                      title="Vista Tabla"
+                    >
+                      <Filter size={14} /> Tabla
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Chips de Filtro Rápido */}
+              <div className="flex flex-wrap items-center gap-2">
+                {[
+                  { id: 'todos', label: `Todos (${prestamistasGrouped.length})` },
+                  { id: 'activos', label: `Al Día (${prestamistasGrouped.filter(g => g.estado === 'Activo').length})` },
+                  { id: 'mora', label: `En Mora (${prestamistasGrouped.filter(g => g.estado === 'En Mora').length})` },
+                  { id: 'finalizados', label: `Finalizados (${prestamistasGrouped.filter(g => g.estado === 'Finalizado').length})` }
+                ].map(chip => (
+                  <button
+                    key={chip.id}
+                    onClick={() => setFiltroRapidoEstado(chip.id)}
+                    className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                      filtroRapidoEstado === chip.id
+                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
+                        : 'bg-white/[0.02] hover:bg-white/[0.05] text-neutral-400 border-white/[0.06]'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Renderizado de Deudores: Tarjetas Inteligentes vs Tabla */}
+            {viewDisplayMode === 'cards' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredPrestamistas.map(g => {
+                  const primer = g.primerContrato || g.contratos[0];
+                  return (
+                    <div
+                      key={g.key}
+                      onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
+                      className="p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/30 transition-all duration-200 cursor-pointer shadow-lg space-y-4 relative group"
+                    >
+                      {/* Cabecera del Prestatario */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <div className="w-12 h-12 rounded-2xl overflow-hidden bg-neutral-800 border border-white/[0.1] flex items-center justify-center shrink-0">
+                              {g.foto ? (
+                                <img src={g.foto} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <User size={22} className="text-neutral-400" />
+                              )}
+                            </div>
+                            <span
+                              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-neutral-900 ${
+                                g.estado === 'Finalizado' ? 'bg-neutral-500' : g.estado === 'En Mora' ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'
+                              }`}
+                            />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-black text-white m-0 group-hover:text-emerald-400 transition-colors">
+                              {g.nombre}
+                            </h3>
+                            <p className="text-[11px] text-neutral-400 m-0 mt-0.5 flex items-center gap-2">
+                              {g.ci && <span>CI: {g.ci}</span>}
+                              {g.telefono && <span>· Telf: {g.telefono}</span>}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Badge de Estado */}
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 ${
+                          g.estado === 'Finalizado'
+                            ? 'bg-white/[0.06] text-neutral-400 border border-white/[0.08]'
+                            : g.estado === 'En Mora'
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        }`}>
+                          {g.estado}
+                        </span>
+                      </div>
+
+                      {/* Montos y Métricas Principales */}
+                      <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-black/40 border border-white/[0.04]">
+                        <div>
+                          <span className="text-[9px] font-bold uppercase text-neutral-500 tracking-wider">Deuda Activa</span>
+                          <p className="text-base font-black font-mono text-white m-0 mt-0.5">
+                            {g.totalAdeudado.toLocaleString()} <span className="text-[10px] font-normal text-neutral-400">BOB</span>
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[9px] font-bold uppercase text-neutral-500 tracking-wider">Interés Mensual</span>
+                          <p className="text-base font-black font-mono text-amber-400 m-0 mt-0.5">
+                            +{Math.round(g.interesMensual).toLocaleString()} <span className="text-[10px] font-normal text-neutral-400">BOB</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Barra de Progreso de Amortización */}
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between items-center text-[10px] text-neutral-400">
+                          <span>{g.contratos.length} {g.contratos.length === 1 ? 'Contrato' : 'Contratos'}</span>
+                          <span className="font-bold font-mono text-neutral-300">{g.progressAmortizado}% Amortizado</span>
+                        </div>
+                        <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
+                            style={{ width: `${g.progressAmortizado}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Botones de Acción Rápida (1 Toque) */}
+                      <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between gap-1.5" onClick={e => e.stopPropagation()}>
+                        
+                        {/* ⚡ Cobro Rápido */}
+                        {primer && (
+                          <button
+                            onClick={(e) => handleQuickCobro(primer, e)}
+                            title="Cobro rápido de periodo actual"
+                            className="py-1.5 px-2.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[11px] font-bold flex items-center gap-1 border border-emerald-500/30 transition-all"
+                          >
+                            <Zap size={12} /> Cobro
+                          </button>
+                        )}
+
+                        {/* 💬 WhatsApp Directo */}
+                        {g.telefono && (
+                          <button
+                            onClick={(e) => handleSendWhatsAppCobro(primer || g, e)}
+                            title="Enviar recordatorio por WhatsApp"
+                            className="py-1.5 px-2.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400 text-[11px] font-bold flex items-center gap-1 border border-green-500/20 transition-all"
+                          >
+                            <Smartphone size={12} /> WhatsApp
+                          </button>
+                        )}
+
+                        {/* 🧾 Recibo Rápido */}
+                        {primer && (
+                          <button
+                            onClick={() => {
+                              setReciboForm({
+                                prestamistaKey: g.nombre,
+                                contratoId: primer.id,
+                                cuotaKey: '',
+                                numero: `REC-${Date.now().toString().slice(-6)}`,
+                                fechaEmision: new Date().toISOString().split('T')[0],
+                                concepto: `Pago de Cuota — ${g.nombre}`,
+                                montoInteres: Math.round(g.interesMensual) || 0,
+                                montoCapital: 0,
+                                montoMora: 0,
+                                montoAjustes: 0,
+                                estado: 'Pagado',
+                                metodo: 'Efectivo',
+                                notas: '',
+                              });
+                              setPrestamoView('recibos');
+                            }}
+                            title="Emitir Recibo"
+                            className="py-1.5 px-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 text-[11px] font-bold flex items-center gap-1 border border-white/[0.08] transition-all"
+                          >
+                            <Printer size={12} /> Recibo
+                          </button>
+                        )}
+
+                        {/* ⚙️ Ajustar Contrato */}
+                        {primer && (
+                          <button
+                            onClick={() => setAjusteTarget(primer)}
+                            title="Ajustes y Reestructuración"
+                            className="py-1.5 px-2 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 text-[11px] font-bold flex items-center gap-1 border border-amber-500/20 transition-all"
+                          >
+                            <Sliders size={12} /> Ajustar
+                          </button>
+                        )}
+
+                        {/* ➕ Nuevo Contrato */}
+                        <button
+                          onClick={() => {
+                            setEditPrestamo({
+                              nombre: g.nombre,
+                              ci: g.ci,
+                              telefono: g.telefono,
+                              foto: g.foto,
+                              capital: '',
+                              interes: settings?.loanDefaultInterest || 5,
+                              moneda: settings?.loanDefaultCurrency || 'BOB',
+                              inicio: new Date().toISOString().split('T')[0],
+                              fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                              estado: 'Activo',
+                              tipoGarantia: '',
+                              garantia: '',
+                              drive_contrato: '',
+                              drive_fotos: '',
+                              notes: '',
+                              pagos: []
+                            });
+                            setShowForm(true);
+                          }}
+                          title="Nuevo Contrato para este deudor"
+                          className="py-1.5 px-2 rounded-lg bg-white/[0.06] hover:bg-white/[0.12] text-white text-[11px] font-bold flex items-center gap-1 border border-white/[0.1] transition-all"
+                        >
+                          <Plus size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Tabla Tradicional con Filtros */
+              <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${t.border}` }}>
                       <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Prestamista</th>
                       <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Contratos</th>
                       <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Total Adeudado</th>
-                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Acción</th>
+                      <th style={{ padding: '16px 24px', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Acciones Rápidas</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {prestamistasGrouped.map(g => (
-                      <tr key={g.key} onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
-                        style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
-                        onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
-                        onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                        className="group"
-                      >
-                        <td style={{ padding: '16px 24px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
-                              {g.foto ? (
-                                <img src={g.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <User size={16} />
+                    {filteredPrestamistas.map(g => {
+                      const primer = g.primerContrato || g.contratos[0];
+                      return (
+                        <tr key={g.key} onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
+                          style={{ borderBottom: `1px solid ${t.border}`, cursor: 'pointer', transition: 'background 0.15s' }}
+                          onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                          onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          className="group"
+                        >
+                          <td style={{ padding: '16px 24px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
+                                {g.foto ? (
+                                  <img src={g.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <User size={16} />
+                                )}
+                              </div>
+                              <div>
+                                <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{g.nombre}</p>
+                                <p style={{ fontSize: '10px', color: t.textDim, marginTop: '2px', margin: 0 }}>
+                                  {g.ci ? `CI: ${g.ci}` : ''} {g.telefono ? `· WhatsApp: ${g.telefono}` : ''}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ padding: '16px 24px', textAlign: 'center' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>
+                              {g.contratos.length} {g.contratos.length === 1 ? 'contrato' : 'contratos'}
+                            </span>
+                            <div style={{ fontSize: '9px', color: t.textDim, marginTop: '2px' }}>
+                              ({g.contratos.filter(c => c.estado !== 'Finalizado').length} activos)
+                            </div>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
+                              {g.totalAdeudado.toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>BOB</span>
+                            </p>
+                            <p style={{ fontSize: '9px', color: t.textDim, marginTop: '2px', margin: 0 }}>
+                              Interés mensual: +{Math.round(g.interesMensual).toLocaleString()} BOB
+                            </p>
+                          </td>
+                          <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+                              {primer && (
+                                <button
+                                  onClick={(e) => handleQuickCobro(primer, e)}
+                                  className="p-2 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 text-xs font-bold"
+                                  title="Cobro rápido"
+                                >
+                                  <Zap size={14} />
+                                </button>
                               )}
+                              {g.telefono && (
+                                <button
+                                  onClick={(e) => handleSendWhatsAppCobro(primer || g, e)}
+                                  className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 text-xs font-bold"
+                                  title="Enviar WhatsApp"
+                                >
+                                  <Smartphone size={14} />
+                                </button>
+                              )}
+                              {primer && (
+                                <button
+                                  onClick={() => setAjusteTarget(primer)}
+                                  className="p-2 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-bold"
+                                  title="Ajustar contrato"
+                                >
+                                  <Sliders size={14} />
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
+                                style={{
+                                  padding: '8px 14px', borderRadius: '10px', border: `1px solid ${t.border}`,
+                                  backgroundColor: t.input, color: t.text, cursor: 'pointer',
+                                  fontSize: '10px', fontWeight: 600, transition: 'all 0.15s',
+                                  display: 'flex', alignItems: 'center', gap: '4px'
+                                }}
+                              >
+                                Contratos <ChevronRight size={12} />
+                              </button>
                             </div>
-                            <div>
-                              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{g.nombre}</p>
-                              <p style={{ fontSize: '10px', color: t.textDim, marginTop: '2px', margin: 0 }}>
-                                {g.ci ? `CI: ${g.ci}` : ''} {g.telefono ? `· WhatsApp: ${g.telefono}` : ''}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-                        <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>
-                            {g.contratos.length} {g.contratos.length === 1 ? 'contrato' : 'contratos'}
-                          </span>
-                          <div style={{ fontSize: '9px', color: t.textDim, marginTop: '2px' }}>
-                            ({g.contratos.filter(c => c.estado !== 'Finalizado').length} activos)
-                          </div>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                            {g.totalAdeudado.toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>BOB</span>
-                          </p>
-                          <p style={{ fontSize: '9px', color: t.textDim, marginTop: '2px', margin: 0 }}>
-                            Total acumulado: {g.totalCapital.toLocaleString()} BOB
-                          </p>
-                        </td>
-                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
-                            <button 
-                              onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
-                              style={{
-                                padding: '10px 16px', minHeight: '44px', borderRadius: '10px', border: `1px solid ${t.border}`,
-                                backgroundColor: t.input, color: t.text, cursor: 'pointer',
-                                fontSize: '10px', fontWeight: 600, transition: 'all 0.15s',
-                                display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center'
-                              }}
-                              onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; e.currentTarget.style.color = t.accent; }}
-                              onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; e.currentTarget.style.color = t.text; }}
-                            >
-                              Ver contratos <ChevronRight size={12} />
-                            </button>
-                            <button 
-                              onClick={() => {
-                                setEditPrestamo({
-                                  nombre: g.nombre,
-                                  ci: g.ci,
-                                  telefono: g.telefono,
-                                  foto: g.foto,
-                                  capital: '',
-                                  interes: settings?.loanDefaultInterest || 5,
-                                  moneda: settings?.loanDefaultCurrency || 'BOB',
-                                  inicio: new Date().toISOString().split('T')[0],
-                                  fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                  estado: 'Activo',
-                                  tipoGarantia: '',
-                                  garantia: '',
-                                  drive_contrato: '',
-                                  drive_fotos: '',
-                                  notes: '',
-                                  pagos: []
-                                });
-                                setShowForm(true);
-                              }}
-                              style={{
-                                padding: '10px 16px', minHeight: '44px', borderRadius: '10px', border: 'none',
-                                backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                                fontSize: '10px', fontWeight: 600, transition: 'all 0.15s',
-                                display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'center'
-                              }}
-                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accent; e.currentTarget.style.color = 'white'; }}
-                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accentSoft; e.currentTarget.style.color = t.accent; }}
-                            >
-                              <Plus size={12} /> Nuevo contrato
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
-              ) : (
-                <div>
-                  {prestamistasGrouped.map(g => (
-                    <div key={g.key} onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
-                      style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <div style={{ width: '44px', height: '44px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
-                            {g.foto ? (
-                              <img src={g.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                              <User size={20} />
-                            )}
-                          </div>
-                          <div>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{g.nombre}</p>
-                            <p style={{ fontSize: '10px', color: t.textDim, marginTop: '2px', margin: 0 }}>
-                              {g.contratos.length} {g.contratos.length === 1 ? 'contrato' : 'contratos'}
-                            </p>
-                          </div>
-                        </div>
-                        <ChevronRight size={18} color={t.textDim} />
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: `1px dashed ${t.border}` }}>
-                        <div>
-                          <p style={{ fontSize: '8px', color: t.textMuted, margin: 0, textTransform: 'uppercase' }}>Deuda Activa</p>
-                          <p style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0 }}>{g.totalAdeudado.toLocaleString()} BOB</p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '6px' }} onClick={e => e.stopPropagation()}>
-                          <button
-                            onClick={() => {
-                              setEditPrestamo({
-                                nombre: g.nombre,
-                                ci: g.ci,
-                                telefono: g.telefono,
-                                foto: g.foto,
-                                capital: '',
-                                interes: settings?.loanDefaultInterest || 5,
-                                moneda: settings?.loanDefaultCurrency || 'BOB',
-                                inicio: new Date().toISOString().split('T')[0],
-                                fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                estado: 'Activo',
-                                tipoGarantia: '',
-                                garantia: '',
-                                drive_contrato: '',
-                                drive_fotos: '',
-                                notes: '',
-                                pagos: []
-                              });
-                              setShowForm(true);
-                            }}
-                            style={{
-                              padding: '6px 10px', borderRadius: '8px', border: 'none',
-                              backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                              fontSize: '9px', fontWeight: 600,
-                            }}
-                          >
-                            + Contrato
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         ) : prestamoView === 'contratos' ? (
           <div className="animate-in slide-in-from-right-8 duration-500">
@@ -1912,7 +2440,42 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                                 </p>
                               </td>
                               <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+                                  <button
+                                    onClick={(e) => handleQuickCobro(p, e)}
+                                    style={{
+                                      padding: '8px', borderRadius: '12px', border: 'none',
+                                      backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    title="Cobro Rápido"
+                                  >
+                                    <Zap size={14} />
+                                  </button>
+                                  {p.telefono && (
+                                    <button
+                                      onClick={(e) => handleSendWhatsAppCobro(p, e)}
+                                      style={{
+                                        padding: '8px', borderRadius: '12px', border: 'none',
+                                        backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                      }}
+                                      title="WhatsApp Cobro"
+                                    >
+                                      <Smartphone size={14} />
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); setAjusteTarget(p); }}
+                                    style={{
+                                      padding: '8px', borderRadius: '12px', border: 'none',
+                                      backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    title="Ajustar / Reestructurar Contrato"
+                                  >
+                                    <Sliders size={14} />
+                                  </button>
                                   <button 
                                     onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
                                     style={{
@@ -1948,40 +2511,64 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                         const moraAmount = moraMap[p.id];
                         return (
                           <div key={p.id} onClick={() => openPrestamo(p)}
-                            style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
-                            <div>
-                              <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>Contrato #${idx + 1}</p>
-                              <p style={{ fontSize: '10px', fontWeight: 600, color: t.accent, marginTop: '2px' }}>
-                                {parseFloat(p.capital).toLocaleString()} {p.moneda} ({p.interes}%)
-                              </p>
-                              {moraAmount > 0 && (
-                                <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444', marginTop: '2px', display: 'inline-block' }}>
-                                  +${moraAmount.toLocaleString()} mora
-                                </span>
-                              )}
+                            style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <p style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0 }}>Contrato #{idx + 1}</p>
+                                <p style={{ fontSize: '11px', fontWeight: 700, color: t.accent, marginTop: '2px', margin: 0 }}>
+                                  {parseFloat(p.capital).toLocaleString()} {p.moneda} ({p.interes}% mensual)
+                                </p>
+                              </div>
+                              <span style={{
+                                fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', padding: '2px 8px', borderRadius: '6px',
+                                backgroundColor: p.estado === 'Finalizado' ? 'rgba(255,255,255,0.06)' : p.estado === 'En Mora' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
+                                color: p.estado === 'Finalizado' ? t.textDim : p.estado === 'En Mora' ? '#ef4444' : '#10b981',
+                              }}>
+                                {p.estado || 'Activo'}
+                              </span>
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            
+                            {/* Botones de acción rápida móviles */}
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', paddingTop: '6px', borderTop: `1px dashed ${t.border}` }} onClick={e => e.stopPropagation()}>
+                              <button
+                                onClick={(e) => handleQuickCobro(p, e)}
+                                style={{
+                                  padding: '6px 10px', borderRadius: '8px', border: 'none',
+                                  backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', cursor: 'pointer',
+                                  fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px'
+                                }}
+                              >
+                                <Zap size={12} /> Cobro
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setAjusteTarget(p); }}
+                                style={{
+                                  padding: '6px 10px', borderRadius: '8px', border: 'none',
+                                  backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', cursor: 'pointer',
+                                  fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px'
+                                }}
+                              >
+                                <Sliders size={12} /> Ajustar
+                              </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
                                 style={{
-                                  padding: '8px', borderRadius: '10px', border: 'none',
+                                  padding: '6px 10px', borderRadius: '8px', border: 'none',
                                   backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                                  fontSize: '10px', fontWeight: 600,
-                                  display: 'flex', alignItems: 'center', gap: '4px',
+                                  fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px'
                                 }}
                               >
-                                <Edit3 size={12} /> Editar
+                                <Edit3 size={12} />
                               </button>
                               <button
                                 onClick={(e) => handleDeleteRequest(p, e)}
                                 style={{
-                                  padding: '8px', borderRadius: '10px', border: 'none',
+                                  padding: '6px 10px', borderRadius: '8px', border: 'none',
                                   backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
                                 }}
                               >
-                                <Trash2 size={14} />
+                                <Trash2 size={12} />
                               </button>
-                              <ChevronRight size={18} color={t.textDim} />
                             </div>
                           </div>
                         );
@@ -2145,6 +2732,40 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                       <option value="En Mora">En Mora</option>
                       <option value="Finalizado">Finalizado</option>
                     </select>
+                    {/* WhatsApp Cobro */}
+                    {activePrestamo.telefono && (
+                      <button
+                        onClick={(e) => handleSendWhatsAppCobro(activePrestamo, e)}
+                        title="Enviar recordatorio WhatsApp"
+                        style={{
+                          width: '44px', height: '44px', minHeight: '44px', borderRadius: '10px',
+                          border: '1px solid rgba(34, 197, 94, 0.3)', backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                          color: '#22c55e', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'; }}
+                      >
+                        <Smartphone size={16} />
+                      </button>
+                    )}
+                    {/* Ajustar Contrato */}
+                    <button
+                      onClick={() => setAjusteTarget(activePrestamo)}
+                      title="Ajustes y Reestructuración de Contrato"
+                      style={{
+                        width: '44px', height: '44px', minHeight: '44px', borderRadius: '10px',
+                        border: '1px solid rgba(245, 158, 11, 0.3)', backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        color: '#f59e0b', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        transition: 'all 0.15s',
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(245, 158, 11, 0.2)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(245, 158, 11, 0.1)'; }}
+                    >
+                      <Sliders size={16} />
+                    </button>
                     {/* Editar — misma altura que el resto */}
                     <button
                       onClick={() => handleEditPrestamo(activePrestamo)}

@@ -92,7 +92,7 @@ const Notifications = ({ data = {}, servicios = [], theReminders = [], onNavigat
           type: 'recordatorio',
           title: r.titulo || r.title || 'Recordatorio',
           sourceId: r.id,
-          tab: 'notas',
+          tab: 'recordatorios',
           date: remDate,
           diffDays,
           amount: null,

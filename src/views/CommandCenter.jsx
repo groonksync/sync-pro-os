@@ -78,16 +78,20 @@ const MODULE_WIDGETS = [
     accion: 'recordatorios'
   },
   {
-    id: 'notas',
-    titulo: 'Notas',
-    icono: FileText,
-    color: '#818cf8',
-    getData: ({ data }) => ({
-      principal: `${data?.notas?.length || 0} notas activas`,
-      secundaria: 'Todas tus notas',
-      alerta: null,
-    }),
-    accion: 'notas'
+    id: 'recordatorios',
+    titulo: 'Recordatorios & Agenda',
+    icono: Bell,
+    color: '#fbbf24',
+    getData: ({ data }) => {
+      const pendientes = data?.recordatorios?.filter(r => r.estado !== 'Completado' && r.estado !== 'Completada') || [];
+      const criticas = pendientes.filter(r => r.prioridad === 'Crítica' || r.prioridad === 'Alta');
+      return {
+        principal: `${pendientes.length} pendientes`,
+        secundaria: `${criticas.length} prioritarias`,
+        alerta: criticas.length > 0 ? `${criticas.length} urgentes` : null,
+      };
+    },
+    accion: 'recordatorios'
   },
   {
     id: 'boveda',

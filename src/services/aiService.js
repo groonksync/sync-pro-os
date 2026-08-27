@@ -1,220 +1,35 @@
-const REQUEST_TIMEOUT_MS = 30000
+// src/services/aiService.js
+// Servicio Centralizado y Seguro de Inteligencia Artificial para Inefable
+// Las consultas se enrutan prioritariamente a través del endpoint serverless /api/ai
+// manteniendo las API Keys 100% protegidas en el servidor.
 
-function validateKey(key, providerName) {
-  if (!key || typeof key !== 'string' || !key.trim()) {
-    return `Configura la API Key de ${providerName} en Ajustes > IA.`
-  }
-  return null
-}
+const REQUEST_TIMEOUT_MS = 30000;
 
-function sanitizeError(error, provider) {
-  if (!error) return 'Error desconocido.'
-  const msg = error.message || String(error)
+function sanitizeError(error, provider = 'IA') {
+  if (!error) return 'Error desconocido.';
+  const msg = error.message || String(error);
   const keyPatterns = [
     /(?:key|token|secret|auth|password)[=:][^\s&]+/gi,
     /AIza[0-9A-Za-z_-]{35}/g,
     /sk-[0-9a-zA-Z]{20,}/g,
     /eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/g
-  ]
-  let sanitized = msg
+  ];
+  let sanitized = msg;
   for (const pattern of keyPatterns) {
-    sanitized = sanitized.replace(pattern, '[KEY_OMITIDA]')
+    sanitized = sanitized.replace(pattern, '[KEY_OMITIDA]');
   }
-  return `Error ${provider}: ${sanitized.split('. ').pop().substring(0, 200)}`
+  return `Error ${provider}: ${sanitized.split('. ').pop().substring(0, 200)}`;
 }
 
 async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { ...options, signal: controller.signal })
-    return response
+    const response = await fetch(url, { ...options, signal: controller.signal });
+    return response;
   } finally {
-    clearTimeout(timeoutId)
+    clearTimeout(timeoutId);
   }
-}
-
-function buildOpenRouterHeaders(apiKey) {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${apiKey}`,
-    'HTTP-Referer': 'https://sync-pro-os.vercel.app',
-    'X-Title': 'Inefable'
-  }
-}
-
-async function queryDeepSeek(apiKey, model, messages) {
-  const error = validateKey(apiKey, 'DeepSeek')
-  if (error) return error
-
-  const res = await fetchWithTimeout('https://api.deepseek.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({ model, messages })
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`)
-  return data.choices[0].message.content
-}
-
-async function queryOpenRouter(apiKey, model, messages) {
-  const error = validateKey(apiKey, 'OpenRouter')
-  if (error) return error
-
-  const res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: buildOpenRouterHeaders(apiKey),
-    body: JSON.stringify({ model, messages })
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`)
-  return data.choices[0].message.content
-}
-
-async function listAvailableGeminiModels(apiKey) {
-  try {
-    const cleanKey = (apiKey || '').trim().replace(/^["']|["']$/g, '');
-    if (!cleanKey) return [];
-    const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${cleanKey}`;
-    const res = await fetchWithTimeout(url, { method: 'GET' }, 8000);
-    const data = await res.json();
-    if (data.models && Array.isArray(data.models)) {
-      return data.models
-        .filter(m => m.supportedGenerationMethods?.includes('generateContent'))
-        .map(m => m.name.replace(/^models\//, ''));
-    }
-  } catch (e) {
-    console.warn('No se pudo listar modelos de Google dinámicamente:', e);
-  }
-  return [];
-}
-
-async function queryGemini(apiKey, model, messages) {
-  const error = validateKey(apiKey, 'Gemini');
-  if (error) return error;
-
-  const cleanKey = apiKey.trim().replace(/^["']|["']$/g, '');
-
-  // 1. Obtener modelos dinámicos reconocidos por la clave del usuario
-  const remoteModels = await listAvailableGeminiModels(cleanKey);
-  const defaultModels = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro', 'gemini-1.5-flash-8b', 'gemini-1.0-pro'];
-  
-  const pool = [];
-  if (model) {
-    pool.push(model.replace(/^models\//, '').trim());
-  }
-  pool.push(...remoteModels);
-  pool.push(...defaultModels);
-
-  // Evitar nombres deprecados
-  const modelsToTry = [...new Set(pool)].filter(m => m && !['gemini-pro', 'gemini-1.0-pro-001'].includes(m));
-
-  const systemMsg = messages.find(m => m.role === 'system')?.content || '';
-  const userMsg = messages.filter(m => m.role === 'user').pop()?.content || 'Hola';
-
-  const historyText = messages
-    .filter(m => m.role !== 'system')
-    .slice(0, -1)
-    .map(m => `${m.role === 'user' ? 'Usuario' : 'Agente'}: ${m.content}`)
-    .join('\n\n');
-
-  const promptToSend = historyText
-    ? `${historyText}\n\nUsuario: ${userMsg}`
-    : userMsg;
-
-  let lastError = null;
-
-  // 1. Intento primario: Google Generative Language REST API (v1beta)
-  for (const mName of modelsToTry) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${mName}:generateContent?key=${cleanKey}`;
-      const payload = {
-        contents: [
-          {
-            parts: [{ text: promptToSend }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048
-        }
-      };
-
-      if (systemMsg) {
-        payload.systemInstruction = {
-          parts: [{ text: systemMsg }]
-        };
-      }
-
-      const res = await fetchWithTimeout(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }, 25000);
-
-      const data = await res.json();
-      if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        return data.candidates[0].content.parts[0].text;
-      }
-      if (data.error?.message) {
-        lastError = new Error(data.error.message);
-      }
-    } catch (restErr) {
-      lastError = restErr;
-    }
-  }
-
-  // 2. Intento de respaldo con SDK oficial @google/generative-ai
-  try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(cleanKey);
-    for (const mName of modelsToTry.slice(0, 3)) {
-      try {
-        const geminiModel = genAI.getGenerativeModel({
-          model: mName,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
-        });
-        const result = await geminiModel.generateContent(
-          systemMsg ? `${systemMsg}\n\n${promptToSend}` : promptToSend
-        );
-        const response = await result.response;
-        const text = response.text();
-        if (text) return text;
-      } catch (sdkErr) {
-        lastError = sdkErr;
-      }
-    }
-  } catch (sdkImportErr) {
-    lastError = sdkImportErr;
-  }
-
-  throw lastError || new Error('No se pudo comunicar con Google Gemini. Verifica que tu API Key sea válida.');
-}
-
-async function queryBalanceDeepSeek(apiKey) {
-  const res = await fetchWithTimeout('https://api.deepseek.com/user/balance', {
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' }
-  })
-  const data = await res.json()
-  if (data.is_error || !data.balance_infos) return '0.00'
-  const total = data.balance_infos.reduce((acc, curr) => acc + parseFloat(curr.total_balance || 0), 0)
-  return total.toFixed(2)
-}
-
-async function queryBalanceOpenRouter(apiKey) {
-  const res = await fetchWithTimeout('https://openrouter.ai/api/v1/auth/key', {
-    headers: { 'Authorization': `Bearer ${apiKey}` }
-  })
-  const data = await res.json()
-  if (data.data) {
-    const { limit, usage } = data.data
-    if (limit === null || parseFloat(limit) === 0) {
-      return `PPU ($${parseFloat(usage).toFixed(4)})`
-    }
-    const rem = parseFloat(limit) - parseFloat(usage)
-    return `$${rem.toFixed(4)}`
-  }
-  return '0.00'
 }
 
 function cleanAiResponse(text) {
@@ -244,33 +59,143 @@ function cleanAiResponse(text) {
   return cleaned;
 }
 
+// ─── CONSULTA A TRAVÉS DEL PROXY SERVERLESS SEGURO ────────────────────────────
+async function queryServerlessProxy(payload) {
+  try {
+    const res = await fetchWithTimeout('/api/ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }, 28000);
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data.text) return data.text;
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      if (errData.error) throw new Error(errData.error);
+    }
+  } catch (proxyErr) {
+    console.warn('[aiService] Servidor proxy no disponible o falló, intentando fallback directo...', proxyErr.message);
+    throw proxyErr;
+  }
+}
+
+// ─── MÉTODOS DE FALLBACK DIRECTO (Si el servidor proxy no está desplegado) ──
+async function fallbackDirectQuery(provider, userKey, model, messages, systemPrompt) {
+  const cleanKey = (userKey || '').trim().replace(/^["']|["']$/g, '');
+  if (!cleanKey) {
+    throw new Error(`Configura la API Key de ${provider} en Ajustes > IA para el modo directo.`);
+  }
+
+  if (provider === 'gemini') {
+    const sysMsg = systemPrompt || messages.find(m => m.role === 'system')?.content || '';
+    const otherMsgs = messages.filter(m => m.role !== 'system');
+    const userMsg = otherMsgs.filter(m => m.role === 'user').pop()?.content || 'Hola';
+    const historyText = otherMsgs
+      .slice(0, -1)
+      .map(m => `${m.role === 'user' ? 'Usuario' : 'Agente'}: ${m.content}`)
+      .join('\n\n');
+    const promptToSend = historyText ? `${historyText}\n\nUsuario: ${userMsg}` : userMsg;
+
+    const mName = model || 'gemini-1.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${mName}:generateContent?key=${cleanKey}`;
+    const payload = {
+      contents: [{ parts: [{ text: promptToSend }] }],
+      generationConfig: { temperature: 0.7, maxOutputTokens: 2048 }
+    };
+    if (sysMsg) {
+      payload.systemInstruction = { parts: [{ text: sysMsg }] };
+    }
+
+    const res = await fetchWithTimeout(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }, 25000);
+
+    const data = await res.json();
+    if (res.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      return data.candidates[0].content.parts[0].text;
+    }
+    throw new Error(data.error?.message || 'Error en respuesta de Google Gemini.');
+  }
+
+  if (provider === 'deepseek') {
+    const res = await fetchWithTimeout('https://api.deepseek.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cleanKey}` },
+      body: JSON.stringify({ model: model || 'deepseek-chat', messages })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+    return data.choices[0].message.content;
+  }
+
+  if (provider === 'openrouter') {
+    const res = await fetchWithTimeout('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cleanKey}`,
+        'HTTP-Referer': 'https://sync-pro-os.vercel.app',
+        'X-Title': 'Inefable'
+      },
+      body: JSON.stringify({ model: model || 'google/gemini-2.5-flash', messages })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+    return data.choices[0].message.content;
+  }
+
+  throw new Error(`Proveedor de IA '${provider}' no soportado.`);
+}
+
 export const aiService = {
-  fetchBalance: async (settings) => {
-    const provider = settings.aiProvider || 'gemini'
+  fetchBalance: async (settings = {}) => {
+    const provider = settings.aiProvider || 'gemini';
 
     if (provider === 'deepseek' && settings.deepseekKey) {
       try {
-        return await queryBalanceDeepSeek(settings.deepseekKey)
+        const res = await fetchWithTimeout('https://api.deepseek.com/user/balance', {
+          headers: { 'Authorization': `Bearer ${settings.deepseekKey}`, 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.is_error || !data.balance_infos) return '0.00';
+        const total = data.balance_infos.reduce((acc, curr) => acc + parseFloat(curr.total_balance || 0), 0);
+        return total.toFixed(2);
       } catch (e) {
-        return 'Error'
+        return 'Error';
       }
     }
 
     if (provider === 'openrouter' && settings.openrouterKey) {
       try {
-        return await queryBalanceOpenRouter(settings.openrouterKey)
+        const res = await fetchWithTimeout('https://openrouter.ai/api/v1/auth/key', {
+          headers: { 'Authorization': `Bearer ${settings.openrouterKey}` }
+        });
+        const data = await res.json();
+        if (data.data) {
+          const { limit, usage } = data.data;
+          if (limit === null || parseFloat(limit) === 0) {
+            return `PPU ($${parseFloat(usage).toFixed(4)})`;
+          }
+          const rem = parseFloat(limit) - parseFloat(usage);
+          return `$${rem.toFixed(4)}`;
+        }
+        return '0.00';
       } catch (e) {
-        return 'Error'
+        return 'Error';
       }
     }
 
-    return 'Ilimitado'
+    return 'Ilimitado';
   },
 
   askAgent: async (message, history = [], context = {}) => {
-    const s = context.settings || {}
-    const provider = s.aiProvider || 'gemini'
-    const activeView = context.activeView || 'General'
+    const s = context.settings || {};
+    const provider = s.aiProvider || 'gemini';
+    const activeView = context.activeView || 'General';
 
     const systemPrompt = `Eres "Agente", el asistente inteligente, rápido y amigable de la aplicación Inefable.
 
@@ -290,103 +215,112 @@ ACCIONES AUTOMATIZADAS (solo si el usuario pide explícitamente crear algo, adju
       { role: 'system', content: systemPrompt },
       ...history.map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.content })),
       { role: 'user', content: message }
-    ]
+    ];
+
+    const userApiKey = provider === 'deepseek' ? s.deepseekKey : (provider === 'openrouter' ? s.openrouterKey : s.geminiKey);
+    const model = provider === 'deepseek' ? s.deepseekModel : (provider === 'openrouter' ? s.openrouterModel : s.geminiModel);
 
     try {
-      let rawResponse = '';
-      if (provider === 'deepseek') {
-        rawResponse = await queryDeepSeek(
-          s.deepseekKey,
-          s.deepseekModel || 'deepseek-chat',
-          messages
-        );
-      } else if (provider === 'openrouter') {
-        rawResponse = await queryOpenRouter(
-          s.openrouterKey,
-          s.openrouterModel || 'google/gemini-2.5-flash',
-          messages
-        );
-      } else {
-        rawResponse = await queryGemini(s.geminiKey, s.geminiModel || '', messages);
+      // 1. Intento primario a través del Proxy Serverless Seguro
+      try {
+        const rawRes = await queryServerlessProxy({
+          provider,
+          action: 'chat',
+          messages,
+          systemPrompt,
+          userPrompt: message,
+          model,
+          userApiKey,
+          temperature: s.aiTemperature || 0.7,
+          maxTokens: s.aiMaxTokens || 2048
+        });
+        return cleanAiResponse(rawRes);
+      } catch (proxyError) {
+        // 2. Fallback directo si no hay servidor serverless activo
+        const directRes = await fallbackDirectQuery(provider, userApiKey, model, messages, systemPrompt);
+        return cleanAiResponse(directRes);
       }
-
-      return cleanAiResponse(rawResponse);
     } catch (e) {
-      return `❌ ${sanitizeError(e, provider)}`
+      return `❌ ${sanitizeError(e, provider)}`;
     }
   },
 
   askRaw: async (systemPrompt, userPrompt, settings = {}) => {
-    const provider = settings.aiProvider || 'gemini'
+    const provider = settings.aiProvider || 'gemini';
+    const userApiKey = provider === 'deepseek' ? settings.deepseekKey : (provider === 'openrouter' ? settings.openrouterKey : settings.geminiKey);
+    const model = provider === 'deepseek' ? settings.deepseekModel : (provider === 'openrouter' ? settings.openrouterModel : settings.geminiModel);
 
     const messages = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt }
-    ]
+    ];
 
     try {
-      let rawResponse = '';
-      if (provider === 'deepseek') {
-        rawResponse = await queryDeepSeek(
-          settings.deepseekKey,
-          settings.deepseekModel || 'deepseek-chat',
-          messages
-        );
-      } else if (provider === 'openrouter') {
-        rawResponse = await queryOpenRouter(
-          settings.openrouterKey,
-          settings.openrouterModel || 'google/gemini-2.5-flash',
-          messages
-        );
-      } else {
-        rawResponse = await queryGemini(settings.geminiKey, settings.geminiModel || '', messages);
+      try {
+        const rawRes = await queryServerlessProxy({
+          provider,
+          action: 'raw',
+          messages,
+          systemPrompt,
+          userPrompt,
+          model,
+          userApiKey,
+          temperature: settings.aiTemperature || 0.7,
+          maxTokens: settings.aiMaxTokens || 2048
+        });
+        return cleanAiResponse(rawRes);
+      } catch (proxyError) {
+        const directRes = await fallbackDirectQuery(provider, userApiKey, model, messages, systemPrompt);
+        return cleanAiResponse(directRes);
       }
-      return cleanAiResponse(rawResponse);
     } catch (e) {
-      return `❌ ${sanitizeError(e, provider)}`
+      return `❌ ${sanitizeError(e, provider)}`;
     }
   },
 
   testConnection: async (provider, apiKey, model) => {
     try {
-      if (!apiKey || !apiKey.trim()) {
-        return { success: false, message: 'La clave API está vacía.' };
-      }
-      if (provider === 'gemini') {
-        const models = await listAvailableGeminiModels(apiKey);
-        const res = await queryGemini(apiKey, model || 'gemini-1.5-flash', [
-          { role: 'user', content: 'Responde únicamente con la palabra OK' }
-        ]);
-        if (res && !res.startsWith('❌')) {
-          return {
-            success: true,
-            message: `Conexión exitosa. Modelos disponibles: ${models.length > 0 ? models.slice(0, 3).join(', ') : 'gemini-1.5-flash'}`,
-            models
-          };
+      // 1. Intentar prueba con el proxy serverless
+      try {
+        const res = await fetchWithTimeout('/api/ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider,
+            action: 'test',
+            userApiKey: apiKey,
+            model
+          })
+        }, 10000);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            return {
+              success: true,
+              message: data.message || `Conexión exitosa con ${provider.toUpperCase()} (Proxy Seguro Activo).`,
+              models: data.models || []
+            };
+          }
         }
-        return { success: false, message: res };
+      } catch (proxyErr) {
+        console.warn('[aiService] Fallback de prueba directa:', proxyErr.message);
       }
-      if (provider === 'deepseek') {
-        const res = await queryDeepSeek(apiKey, model || 'deepseek-chat', [
-          { role: 'user', content: 'Responde únicamente con la palabra OK' }
-        ]);
-        if (res && !res.startsWith('❌')) {
-          return { success: true, message: 'Conexión exitosa con DeepSeek API.' };
-        }
-        return { success: false, message: res };
+
+      // 2. Fallback de prueba directa si falla el proxy
+      const fallbackRes = await fallbackDirectQuery(provider, apiKey, model, [
+        { role: 'user', content: 'Responde únicamente con la palabra OK' }
+      ], '');
+      
+      if (fallbackRes && !fallbackRes.startsWith('❌')) {
+        return {
+          success: true,
+          message: `Conexión directa exitosa con ${provider.toUpperCase()}.`
+        };
       }
-      if (provider === 'openrouter') {
-        const res = await queryOpenRouter(apiKey, model || 'google/gemini-2.5-flash', [
-          { role: 'user', content: 'Responde únicamente con la palabra OK' }
-        ]);
-        if (res && !res.startsWith('❌')) {
-          return { success: true, message: 'Conexión exitosa con OpenRouter API.' };
-        }
-        return { success: false, message: res };
-      }
-      return { success: false, message: 'Proveedor no reconocido.' };
+      return { success: false, message: fallbackRes };
     } catch (e) {
       return { success: false, message: e.message || String(e) };
     }
   }
-}
+};
