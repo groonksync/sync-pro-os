@@ -4,23 +4,21 @@ import {
   UtensilsCrossed, Plus, Minus, Check, CheckCircle2, Smartphone,
   User, ShieldCheck, MapPin, Truck, AlertTriangle, MessageCircle,
   Clock, DollarSign, Wallet, QrCode, RefreshCw, Sparkles, ChevronDown,
-  History, ArrowRight, HeartHandshake, FileText, Share2
+  History, ArrowRight, HeartHandshake, FileText, Share2, Package
 } from 'lucide-react';
+import {
+  getLocalCatalogo,
+  fetchRemoteCatalogo,
+  calcularPrecioDinamico,
+  CATALOGO_DEFAULT
+} from '../lib/alimentosCatalogo';
 
-const PRECIO_UNITARIO = 35; // 1 plato = 35 Bs
-const PRECIO_PACK_3 = 100;  // 3 platos = 100 Bs
-
-// Función que optimiza el cálculo de precio según paquetes de 3
-export function calcularPrecioOptimo(totalUnidades) {
-  const unidades = Math.max(0, parseInt(totalUnidades) || 0);
-  const packs3 = Math.floor(unidades / 3);
-  const sueltas = unidades % 3;
-  const subtotal = (packs3 * PRECIO_PACK_3) + (sueltas * PRECIO_UNITARIO);
-  const ahorro = (unidades * PRECIO_UNITARIO) - subtotal;
-  return { unidades, packs3, sueltas, subtotal, ahorro };
-}
+export { calcularPrecioDinamico };
 
 export default function FieldSalesPortal() {
+  // Catálogo dinámico configurado
+  const [catalogo, setCatalogo] = useState(() => getLocalCatalogo());
+  
   // Estado de sesión y memoria de vendedor
   const [vendedor, setVendedor] = useState(() => localStorage.getItem('field_seller_name') || '');
   const [vista, setVista] = useState('formulario'); // 'formulario' | 'historial'
@@ -56,18 +54,25 @@ export default function FieldSalesPortal() {
     }
   });
 
-  // Guardar vendedor en memoria
+  // Cargar catálogo actualizado desde la nube
+  useEffect(() => {
+    fetchRemoteCatalogo().then(c => {
+      if (c) setCatalogo(c);
+    });
+  }, []);
+
+  // Guardar vendedor en memoria local
   useEffect(() => {
     if (vendedor.trim()) {
       localStorage.setItem('field_seller_name', vendedor.trim());
     }
   }, [vendedor]);
 
-  // Cálculos automáticos de precio
-  const { packs3, sueltas, subtotal, ahorro } = useMemo(() => calcularPrecioOptimo(cantidad), [cantidad]);
+  // Cálculos automáticos con catálogo dinámico
+  const calc = useMemo(() => calcularPrecioDinamico(cantidad, catalogo), [cantidad, catalogo]);
   
   const deliveryExtra = tipoEntrega === 'delivery_pagado' ? (parseFloat(costoDeliveryCliente) || 0) : 0;
-  const totalPagar = subtotal + deliveryExtra;
+  const totalPagar = calc.subtotal + deliveryExtra;
 
   // Registrar venta
   const handleSubmit = async (e) => {
@@ -88,11 +93,11 @@ export default function FieldSalesPortal() {
     }
     if (metodoPago === 'credito') {
       if (!personaFiada.trim()) {
-        setErrorMsg('Debes especificar el nombre de la persona que se fía.');
+        setErrorMsg('Debes registrar a la persona que se fía.');
         return;
       }
       if (!hermanoAutoriza.trim()) {
-        setErrorMsg('Debes especificar el hermano que autoriza el crédito.');
+        setErrorMsg('Debes registrar el hermano que autoriza el crédito.');
         return;
       }
     }
@@ -101,15 +106,17 @@ export default function FieldSalesPortal() {
 
     try {
       const ticketNum = `TICK-${Date.now().toString().slice(-6)}`;
+      const packCount = (calc.packsAplicados && calc.packsAplicados.length > 0) ? calc.packsAplicados[0].count : 0;
+
       const ventaData = {
         numero_ticket: ticketNum,
         cliente_nombre: clienteNombre.trim(),
         cliente_telefono: clienteTelefono.trim(),
         vendedor_nombre: vendedor.trim(),
         cantidad_unidades: cantidad,
-        paquetes_3: packs3,
-        unidades_sueltas: sueltas,
-        monto_subtotal: subtotal,
+        paquetes_3: packCount,
+        unidades_sueltas: calc.sueltas || 0,
+        monto_subtotal: calc.subtotal,
         monto_total: totalPagar,
         metodo_pago: metodoPago,
         es_credito: metodoPago === 'credito',
@@ -140,13 +147,13 @@ export default function FieldSalesPortal() {
       try {
         localStorage.setItem('field_sales_history_today', JSON.stringify(nuevoHistorial));
       } catch (err) {
-        console.warn('Storage limit reached', err);
+        console.warn('Storage error:', err);
       }
 
-      // Mostrar modal de éxito
+      // Mostrar comprobante
       setVentaExitosa(savedTicket);
 
-      // Resetear campos del pedido (conservando vendedor)
+      // Resetear campos del pedido
       setCantidad(1);
       setClienteNombre('');
       setClienteTelefono('');
@@ -159,18 +166,18 @@ export default function FieldSalesPortal() {
 
     } catch (err) {
       console.error('Error al registrar venta:', err);
-      setErrorMsg('No se pudo guardar la venta en el servidor. Verifica tu conexión a internet.');
+      setErrorMsg('No se pudo guardar en el servidor. Verifica tu conexión a internet.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Generador de mensaje de WhatsApp para el cliente
+  // Generador de mensaje formal de WhatsApp para el cliente
   const handleSendWhatsAppTicket = (ticket) => {
     if (!ticket) return;
     const phone = (ticket.cliente_telefono || '').replace(/\D/g, '');
     const packText = ticket.paquetes_3 > 0 
-      ? `\n🍱 *${ticket.paquetes_3} Pack(s) de 3* + *${ticket.unidades_sueltas} plato(s) suelto(s)*` 
+      ? `\n🍱 *${ticket.paquetes_3} Pack(s)* + *${ticket.unidades_sueltas} suelto(s)*` 
       : `\n🍛 *${ticket.cantidad_unidades} Plato(s)*`;
 
     const entregaText = ticket.tipo_entrega === 'recojo' 
@@ -211,31 +218,34 @@ export default function FieldSalesPortal() {
   const totalRecaudadoHoy = misVentasHoy.reduce((sum, v) => sum + (parseFloat(v.monto_total) || 0), 0);
   const totalPlatosHoy = misVentasHoy.reduce((sum, v) => sum + (parseInt(v.cantidad_unidades) || 0), 0);
 
+  const baseProduct = catalogo.productos?.[0] || { nombre: 'Plato Individual', precio: 35 };
+  const packagesList = catalogo.paquetes || [];
+
   return (
     <div className="min-h-screen bg-[#0A0A0C] text-[#ECECEE] font-sans selection:bg-emerald-500 selection:text-black pb-24">
-      {/* ─── CABECERA EXCLUSIVA MINIMALISTA ─── */}
-      <header className="sticky top-0 z-40 bg-[#121216]/90 backdrop-blur-xl border-b border-white/[0.08] px-4 py-3">
+      {/* ─── CABECERA EXCLUSIVA LIQUID GLASS ─── */}
+      <header className="sticky top-0 z-40 bg-[#121216]/80 backdrop-blur-2xl border-b border-white/[0.08] px-4 py-3 shadow-xl">
         <div className="max-w-md mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-neutral-950 font-black shadow-lg shadow-emerald-500/20">
               <UtensilsCrossed size={18} />
             </div>
             <div>
-              <h1 className="text-sm font-black text-white uppercase tracking-tight flex items-center gap-1.5 m-0 leading-none">
-                Ventas en Campo
+              <h1 className="text-sm font-black text-white uppercase tracking-tight m-0 leading-none">
+                Portal de Venta
               </h1>
               <p className="text-[10px] text-emerald-400 font-bold tracking-wider uppercase mt-1 m-0">
-                Tickets de Alimentos
+                Tickets en Campo
               </p>
             </div>
           </div>
 
           {/* Toggle de Vistas */}
-          <div className="flex p-0.5 rounded-xl bg-black/40 border border-white/[0.08]">
+          <div className="flex p-0.5 rounded-xl bg-black/40 border border-white/[0.08] backdrop-blur-xl">
             <button
               onClick={() => setVista('formulario')}
               className={`py-1.5 px-3 rounded-lg text-[11px] font-black transition-all ${
-                vista === 'formulario' ? 'bg-emerald-500 text-neutral-950 shadow-sm' : 'text-neutral-400 hover:text-white'
+                vista === 'formulario' ? 'bg-emerald-500 text-neutral-950 shadow-md' : 'text-neutral-400 hover:text-white'
               }`}
             >
               Vender
@@ -266,54 +276,80 @@ export default function FieldSalesPortal() {
         {vista === 'formulario' ? (
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* 1. SELECCIÓN VISUAL DE PLATOS Y PROMOCIONES */}
-            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-3.5 shadow-xl">
+            {/* 1. SELECCIÓN VISUAL DINÁMICA DE PLATOS Y PAQUETES */}
+            <div
+              className="p-4 rounded-2xl space-y-3.5 shadow-2xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400">
                   Opciones de Compra
                 </span>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-black uppercase">
-                  Promo 3x100 Bs
+                  Catálogo Activo
                 </span>
               </div>
 
-              {/* Botones Rápidos de Paquete */}
+              {/* Botones Rápidos de Opciones (Unidad y Paquetes Dinámicos) */}
               <div className="grid grid-cols-2 gap-2.5">
+                {/* Opción 1: Unidad Base */}
                 <button
                   type="button"
                   onClick={() => setCantidad(1)}
                   className={`p-3 rounded-xl border text-left transition-all ${
                     cantidad === 1
-                      ? 'bg-emerald-500/15 border-emerald-500 text-white shadow-md'
+                      ? 'bg-emerald-500/20 border-emerald-500 text-white shadow-lg'
                       : 'bg-black/30 border-white/[0.06] text-neutral-300 hover:border-white/[0.15]'
                   }`}
                 >
-                  <p className="text-xs font-black m-0">1 Unidad</p>
-                  <p className="text-base font-black text-emerald-400 font-mono m-0 mt-0.5">35 Bs</p>
-                  <span className="text-[9px] text-neutral-500">Plato individual</span>
+                  <p className="text-xs font-black m-0">{baseProduct.nombre || '1 Unidad'}</p>
+                  <p className="text-base font-black text-emerald-400 font-mono m-0 mt-0.5">{baseProduct.precio} Bs</p>
+                  <span className="text-[9px] text-neutral-500">Precio individual</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setCantidad(3)}
-                  className={`p-3 rounded-xl border text-left transition-all relative overflow-hidden ${
-                    cantidad === 3
-                      ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-lg'
-                      : 'bg-black/30 border-white/[0.06] text-neutral-300 hover:border-white/[0.15]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-black m-0">Paquete de 3</p>
-                    <span className="text-[8px] font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      -5 Bs
-                    </span>
-                  </div>
-                  <p className="text-base font-black text-amber-400 font-mono m-0 mt-0.5">100 Bs</p>
-                  <span className="text-[9px] text-neutral-400">Combo familiar</span>
-                </button>
+                {/* Opción 2: Paquete Principal */}
+                {packagesList.length > 0 ? (
+                  packagesList.slice(0, 1).map(pkg => (
+                    <button
+                      key={pkg.id}
+                      type="button"
+                      onClick={() => setCantidad(parseInt(pkg.unidades) || 3)}
+                      className={`p-3 rounded-xl border text-left transition-all relative overflow-hidden ${
+                        cantidad === parseInt(pkg.unidades)
+                          ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-lg'
+                          : 'bg-black/30 border-white/[0.06] text-neutral-300 hover:border-white/[0.15]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-black m-0">{pkg.nombre}</p>
+                        {pkg.badge && (
+                          <span className="text-[8px] font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            {pkg.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-base font-black text-amber-400 font-mono m-0 mt-0.5">{pkg.precio} Bs</p>
+                      <span className="text-[9px] text-neutral-400">{pkg.unidades} platos combinados</span>
+                    </button>
+                  ))
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCantidad(3)}
+                    className="p-3 rounded-xl border text-left bg-black/30 border-white/[0.06] text-neutral-300"
+                  >
+                    <p className="text-xs font-black m-0">3 Unidades</p>
+                    <p className="text-base font-black text-amber-400 font-mono m-0 mt-0.5">{baseProduct.precio * 3} Bs</p>
+                  </button>
+                )}
               </div>
 
-              {/* Selector de Cantidad Personalizada */}
+              {/* Selector de Cantidad Personalizada con Stepper */}
               <div className="p-3 rounded-xl bg-black/40 border border-white/[0.06] flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-bold text-neutral-400 uppercase">Cantidad Total</span>
@@ -345,14 +381,15 @@ export default function FieldSalesPortal() {
                 </div>
               </div>
 
-              {/* Presets Rápidos */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+              {/* Presets Rápidos de Cantidad */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 {[
                   { label: '+1 Plato', val: 1 },
-                  { label: '+3 (1 Pack)', val: 3 },
-                  { label: '+6 (2 Packs)', val: 6 },
-                  { label: '+9 (3 Packs)', val: 9 },
-                  { label: '+12 (4 Packs)', val: 12 },
+                  { label: '+3 Platos', val: 3 },
+                  { label: '+6 Platos', val: 6 },
+                  { label: '+9 Platos', val: 9 },
+                  { label: '+12 Platos', val: 12 },
+                  { label: '+15 Platos', val: 15 },
                 ].map(p => (
                   <button
                     key={p.label}
@@ -360,7 +397,7 @@ export default function FieldSalesPortal() {
                     onClick={() => setCantidad(p.val)}
                     className={`py-1 px-2.5 rounded-lg text-[10px] font-bold shrink-0 transition-all border ${
                       cantidad === p.val
-                        ? 'bg-white text-black border-white'
+                        ? 'bg-white text-black border-white shadow-sm'
                         : 'bg-white/[0.04] text-neutral-400 border-white/[0.06] hover:text-white'
                     }`}
                   >
@@ -371,24 +408,30 @@ export default function FieldSalesPortal() {
 
               {/* Desglose de Cálculo */}
               <div className="pt-2 border-t border-white/[0.06] flex items-center justify-between text-xs font-mono">
-                <span className="text-neutral-400 text-[11px]">
-                  {packs3 > 0 && `${packs3}x Pack 3 (100 Bs)`}
-                  {packs3 > 0 && sueltas > 0 && ' + '}
-                  {sueltas > 0 && `${sueltas}x Suelto (35 Bs)`}
+                <span className="text-neutral-400 text-[11px] truncate max-w-[200px]">
+                  {calc.desglose}
                 </span>
                 <span className="text-white font-black text-sm">
-                  Subtotal: {subtotal} BOB
+                  Subtotal: {calc.subtotal} BOB
                 </span>
               </div>
-              {ahorro > 0 && (
+              {calc.ahorro > 0 && (
                 <p className="text-[10px] text-amber-400 font-bold text-right m-0">
-                  🎉 Ahorro aplicado: {ahorro} Bs
+                  🎉 Ahorro aplicado: {calc.ahorro} Bs
                 </p>
               )}
             </div>
 
             {/* 2. DATOS DEL CLIENTE Y VENDEDOR */}
-            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-3 shadow-xl">
+            <div
+              className="p-4 rounded-2xl space-y-3 shadow-xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
               <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block">
                 Datos de Venta
               </span>
@@ -429,7 +472,7 @@ export default function FieldSalesPortal() {
               {/* Teléfono / WhatsApp */}
               <div>
                 <label className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
-                  WhatsApp del Cliente (Para enviar ticket)
+                  WhatsApp del Cliente (Para comprobante)
                 </label>
                 <div className="relative">
                   <Smartphone size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-500" />
@@ -445,7 +488,15 @@ export default function FieldSalesPortal() {
             </div>
 
             {/* 3. LOGÍSTICA Y ENTREGA */}
-            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-3 shadow-xl">
+            <div
+              className="p-4 rounded-2xl space-y-3 shadow-xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
               <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block">
                 Modalidad de Entrega
               </span>
@@ -522,7 +573,15 @@ export default function FieldSalesPortal() {
             </div>
 
             {/* 4. FORMA DE PAGO & SECCIÓN DE CRÉDITO (FIADOS) */}
-            <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/[0.08] space-y-3.5 shadow-xl">
+            <div
+              className="p-4 rounded-2xl space-y-3.5 shadow-xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
               <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block">
                 Forma de Pago
               </span>
@@ -617,7 +676,7 @@ export default function FieldSalesPortal() {
               />
             </div>
 
-            {/* 6. BARRA FIJA INFERIOR DE REGISTRO */}
+            {/* 6. BOTÓN DE REGISTRO */}
             <div className="pt-2">
               <button
                 type="submit"

@@ -29,41 +29,33 @@ CREATE TABLE IF NOT EXISTS public.ventas_alimentos_tickets (
     estado VARCHAR(50) DEFAULT 'completado' -- 'completado', 'anulado'
 );
 
--- Índices para búsqueda rápida
-CREATE INDEX IF NOT EXISTS idx_ventas_alimentos_vendedor ON public.ventas_alimentos_tickets (vendedor_nombre);
-CREATE INDEX IF NOT EXISTS idx_ventas_alimentos_fecha ON public.ventas_alimentos_tickets (created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_ventas_alimentos_credito ON public.ventas_alimentos_tickets (es_credito, estado_credito);
+-- ============================================================
+-- TABLA: alimentos_config_catalogo
+-- Configuración de Platos y Paquetes Dinámicos
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS public.alimentos_config_catalogo (
+    id VARCHAR(50) PRIMARY KEY DEFAULT 'default',
+    updated_at TIMESTAMPTZ DEFAULT now(),
+    productos JSONB DEFAULT '[]'::jsonb,
+    paquetes JSONB DEFAULT '[]'::jsonb
+);
 
 -- Habilitar RLS
 ALTER TABLE public.ventas_alimentos_tickets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.alimentos_config_catalogo ENABLE ROW LEVEL SECURITY;
 
--- Políticas de Acceso: Permitir inserción anónima para vendedores en campo con enlace
+-- Políticas de Acceso: Permitir inserción y lectura anónima/autenticada
 DROP POLICY IF EXISTS "Permitir insercion publica de ventas alimentos" ON public.ventas_alimentos_tickets;
 CREATE POLICY "Permitir insercion publica de ventas alimentos"
-ON public.ventas_alimentos_tickets
-FOR INSERT
-TO anon, authenticated
-WITH CHECK (true);
-
--- Permitir lectura y modificación completa a usuarios autenticados (o consulta anónima de tickets)
-DROP POLICY IF EXISTS "Permitir lectura ventas alimentos" ON public.ventas_alimentos_tickets;
-CREATE POLICY "Permitir lectura ventas alimentos"
-ON public.ventas_alimentos_tickets
-FOR SELECT
-TO anon, authenticated
-USING (true);
-
-DROP POLICY IF EXISTS "Permitir actualizacion ventas alimentos autenticados" ON public.ventas_alimentos_tickets;
-CREATE POLICY "Permitir actualizacion ventas alimentos autenticados"
-ON public.ventas_alimentos_tickets
-FOR UPDATE
+ON public.ventas_alimentos_tickets FOR ALL
 TO anon, authenticated
 USING (true)
 WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Permitir eliminacion ventas alimentos" ON public.ventas_alimentos_tickets;
-CREATE POLICY "Permitir eliminacion ventas alimentos"
-ON public.ventas_alimentos_tickets
-FOR DELETE
+DROP POLICY IF EXISTS "Permitir acceso publico catalogo alimentos" ON public.alimentos_config_catalogo;
+CREATE POLICY "Permitir acceso publico catalogo alimentos"
+ON public.alimentos_config_catalogo FOR ALL
 TO anon, authenticated
-USING (true);
+USING (true)
+WITH CHECK (true);

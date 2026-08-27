@@ -1734,19 +1734,48 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
       <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
         {prestamoView === 'list' ? (
           <div className="animate-in fade-in duration-300">
-            {/* Cabecera Principal */}
-            <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 w-full">
+            {/* 1. Cabecera Unificada en 1 Sola Fila Horizontal con Iconos Modernos */}
+            <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-5 w-full pb-4 border-b border-white/[0.06]">
               <div>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
                   {filtroTipo === 'recibido' ? 'Mis Deudas & Créditos' : 'Cartera de Préstamos'}
                 </h2>
-                <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '2px', fontWeight: 500 }}>
+                <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '2px', fontWeight: 500, margin: 0 }}>
                   {filtroTipo === 'recibido' ? 'Control de préstamos bancarios y deudas con terceros' : 'Dashboard Analítico — Gestión de Capital y Cobranza'}
                 </p>
               </div>
 
-              {/* Botones de Acción en Fila Horizontal Unificada */}
-              <div className="flex flex-row items-center gap-2 w-full sm:w-auto">
+              {/* Fila Horizontal Única: Selector de Cartera + Acciones con Iconos Modernos */}
+              <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto whitespace-nowrap scrollbar-none py-0.5">
+                {/* Selector de Cartera con Iconos Modernos */}
+                <div className="flex p-1 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl shrink-0">
+                  <button
+                    onClick={() => setFiltroTipo('otorgado')}
+                    className={`py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                      filtroTipo === 'otorgado'
+                        ? 'bg-emerald-500 text-neutral-950 shadow-md'
+                        : 'text-neutral-400 hover:text-white'
+                    }`}
+                    title="Cartera Otorgada a Clientes"
+                  >
+                    <TrendingUp size={15} strokeWidth={2.5} />
+                    <span className="hidden sm:inline">Otorgados</span>
+                  </button>
+                  <button
+                    onClick={() => setFiltroTipo('recibido')}
+                    className={`py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                      filtroTipo === 'recibido'
+                        ? 'bg-sky-500 text-neutral-950 shadow-md'
+                        : 'text-neutral-400 hover:text-white'
+                    }`}
+                    title="Créditos Recibidos (Banco / Deudas)"
+                  >
+                    <Wallet size={15} strokeWidth={2.5} />
+                    <span className="hidden sm:inline">Recibidos</span>
+                  </button>
+                </div>
+
+                {/* Botón Emitir Recibo */}
                 <button
                   onClick={() => {
                     setReciboForm({
@@ -1766,19 +1795,14 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     });
                     setPrestamoView('recibos');
                   }}
-                  style={{
-                    backgroundColor: t.panel, color: t.text, border: `1px solid ${t.border}`,
-                    borderRadius: '12px', padding: '10px 16px',
-                    fontSize: '11px', fontWeight: 700, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: '6px', transition: 'all 0.2s ease', flex: isMobile ? 1 : 'initial'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = t.panel}
+                  className="py-2 px-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 backdrop-blur-xl shrink-0"
+                  title="Emitir Recibo Oficial"
                 >
-                  <Printer size={15} /> Emitir Recibo
+                  <Printer size={15} />
+                  <span className="hidden sm:inline">Emitir Recibo</span>
                 </button>
 
+                {/* Botón Nuevo Registro */}
                 <button 
                   onClick={() => {
                     setEditPrestamo({
@@ -1806,58 +1830,21 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     });
                     setShowForm(true);
                   }} 
-                  style={{
-                    backgroundColor: t.accent, color: isDark ? '#0A0A0C' : '#FFFFFF', border: 'none',
-                    borderRadius: '12px', padding: '10px 18px',
-                    fontSize: '11px', fontWeight: 800, cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: '6px', transition: 'all 0.2s ease', flex: isMobile ? 1 : 'initial',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.accentHover}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = t.accent}
+                  className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-xs font-black transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-1.5 shrink-0"
+                  title="Registrar Nuevo Préstamo o Deuda"
                 >
-                  <Plus size={15} strokeWidth={3} /> Nuevo Registro
+                  <Plus size={15} strokeWidth={3} />
+                  <span className="hidden sm:inline">Nuevo Registro</span>
                 </button>
               </div>
             </header>
 
-            {/* Fila Paralela: Selector de Tipo de Cartera */}
-            <div className="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-white/[0.06] flex-wrap">
-              <div className="flex p-1 rounded-xl bg-white/[0.03] border border-white/[0.08] w-full sm:w-auto">
-                <button
-                  onClick={() => setFiltroTipo('otorgado')}
-                  className={`flex-1 sm:flex-initial py-2 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                    filtroTipo === 'otorgado'
-                      ? 'bg-emerald-500 text-neutral-950 shadow-md'
-                      : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  <TrendingUp size={14} /> Otorgados (A Clientes)
-                </button>
-                <button
-                  onClick={() => setFiltroTipo('recibido')}
-                  className={`flex-1 sm:flex-initial py-2 px-4 rounded-lg text-xs font-black uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${
-                    filtroTipo === 'recibido'
-                      ? 'bg-sky-500 text-neutral-950 shadow-md'
-                      : 'text-neutral-400 hover:text-white'
-                  }`}
-                >
-                  <Wallet size={14} /> Recibidos (Banco / Deudas)
-                </button>
-              </div>
-              
-              <span className="text-[11px] font-semibold text-neutral-400 hidden sm:inline-block">
-                {filtroTipo === 'recibido' ? 'Control de pasivos y créditos bancarios' : 'Gestión activa de capital colocado e intereses'}
-              </span>
-            </div>
-
-            {/* ─── DASHBOBOARD ANALÍTICO ──────────────────────────────── */}
-            {/* Panel de Flujo Semanal y Resumen de Cartera */}
+            {/* ─── DASHBOARD ANALÍTICO LIQUID GLASS ───────────────────── */}
+            {/* Panel de Flujo Semanal */}
             <FinancialWeeklyOverview
               isDark={isDark}
               title="Distribución Semanal de Cobros de Cartera"
-              subtitle="Proyección de recaudación de capital y flujo por semanas del mes"
+              subtitle="Proyección de recaudación de capital y flujo por períodos de 7 días"
               weeklyData={[
                 { week: '1st Week', bars: [Math.round(stats.rendimientoMensual * 0.28) || 180, Math.round(stats.rendimientoMensual * 0.22) || 150, Math.round(stats.rendimientoMensual * 0.3) || 195] },
                 { week: '2nd Week', bars: [Math.round(stats.rendimientoMensual * 0.25) || 160, Math.round(stats.rendimientoMensual * 0.28) || 175, Math.round(stats.rendimientoMensual * 0.2) || 130] },
@@ -1873,52 +1860,106 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               maxScale={Math.max(stats.rendimientoMensual * 0.4, 200)}
             />
 
-            {/* KPIs en Cuadrícula 2x2 para Reducir Desplazamiento Vertical */}
-            <div className="grid grid-cols-2 gap-3 mb-4">
+            {/* 3. Métricas en Fila Compacta (4 Indicadores en 1 Sola Fila Optimizada) */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
               <KPICard t={t} icon={DollarSign} label={filtroTipo === 'recibido' ? "Deuda Recibida" : "Capital Activo"} value={stats.capitalActivo.toLocaleString()} moneda="BOB" color={t.accent} />
               <KPICard t={t} icon={TrendingUp} label={filtroTipo === 'recibido' ? "Interés a Pagar" : "Rendimiento Mes"} value={stats.rendimientoMensual.toLocaleString()} moneda="BOB" color="#10b981" />
               <KPICard t={t} icon={Percent} label="Tasa Promedio" value={stats.tasaPromedio.toFixed(1)} moneda="%" color="#f59e0b" />
               <KPICard t={t} icon={AlertTriangle} label="Mora Acumulada" value={stats.totalMora.toLocaleString()} moneda="BOB" color="#ef4444" />
             </div>
 
-            {/* Widget Visual Integrado: Distribución de Riesgo + Índice de Salud (Compacto) */}
-            <div style={{
-              padding: '16px 18px', backgroundColor: t.panel,
-              border: `1px solid ${t.border}`, borderRadius: '16px',
-              marginBottom: '20px',
-            }}>
+            {/* 4. Detalle de Rendimiento Inferior (3 Paneles de Tendencia Sparkline en Fila Horizontal) */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+              {[
+                { title: filtroTipo === 'recibido' ? 'DEUDA ACTIVA' : 'CAPITAL ACTIVO', amount: stats.capitalActivo, color: '#06b6d4', points: '0,20 15,35 30,15 45,22' },
+                { title: filtroTipo === 'recibido' ? 'INTERÉS MENSUAL' : 'RENDIMIENTO MES', amount: stats.rendimientoMensual, color: '#0284c7', points: '0,28 15,15 30,22 45,30' },
+                { title: 'MORA ACUMULADA', amount: stats.totalMora, color: '#ef4444', points: '0,15 15,30 30,28 45,35' },
+              ].map((card, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 rounded-2xl flex items-center justify-between transition-all duration-300 hover:scale-[1.01]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    boxShadow: '0 8px 30px rgba(0,0,0,0.25)'
+                  }}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: card.color, boxShadow: `0 0 8px ${card.color}` }}
+                      />
+                      <span style={{ fontSize: '10px', fontWeight: 800, color: card.color, letterSpacing: '0.06em' }}>
+                        {card.title}
+                      </span>
+                    </div>
+                    <h4 style={{ fontSize: '20px', fontWeight: 900, color: t.text, margin: 0, letterSpacing: '-0.03em' }}>
+                      <span className="num-tabular">{card.amount.toLocaleString()}</span> <span style={{ fontSize: '11px', color: t.textDim, fontWeight: 700 }}>BOB</span>
+                    </h4>
+                  </div>
+
+                  {/* Sparkline SVG */}
+                  <div style={{ width: '70px', height: '36px' }}>
+                    <svg width="100%" height="100%" viewBox="0 0 50 40" fill="none" style={{ overflow: 'visible' }}>
+                      <polyline
+                        points={card.points}
+                        stroke={card.color}
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 5 & 6. Widget de Salud Financiera & Distribución de Riesgo Liquid Glass */}
+            <div
+              className="p-4 md:p-5 rounded-2xl mb-6 transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.35)',
+              }}
+            >
               {/* Cabecera del Widget Integrado */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Heart size={15} color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
-                  <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.text }}>
+                  <Heart size={16} color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
+                  <span style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text }}>
                     Salud & Distribución de Riesgo
                   </span>
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '3px 10px', borderRadius: '20px',
-                  backgroundColor: stats.indiceSalud >= 70 ? 'rgba(16, 185, 129, 0.12)' : stats.indiceSalud >= 40 ? 'rgba(245, 158, 11, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-                  border: `1px solid ${stats.indiceSalud >= 70 ? 'rgba(16, 185, 129, 0.3)' : stats.indiceSalud >= 40 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`
+                  padding: '4px 12px', borderRadius: '20px',
+                  backgroundColor: stats.indiceSalud >= 70 ? 'rgba(16, 185, 129, 0.15)' : stats.indiceSalud >= 40 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  border: `1px solid ${stats.indiceSalud >= 70 ? 'rgba(16, 185, 129, 0.35)' : stats.indiceSalud >= 40 ? 'rgba(245, 158, 11, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`
                 }}>
                   <span style={{
-                    fontSize: '11px', fontWeight: 800,
+                    fontSize: '12px', fontWeight: 900,
                     color: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'
                   }}>
-                    {stats.indiceSalud.toFixed(0)}/100
+                    {stats.indiceSalud.toFixed(0)}%
                   </span>
-                  <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: t.textDim }}>
                     · {stats.indiceSalud >= 80 ? 'Excelente' : stats.indiceSalud >= 60 ? 'Saludable' : stats.indiceSalud >= 40 ? 'En Observación' : 'Riesgo Crítico'}
                   </span>
                 </div>
               </div>
 
-              {/* Contenido Visual Integrado */}
+              {/* Contenido Visual Integrado Liquid Glass */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                {/* Donut SVG + Salud (Columna Izquierda 5/12) */}
+                {/* Donut Circular SVG (Columna Izquierda 5/12) */}
                 <div className="md:col-span-5 flex items-center gap-4">
-                  <div style={{ position: 'relative', width: '74px', height: '74px', flexShrink: 0 }}>
-                    <svg width="74" height="74" viewBox="0 0 100 100">
+                  <div style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
+                    <svg width="80" height="80" viewBox="0 0 100 100">
                       {riesgoData.segments.map((seg, idx) => (
                         <circle
                           key={idx}
@@ -1929,26 +1970,26 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                           strokeDasharray={seg.dashArray}
                           strokeDashoffset={seg.dashOffset}
                           transform="rotate(-90 50 50)"
-                          style={{ transition: 'stroke-dasharray 0.5s ease' }}
+                          style={{ transition: 'stroke-dasharray 0.5s ease', filter: `drop-shadow(0 0 4px ${seg.color}40)` }}
                         />
                       ))}
-                      <circle cx="50" cy="50" r="26" fill={t.panel} />
+                      <circle cx="50" cy="50" r="26" fill={isDark ? '#141418' : '#F5F5F7'} />
                       <text x="50" y="47" textAnchor="middle" dominantBaseline="central"
-                        fill={t.text} fontSize="15" fontWeight="800">
-                        {riesgoData.totalVal}
+                        fill={t.text} fontSize="14" fontWeight="900">
+                        {stats.indiceSalud.toFixed(0)}%
                       </text>
-                      <text x="50" y="60" textAnchor="middle" dominantBaseline="central"
-                        fill={t.textDim} fontSize="8" fontWeight="700">
-                        CONTRATOS
+                      <text x="50" y="59" textAnchor="middle" dominantBaseline="central"
+                        fill={t.textDim} fontSize="7" fontWeight="800">
+                        SALUD
                       </text>
                     </svg>
                   </div>
 
-                  <div className="flex-1 space-y-1">
+                  <div className="flex-1 space-y-1.5">
                     <div className="flex justify-between items-center text-[10px]">
-                      <span style={{ color: t.textDim, fontWeight: 600 }}>Índice de Salud</span>
+                      <span style={{ color: t.textDim, fontWeight: 700 }}>Cumplimiento de Cartera</span>
                       <span style={{ fontWeight: 800, color: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444' }}>
-                        {stats.indiceSalud.toFixed(0)}%
+                        {riesgoData.totalVal} Contratos
                       </span>
                     </div>
                     <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
@@ -1956,7 +1997,8 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                         className="h-full rounded-full transition-all duration-700"
                         style={{
                           width: `${Math.min(100, Math.max(5, stats.indiceSalud))}%`,
-                          backgroundColor: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'
+                          backgroundColor: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444',
+                          boxShadow: `0 0 10px ${stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'}`
                         }}
                       />
                     </div>
@@ -1966,27 +2008,24 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                   </div>
                 </div>
 
-                {/* Píldoras de Categorías de Riesgo (Columna Derecha 7/12) */}
+                {/* Píldoras de Categorías de Riesgo Liquid Glass (Columna Derecha 7/12) */}
                 <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {riesgoData.items.map((item, idx) => (
                     <div
                       key={idx}
+                      className="flex items-center gap-2 p-2.5 rounded-xl transition-all"
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '8px 10px',
-                        borderRadius: '10px',
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-                        border: `1px solid ${t.border}`,
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        backdropFilter: 'blur(10px)'
                       }}
                     >
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, flexShrink: 0 }} />
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}`, flexShrink: 0 }} />
                       <div className="min-w-0 flex-1">
-                        <p style={{ fontSize: '9px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ fontSize: '9px', fontWeight: 700, color: t.textDim, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {item.label}
                         </p>
-                        <p style={{ fontSize: '13px', fontWeight: 800, color: t.text, margin: 0, lineHeight: 1.1 }}>
+                        <p style={{ fontSize: '13px', fontWeight: 900, color: t.text, margin: 0, lineHeight: 1.1 }}>
                           {item.value}
                         </p>
                       </div>
@@ -1996,10 +2035,10 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               </div>
             </div>
 
-            {/* Barra de Búsqueda, Filtros Rápidos y Vista (Cards vs Tabla) */}
+            {/* 7 & 2. Barra de Búsqueda Minimalista y Filtros de Estado a Nivel Único */}
             <div className="space-y-4 mb-6">
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-                {/* Input de Búsqueda Simplificado (Sin Lupa) */}
+                {/* 7. Input de Búsqueda Simplificado (Sin Lupa) */}
                 <div className="relative flex-1 max-w-md">
                   <input
                     type="text"
@@ -2017,7 +2056,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
 
                 {/* Switcher de Vista: Tarjetas vs Tabla */}
                 <div className="flex items-center gap-2 self-end md:self-auto">
-                  <div className="flex p-1 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                  <div className="flex p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl">
                     <button
                       onClick={() => setViewDisplayMode('cards')}
                       className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
@@ -2040,8 +2079,8 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                 </div>
               </div>
 
-              {/* Chips de Filtro Rápido */}
-              <div className="flex flex-wrap items-center gap-2">
+              {/* 2. Filtros de Estado a Nivel Único (Una Sola Línea Continua con scroll horizontal suave) */}
+              <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none py-1 w-full">
                 {[
                   { id: 'todos', label: `Todos (${prestamistasGrouped.length})` },
                   { id: 'activos', label: `Al Día (${prestamistasGrouped.filter(g => g.estado === 'Activo').length})` },
@@ -2051,7 +2090,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                   <button
                     key={chip.id}
                     onClick={() => setFiltroRapidoEstado(chip.id)}
-                    className={`py-1.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                    className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all border shrink-0 ${
                       filtroRapidoEstado === chip.id
                         ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
                         : 'bg-white/[0.02] hover:bg-white/[0.05] text-neutral-400 border-white/[0.06]'
@@ -4181,28 +4220,35 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
   );
 };
 
-// ─── COMPONENTE KPI CARD EJECUTIVO ──────────────────────────
+// ─── COMPONENTE KPI CARD EJECUTIVO LIQUID GLASS ──────────────────────────
 const KPICard = ({ t, icon: Icon, label, value, moneda, color }) => (
-  <div className="metric-card-executive" style={{
-    backgroundColor: t.panel,
-    borderColor: t.border,
-    display: 'flex', flexDirection: 'column', gap: '10px',
-  }}>
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div className="icon-squircle" style={{
-        width: '36px', height: '36px', borderRadius: '10px',
-        backgroundColor: `${color}15`, color, border: `1px solid ${color}30`
+  <div
+    className="p-4 rounded-2xl transition-all duration-300 relative group overflow-hidden"
+    style={{
+      background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1px solid rgba(255,255,255,0.08)',
+      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+      <div style={{
+        width: '36px', height: '36px', borderRadius: '12px',
+        backgroundColor: `${color}18`, color, border: `1px solid ${color}35`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: `0 0 16px ${color}20`
       }}>
-        <Icon size={16} strokeWidth={2} />
+        <Icon size={17} strokeWidth={2.2} />
       </div>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: color }} />
+      <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: color, boxShadow: `0 0 8px ${color}` }} />
     </div>
-    <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: t.textMuted }}>
+    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>
       {label}
-    </span>
-    <span className="num-tabular tabular-nums" style={{ fontSize: '1.25rem', fontWeight: 800, color: t.text, lineHeight: 1, letterSpacing: '-0.03em' }}>
-      {value} {moneda && <span style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted, letterSpacing: '0.05em' }}>{moneda}</span>}
-    </span>
+    </p>
+    <p className="num-tabular tabular-nums" style={{ fontSize: '1.35rem', fontWeight: 900, color: t.text, lineHeight: 1.1, margin: '4px 0 0', letterSpacing: '-0.03em' }}>
+      {value} {moneda && <span style={{ fontSize: '11px', fontWeight: 700, color: t.textMuted, letterSpacing: '0.04em' }}>{moneda}</span>}
+    </p>
   </div>
 );
 

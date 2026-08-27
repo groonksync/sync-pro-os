@@ -5,12 +5,27 @@ import {
   UtensilsCrossed, Plus, Search, Filter, Smartphone, Check, CheckCircle2,
   AlertTriangle, DollarSign, Wallet, QrCode, HeartHandshake, Truck, MapPin,
   Share2, Copy, Trash2, Edit3, RefreshCw, X, Download, User, ShieldCheck,
-  Calendar, ArrowRight, Clock, ChevronDown
+  Calendar, ArrowRight, Clock, ChevronDown, Package, Settings, Sparkles, Tag
 } from 'lucide-react';
-import { calcularPrecioOptimo } from './FieldSalesPortal';
+import {
+  getLocalCatalogo,
+  saveLocalCatalogo,
+  fetchRemoteCatalogo,
+  calcularPrecioDinamico,
+  CATALOGO_DEFAULT
+} from '../lib/alimentosCatalogo';
 
 export default function VentasAlimentos({ isDark, settings }) {
   const t = useTheme(isDark);
+  
+  // Pestaña activa del módulo: 'ventas' | 'catalogo'
+  const [tabActual, setTabActual] = useState('ventas');
+
+  // Estado del catálogo dinámico
+  const [catalogo, setCatalogo] = useState(() => getLocalCatalogo());
+  const [catalogoSaving, setCatalogoSaving] = useState(false);
+
+  // Estados de ventas
   const [ventas, setVentas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,7 +34,7 @@ export default function VentasAlimentos({ isDark, settings }) {
   const [toastMsg, setToastMsg] = useState('');
   const [showModal, setShowModal] = useState(false);
 
-  // Formulario manual
+  // Formulario manual de ventas
   const [clienteNombre, setClienteNombre] = useState('');
   const [clienteTelefono, setClienteTelefono] = useState('');
   const [vendedorNombre, setVendedorNombre] = useState('');
@@ -37,7 +52,11 @@ export default function VentasAlimentos({ isDark, settings }) {
   const [notas, setNotas] = useState('');
   const [savingVenta, setSavingVenta] = useState(false);
 
-  // Cargar ventas desde Supabase (con fallback en localStorage)
+  // Formulario para nuevo plato / producto
+  const [nuevoPlato, setNuevoPlato] = useState({ nombre: '', precio: 35, descripcion: '', icono: '🍛' });
+  const [nuevoPaquete, setNuevoPaquete] = useState({ nombre: '', unidades: 3, precio: 100, badge: 'Promo Ahorro' });
+
+  // Cargar ventas y catálogo
   const fetchVentas = async () => {
     setLoading(true);
     try {
@@ -61,6 +80,9 @@ export default function VentasAlimentos({ isDark, settings }) {
 
   useEffect(() => {
     fetchVentas();
+    fetchRemoteCatalogo().then(c => {
+      if (c) setCatalogo(c);
+    });
   }, []);
 
   const showToast = (msg) => {
@@ -78,6 +100,89 @@ export default function VentasAlimentos({ isDark, settings }) {
     } else {
       prompt('Copia el siguiente enlace para vendedores:', url);
     }
+  };
+
+  // Guardar cambios en el catálogo
+  const handleSaveCatalogo = async (newConfig) => {
+    setCatalogo(newConfig);
+    setCatalogoSaving(true);
+    try {
+      await saveLocalCatalogo(newConfig);
+      showToast('¡Configuración de catálogo guardada con éxito!');
+    } catch (err) {
+      console.error('Error guardando catalogo:', err);
+      showToast('Error al guardar catálogo.');
+    } finally {
+      setCatalogoSaving(false);
+    }
+  };
+
+  // Agregar nuevo plato
+  const handleAddPlato = (e) => {
+    e.preventDefault();
+    if (!nuevoPlato.nombre.trim() || !nuevoPlato.precio) {
+      alert('Nombre y precio unitario son obligatorios.');
+      return;
+    }
+    const item = {
+      id: `prod_${Date.now()}`,
+      nombre: nuevoPlato.nombre.trim(),
+      precio: parseFloat(nuevoPlato.precio) || 35,
+      descripcion: nuevoPlato.descripcion.trim(),
+      icono: nuevoPlato.icono || '🍛',
+      activo: true,
+    };
+    const updated = {
+      ...catalogo,
+      productos: [...(catalogo.productos || []), item],
+    };
+    handleSaveCatalogo(updated);
+    setNuevoPlato({ nombre: '', precio: 35, descripcion: '', icono: '🍛' });
+  };
+
+  // Eliminar plato
+  const handleDeletePlato = (id) => {
+    if (catalogo.productos.length <= 1) {
+      alert('Debe existir al menos un plato principal en el catálogo.');
+      return;
+    }
+    const updated = {
+      ...catalogo,
+      productos: catalogo.productos.filter(p => p.id !== id),
+    };
+    handleSaveCatalogo(updated);
+  };
+
+  // Agregar nuevo paquete / combo
+  const handleAddPaquete = (e) => {
+    e.preventDefault();
+    if (!nuevoPaquete.nombre.trim() || !nuevoPaquete.unidades || !nuevoPaquete.precio) {
+      alert('Nombre, unidades y precio son obligatorios.');
+      return;
+    }
+    const item = {
+      id: `pack_${Date.now()}`,
+      nombre: nuevoPaquete.nombre.trim(),
+      unidades: parseInt(nuevoPaquete.unidades) || 3,
+      precio: parseFloat(nuevoPaquete.precio) || 100,
+      badge: nuevoPaquete.badge.trim() || 'Promo',
+      activo: true,
+    };
+    const updated = {
+      ...catalogo,
+      paquetes: [...(catalogo.paquetes || []), item],
+    };
+    handleSaveCatalogo(updated);
+    setNuevoPaquete({ nombre: '', unidades: 3, precio: 100, badge: 'Promo Ahorro' });
+  };
+
+  // Eliminar paquete
+  const handleDeletePaquete = (id) => {
+    const updated = {
+      ...catalogo,
+      paquetes: catalogo.paquetes.filter(p => p.id !== id),
+    };
+    handleSaveCatalogo(updated);
   };
 
   // Marcar crédito / fiado como pagado
@@ -123,9 +228,10 @@ export default function VentasAlimentos({ isDark, settings }) {
       return;
     }
 
-    const { packs3, sueltas, subtotal } = calcularPrecioOptimo(cantidad);
+    const calc = calcularPrecioDinamico(cantidad, catalogo);
     const extraDel = tipoEntrega === 'delivery_pagado' ? (parseFloat(costoDeliveryCliente) || 0) : 0;
-    const total = subtotal + extraDel;
+    const total = calc.subtotal + extraDel;
+    const packCount = (calc.packsAplicados && calc.packsAplicados.length > 0) ? calc.packsAplicados[0].count : 0;
 
     setSavingVenta(true);
     try {
@@ -136,9 +242,9 @@ export default function VentasAlimentos({ isDark, settings }) {
         cliente_telefono: clienteTelefono.trim(),
         vendedor_nombre: vendedorNombre.trim(),
         cantidad_unidades: cantidad,
-        paquetes_3: packs3,
-        unidades_sueltas: sueltas,
-        monto_subtotal: subtotal,
+        paquetes_3: packCount,
+        unidades_sueltas: calc.sueltas || 0,
+        monto_subtotal: calc.subtotal,
         monto_total: total,
         metodo_pago: metodoPago,
         es_credito: metodoPago === 'credito',
@@ -234,11 +340,9 @@ export default function VentasAlimentos({ isDark, settings }) {
     });
   }, [ventas, searchQuery, filtroEstado, filtroVendedor]);
 
-  const { packs3: modalPacks, sueltas: modalSueltas, subtotal: modalSubtotal } = useMemo(
-    () => calcularPrecioOptimo(cantidad), [cantidad]
-  );
+  const modalCalc = useMemo(() => calcularPrecioDinamico(cantidad, catalogo), [cantidad, catalogo]);
   const modalDeliveryExtra = tipoEntrega === 'delivery_pagado' ? (parseFloat(costoDeliveryCliente) || 0) : 0;
-  const modalTotal = modalSubtotal + modalDeliveryExtra;
+  const modalTotal = modalCalc.subtotal + modalDeliveryExtra;
 
   return (
     <div className="flex flex-col h-full w-full animate-in fade-in duration-300 p-2 md:p-6 space-y-6">
@@ -251,8 +355,8 @@ export default function VentasAlimentos({ isDark, settings }) {
         </div>
       )}
 
-      {/* ─── CABECERA PRINCIPAL ─── */}
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* ─── CABECERA PRINCIPAL LIQUID GLASS ─── */}
+      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-neutral-950 font-black shadow-lg shadow-emerald-500/20">
@@ -263,313 +367,565 @@ export default function VentasAlimentos({ isDark, settings }) {
                 Ventas de Alimentos & Tickets
               </h1>
               <p style={{ color: t.textDim }} className="text-xs font-semibold mt-1 m-0">
-                Control de preventa, vendedores en campo, delivery y cobranza de fiados
+                Gestión integral de preventa, catálogo dinámico, vendedores y fiados
               </p>
             </div>
           </div>
         </div>
 
-        {/* Botones de Cabecera */}
+        {/* Botones de Cabecera y Selector de Pestañas */}
         <div className="flex items-center gap-2 w-full md:w-auto flex-wrap">
+          {/* Switcher de Sub-Pestañas */}
+          <div className="flex p-1 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl">
+            <button
+              onClick={() => setTabActual('ventas')}
+              className={`py-2 px-3.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                tabActual === 'ventas' ? 'bg-emerald-500 text-neutral-950 shadow-md' : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <UtensilsCrossed size={14} /> Panel Ventas
+            </button>
+            <button
+              onClick={() => setTabActual('catalogo')}
+              className={`py-2 px-3.5 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
+                tabActual === 'catalogo' ? 'bg-sky-500 text-neutral-950 shadow-md' : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <Settings size={14} /> Catálogo & Paquetes
+            </button>
+          </div>
+
           {/* Botón Copiar Enlace Vendedores */}
           <button
             onClick={handleCopyFieldLink}
             style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}
-            className="flex-1 md:flex-initial py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/[0.08] transition-all shadow-sm"
-            title="Copiar enlace restringido para vendedores en la calle"
+            className="py-2.5 px-3.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 hover:bg-white/[0.08] transition-all shadow-sm backdrop-blur-xl"
+            title="Copiar enlace restringido para vendedores en la calle (/ventas-campo)"
           >
             <Share2 size={15} className="text-emerald-400" />
-            <span>Enlace Vendedores</span>
+            <span className="hidden sm:inline">Enlace Campo</span>
           </button>
 
           {/* Botón Nueva Venta Manual */}
           <button
             onClick={() => setShowModal(true)}
-            className="flex-1 md:flex-initial py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+            className="py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
           >
             <Plus size={16} strokeWidth={3} />
             <span>Nueva Venta</span>
           </button>
-
-          {/* Botón Refrescar */}
-          <button
-            onClick={fetchVentas}
-            style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.textDim }}
-            className="p-2.5 rounded-xl hover:text-white transition-all"
-            title="Recargar datos"
-          >
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-          </button>
         </div>
       </header>
 
-      {/* ─── INDICADORES FINANCIEROS (CUADRÍCULA 2X2) ─── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }} className="p-4 rounded-2xl space-y-1 shadow-sm">
-          <div className="flex items-center justify-between text-neutral-400">
-            <span className="text-[10px] font-black uppercase tracking-wider">Total Recaudado</span>
-            <DollarSign size={16} className="text-emerald-400" />
-          </div>
-          <p className="text-2xl font-black font-mono text-emerald-400 m-0">
-            {stats.totalRecaudado.toLocaleString()} <span className="text-xs text-neutral-400">BOB</span>
-          </p>
-          <span className="text-[10px] text-neutral-500 font-bold">Efectivo + QR cobrado</span>
-        </div>
+      {tabActual === 'ventas' ? (
+        <>
+          {/* ─── INDICADORES FINANCIEROS (4 KPIs EN 1 FILA COMPACTA) ─── */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div
+              className="p-4 rounded-2xl space-y-1 shadow-sm transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div className="flex items-center justify-between text-neutral-400">
+                <span className="text-[10px] font-black uppercase tracking-wider">Total Recaudado</span>
+                <DollarSign size={16} className="text-emerald-400" />
+              </div>
+              <p className="text-2xl font-black font-mono text-emerald-400 m-0">
+                {stats.totalRecaudado.toLocaleString()} <span className="text-xs text-neutral-400">BOB</span>
+              </p>
+              <span className="text-[10px] text-neutral-500 font-bold">Efectivo + QR cobrado</span>
+            </div>
 
-        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }} className="p-4 rounded-2xl space-y-1 shadow-sm">
-          <div className="flex items-center justify-between text-neutral-400">
-            <span className="text-[10px] font-black uppercase tracking-wider">Platos Vendidos</span>
-            <UtensilsCrossed size={16} className="text-sky-400" />
-          </div>
-          <p className="text-2xl font-black font-mono text-white m-0">
-            {stats.totalPlatos.toLocaleString()} <span className="text-xs text-neutral-400">unidades</span>
-          </p>
-          <span className="text-[10px] text-neutral-500 font-bold">Promo 3x100 Bs & 1x35 Bs</span>
-        </div>
+            <div
+              className="p-4 rounded-2xl space-y-1 shadow-sm transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div className="flex items-center justify-between text-neutral-400">
+                <span className="text-[10px] font-black uppercase tracking-wider">Platos Vendidos</span>
+                <UtensilsCrossed size={16} className="text-sky-400" />
+              </div>
+              <p className="text-2xl font-black font-mono text-white m-0">
+                {stats.totalPlatos.toLocaleString()} <span className="text-xs text-neutral-400">unidades</span>
+              </p>
+              <span className="text-[10px] text-neutral-500 font-bold">Total despachado</span>
+            </div>
 
-        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }} className="p-4 rounded-2xl space-y-1 shadow-sm">
-          <div className="flex items-center justify-between text-neutral-400">
-            <span className="text-[10px] font-black uppercase tracking-wider">Fiados Pendientes</span>
-            <HeartHandshake size={16} className="text-amber-400" />
-          </div>
-          <p className="text-2xl font-black font-mono text-amber-400 m-0">
-            {stats.totalFiadoPendiente.toLocaleString()} <span className="text-xs text-neutral-400">BOB</span>
-          </p>
-          <span className="text-[10px] text-neutral-500 font-bold">Créditos por cobrar</span>
-        </div>
+            <div
+              className="p-4 rounded-2xl space-y-1 shadow-sm transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div className="flex items-center justify-between text-neutral-400">
+                <span className="text-[10px] font-black uppercase tracking-wider">Fiados Pendientes</span>
+                <HeartHandshake size={16} className="text-amber-400" />
+              </div>
+              <p className="text-2xl font-black font-mono text-amber-400 m-0">
+                {stats.totalFiadoPendiente.toLocaleString()} <span className="text-xs text-neutral-400">BOB</span>
+              </p>
+              <span className="text-[10px] text-neutral-500 font-bold">Créditos por cobrar</span>
+            </div>
 
-        <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }} className="p-4 rounded-2xl space-y-1 shadow-sm">
-          <div className="flex items-center justify-between text-neutral-400">
-            <span className="text-[10px] font-black uppercase tracking-wider">Deliveries</span>
-            <Truck size={16} className="text-purple-400" />
+            <div
+              className="p-4 rounded-2xl space-y-1 shadow-sm transition-all"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div className="flex items-center justify-between text-neutral-400">
+                <span className="text-[10px] font-black uppercase tracking-wider">Deliveries</span>
+                <Truck size={16} className="text-purple-400" />
+              </div>
+              <p className="text-2xl font-black font-mono text-purple-400 m-0">
+                {stats.totalCostoDelivery.toLocaleString()} <span className="text-xs text-neutral-400">BOB</span>
+              </p>
+              <span className="text-[10px] text-neutral-500 font-bold">Costo logístico global</span>
+            </div>
           </div>
-          <p className="text-2xl font-black font-mono text-purple-400 m-0">
-            {stats.totalCostoDelivery.toLocaleString()} <span className="text-xs text-neutral-400">BOB</span>
-          </p>
-          <span className="text-[10px] text-neutral-500 font-bold">Costo logístico global</span>
-        </div>
-      </div>
 
-      {/* ─── FILTROS Y BÚSQUEDA ─── */}
-      <div className="space-y-3">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          {/* Buscador minimalista sin lupa */}
-          <div className="relative flex-1 max-w-md">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Buscar por cliente, vendedor o # ticket..."
-              style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}
-              className="w-full px-4 py-2.5 rounded-xl text-xs placeholder-neutral-500 focus:border-emerald-500 outline-none transition-all shadow-inner"
-            />
-            {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1">
-                <X size={14} />
-              </button>
+          {/* ─── FILTROS Y BÚSQUEDA MINIMALISTA ─── */}
+          <div className="space-y-3">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              {/* Buscador minimalista sin lupa */}
+              <div className="relative flex-1 max-w-md">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Buscar por cliente, vendedor o # ticket..."
+                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}
+                  className="w-full px-4 py-2.5 rounded-xl text-xs placeholder-neutral-500 focus:border-emerald-500 outline-none transition-all shadow-inner"
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Filtro por Vendedor */}
+              {vendedoresList.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-neutral-400">Vendedor:</span>
+                  <select
+                    value={filtroVendedor}
+                    onChange={e => setFiltroVendedor(e.target.value)}
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}
+                    className="px-3 py-2 rounded-xl text-xs font-semibold outline-none"
+                  >
+                    <option value="todos">Todos los vendedores</option>
+                    {vendedoresList.map(v => (
+                      <option key={v} value={v}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            {/* Chips de Filtro Rápido en 1 Sola Línea Continua */}
+            <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none py-1 w-full">
+              {[
+                { id: 'todos', label: `Todos (${ventas.length})` },
+                { id: 'pagados', label: `Pagados (${ventas.filter(v => !v.es_credito || v.estado_credito === 'pagado').length})` },
+                { id: 'fiados', label: `Fiados Pendientes (${ventas.filter(v => v.es_credito && v.estado_credito === 'pendiente').length})` },
+                { id: 'delivery', label: `Con Delivery (${ventas.filter(v => v.tipo_entrega !== 'recojo').length})` },
+              ].map(chip => (
+                <button
+                  key={chip.id}
+                  onClick={() => setFiltroEstado(chip.id)}
+                  className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all border shrink-0 ${
+                    filtroEstado === chip.id
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
+                      : 'bg-white/[0.02] hover:bg-white/[0.05] text-neutral-400 border-white/[0.06]'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ─── LISTADO DE VENTAS / TICKETS ─── */}
+          <div
+            className="rounded-2xl overflow-hidden shadow-2xl transition-all"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            {loading ? (
+              <div className="p-12 text-center text-neutral-400 text-xs">
+                <RefreshCw size={24} className="animate-spin mx-auto mb-2 text-emerald-400" />
+                Cargando tickets de venta...
+              </div>
+            ) : ventasFiltradas.length === 0 ? (
+              <div className="p-12 text-center text-neutral-500 text-xs space-y-2">
+                <UtensilsCrossed size={32} className="mx-auto opacity-30 text-neutral-400" />
+                <p className="m-0 font-semibold">No se encontraron registros de ventas.</p>
+                <p className="text-[10px] text-neutral-600 m-0">Comparte el enlace /ventas-campo con tus vendedores o registra una venta con el botón superior.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr style={{ borderBottom: `1px solid ${t.border}` }} className="text-[10px] uppercase font-black tracking-wider text-neutral-400 bg-white/[0.01]">
+                      <th className="py-3 px-4">Ticket / Fecha</th>
+                      <th className="py-3 px-4">Cliente / Contacto</th>
+                      <th className="py-3 px-4">Vendedor</th>
+                      <th className="py-3 px-4">Pedido / Entrega</th>
+                      <th className="py-3 px-4 text-right">Total</th>
+                      <th className="py-3 px-4 text-center">Estado / Pago</th>
+                      <th className="py-3 px-4 text-right">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/[0.04] text-xs">
+                    {ventasFiltradas.map(v => {
+                      const esFiadoPendiente = v.es_credito && v.estado_credito === 'pendiente';
+                      return (
+                        <tr key={v.id} className="hover:bg-white/[0.02] transition-colors">
+                          {/* Ticket / Fecha */}
+                          <td className="py-3.5 px-4">
+                            <span className="font-mono font-bold text-white block">#{v.numero_ticket || 'TICK'}</span>
+                            <span className="text-[10px] text-neutral-500">
+                              {new Date(v.created_at || Date.now()).toLocaleDateString([], { day: '2-digit', month: 'short' })} · {new Date(v.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </td>
+
+                          {/* Cliente */}
+                          <td className="py-3.5 px-4">
+                            <span className="font-bold text-white block">{v.cliente_nombre}</span>
+                            {v.cliente_telefono && (
+                              <span className="text-[10px] text-neutral-400 font-mono flex items-center gap-1">
+                                <Smartphone size={10} /> {v.cliente_telefono}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Vendedor */}
+                          <td className="py-3.5 px-4">
+                            <span className="px-2 py-0.5 rounded-lg bg-white/[0.06] text-neutral-300 text-[11px] font-semibold">
+                              {v.vendedor_nombre}
+                            </span>
+                          </td>
+
+                          {/* Pedido / Entrega */}
+                          <td className="py-3.5 px-4">
+                            <span className="font-bold text-white block">
+                              {v.cantidad_unidades} plato(s) {v.paquetes_3 > 0 && `(${v.paquetes_3} pack)`}
+                            </span>
+                            <span className="text-[10px] text-neutral-400 flex items-center gap-1 mt-0.5">
+                              {v.tipo_entrega === 'recojo' ? (
+                                <><MapPin size={10} /> Recojo</>
+                              ) : (
+                                <><Truck size={10} className="text-purple-400" /> Delivery {v.costo_delivery_cliente > 0 ? `(+${v.costo_delivery_cliente} Bs)` : '(Gratis)'}</>
+                              )}
+                            </span>
+                            {v.direccion_entrega && (
+                              <span className="text-[9px] text-neutral-500 block truncate max-w-[180px]">
+                                {v.direccion_entrega}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Total */}
+                          <td className="py-3.5 px-4 text-right">
+                            <span className="font-black font-mono text-sm text-emerald-400 block">
+                              {v.monto_total} BOB
+                            </span>
+                          </td>
+
+                          {/* Estado / Pago */}
+                          <td className="py-3.5 px-4 text-center">
+                            {esFiadoPendiente ? (
+                              <div className="inline-flex flex-col items-center">
+                                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase">
+                                  Fiado Pendiente
+                                </span>
+                                <span className="text-[9px] text-amber-400/80 mt-0.5">
+                                  Aut: {v.hermano_autoriza}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-[10px] font-black uppercase">
+                                {v.es_credito ? 'Fiado Pagado' : v.metodo_pago === 'qr_transferencia' ? 'QR / Transf' : 'Efectivo'}
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Acciones */}
+                          <td className="py-3.5 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Botón Marcar Pagado si es fiado pendiente */}
+                              {esFiadoPendiente && (
+                                <button
+                                  onClick={() => handleMarcarPagado(v)}
+                                  className="py-1 px-2.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-black flex items-center gap-1 border border-emerald-500/30 transition-all"
+                                  title="Marcar crédito como cobrado"
+                                >
+                                  <Check size={12} /> Cobrar
+                                </button>
+                              )}
+
+                              {/* WhatsApp */}
+                              {v.cliente_telefono && (
+                                <button
+                                  onClick={() => {
+                                    const phone = (v.cliente_telefono || '').replace(/\D/g, '');
+                                    const text = `🎟️ *COMPROBANTE TICKET #${v.numero_ticket}*\n👤 Cliente: ${v.cliente_nombre}\n🍽️ Pedido: ${v.cantidad_unidades} plato(s)\n💰 Total: *${v.monto_total} BOB*\n💳 Pago: ${v.es_credito ? 'Fiado (Autorizado por ' + v.hermano_autoriza + ')' : v.metodo_pago}`;
+                                    window.open(`https://wa.me/${phone.startsWith('591') ? phone : '591' + phone}?text=${encodeURIComponent(text)}`, '_blank');
+                                  }}
+                                  className="p-1.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400"
+                                  title="Enviar comprobante WhatsApp"
+                                >
+                                  <Smartphone size={14} />
+                                </button>
+                              )}
+
+                              {/* Eliminar */}
+                              <button
+                                onClick={() => handleDeleteVenta(v)}
+                                className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
+                                title="Eliminar registro"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
-
-          {/* Filtro por Vendedor */}
-          {vendedoresList.length > 0 && (
+        </>
+      ) : (
+        /* ─── 9. MÓDULO DE GESTIÓN DE CATÁLOGO & PAQUETES DINÁMICOS ─── */
+        <div className="space-y-6 animate-in fade-in">
+          <div className="p-4 rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-bold text-neutral-400">Vendedor:</span>
-              <select
-                value={filtroVendedor}
-                onChange={e => setFiltroVendedor(e.target.value)}
-                style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, color: t.text }}
-                className="px-3 py-2 rounded-xl text-xs font-semibold outline-none"
-              >
-                <option value="todos">Todos los vendedores</option>
-                {vendedoresList.map(v => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-              </select>
+              <Sparkles size={18} className="text-sky-400" />
+              <span>
+                Cualquier plato o paquete que configures aquí se reflejará en tiempo real en el portal de vendedores en campo (<strong>/ventas-campo</strong>).
+              </span>
             </div>
-          )}
-        </div>
-
-        {/* Chips de Filtro Rápido */}
-        <div className="flex flex-wrap items-center gap-2">
-          {[
-            { id: 'todos', label: `Todos (${ventas.length})` },
-            { id: 'pagados', label: `Pagados (${ventas.filter(v => !v.es_credito || v.estado_credito === 'pagado').length})` },
-            { id: 'fiados', label: `Fiados Pendientes (${ventas.filter(v => v.es_credito && v.estado_credito === 'pendiente').length})` },
-            { id: 'delivery', label: `Con Delivery (${ventas.filter(v => v.tipo_entrega !== 'recojo').length})` },
-          ].map(chip => (
-            <button
-              key={chip.id}
-              onClick={() => setFiltroEstado(chip.id)}
-              className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all border ${
-                filtroEstado === chip.id
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
-                  : 'bg-white/[0.02] hover:bg-white/[0.05] text-neutral-400 border-white/[0.06]'
-              }`}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ─── LISTADO DE VENTAS / TICKETS ─── */}
-      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }} className="rounded-2xl overflow-hidden shadow-lg">
-        {loading ? (
-          <div className="p-12 text-center text-neutral-400 text-xs">
-            <RefreshCw size={24} className="animate-spin mx-auto mb-2 text-emerald-400" />
-            Cargando tickets de venta...
+            {catalogoSaving && <span className="font-bold text-sky-400 animate-pulse">Guardando...</span>}
           </div>
-        ) : ventasFiltradas.length === 0 ? (
-          <div className="p-12 text-center text-neutral-500 text-xs space-y-2">
-            <UtensilsCrossed size={32} className="mx-auto opacity-30 text-neutral-400" />
-            <p className="m-0 font-semibold">No se encontraron registros de ventas.</p>
-            <p className="text-[10px] text-neutral-600 m-0">Comparte el enlace con tus vendedores o registra una venta con el botón superior.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr style={{ borderBottom: `1px solid ${t.border}` }} className="text-[10px] uppercase font-black tracking-wider text-neutral-400 bg-white/[0.01]">
-                  <th className="py-3 px-4">Ticket / Fecha</th>
-                  <th className="py-3 px-4">Cliente / Contacto</th>
-                  <th className="py-3 px-4">Vendedor</th>
-                  <th className="py-3 px-4">Pedido / Entrega</th>
-                  <th className="py-3 px-4 text-right">Total</th>
-                  <th className="py-3 px-4 text-center">Estado / Pago</th>
-                  <th className="py-3 px-4 text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/[0.04] text-xs">
-                {ventasFiltradas.map(v => {
-                  const esFiadoPendiente = v.es_credito && v.estado_credito === 'pendiente';
-                  return (
-                    <tr key={v.id} className="hover:bg-white/[0.02] transition-colors">
-                      {/* Ticket / Fecha */}
-                      <td className="py-3.5 px-4">
-                        <span className="font-mono font-bold text-white block">#{v.numero_ticket || 'TICK'}</span>
-                        <span className="text-[10px] text-neutral-500">
-                          {new Date(v.created_at || Date.now()).toLocaleDateString([], { day: '2-digit', month: 'short' })} · {new Date(v.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </td>
 
-                      {/* Cliente */}
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-white block">{v.cliente_nombre}</span>
-                        {v.cliente_telefono && (
-                          <span className="text-[10px] text-neutral-400 font-mono flex items-center gap-1">
-                            <Smartphone size={10} /> {v.cliente_telefono}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Vendedor */}
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-lg bg-white/[0.06] text-neutral-300 text-[11px] font-semibold">
-                          {v.vendedor_nombre}
-                        </span>
-                      </td>
-
-                      {/* Pedido / Entrega */}
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-white block">
-                          {v.cantidad_unidades} plato(s) {v.paquetes_3 > 0 && `(${v.paquetes_3} pack)`}
-                        </span>
-                        <span className="text-[10px] text-neutral-400 flex items-center gap-1 mt-0.5">
-                          {v.tipo_entrega === 'recojo' ? (
-                            <><MapPin size={10} /> Recojo</>
-                          ) : (
-                            <><Truck size={10} className="text-purple-400" /> Delivery {v.costo_delivery_cliente > 0 ? `(+${v.costo_delivery_cliente} Bs)` : '(Gratis)'}</>
-                          )}
-                        </span>
-                        {v.direccion_entrega && (
-                          <span className="text-[9px] text-neutral-500 block truncate max-w-[180px]">
-                            {v.direccion_entrega}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Total */}
-                      <td className="py-3.5 px-4 text-right">
-                        <span className="font-black font-mono text-sm text-emerald-400 block">
-                          {v.monto_total} BOB
-                        </span>
-                      </td>
-
-                      {/* Estado / Pago */}
-                      <td className="py-3.5 px-4 text-center">
-                        {esFiadoPendiente ? (
-                          <div className="inline-flex flex-col items-center">
-                            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-black uppercase">
-                              Fiado Pendiente
-                            </span>
-                            <span className="text-[9px] text-amber-400/80 mt-0.5">
-                              Aut: {v.hermano_autoriza}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-[10px] font-black uppercase">
-                            {v.es_credito ? 'Fiado Pagado' : v.metodo_pago === 'qr_transferencia' ? 'QR / Transf' : 'Efectivo'}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Acciones */}
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Botón Marcar Pagado si es fiado pendiente */}
-                          {esFiadoPendiente && (
-                            <button
-                              onClick={() => handleMarcarPagado(v)}
-                              className="py-1 px-2.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 text-[10px] font-black flex items-center gap-1 border border-emerald-500/30 transition-all"
-                              title="Marcar crédito como cobrado"
-                            >
-                              <Check size={12} /> Cobrar
-                            </button>
-                          )}
-
-                          {/* WhatsApp */}
-                          {v.cliente_telefono && (
-                            <button
-                              onClick={() => {
-                                const phone = (v.cliente_telefono || '').replace(/\D/g, '');
-                                const text = `Hola ${v.cliente_nombre}, te confirmamos tu ticket #${v.numero_ticket} por ${v.cantidad_unidades} plato(s). Total: ${v.monto_total} BOB.`;
-                                window.open(`https://wa.me/${phone.startsWith('591') ? phone : '591' + phone}?text=${encodeURIComponent(text)}`, '_blank');
-                              }}
-                              className="p-1.5 rounded-lg bg-green-500/10 hover:bg-green-500/20 text-green-400"
-                              title="Enviar mensaje WhatsApp"
-                            >
-                              <Smartphone size={14} />
-                            </button>
-                          )}
-
-                          {/* Eliminar */}
-                          <button
-                            onClick={() => handleDeleteVenta(v)}
-                            className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400"
-                            title="Eliminar registro"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* ─── MODAL DE REGISTRO MANUAL ─── */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div style={{ backgroundColor: '#141418', borderColor: t.border }} className="w-full max-w-md rounded-3xl border p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
+            {/* SECCIÓN 1: PLATOS INDIVIDUALES */}
+            <div
+              className="p-5 rounded-2xl space-y-4 shadow-xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <UtensilsCrossed size={18} className="text-emerald-400" />
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider m-0">
+                    Platos Individuales ({catalogo.productos?.length || 0})
+                  </h3>
+                </div>
+              </div>
+
+              {/* Lista de Platos */}
+              <div className="space-y-2.5">
+                {(catalogo.productos || []).map((p) => (
+                  <div
+                    key={p.id}
+                    className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] flex items-center justify-between gap-3"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-xl">{p.icono || '🍛'}</span>
+                      <div>
+                        <p className="text-xs font-black text-white m-0 truncate">{p.nombre}</p>
+                        <p className="text-[10px] text-neutral-400 m-0">{p.descripcion || 'Plato estándar'}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-sm font-black font-mono text-emerald-400">{p.precio} BOB</span>
+                      <button
+                        onClick={() => handleDeletePlato(p.id)}
+                        className="text-neutral-500 hover:text-red-400 p-1"
+                        title="Eliminar plato"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Formulario Agregar Plato */}
+              <form onSubmit={handleAddPlato} className="pt-3 border-t border-white/[0.06] space-y-3">
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block">
+                  + Agregar Nuevo Plato
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nombre del plato..."
+                    value={nuevoPlato.nombre}
+                    onChange={e => setNuevoPlato({ ...nuevoPlato, nombre: e.target.value })}
+                    className="col-span-2 px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white outline-none"
+                  />
+                  <input
+                    type="number"
+                    required
+                    placeholder="Precio (Bs)"
+                    value={nuevoPlato.precio}
+                    onChange={e => setNuevoPlato({ ...nuevoPlato, precio: e.target.value })}
+                    className="px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white font-mono outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md"
+                >
+                  <Plus size={15} strokeWidth={3} /> Agregar Plato al Catálogo
+                </button>
+              </form>
+            </div>
+
+            {/* SECCIÓN 2: PAQUETES & COMBOS PROMOCIONALES */}
+            <div
+              className="p-5 rounded-2xl space-y-4 shadow-xl"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <Package size={18} className="text-amber-400" />
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider m-0">
+                    Paquetes & Combos ({catalogo.paquetes?.length || 0})
+                  </h3>
+                </div>
+              </div>
+
+              {/* Lista de Paquetes */}
+              <div className="space-y-2.5">
+                {(catalogo.paquetes || []).map((pkg) => (
+                  <div
+                    key={pkg.id}
+                    className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-black text-white m-0 truncate">{pkg.nombre}</p>
+                        {pkg.badge && (
+                          <span className="text-[8px] font-black px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            {pkg.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-neutral-400 m-0">Contiene {pkg.unidades} platos</p>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-sm font-black font-mono text-amber-400">{pkg.precio} BOB</span>
+                      <button
+                        onClick={() => handleDeletePaquete(pkg.id)}
+                        className="text-neutral-500 hover:text-red-400 p-1"
+                        title="Eliminar paquete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Formulario Agregar Paquete */}
+              <form onSubmit={handleAddPaquete} className="pt-3 border-t border-white/[0.06] space-y-3">
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block">
+                  + Agregar Nuevo Paquete Promocional
+                </span>
+                <input
+                  type="text"
+                  required
+                  placeholder="Nombre (ej: Combo Familiar de 3)..."
+                  value={nuevoPaquete.nombre}
+                  onChange={e => setNuevoPaquete({ ...nuevoPaquete, nombre: e.target.value })}
+                  className="w-full px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white outline-none"
+                />
+                <div className="grid grid-cols-3 gap-2">
+                  <input
+                    type="number"
+                    required
+                    placeholder="Unidades (ej: 3)"
+                    value={nuevoPaquete.unidades}
+                    onChange={e => setNuevoPaquete({ ...nuevoPaquete, unidades: e.target.value })}
+                    className="px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white font-mono outline-none"
+                  />
+                  <input
+                    type="number"
+                    required
+                    placeholder="Precio Total (Bs)"
+                    value={nuevoPaquete.precio}
+                    onChange={e => setNuevoPaquete({ ...nuevoPaquete, precio: e.target.value })}
+                    className="px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white font-mono outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Etiqueta (-5 Bs)"
+                    value={nuevoPaquete.badge}
+                    onChange={e => setNuevoPaquete({ ...nuevoPaquete, badge: e.target.value })}
+                    className="px-3 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white outline-none"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 font-black text-xs uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-md"
+                >
+                  <Plus size={15} strokeWidth={3} /> Agregar Paquete al Catálogo
+                </button>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ─── MODAL DE REGISTRO MANUAL DE VENTAS ─── */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-md rounded-3xl border border-white/[0.1] p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto"
+            style={{
+              background: '#141418',
+            }}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
                 <UtensilsCrossed size={18} className="text-emerald-400" />
-                <h3 className="text-sm font-black text-white uppercase tracking-wider m-0">Registrar Venta</h3>
+                <h3 className="text-sm font-black text-white uppercase tracking-wider m-0">Registrar Venta de Alimentos</h3>
               </div>
               <button onClick={() => setShowModal(false)} className="text-neutral-400 hover:text-white">
                 <X size={18} />
@@ -578,7 +934,7 @@ export default function VentasAlimentos({ isDark, settings }) {
 
             <form onSubmit={handleSaveManual} className="space-y-3.5">
               
-              {/* Opciones 1x35 y 3x100 */}
+              {/* Opciones del Catálogo */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -586,19 +942,30 @@ export default function VentasAlimentos({ isDark, settings }) {
                   className={`p-2.5 rounded-xl border text-left ${cantidad === 1 ? 'bg-emerald-500/20 border-emerald-500 text-white' : 'bg-black/30 border-white/[0.06] text-neutral-400'}`}
                 >
                   <p className="text-[11px] font-black m-0">1 Unidad</p>
-                  <p className="text-sm font-mono font-black text-emerald-400 m-0">35 Bs</p>
+                  <p className="text-sm font-mono font-black text-emerald-400 m-0">{modalCalc.basePrice || 35} Bs</p>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setCantidad(3)}
-                  className={`p-2.5 rounded-xl border text-left ${cantidad === 3 ? 'bg-emerald-500/20 border-emerald-500 text-white' : 'bg-black/30 border-white/[0.06] text-neutral-400'}`}
-                >
-                  <p className="text-[11px] font-black m-0">Pack de 3</p>
-                  <p className="text-sm font-mono font-black text-amber-400 m-0">100 Bs (-5 Bs)</p>
-                </button>
+                {catalogo.paquetes?.[0] ? (
+                  <button
+                    type="button"
+                    onClick={() => setCantidad(parseInt(catalogo.paquetes[0].unidades) || 3)}
+                    className={`p-2.5 rounded-xl border text-left ${cantidad === parseInt(catalogo.paquetes[0].unidades) ? 'bg-emerald-500/20 border-emerald-500 text-white' : 'bg-black/30 border-white/[0.06] text-neutral-400'}`}
+                  >
+                    <p className="text-[11px] font-black m-0">{catalogo.paquetes[0].nombre}</p>
+                    <p className="text-sm font-mono font-black text-amber-400 m-0">{catalogo.paquetes[0].precio} Bs</p>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setCantidad(3)}
+                    className="p-2.5 rounded-xl border text-left bg-black/30 border-white/[0.06] text-neutral-400"
+                  >
+                    <p className="text-[11px] font-black m-0">3 Unidades</p>
+                    <p className="text-sm font-mono font-black text-amber-400 m-0">105 Bs</p>
+                  </button>
+                )}
               </div>
 
-              {/* Cantidad */}
+              {/* Cantidad Stepper */}
               <div>
                 <label className="text-[9px] font-bold text-neutral-400 uppercase block mb-1">Cantidad de Platos</label>
                 <div className="flex items-center gap-2">
