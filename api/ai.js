@@ -224,7 +224,7 @@ export default async function handler(req, res) {
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${openrouterKey}`,
-            'HTTP-Referer': 'https://sync-pro-os.vercel.app',
+            'HTTP-Referer': 'https://inefablesc.vercel.app',
             'X-Title': 'Inefable'
           },
           body: JSON.stringify({
@@ -255,7 +255,7 @@ export default async function handler(req, res) {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${openrouterKey}`,
-          'HTTP-Referer': 'https://sync-pro-os.vercel.app',
+          'HTTP-Referer': 'https://inefablesc.vercel.app',
           'X-Title': 'Inefable'
         },
         body: JSON.stringify({

@@ -138,7 +138,7 @@ async function fallbackDirectQuery(provider, userKey, model, messages, systemPro
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${cleanKey}`,
-        'HTTP-Referer': 'https://sync-pro-os.vercel.app',
+        'HTTP-Referer': 'https://inefablesc.vercel.app',
         'X-Title': 'Inefable'
       },
       body: JSON.stringify({ model: model || 'google/gemini-2.5-flash', messages })

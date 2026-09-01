@@ -37,9 +37,9 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    const redirectTo = window.location.hostname === 'localhost'
-      ? 'http://localhost:5173'
-      : 'https://sync-pro-os.vercel.app';
+    const redirectTo = typeof window !== 'undefined'
+      ? window.location.origin
+      : 'https://inefablesc.vercel.app';
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',

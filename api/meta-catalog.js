@@ -1,13 +1,13 @@
 // api/meta-catalog.js
 // Función serverless de Vercel — genera el feed XML de productos para Meta Commerce Manager
-// URL pública: https://sync-pro-os.vercel.app/api/meta-catalog
+// URL pública: https://inefablesc.vercel.app/api/meta-catalog
 
 import { createClient } from '@supabase/supabase-js';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const SUPABASE_URL    = process.env.VITE_SUPABASE_URL    || process.env.SUPABASE_URL;
 const SUPABASE_KEY    = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-const CATALOG_BASE_URL = 'https://sync-pro-os.vercel.app';
+const CATALOG_BASE_URL = process.env.APP_URL || 'https://inefablesc.vercel.app';
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
 
