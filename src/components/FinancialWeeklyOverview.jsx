@@ -39,7 +39,7 @@ export const FinancialWeeklyOverview = ({
         className="lg:col-span-8 p-6 rounded-2xl flex flex-col justify-between"
         style={{
           backgroundColor: t.panel,
-          border: '1px solid rgba(255,255,255,0.07)',
+          border: `1px solid ${t.border}`,
           boxShadow: '0 8px 30px rgba(0,0,0,0.25)'
         }}
       >
@@ -155,7 +155,7 @@ export const FinancialWeeklyOverview = ({
             className="flex-1 p-4 rounded-2xl flex items-center justify-between transition-all duration-300 hover:scale-[1.01]"
             style={{
               backgroundColor: t.panel,
-              border: '1px solid rgba(255,255,255,0.07)',
+              border: `1px solid ${t.border}`,
               boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
             }}
           >

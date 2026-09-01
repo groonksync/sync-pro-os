@@ -4,7 +4,7 @@ import {
   ExternalLink, User, CreditCard, ArrowRight, ShieldCheck, CalendarDays, CheckCircle2,
   Check, X, AlertCircle, Trash2, AlertTriangle, Edit3, Search, Eye, EyeOff, Clock,
   MoreHorizontal, Filter, Download, Printer, RefreshCw, TrendingUp, Percent,
-  Heart, BarChart3, PieChart, Wallet, Bookmark, Sun, Moon,
+  BarChart3, PieChart, Wallet, Bookmark, Sun, Moon,
   Zap, Sliders, BadgePercent
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
@@ -792,7 +792,10 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06] mb-4">
+        <div
+          className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl mb-4"
+          style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}
+        >
           {[
             { id: 'abono_capital', label: 'Abono Capital' },
             { id: 'condonar_mora', label: 'Condonar Mora' },
@@ -802,11 +805,12 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
             <button
               key={tab.id}
               onClick={() => setTipoAjuste(tab.id)}
-              className={`py-2 px-1.5 rounded-lg text-[10px] font-bold text-center transition-all ${
-                tipoAjuste === tab.id
-                  ? 'bg-amber-500 text-black shadow-md'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
+              className="py-2 px-1.5 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer"
+              style={{
+                backgroundColor: tipoAjuste === tab.id ? '#f59e0b' : 'transparent',
+                color: tipoAjuste === tab.id ? '#000000' : t.textDim,
+                boxShadow: tipoAjuste === tab.id ? '0 2px 8px rgba(245, 158, 11, 0.3)' : 'none'
+              }}
             >
               {tab.label}
             </button>
@@ -825,7 +829,12 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
                 value={montoAbono}
                 onChange={e => setMontoAbono(e.target.value)}
                 placeholder="Ej: 1000"
-                className="w-full py-2.5 px-3 rounded-lg bg-black/50 border border-white/[0.1] text-white text-base font-mono font-bold outline-none"
+                className="w-full py-2.5 px-3 rounded-lg text-base font-mono font-bold outline-none"
+                style={{
+                  backgroundColor: t.inputBg,
+                  border: `1px solid ${t.borderLight}`,
+                  color: t.text
+                }}
               />
               <div className="flex justify-between items-center text-xs pt-1">
                 <span className="text-neutral-400">Capital Restante:</span>
@@ -854,7 +863,11 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
                 step="0.5"
                 value={nuevaTasa}
                 onChange={e => setNuevaTasa(e.target.value)}
-                className="w-full py-2.5 px-3 rounded-lg bg-black/50 border border-white/[0.1] text-amber-400 text-base font-mono font-bold outline-none"
+                className="w-full py-2.5 px-3 rounded-lg text-amber-400 text-base font-mono font-bold outline-none"
+                style={{
+                  backgroundColor: t.inputBg,
+                  border: `1px solid ${t.borderLight}`
+                }}
               />
               <div className="flex justify-between items-center text-xs pt-1">
                 <span className="text-neutral-400">Nuevo Interés Mensual:</span>
@@ -874,7 +887,12 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
                 type="date"
                 value={nuevaFechaFin}
                 onChange={e => setNuevaFechaFin(e.target.value)}
-                className="w-full py-2.5 px-3 rounded-lg bg-black/50 border border-white/[0.1] text-white text-xs font-mono font-bold outline-none"
+                className="w-full py-2.5 px-3 rounded-lg text-xs font-mono font-bold outline-none"
+                style={{
+                  backgroundColor: t.inputBg,
+                  border: `1px solid ${t.borderLight}`,
+                  color: t.text
+                }}
               />
             </div>
           )}
@@ -888,7 +906,12 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
               value={motivo}
               onChange={e => setMotivo(e.target.value)}
               placeholder="Ej: Descuento acordado / Renovación"
-              className="w-full py-2 px-3 text-xs rounded-lg bg-black/40 border border-white/[0.08] text-neutral-200 outline-none"
+              className="w-full py-2 px-3 text-xs rounded-lg outline-none"
+              style={{
+                backgroundColor: t.inputBg,
+                border: `1px solid ${t.borderLight}`,
+                color: t.text
+              }}
             />
           </div>
 
@@ -899,7 +922,12 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
           <div className="flex gap-2.5 pt-3">
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 rounded-xl border border-white/[0.1] bg-white/[0.04] hover:bg-white/[0.08] text-neutral-300 text-xs font-bold transition-all"
+              className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              style={{
+                backgroundColor: t.surface,
+                border: `1px solid ${t.borderLight}`,
+                color: t.textDim
+              }}
             >
               Cancelar
             </button>
@@ -1646,26 +1674,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
     return Object.values(acum).map(v => ({ ...v, pct: (v.valor / maxVal) * 100 }));
   }, [prestamosList]);
 
-  // Data para donut chart de riesgo
-  const riesgoData = useMemo(() => {
-    const items = [
-      { label: 'Al día', value: totales.alDia, color: '#10b981' },
-      { label: 'Pendientes', value: totales.pendientes, color: '#f59e0b' },
-      { label: '1 mes mora', value: totales.deudor1Mes, color: '#f97316' },
-      { label: 'Crítico', value: totales.deudorCritico, color: '#ef4444' },
-    ];
-    const totalVal = items.reduce((s, i) => s + i.value, 0) || 1;
-    let offset = 0;
-    const circumference = 2 * Math.PI * 38;
-    const segments = items.map(i => {
-      const pct = i.value / totalVal;
-      const segLen = pct * circumference;
-      const seg = { ...i, pct: pct * 100, dashArray: `${segLen} ${circumference - segLen}`, dashOffset: -offset };
-      offset += segLen;
-      return seg;
-    });
-    return { segments, totalVal, items };
-  }, [totales]);
+
 
   // Mapa de mora por préstamo para mostrar en lista
   const moraMap = useMemo(() => {
@@ -1748,14 +1757,18 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               {/* Fila Horizontal Única: Selector de Cartera + Acciones con Iconos Modernos */}
               <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto whitespace-nowrap scrollbar-none py-0.5">
                 {/* Selector de Cartera con Iconos Modernos */}
-                <div className="flex p-1 rounded-xl bg-white/[0.03] border border-white/[0.08] backdrop-blur-xl shrink-0">
+                <div
+                  className="flex p-1 rounded-xl shrink-0"
+                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}
+                >
                   <button
                     onClick={() => setFiltroTipo('otorgado')}
-                    className={`py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
-                      filtroTipo === 'otorgado'
-                        ? 'bg-emerald-500 text-neutral-950 shadow-md'
-                        : 'text-neutral-400 hover:text-white'
-                    }`}
+                    className="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1.5"
+                    style={{
+                      backgroundColor: filtroTipo === 'otorgado' ? '#10b981' : 'transparent',
+                      color: filtroTipo === 'otorgado' ? '#000000' : t.textDim,
+                      boxShadow: filtroTipo === 'otorgado' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none'
+                    }}
                     title="Cartera Otorgada a Clientes"
                   >
                     <TrendingUp size={15} strokeWidth={2.5} />
@@ -1763,11 +1776,12 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                   </button>
                   <button
                     onClick={() => setFiltroTipo('recibido')}
-                    className={`py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 ${
-                      filtroTipo === 'recibido'
-                        ? 'bg-sky-500 text-neutral-950 shadow-md'
-                        : 'text-neutral-400 hover:text-white'
-                    }`}
+                    className="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1.5"
+                    style={{
+                      backgroundColor: filtroTipo === 'recibido' ? '#0284c7' : 'transparent',
+                      color: filtroTipo === 'recibido' ? '#FFFFFF' : t.textDim,
+                      boxShadow: filtroTipo === 'recibido' ? '0 2px 8px rgba(2, 132, 199, 0.3)' : 'none'
+                    }}
                     title="Créditos Recibidos (Banco / Deudas)"
                   >
                     <Wallet size={15} strokeWidth={2.5} />
@@ -1795,7 +1809,12 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     });
                     setPrestamoView('recibos');
                   }}
-                  className="py-2 px-3.5 rounded-xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 backdrop-blur-xl shrink-0"
+                  className="py-2 px-3.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+                  style={{
+                    backgroundColor: t.panel,
+                    border: `1px solid ${t.border}`,
+                    color: t.text
+                  }}
                   title="Emitir Recibo Oficial"
                 >
                   <Printer size={15} />
@@ -1879,11 +1898,9 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                   key={idx}
                   className="p-4 rounded-2xl flex items-center justify-between transition-all duration-300 hover:scale-[1.01]"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.25)'
+                    backgroundColor: t.panel,
+                    border: `1px solid ${t.border}`,
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
                   }}
                 >
                   <div>
@@ -1917,138 +1934,25 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               ))}
             </div>
 
-            {/* 5 & 6. Widget de Salud Financiera & Distribución de Riesgo Liquid Glass */}
-            <div
-              className="p-4 md:p-5 rounded-2xl mb-6 transition-all"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.35)',
-              }}
-            >
-              {/* Cabecera del Widget Integrado */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Heart size={16} color={stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'} />
-                  <span style={{ fontSize: '12px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.text }}>
-                    Salud & Distribución de Riesgo
-                  </span>
-                </div>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '6px',
-                  padding: '4px 12px', borderRadius: '20px',
-                  backgroundColor: stats.indiceSalud >= 70 ? 'rgba(16, 185, 129, 0.15)' : stats.indiceSalud >= 40 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                  border: `1px solid ${stats.indiceSalud >= 70 ? 'rgba(16, 185, 129, 0.35)' : stats.indiceSalud >= 40 ? 'rgba(245, 158, 11, 0.35)' : 'rgba(239, 68, 68, 0.35)'}`
-                }}>
-                  <span style={{
-                    fontSize: '12px', fontWeight: 900,
-                    color: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'
-                  }}>
-                    {stats.indiceSalud.toFixed(0)}%
-                  </span>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: t.textDim }}>
-                    · {stats.indiceSalud >= 80 ? 'Excelente' : stats.indiceSalud >= 60 ? 'Saludable' : stats.indiceSalud >= 40 ? 'En Observación' : 'Riesgo Crítico'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Contenido Visual Integrado Liquid Glass */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                {/* Donut Circular SVG (Columna Izquierda 5/12) */}
-                <div className="md:col-span-5 flex items-center gap-4">
-                  <div style={{ position: 'relative', width: '80px', height: '80px', flexShrink: 0 }}>
-                    <svg width="80" height="80" viewBox="0 0 100 100">
-                      {riesgoData.segments.map((seg, idx) => (
-                        <circle
-                          key={idx}
-                          cx="50" cy="50" r="38"
-                          fill="none"
-                          stroke={seg.color}
-                          strokeWidth="14"
-                          strokeDasharray={seg.dashArray}
-                          strokeDashoffset={seg.dashOffset}
-                          transform="rotate(-90 50 50)"
-                          style={{ transition: 'stroke-dasharray 0.5s ease', filter: `drop-shadow(0 0 4px ${seg.color}40)` }}
-                        />
-                      ))}
-                      <circle cx="50" cy="50" r="26" fill={isDark ? '#141418' : '#F5F5F7'} />
-                      <text x="50" y="47" textAnchor="middle" dominantBaseline="central"
-                        fill={t.text} fontSize="14" fontWeight="900">
-                        {stats.indiceSalud.toFixed(0)}%
-                      </text>
-                      <text x="50" y="59" textAnchor="middle" dominantBaseline="central"
-                        fill={t.textDim} fontSize="7" fontWeight="800">
-                        SALUD
-                      </text>
-                    </svg>
-                  </div>
-
-                  <div className="flex-1 space-y-1.5">
-                    <div className="flex justify-between items-center text-[10px]">
-                      <span style={{ color: t.textDim, fontWeight: 700 }}>Cumplimiento de Cartera</span>
-                      <span style={{ fontWeight: 800, color: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444' }}>
-                        {riesgoData.totalVal} Contratos
-                      </span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{
-                          width: `${Math.min(100, Math.max(5, stats.indiceSalud))}%`,
-                          backgroundColor: stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444',
-                          boxShadow: `0 0 10px ${stats.indiceSalud >= 70 ? '#10b981' : stats.indiceSalud >= 40 ? '#f59e0b' : '#ef4444'}`
-                        }}
-                      />
-                    </div>
-                    <p style={{ fontSize: '9px', color: t.textDim, margin: 0, lineHeight: 1.2 }}>
-                      {stats.indiceSalud >= 70 ? '🟢 Cartera al día y cobros puntuales' : stats.indiceSalud >= 40 ? '🟡 Clientes con atrasos a gestionar' : '🔴 Atención prioritaria en mora'}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Píldoras de Categorías de Riesgo Liquid Glass (Columna Derecha 7/12) */}
-                <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {riesgoData.items.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center gap-2 p-2.5 rounded-xl transition-all"
-                      style={{
-                        background: 'rgba(255,255,255,0.02)',
-                        border: '1px solid rgba(255,255,255,0.06)',
-                        backdropFilter: 'blur(10px)'
-                      }}
-                    >
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}`, flexShrink: 0 }} />
-                      <div className="min-w-0 flex-1">
-                        <p style={{ fontSize: '9px', fontWeight: 700, color: t.textDim, textTransform: 'uppercase', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {item.label}
-                        </p>
-                        <p style={{ fontSize: '13px', fontWeight: 900, color: t.text, margin: 0, lineHeight: 1.1 }}>
-                          {item.value}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* 7 & 2. Barra de Búsqueda Minimalista y Filtros de Estado a Nivel Único */}
+            {/* Barra de Búsqueda Minimalista y Filtros de Estado */}
             <div className="space-y-4 mb-6">
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-                {/* 7. Input de Búsqueda Simplificado (Sin Lupa) */}
+                {/* Input de Búsqueda */}
                 <div className="relative flex-1 max-w-md">
                   <input
                     type="text"
                     value={searchTermDebtor}
                     onChange={e => setSearchTermDebtor(e.target.value)}
                     placeholder="Buscar por cliente, CI o WhatsApp..."
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08] text-xs text-white placeholder-neutral-500 focus:border-emerald-500/60 focus:bg-white/[0.06] outline-none transition-all shadow-inner"
+                    className="w-full px-4 py-2.5 rounded-xl text-xs outline-none transition-all shadow-inner"
+                    style={{
+                      backgroundColor: t.inputBg,
+                      border: `1px solid ${t.borderLight}`,
+                      color: t.text
+                    }}
                   />
                   {searchTermDebtor && (
-                    <button onClick={() => setSearchTermDebtor('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-white p-1">
+                    <button onClick={() => setSearchTermDebtor('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1" style={{ color: t.textDim }}>
                       <X size={14} />
                     </button>
                   )}
@@ -2056,21 +1960,30 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
 
                 {/* Switcher de Vista: Tarjetas vs Tabla */}
                 <div className="flex items-center gap-2 self-end md:self-auto">
-                  <div className="flex p-1 rounded-xl bg-white/[0.04] border border-white/[0.08] backdrop-blur-xl">
+                  <div
+                    className="flex p-1 rounded-xl"
+                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}
+                  >
                     <button
                       onClick={() => setViewDisplayMode('cards')}
-                      className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        viewDisplayMode === 'cards' ? 'bg-white/[0.12] text-white shadow-sm' : 'text-neutral-400 hover:text-white'
-                      }`}
+                      className="py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                      style={{
+                        backgroundColor: viewDisplayMode === 'cards' ? t.accentSoft : 'transparent',
+                        color: viewDisplayMode === 'cards' ? t.text : t.textDim,
+                        border: viewDisplayMode === 'cards' ? `1px solid ${t.borderLight}` : '1px solid transparent'
+                      }}
                       title="Vista Móvil / Tarjetas Inteligentes"
                     >
                       <BarChart3 size={14} /> Tarjetas
                     </button>
                     <button
                       onClick={() => setViewDisplayMode('table')}
-                      className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                        viewDisplayMode === 'table' ? 'bg-white/[0.12] text-white shadow-sm' : 'text-neutral-400 hover:text-white'
-                      }`}
+                      className="py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                      style={{
+                        backgroundColor: viewDisplayMode === 'table' ? t.accentSoft : 'transparent',
+                        color: viewDisplayMode === 'table' ? t.text : t.textDim,
+                        border: viewDisplayMode === 'table' ? `1px solid ${t.borderLight}` : '1px solid transparent'
+                      }}
                       title="Vista Tabla"
                     >
                       <Filter size={14} /> Tabla
@@ -2079,26 +1992,31 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                 </div>
               </div>
 
-              {/* 2. Filtros de Estado a Nivel Único (Una Sola Línea Continua con scroll horizontal suave) */}
+              {/* Filtros de Estado a Nivel Único */}
               <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none py-1 w-full">
                 {[
                   { id: 'todos', label: `Todos (${prestamistasGrouped.length})` },
                   { id: 'activos', label: `Al Día (${prestamistasGrouped.filter(g => g.estado === 'Activo').length})` },
                   { id: 'mora', label: `En Mora (${prestamistasGrouped.filter(g => g.estado === 'En Mora').length})` },
                   { id: 'finalizados', label: `Finalizados (${prestamistasGrouped.filter(g => g.estado === 'Finalizado').length})` }
-                ].map(chip => (
-                  <button
-                    key={chip.id}
-                    onClick={() => setFiltroRapidoEstado(chip.id)}
-                    className={`py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all border shrink-0 ${
-                      filtroRapidoEstado === chip.id
-                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-sm'
-                        : 'bg-white/[0.02] hover:bg-white/[0.05] text-neutral-400 border-white/[0.06]'
-                    }`}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
+                ].map(chip => {
+                  const isSelected = filtroRapidoEstado === chip.id;
+                  return (
+                    <button
+                      key={chip.id}
+                      onClick={() => setFiltroRapidoEstado(chip.id)}
+                      className="py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
+                      style={{
+                        backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : t.panel,
+                        color: isSelected ? '#10b981' : t.textDim,
+                        border: `1px solid ${isSelected ? 'rgba(16, 185, 129, 0.35)' : t.border}`,
+                        boxShadow: isSelected ? '0 2px 8px rgba(16, 185, 129, 0.15)' : 'none'
+                      }}
+                    >
+                      {chip.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -2111,17 +2029,25 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     <div
                       key={g.key}
                       onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
-                      className="p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/[0.08] hover:border-emerald-500/30 transition-all duration-200 cursor-pointer shadow-lg space-y-4 relative group"
+                      className="p-5 rounded-2xl transition-all duration-200 cursor-pointer shadow-lg space-y-4 relative group"
+                      style={{
+                        backgroundColor: t.panel,
+                        border: `1px solid ${t.border}`,
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
+                      }}
                     >
                       {/* Cabecera del Prestatario */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <div className="relative">
-                            <div className="w-12 h-12 rounded-2xl overflow-hidden bg-neutral-800 border border-white/[0.1] flex items-center justify-center shrink-0">
+                            <div
+                              className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center shrink-0"
+                              style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}
+                            >
                               {g.foto ? (
                                 <img src={g.foto} alt="" className="w-full h-full object-cover" />
                               ) : (
-                                <User size={22} className="text-neutral-400" />
+                                <User size={22} color={t.textDim} />
                               )}
                             </div>
                             <span
@@ -2131,10 +2057,10 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                             />
                           </div>
                           <div>
-                            <h3 className="text-sm font-black text-white m-0 group-hover:text-emerald-400 transition-colors">
+                            <h3 className="text-sm font-black m-0 group-hover:text-emerald-400 transition-colors" style={{ color: t.text }}>
                               {g.nombre}
                             </h3>
-                            <p className="text-[11px] text-neutral-400 m-0 mt-0.5 flex items-center gap-2">
+                            <p className="text-[11px] m-0 mt-0.5 flex items-center gap-2" style={{ color: t.textDim }}>
                               {g.ci && <span>CI: {g.ci}</span>}
                               {g.telefono && <span>· Telf: {g.telefono}</span>}
                             </p>
@@ -2144,7 +2070,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                         {/* Badge de Estado */}
                         <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 ${
                           g.estado === 'Finalizado'
-                            ? 'bg-white/[0.06] text-neutral-400 border border-white/[0.08]'
+                            ? 'bg-neutral-500/15 text-neutral-400 border border-neutral-500/30'
                             : g.estado === 'En Mora'
                             ? 'bg-red-500/20 text-red-400 border border-red-500/30'
                             : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
@@ -2154,28 +2080,34 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                       </div>
 
                       {/* Montos y Métricas Principales */}
-                      <div className="grid grid-cols-2 gap-2 p-3 rounded-xl bg-black/40 border border-white/[0.04]">
+                      <div
+                        className="grid grid-cols-2 gap-2 p-3 rounded-xl"
+                        style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}
+                      >
                         <div>
-                          <span className="text-[9px] font-bold uppercase text-neutral-500 tracking-wider">Deuda Activa</span>
-                          <p className="text-base font-black font-mono text-white m-0 mt-0.5">
-                            {(g.totalAdeudado || 0).toLocaleString()} <span className="text-[10px] font-normal text-neutral-400">BOB</span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Deuda Activa</span>
+                          <p className="text-base font-black font-mono m-0 mt-0.5" style={{ color: t.text }}>
+                            {(g.totalAdeudado || 0).toLocaleString()} <span className="text-[10px] font-normal" style={{ color: t.textDim }}>BOB</span>
                           </p>
                         </div>
                         <div className="text-right">
-                          <span className="text-[9px] font-bold uppercase text-neutral-500 tracking-wider">Interés Mensual</span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Interés Mensual</span>
                           <p className="text-base font-black font-mono text-amber-400 m-0 mt-0.5">
-                            +{Math.round(g.interesMensual || 0).toLocaleString()} <span className="text-[10px] font-normal text-neutral-400">BOB</span>
+                            +{Math.round(g.interesMensual || 0).toLocaleString()} <span className="text-[10px] font-normal" style={{ color: t.textDim }}>BOB</span>
                           </p>
                         </div>
                       </div>
 
                       {/* Barra de Progreso de Amortización */}
                       <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-[10px] text-neutral-400">
+                        <div className="flex justify-between items-center text-[10px]" style={{ color: t.textDim }}>
                           <span>{(g.contratos?.length || 0)} {(g.contratos?.length || 0) === 1 ? 'Contrato' : 'Contratos'}</span>
-                          <span className="font-bold font-mono text-neutral-300">{g.progressAmortizado ?? 100}% Amortizado</span>
+                          <span className="font-bold font-mono" style={{ color: t.textSecondary }}>{g.progressAmortizado ?? 100}% Amortizado</span>
                         </div>
-                        <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div
+                          className="w-full h-1.5 rounded-full overflow-hidden"
+                          style={{ backgroundColor: t.surface }}
+                        >
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
                             style={{ width: `${g.progressAmortizado ?? 100}%` }}
@@ -2184,8 +2116,11 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                       </div>
 
                       {/* Barra Horizontal Ergonómica de Acciones Rápidas (Uso a 1 Mano) */}
-                      <div className="pt-2 border-t border-white/[0.06]" onClick={e => e.stopPropagation()}>
-                        <div className="grid grid-cols-5 gap-1.5 p-1 rounded-xl bg-black/40 border border-white/[0.04]">
+                      <div className="pt-2" style={{ borderTop: `1px solid ${t.borderLight}` }} onClick={e => e.stopPropagation()}>
+                        <div
+                          className="grid grid-cols-5 gap-1.5 p-1 rounded-xl"
+                          style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}
+                        >
                           
                           {/* ⚡ 1. Cobro Rápido */}
                           <button
@@ -2273,7 +2208,12 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                               setShowForm(true);
                             }}
                             title="Nuevo Contrato para este deudor"
-                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-white/[0.08] hover:bg-white/[0.15] active:scale-95 text-white border border-white/[0.1] transition-all"
+                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg active:scale-95 transition-all"
+                            style={{
+                              backgroundColor: t.panel,
+                              border: `1px solid ${t.borderLight}`,
+                              color: t.text
+                            }}
                           >
                             <Plus size={15} strokeWidth={2.5} />
                             <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Nuevo</span>
@@ -4220,16 +4160,14 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
   );
 };
 
-// ─── COMPONENTE KPI CARD EJECUTIVO LIQUID GLASS ──────────────────────────
+// ─── COMPONENTE KPI CARD EJECUTIVO ──────────────────────────
 const KPICard = ({ t, icon: Icon, label, value, moneda, color }) => (
   <div
     className="p-4 rounded-2xl transition-all duration-300 relative group overflow-hidden"
     style={{
-      background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+      backgroundColor: t.panel,
+      border: `1px solid ${t.border}`,
+      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>

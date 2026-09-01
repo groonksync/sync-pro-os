@@ -163,12 +163,69 @@ const LoginScreen = ({ onLogin, loading }) => (
   </div>
 );
 
+const ALLOWED_EMAILS = (import.meta.env.VITE_ALLOWED_EMAILS || 'carlosjoelsb@gmail.com')
+  .split(',')
+  .map(e => e.trim().toLowerCase());
+
+const AccessDeniedScreen = ({ userEmail, onSignOut }) => (
+  <div style={{
+    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+    height: '100vh', width: '100vw', backgroundColor: '#0A0A0C', color: '#ECECEE',
+    fontFamily: "'Geist', 'Inter', sans-serif", gap: 24, padding: 24,
+    backgroundImage: 'radial-gradient(ellipse at 50% 50%, rgba(220,38,38,0.1) 0%, transparent 70%)',
+  }}>
+    <div style={{
+      width: 56, height: 56, borderRadius: 16,
+      background: 'rgba(239, 68, 68, 0.1)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      border: '1px solid rgba(239, 68, 68, 0.3)',
+      color: '#EF4444'
+    }}>
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    </div>
+    
+    <div style={{ textAlign: 'center', maxWidth: 440 }}>
+      <h1 style={{
+        fontSize: 20, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '-0.02em',
+        margin: '0 0 8px 0', color: '#ECECEE', fontFamily: "'Space Grotesk', sans-serif",
+      }}>Acceso No Autorizado</h1>
+      <p style={{
+        fontSize: 12, color: '#A0A0A6', lineHeight: '1.6', margin: 0, fontFamily: "'Geist', sans-serif"
+      }}>
+        La cuenta <span style={{ color: '#F87171', fontWeight: 600 }}>{userEmail}</span> no tiene permisos para acceder a esta estación de trabajo privada.
+      </p>
+    </div>
+
+    <button onClick={onSignOut} style={{
+      display: 'flex', alignItems: 'center', gap: 10, padding: '12px 24px',
+      borderRadius: 12, border: '1px solid #33333C', backgroundColor: '#18181D',
+      color: '#ECECEE', cursor: 'pointer',
+      fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
+      transition: 'all 0.2s ease', fontFamily: "'Geist', sans-serif"
+    }}
+    onMouseEnter={e => { e.currentTarget.style.borderColor = '#EF4444'; e.currentTarget.style.backgroundColor = '#201515'; }}
+    onMouseLeave={e => { e.currentTarget.style.borderColor = '#33333C'; e.currentTarget.style.backgroundColor = '#18181D'; }}
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/>
+        <line x1="21" x2="9" y1="12" y2="12"/>
+      </svg>
+      Cerrar sesión / Usar otra cuenta
+    </button>
+  </div>
+);
+
 const AppContent = () => {
   if (!isSupabaseConfigured) {
     return <ConfigMissingScreen />;
   }
 
-  const { session, user, loading, signInWithGoogle } = useAuth();
+  const { session, user, loading, signInWithGoogle, signOut } = useAuth();
+  const isAuthorized = user?.email && ALLOWED_EMAILS.includes(user.email.toLowerCase());
 
   const [activeTab, setActiveTab] = useState('resumen');
   const [meetingsList, setMeetingsList] = useState([]);
@@ -674,6 +731,7 @@ const AppContent = () => {
   }
 
   if (!user) return <LoginScreen onLogin={signInWithGoogle} loading={loading} />;
+  if (!isAuthorized) return <AccessDeniedScreen userEmail={user?.email} onSignOut={signOut} />;
 
   return (
     <div className={`flex flex-col md:flex-row h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
