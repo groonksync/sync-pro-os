@@ -539,63 +539,237 @@ const SistemaGimnasio = ({ settings, isDark }) => {
             </div>
           )}
 
-          {/* CLIENTES */}
+          {/* CLIENTES - CONTROL AVANZADO & MINIMALISTA */}
           {activeSubTab === 'miembros' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-                <div style={{ flex: 1, minWidth: 200, position: 'relative' }}>
-                  <input type="text" placeholder="Buscar cliente..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ ...inputGlassStyle, width: '100%', padding: '8px 32px 8px 12px', color: t.text, outline: 'none', fontSize: 12 }} />
-                  {searchTerm && <button onClick={() => setSearchTerm('')} style={{ position: 'absolute', right: 8, top: 8, background: 'none', border: 'none', color: t.textMuted, cursor: 'pointer' }}><XCircle size={14} /></button>}
+              {/* Barra superior de búsqueda y filtros */}
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', gap: 10, flex: 1, minWidth: 260, alignItems: 'center' }}>
+                  <div style={{ flex: 1, position: 'relative' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Buscar por nombre, teléfono, membresía o grupo..." 
+                      value={searchTerm} 
+                      onChange={e => setSearchTerm(e.target.value)} 
+                      style={{ ...inputGlassStyle, width: '100%', padding: '10px 36px 10px 14px', color: t.text, outline: 'none', fontSize: 13, transition: 'border-color 0.2s' }} 
+                    />
+                    {searchTerm && (
+                      <button 
+                        onClick={() => setSearchTerm('')} 
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: t.textMuted, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                      >
+                        <XCircle size={15} />
+                      </button>
+                    )}
+                  </div>
+                  
+                  <button 
+                    onClick={() => setFilterHealthAlerts(!filterHealthAlerts)} 
+                    style={{ 
+                      padding: '8px 14px', borderRadius: '12px', 
+                      background: filterHealthAlerts ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.03)', 
+                      border: `1px solid ${filterHealthAlerts ? '#F59E0B' : 'rgba(255,255,255,0.08)'}`, 
+                      color: filterHealthAlerts ? '#F59E0B' : t.textMuted, fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s', whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <HeartPulse size={14} color={filterHealthAlerts ? '#F59E0B' : t.textMuted} />
+                    {filterHealthAlerts ? 'Salud: Filtrado' : 'Ficha Salud'}
+                  </button>
                 </div>
-                
-                <button onClick={() => setFilterHealthAlerts(!filterHealthAlerts)} style={{ padding: '6px 12px', borderRadius: 20, background: filterHealthAlerts ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.03)', border: `1px solid ${filterHealthAlerts ? '#F59E0B' : 'rgba(255,255,255,0.08)'}`, color: filterHealthAlerts ? '#F59E0B' : t.textMuted, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                  {filterHealthAlerts ? '♥ Salud Activo' : '♥ Salud'}
-                </button>
 
-                <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', padding: 4, borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
-                  {['Todos', 'Al día', 'Por vencer', 'Vencido'].map(status => (
-                    <button key={status} onClick={() => setFilterPaymentStatus(status)} style={{ padding: '4px 10px', borderRadius: 8, background: filterPaymentStatus === status ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', color: filterPaymentStatus === status ? t.text : t.textMuted, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
-                      {status}
-                    </button>
-                  ))}
+                {/* Chips de Estado */}
+                <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.03)', padding: 4, borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)', overflowX: 'auto' }}>
+                  {[
+                    { id: 'Todos', label: `Todos (${miembros.length})` },
+                    { id: 'Al día', label: `Al Día (${miembrosActivos})`, color: '#10B981' },
+                    { id: 'Por vencer', label: `Por Vencer (${miembrosPorVencer})`, color: '#F59E0B' },
+                    { id: 'Vencido', label: `Vencidos (${miembrosMorosos})`, color: '#EF4444' }
+                  ].map(tab => {
+                    const active = filterPaymentStatus === tab.id;
+                    return (
+                      <button 
+                        key={tab.id} 
+                        onClick={() => setFilterPaymentStatus(tab.id)} 
+                        style={{ 
+                          padding: '6px 12px', borderRadius: 8, 
+                          background: active ? (tab.color ? `${tab.color}20` : 'rgba(255,255,255,0.12)') : 'transparent', 
+                          border: active ? `1px solid ${tab.color || 'rgba(255,255,255,0.2)'}` : '1px solid transparent', 
+                          color: active ? (tab.color || t.text) : t.textMuted, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                          whiteSpace: 'nowrap', transition: 'all 0.2s'
+                        }}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div style={{ ...liquidGlassStyle, borderRadius: 16, overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 12 }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <th style={{ padding: '12px 16px', color: t.textMuted, fontWeight: 600 }}>Cliente</th>
-                      <th style={{ padding: '12px 16px', color: t.textMuted, fontWeight: 600 }}>Plan</th>
-                      <th style={{ padding: '12px 16px', color: t.textMuted, fontWeight: 600 }}>Vence</th>
-                      <th style={{ padding: '12px 16px', color: t.textMuted, fontWeight: 600 }}>Estado</th>
-                      <th style={{ padding: '12px 16px', color: t.textMuted, fontWeight: 600, textAlign: 'right' }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredMiembros.map(m => {
-                      const colors = getStatusColor(m.estadoPago);
-                      return (
-                        <tr key={m.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.02)'} onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                          <td style={{ padding: '12px 16px' }}>
-                            <div style={{ fontWeight: 600 }}>{m.nombre}</div>
-                            <div style={{ fontSize: 10, color: t.textSecondary }}>{m.telefono}</div>
-                          </td>
-                          <td style={{ padding: '12px 16px' }}>{m.membresia}</td>
-                          <td style={{ padding: '12px 16px', color: t.textSecondary }}>{m.vencimiento}</td>
-                          <td style={{ padding: '12px 16px' }}><span style={{ color: colors.text, background: colors.bg, padding: '2px 8px', borderRadius: 8, fontSize: 10, fontWeight: 700 }}>{m.estadoPago}</span></td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4 }}>
-                              <button onClick={() => setSelectedMiembro360(m)} style={{ padding: '4px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: t.text, fontSize: 11, cursor: 'pointer' }}>360°</button>
-                              <button onClick={() => handleRenovacionRapida(m)} style={{ padding: '4px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.05)', border: 'none', color: t.text, fontSize: 11, cursor: 'pointer' }}>Renovar</button>
-                              <button onClick={() => openDeleteModal(m)} style={{ padding: '4px 8px', borderRadius: 6, background: 'rgba(239,68,68,0.1)', border: 'none', color: '#EF4444', fontSize: 11, cursor: 'pointer' }}>X</button>
+              {/* Tabla de Clientes con Diseño Liquid Glass */}
+              <div style={{ ...liquidGlassStyle, borderRadius: 20, overflow: 'hidden' }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                        <th style={{ padding: '14px 18px', color: t.textMuted, fontWeight: 700, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.08em' }}>Cliente / Datos</th>
+                        <th style={{ padding: '14px 18px', color: t.textMuted, fontWeight: 700, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.08em' }}>Membresía / Plan</th>
+                        <th style={{ padding: '14px 18px', color: t.textMuted, fontWeight: 700, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.08em' }}>Vencimiento</th>
+                        <th style={{ padding: '14px 18px', color: t.textMuted, fontWeight: 700, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.08em' }}>Estado</th>
+                        <th style={{ padding: '14px 18px', color: t.textMuted, fontWeight: 700, textTransform: 'uppercase', fontSize: 10, letterSpacing: '0.08em', textAlign: 'right' }}>Gestión</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredMiembros.length > 0 ? (
+                        filteredMiembros.map(m => {
+                          const colors = getStatusColor(m.estadoPago);
+                          const initials = (m.nombre || 'U').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+                          return (
+                            <tr 
+                              key={m.id} 
+                              style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', transition: 'background 0.2s' }} 
+                              onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.025)'} 
+                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                            >
+                              {/* Cliente Info con Avatar */}
+                              <td style={{ padding: '14px 18px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                  <div style={{ 
+                                    width: 36, height: 36, borderRadius: 12, 
+                                    background: `linear-gradient(135deg, ${colors.text}25 0%, rgba(255,255,255,0.02) 100%)`, 
+                                    border: `1px solid ${colors.text}40`,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: colors.text, fontWeight: 800, fontSize: 12, letterSpacing: '0.05em', shrink: 0
+                                  }}>
+                                    {initials}
+                                  </div>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                    <div style={{ fontWeight: 700, color: t.text, fontSize: 13 }}>{m.nombre}</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: t.textSecondary }}>
+                                      {m.telefono ? <span>{m.telefono}</span> : <span style={{ color: t.textMuted }}>Sin teléfono</span>}
+                                      {m.grupo_familiar && (
+                                        <span style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 6px', borderRadius: 6, fontSize: 10, color: t.accent }}>
+                                          {m.grupo_familiar}
+                                        </span>
+                                      )}
+                                      {m.alertas_medicas && (
+                                        <span 
+                                          title={m.notas_medicas || 'Alerta de salud registrada'}
+                                          style={{ background: 'rgba(245,158,11,0.15)', color: '#F59E0B', border: '1px solid rgba(245,158,11,0.3)', padding: '1px 6px', borderRadius: 6, fontSize: 9, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 2 }}
+                                        >
+                                          <AlertTriangle size={9} /> Salud
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Membresía */}
+                              <td style={{ padding: '14px 18px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                                  <span style={{ fontWeight: 650, color: t.text }}>{m.membresia}</span>
+                                  {m.cupon_aplicado && (
+                                    <span style={{ fontSize: 9, color: t.accent, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 2 }}>
+                                      <Tag size={9} /> {m.cupon_aplicado}
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Vencimiento */}
+                              <td style={{ padding: '14px 18px', color: t.textSecondary, fontSize: 12 }}>
+                                <div>{m.vencimiento}</div>
+                                <div style={{ fontSize: 10, color: t.textMuted }}>Desde: {m.fecha_inicio}</div>
+                              </td>
+
+                              {/* Estado */}
+                              <td style={{ padding: '14px 18px' }}>
+                                <span style={{ 
+                                  color: colors.text, background: colors.bg, border: `1px solid ${colors.border}`,
+                                  padding: '3px 10px', borderRadius: 20, fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' 
+                                }}>
+                                  {m.estadoPago}
+                                </span>
+                              </td>
+
+                              {/* Acciones */}
+                              <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 6 }}>
+                                  {/* WhatsApp */}
+                                  {m.telefono && (
+                                    <button 
+                                      onClick={() => handleSendWhatsApp(m)} 
+                                      title="Enviar recordatorio WhatsApp" 
+                                      style={{ 
+                                        padding: '6px 10px', borderRadius: 8, 
+                                        background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)', 
+                                        color: '#10B981', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.2s'
+                                      }}
+                                    >
+                                      <Phone size={12} /> WhatsApp
+                                    </button>
+                                  )}
+
+                                  {/* Expediente 360 */}
+                                  <button 
+                                    onClick={() => setSelectedMiembro360(m)} 
+                                    title="Ver y editar progreso físico 360°"
+                                    style={{ 
+                                      padding: '6px 10px', borderRadius: 8, 
+                                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', 
+                                      color: t.text, fontSize: 11, fontWeight: 650, cursor: 'pointer',
+                                      display: 'flex', alignItems: 'center', gap: 4, transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    <Activity size={12} color={t.accent} /> 360°
+                                  </button>
+
+                                  {/* Renovar */}
+                                  <button 
+                                    onClick={() => handleRenovacionRapida(m)} 
+                                    title="Renovar ciclo de membresía"
+                                    style={{ 
+                                      padding: '6px 10px', borderRadius: 8, 
+                                      background: t.accentSoft, border: `1px solid ${t.accent}40`, 
+                                      color: t.accent, fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                                      transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    Renovar
+                                  </button>
+
+                                  {/* Eliminar */}
+                                  <button 
+                                    onClick={() => openDeleteModal(m)} 
+                                    title="Mover a papelera segura"
+                                    style={{ 
+                                      padding: '6px 8px', borderRadius: 8, 
+                                      background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', 
+                                      color: '#EF4444', fontSize: 11, cursor: 'pointer', transition: 'all 0.2s'
+                                    }}
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan="5" style={{ padding: '40px 18px', textAlign: 'center', color: t.textMuted }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                              <Users size={32} opacity={0.3} />
+                              <span>No se encontraron clientes registrados con los filtros seleccionados.</span>
                             </div>
                           </td>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
@@ -770,22 +944,43 @@ const SistemaGimnasio = ({ settings, isDark }) => {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <select name="cupon_id" value={formData.cupon_id} onChange={handleInputChange} style={{ ...inputGlassStyle, padding: '12px', color: t.text, outline: 'none', fontSize: 13 }}>
-                <option value="" style={{ color: '#000' }}>Sin cupón</option>
-                {cupones.filter(c=>c.activo).map(c=><option key={c.id} value={c.id} style={{ color: '#000' }}>{c.codigo}</option>)}
+                <option value="" style={{ color: '#000' }}>Sin cupón promocional</option>
+                {cupones.filter(c=>c.activo).map(c=><option key={c.id} value={c.id} style={{ color: '#000' }}>{c.codigo} ({c.tipo_descuento === 'Porcentaje' ? `${c.valor}%` : `${c.valor} Bs.`})</option>)}
               </select>
               <select name="metodo_pago" value={formData.metodo_pago} onChange={handleInputChange} style={{ ...inputGlassStyle, padding: '12px', color: t.text, outline: 'none', fontSize: 13 }}>
                 <option value="Efectivo" style={{ color: '#000' }}>Efectivo</option>
-                <option value="Transferencia" style={{ color: '#000' }}>Transferencia</option>
+                <option value="Transferencia" style={{ color: '#000' }}>Transferencia / QR</option>
+                <option value="Tarjeta" style={{ color: '#000' }}>Tarjeta de Débito/Crédito</option>
               </select>
             </div>
 
-            <div style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.03)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: 12, color: t.textMuted }}>Total a cobrar:</span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: '#10B981' }}>{getPreciosFinales().total} Bs.</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <input type="text" name="grupo_familiar" value={formData.grupo_familiar} onChange={handleInputChange} placeholder="Grupo / Familia (Opcional)" style={{ ...inputGlassStyle, padding: '12px', color: t.text, outline: 'none', fontSize: 13 }} />
+              <input type="number" name="descuento_manual" value={formData.descuento_manual} onChange={handleInputChange} placeholder="Descuento extra (Bs.)" min="0" step="0.01" style={{ ...inputGlassStyle, padding: '12px', color: t.text, outline: 'none', fontSize: 13 }} />
             </div>
 
-            <button type="submit" disabled={loading} style={{ padding: '14px', borderRadius: 12, background: t.accent, border: 'none', color: '#000', fontWeight: 800, fontSize: 14, cursor: 'pointer', marginTop: 8 }}>
-              {loading ? 'Procesando...' : 'Guardar y Cobrar'}
+            <textarea name="notas_medicas" value={formData.notas_medicas} onChange={handleInputChange} placeholder="Notas médicas, lesiones previas o recomendaciones..." rows="2" style={{ ...inputGlassStyle, padding: '10px 12px', color: t.text, outline: 'none', fontSize: 12, resize: 'vertical' }} />
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <input type="checkbox" name="alertas_medicas" id="alertas_medicas_modal" checked={formData.alertas_medicas} onChange={handleInputChange} style={{ cursor: 'pointer' }} />
+              <label htmlFor="alertas_medicas_modal" style={{ fontSize: 12, color: '#F59E0B', fontWeight: 650, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <AlertCircle size={13} /> Activar alerta visual de cuidado físico en el perfil
+              </label>
+            </div>
+
+            <div style={{ padding: 12, borderRadius: 12, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 11, color: t.textMuted }}>Subtotal: {getPreciosFinales().subtotal} Bs.</span>
+                <span style={{ fontSize: 11, color: t.accent }}>Descuento: -{getPreciosFinales().descuento} Bs.</span>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: 10, color: t.textMuted, textTransform: 'uppercase', display: 'block' }}>Total a cobrar</span>
+                <span style={{ fontSize: 18, fontWeight: 900, color: '#10B981', fontFamily: "'JetBrains Mono', monospace" }}>{getPreciosFinales().total} Bs.</span>
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} style={{ padding: '14px', borderRadius: 12, background: t.accent, border: 'none', color: '#000', fontWeight: 800, fontSize: 13, textTransform: 'uppercase', letterSpacing: '0.05em', cursor: 'pointer', marginTop: 4, transition: 'all 0.2s', boxShadow: `0 4px 20px ${t.accent}40` }}>
+              {loading ? 'Procesando...' : 'Confirmar Registro y Pago'}
             </button>
           </form>
         </div>
