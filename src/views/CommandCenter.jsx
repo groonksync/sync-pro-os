@@ -698,32 +698,38 @@ const CommandCenter = ({
       )}
 
       {/* ══════════════════════════════════════════════════════
-          HEADER
+          HEADER & METRICS SUMMARY (EXECUTIVE OVERVIEW)
           ══════════════════════════════════════════════════════ */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        paddingBottom: '16px', marginBottom: '20px',
-        flexWrap: 'wrap', gap: '12px',
-      }}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between pb-4 mb-6 border-b gap-4"
+           style={{ borderColor: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.08)' }}>
         <div>
-          <h2 style={{ fontSize: 20, fontWeight: 800, color: t.text, letterSpacing: '-0.03em', margin: 0, fontFamily: "'Space Grotesk', 'Geist', sans-serif" }}>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+              Operaciones en Tiempo Real
+            </span>
+          </div>
+          <h2 style={{ fontSize: 22, fontWeight: 800, color: t.text, letterSpacing: '-0.03em', margin: 0, fontFamily: "'Space Grotesk', 'Geist', sans-serif" }}>
             Centro de Control
           </h2>
-          <p style={{ fontSize: 11, color: t.textSecondary, marginTop: 3, fontWeight: 500, letterSpacing: '-0.005em', fontFamily: "'Geist', sans-serif" }}>
-            Panel de monitoreo y control unificado
+          <p style={{ fontSize: 12, color: t.textSecondary, marginTop: 4, fontWeight: 500, letterSpacing: '-0.01em', fontFamily: "'Geist', sans-serif" }}>
+            Cockpit ejecutivo de monitoreo de capital, cobranzas y rendimiento operativo.
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          
+
+        <div className="flex items-center gap-2.5 flex-wrap">
           {/* Selector de período */}
-          <div style={{ position: 'relative' }}>
+          <div className="relative flex items-center">
+            <CalendarDays size={14} className="absolute left-3 pointer-events-none text-neutral-400" />
             <select
               value={periodoMes}
               onChange={e => setPeriodoMes(e.target.value)}
+              className="pl-8 pr-4 py-2 rounded-xl text-xs font-semibold cursor-pointer outline-none transition-all"
               style={{
-                padding: '8px 14px', minHeight: '44px', borderRadius: '12px', border: `1px solid ${t.border}`,
-                backgroundColor: t.panel, color: t.text, fontSize: '11px', fontWeight: 600,
-                cursor: 'pointer', outline: 'none',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.04)' : '#FFFFFF',
+                border: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'}`,
+                color: t.text,
+                boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.05)',
               }}
             >
               {periodosDisponibles.map(p => (
@@ -735,27 +741,176 @@ const CommandCenter = ({
           </div>
 
           {/* Estado IA */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '10px',
-            padding: '8px 14px', minHeight: '44px', backgroundColor: t.panel,
-            border: `1px solid ${t.border}`, borderRadius: '12px',
-          }}>
-            <ActiveAILogo />
-            <div>
-              <p style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, margin: 0 }}>
+          <div 
+            className="flex items-center gap-2 px-3 py-1.5 rounded-xl border"
+            style={{
+              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#FFFFFF',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <ActiveAILogo size={16} />
+            <div className="flex flex-col">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-neutral-500 leading-none">
                 {settings.aiProvider === 'deepseek' ? 'DeepSeek' : 'Gemini'}
-              </p>
-              <p style={{ fontSize: '11px', fontWeight: 600, color: t.text, marginTop: '1px', margin: 0 }}>
-                {aiBalance} <span style={{ fontSize: '8px', color: t.textDim }}>{settings.aiProvider === 'deepseek' ? 'USD' : 'INF'}</span>
-              </p>
+              </span>
+              <span className="text-[11px] font-semibold text-neutral-200 mt-0.5 leading-none">
+                {aiBalance} <span className="text-[8px] text-neutral-500">{settings.aiProvider === 'deepseek' ? 'USD' : 'INF'}</span>
+              </span>
             </div>
             <button
               onClick={fetchAiBalance}
-              className={isRefreshing ? 'animate-spin' : ''}
-              style={{ padding: '4px', borderRadius: '10px', border: 'none', background: 'transparent', color: t.textDim, cursor: 'pointer' }}
+              className={`p-1 rounded-md text-neutral-400 hover:text-neutral-200 ${isRefreshing ? 'animate-spin' : ''}`}
+              title="Refrescar balance de IA"
             >
-              <RefreshCw size={12} />
+              <RefreshCw size={11} />
             </button>
+          </div>
+
+          {/* Botón Resumen IA */}
+          <button
+            onClick={generarResumenIA}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 cursor-pointer"
+            style={{
+              backgroundColor: t.accent,
+              color: isDark ? '#09090B' : '#FFFFFF',
+            }}
+          >
+            <Sparkles size={14} />
+            <span>Resumen IA</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ── CUADRÍCULA DE 4 KPIS EJECUTIVOS ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        {/* KPI 1: Capital Activo */}
+        <div 
+          className="glass-card p-5 flex flex-col justify-between"
+          style={{
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(24, 24, 28, 0.8), rgba(20, 20, 24, 0.6))'
+              : '#FFFFFF',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Capital en Préstamos
+            </span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <Landmark size={16} />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-extrabold tracking-tight font-mono" style={{ color: t.text }}>
+                {totalCapital.toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-neutral-400">BOB</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-[11px] text-neutral-400">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400">
+                {listaPrestamos.length} activos
+              </span>
+              <span>en cartera</span>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 2: Rendimiento Mensual */}
+        <div 
+          className="glass-card p-5 flex flex-col justify-between"
+          style={{
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(24, 24, 28, 0.8), rgba(20, 20, 24, 0.6))'
+              : '#FFFFFF',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Interés Proyectado / Mes
+            </span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+              <TrendingUp size={16} />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-extrabold tracking-tight font-mono text-emerald-400">
+                +{totalInteresMensual.toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-neutral-400">BOB</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-[11px] text-neutral-400">
+              <span className="text-neutral-400">Cobranza del período</span>
+              <span className="font-semibold text-neutral-200">
+                {categorias.totales.alDia} al día
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 3: Valor de Inventario */}
+        <div 
+          className="glass-card p-5 flex flex-col justify-between"
+          style={{
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(24, 24, 28, 0.8), rgba(20, 20, 24, 0.6))'
+              : '#FFFFFF',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Valor en Mercadería
+            </span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
+              <Package size={16} />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-extrabold tracking-tight font-mono" style={{ color: t.text }}>
+                {valorInventario.toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-neutral-400">BOB</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-[11px] text-neutral-400">
+              <span>{listaProductos.length} productos</span>
+              {stockBajo.length > 0 && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400">
+                  {stockBajo.length} por reponer
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 4: Flujo de Egresos & Servicios */}
+        <div 
+          className="glass-card p-5 flex flex-col justify-between"
+          style={{
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(24, 24, 28, 0.8), rgba(20, 20, 24, 0.6))'
+              : '#FFFFFF',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              Egresos & Suscripciones
+            </span>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-amber-500/10 border border-amber-500/20 text-amber-400">
+              <Wallet size={16} />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl font-extrabold tracking-tight font-mono text-amber-400">
+                {totalEgresosYServicios.toLocaleString()}
+              </span>
+              <span className="text-xs font-semibold text-neutral-400">BOB</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2 text-[11px] text-neutral-400">
+              <span>{servicios?.length || 0} servicios recurrentes</span>
+            </div>
           </div>
         </div>
       </div>
@@ -783,7 +938,7 @@ const CommandCenter = ({
       />
 
       {/* ══════════════════════════════════════════════════════
-          FILA 2: COBROS — EXECUTIVE LOAN COLLECTIONS TABLE
+          FILA 2: COBROS — TABLA EJECUTIVA DE CARTERA
           ══════════════════════════════════════════════════════ */}
       <section style={{ marginBottom: '28px' }}>
         <div style={{
@@ -794,8 +949,8 @@ const CommandCenter = ({
           {/* Header con filtros segmentados */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3.5 w-full">
             <div>
-              <h3 style={{ fontSize: 15, fontWeight: 800, color: t.text, margin: 0, letterSpacing: '-0.02em', fontFamily: "'Geist', sans-serif" }}>
-                Executive Loan Collections
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: t.text, margin: 0, letterSpacing: '-0.02em', fontFamily: "'Geist', sans-serif" }}>
+                Cobranza de Cartera & Préstamos
               </h3>
               <p style={{
                 fontSize: '11px', color: t.textMuted, margin: '3px 0 0',
@@ -847,12 +1002,12 @@ const CommandCenter = ({
               <table className="table-luxury">
                 <thead>
                   <tr>
-                    <th style={{ width: '28%' }}>Client</th>
-                    <th style={{ width: '18%' }}>Status</th>
-                    <th style={{ width: '14%' }}>Overdue</th>
-                    <th style={{ width: '16%', textAlign: 'right' }}>Capital</th>
-                    <th style={{ width: '14%', textAlign: 'right' }}>Interest</th>
-                    <th style={{ width: '10%', textAlign: 'center' }}>Action</th>
+                    <th style={{ width: '28%' }}>Cliente / Prestatario</th>
+                    <th style={{ width: '18%' }}>Estado de Cobro</th>
+                    <th style={{ width: '14%' }}>Atraso</th>
+                    <th style={{ width: '16%', textAlign: 'right' }}>Capital Activo</th>
+                    <th style={{ width: '14%', textAlign: 'right' }}>Interés Mensual</th>
+                    <th style={{ width: '10%', textAlign: 'center' }}>Acción</th>
                   </tr>
                 </thead>
                 <tbody>
