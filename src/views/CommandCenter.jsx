@@ -29,7 +29,7 @@ const MODULE_WIDGETS = [
     id: 'editor',
     titulo: 'Editor de Video',
     icono: Video,
-    color: '#a78bfa',
+    color: '#EDEDF0',
     getData: ({ meetingsList }) => ({
       principal: `${meetingsList?.length || 0} proyectos`,
       secundaria: `${meetingsList?.length || 0} sesiones activas`,
@@ -41,7 +41,7 @@ const MODULE_WIDGETS = [
     id: 'almacenamiento',
     titulo: 'Drive Soberano',
     icono: Cloud,
-    color: '#60a5fa',
+    color: '#D4D4D8',
     getData: () => ({
       principal: 'Drive Conectado',
       secundaria: 'Google API activa',
@@ -53,7 +53,7 @@ const MODULE_WIDGETS = [
     id: 'calendario',
     titulo: 'Calendario',
     icono: CalendarDays,
-    color: '#34d399',
+    color: '#E4E4E7',
     getData: () => ({
       principal: 'Calendario Google',
       secundaria: 'Eventos sincronizados',
@@ -63,25 +63,9 @@ const MODULE_WIDGETS = [
   },
   {
     id: 'recordatorios',
-    titulo: 'Recordatorios',
-    icono: Bell,
-    color: '#fbbf24',
-    getData: ({ data }) => {
-      const pendientes = data?.recordatorios?.filter(r => r.estado !== 'Completada') || [];
-      const criticas = pendientes.filter(r => r.prioridad === 'Crítica');
-      return {
-        principal: `${pendientes.length} pendientes`,
-        secundaria: `${criticas.length} críticas`,
-        alerta: criticas.length > 0 ? `${criticas.length} tareas críticas` : null,
-      };
-    },
-    accion: 'recordatorios'
-  },
-  {
-    id: 'recordatorios',
     titulo: 'Recordatorios & Agenda',
     icono: Bell,
-    color: '#fbbf24',
+    color: '#A1A1AA',
     getData: ({ data }) => {
       const pendientes = data?.recordatorios?.filter(r => r.estado !== 'Completado' && r.estado !== 'Completada') || [];
       const criticas = pendientes.filter(r => r.prioridad === 'Crítica' || r.prioridad === 'Alta');
@@ -97,7 +81,7 @@ const MODULE_WIDGETS = [
     id: 'boveda',
     titulo: 'Bóveda',
     icono: Lock,
-    color: '#f472b6',
+    color: '#D4D4D8',
     getData: () => ({
       principal: 'Bóveda de Contraseñas',
       secundaria: 'Cifrado AES-256',
@@ -109,7 +93,7 @@ const MODULE_WIDGETS = [
     id: 'egresos',
     titulo: 'Mis Egresos',
     icono: CreditCard,
-    color: '#fb923c',
+    color: '#EDEDF0',
     getData: ({ data }) => {
       const egresos = data?.egresos || [];
       const mesActual = new Date().getMonth();
@@ -130,7 +114,7 @@ const MODULE_WIDGETS = [
     id: 'proyectos',
     titulo: 'Proyectos',
     icono: Briefcase,
-    color: '#2dd4bf',
+    color: '#A1A1AA',
     getData: ({ data }) => ({
       principal: `${data?.proyectos?.filter(p => p.estado !== 'Completado').length || 0} activos`,
       secundaria: `${data?.proyectos?.filter(p => p.estado === 'Completado').length || 0} completados`,
@@ -142,7 +126,7 @@ const MODULE_WIDGETS = [
     id: 'ventas',
     titulo: 'Ventas Digitales',
     icono: ShoppingCart,
-    color: '#a78bfa',
+    color: '#E4E4E7',
     getData: ({ data }) => {
       const ventas = data?.ventas || [];
       const total = ventas.reduce((s, v) => s + Number(v.monto || 0), 0);
@@ -774,9 +758,9 @@ const CommandCenter = ({
           { week: '4th Week', bars: [140, 180, 190] },
         ]}
         monthlyCards={[
-          { month: 'CAPITAL ACTIVO', amount: totalCapital, color: '#06b6d4', points: '0,20 15,35 30,15 45,22' },
-          { month: 'VALOR INVENTARIO', amount: valorInventario, color: '#0284c7', points: '0,28 15,15 30,22 45,30' },
-          { month: 'FLUJO PROYECTADO', amount: Math.round(totalCapital * 1.12), color: '#1d4ed8', points: '0,15 15,30 30,28 45,35' },
+          { month: 'CAPITAL ACTIVO', amount: totalCapital, color: '#EDEDF0', points: '0,20 15,35 30,15 45,22' },
+          { month: 'VALOR INVENTARIO', amount: valorInventario, color: '#A1A1AA', points: '0,28 15,15 30,22 45,30' },
+          { month: 'FLUJO PROYECTADO', amount: Math.round(totalCapital * 1.12), color: '#71717A', points: '0,15 15,30 30,28 45,35' },
         ]}
         unit="BOB"
         maxScale={200}
@@ -803,7 +787,7 @@ const CommandCenter = ({
               }}>
                 <span style={{
                   display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%',
-                  backgroundColor: cobrosDelPeriodo.length > 0 ? '#fbbf24' : '#34d399',
+                  backgroundColor: cobrosDelPeriodo.length > 0 ? '#EDEDF0' : '#52525B',
                 }} />
                 {cobrosDelPeriodo.length} clientes · <span className="num-tabular" style={{ fontWeight: 700, color: t.text }}>{categorias.totales.totalPendiente.toLocaleString()} {settings?.loanDefaultCurrency || 'BOB'}</span> pendientes
               </p>
@@ -821,14 +805,14 @@ const CommandCenter = ({
                 onClick={() => setFiltroCategoria(filtroCategoria === 'AL_DIA' ? null : 'AL_DIA')}
                 className={`tab-segmented-btn ${filtroCategoria === 'AL_DIA' ? 'active' : ''}`}
               >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#10b981' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#EDEDF0' }} />
                 Al Día ({categorias.totales.alDia})
               </button>
               <button
                 onClick={() => setFiltroCategoria(filtroCategoria === 'PENDIENTE' ? null : 'PENDIENTE')}
                 className={`tab-segmented-btn ${filtroCategoria === 'PENDIENTE' ? 'active' : ''}`}
               >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#A1A1AA' }} />
                 Pendientes ({categorias.totales.pendientes})
               </button>
               <button
@@ -857,7 +841,6 @@ const CommandCenter = ({
                 </thead>
                 <tbody>
                   {cobrosFiltrados.map(p => {
-                    const badgeColor = p.dialog?.color || t.textDim;
                     const isCritico = p.categoria === 'DEUDOR_CRITICO';
                     return (
                       <tr key={p.id} style={{ backgroundColor: isCritico ? 'rgba(239, 68, 68, 0.04)' : 'transparent' }}>
@@ -866,7 +849,9 @@ const CommandCenter = ({
                             <div className="icon-squircle" style={{
                               width: '34px', height: '34px', borderRadius: '10px',
                               fontSize: '12px', fontWeight: 800,
-                              backgroundColor: `${badgeColor}18`, color: badgeColor, border: `1px solid ${badgeColor}30`
+                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                              color: '#EDEDF0',
+                              border: '1px solid rgba(255, 255, 255, 0.1)'
                             }}>
                               {p.nombre?.charAt(0) || '?'}
                             </div>
@@ -905,7 +890,7 @@ const CommandCenter = ({
                           </p>
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <p className="num-tabular" style={{ fontSize: '13px', fontWeight: 700, color: '#10b981', margin: 0 }}>
+                          <p className="num-tabular" style={{ fontSize: '13px', fontWeight: 700, color: '#EDEDF0', margin: 0 }}>
                             +{(parseFloat(p.capital) * (parseFloat(p.interes) / 100) || 0).toLocaleString()} BOB
                           </p>
                         </td>

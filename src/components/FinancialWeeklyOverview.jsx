@@ -18,9 +18,9 @@ export const FinancialWeeklyOverview = ({
     { week: '4th Week', bars: [125, 175, 180] },
   ],
   monthlyCards = [
-    { month: 'SEPTIEMBRE', amount: 63500, color: '#06b6d4', trend: 'down', points: '0,20 15,35 30,15 45,25' },
-    { month: 'AGOSTO', amount: 66000, color: '#0284c7', trend: 'up', points: '0,25 15,15 30,22 45,30' },
-    { month: 'JULIO', amount: 65000, color: '#2563eb', trend: 'down', points: '0,15 15,30 30,28 45,35' },
+    { month: 'SEPTIEMBRE', amount: 63500, color: '#EDEDF0', trend: 'down', points: '0,20 15,35 30,15 45,25' },
+    { month: 'AGOSTO', amount: 66000, color: '#A1A1AA', trend: 'up', points: '0,25 15,15 30,22 45,30' },
+    { month: 'JULIO', amount: 65000, color: '#52525B', trend: 'down', points: '0,15 15,30 30,28 45,35' },
   ],
   unit = "BOB",
   maxScale = 200
@@ -28,8 +28,8 @@ export const FinancialWeeklyOverview = ({
   const t = useTheme(isDark);
   const [hoveredBar, setHoveredBar] = useState(null);
 
-  // Paleta de 3 colores para las barras agrupadas (idéntica a la imagen de referencia)
-  const barColors = ['#1d4ed8', '#0284c7', '#06b6d4'];
+  // Paleta monocromática elegante (carbón, zinc y plata titanio)
+  const barColors = isDark ? ['#3F3F46', '#71717A', '#EDEDF0'] : ['#E4E4E7', '#A1A1AA', '#18181B'];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full my-6">
@@ -54,16 +54,16 @@ export const FinancialWeeklyOverview = ({
             </p>
           </div>
 
-          {/* Leyenda de colores */}
+          {/* Leyenda de colores sobria */}
           <div className="flex items-center gap-4 text-[10px] font-semibold">
-            <span className="flex items-center gap-1.5" style={{ color: '#06b6d4' }}>
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#06b6d4' }} /> Mes Actual
+            <span className="flex items-center gap-1.5" style={{ color: '#EDEDF0' }}>
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#EDEDF0' }} /> Mes Actual
             </span>
-            <span className="flex items-center gap-1.5" style={{ color: '#0284c7' }}>
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#0284c7' }} /> Mes Anterior
+            <span className="flex items-center gap-1.5" style={{ color: '#A1A1AA' }}>
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#A1A1AA' }} /> Mes Anterior
             </span>
-            <span className="flex items-center gap-1.5" style={{ color: '#1d4ed8' }}>
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#1d4ed8' }} /> Histórico
+            <span className="flex items-center gap-1.5" style={{ color: '#71717A' }}>
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#71717A' }} /> Histórico
             </span>
           </div>
         </div>

@@ -1,25 +1,25 @@
 const GRAY_SCALE = {
-  bg:         '#121214',
-  panel:      '#121214',
-  surface:    '#18181C',
-  card:       '#1E1E22',
-  input:      '#242427',
-  border:     '#222225',
-  borderLight:'#2D2D32',
-  overlay:    'rgba(18,18,20,0.96)',
+  bg:         '#070709',
+  panel:      '#0A0A0D',
+  surface:    '#0F0F13',
+  card:       '#121217',
+  input:      '#15151A',
+  border:     '#1B1B22',
+  borderLight:'#262630',
+  overlay:    'rgba(7,7,9,0.96)',
 };
 
 const MODOS = {
   darkGray: { ...GRAY_SCALE },
   black: {
-    bg: '#0A0A0C', panel: '#0A0A0C', surface: '#121215',
-    input: '#1A1A1E', border: '#202024', borderLight: '#2A2A30',
-    overlay: 'rgba(10,10,12,0.95)',
+    bg: '#040406', panel: '#070709', surface: '#0B0B0E',
+    card: '#0E0E12', input: '#121216', border: '#17171E', borderLight: '#202028',
+    overlay: 'rgba(4,4,6,0.98)',
   },
   lightGray: {
-    bg: '#1C1C1E', panel: '#1C1C1E', surface: '#242427',
-    input: '#2D2D30', border: '#3A3A3E', borderLight: '#46464B',
-    overlay: 'rgba(28,28,30,0.96)',
+    bg: '#0A0A0D', panel: '#0D0D11', surface: '#121216',
+    card: '#16161B', input: '#1A1A20', border: '#22222A', borderLight: '#2E2E38',
+    overlay: 'rgba(10,10,13,0.96)',
   },
 };
 
@@ -67,35 +67,35 @@ export function getTheme(isDark = true, custom = {}) {
     ? MODOS[custom.appearanceMode] || MODOS.darkGray
     : LIGHT;
 
-  const accent = custom.accentColor || (isDark ? '#C0C0C6' : '#475569');
+  const accent = custom.accentColor || (isDark ? '#EDEDF0' : '#18181B');
   const accentLight = isHexLight(accent);
   const accentHover = isDark
-    ? (accentLight ? '#A0A0A6' : '#D4D4D9')
-    : (accentLight ? '#334155' : '#1e293b');
+    ? (accentLight ? '#C4C4CC' : '#FFFFFF')
+    : (accentLight ? '#334155' : '#09090B');
 
-  const textColor = isDark ? '#ECECEE' : '#0F172A';
-  const textSecondary = isDark ? '#A0A0A6' : '#475569';
-  const textMuted = isDark ? '#6A6A72' : '#64748B';
+  const textColor = isDark ? '#F4F4F6' : '#09090B';
+  const textSecondary = isDark ? '#A1A1AA' : '#52525B';
+  const textMuted = isDark ? '#71717A' : '#71717A';
 
   return {
     ...base,
     accent,
     accentHover,
-    accentSoft: hexToRgba(accent, isDark ? 0.08 : 0.04),
-    accentSoftHover: hexToRgba(accent, isDark ? 0.14 : 0.08),
-    accentGlow: hexToRgba(accent, isDark ? 0.10 : 0.05),
+    accentSoft: hexToRgba(accent, isDark ? 0.06 : 0.04),
+    accentSoftHover: hexToRgba(accent, isDark ? 0.12 : 0.08),
+    accentGlow: hexToRgba(accent, isDark ? 0.08 : 0.04),
     text: textColor,
     textSecondary,
     textMuted,
-    textDim: isDark ? '#52525A' : '#94A3B8',
+    textDim: isDark ? '#52525B' : '#A1A1AA',
     hover: hexToRgba(textColor, 0.04),
     hoverActive: hexToRgba(textColor, 0.08),
-    glow: hexToRgba(textColor, 0.08),
-    inputBg: isDark ? 'rgba(255,255,255,0.03)' : '#FFFFFF',
-    danger: '#F14C4C',
-    dangerSoft: 'rgba(241,76,76,0.1)',
-    warning: '#CCA700',
-    success: '#4EC9B0',
+    glow: hexToRgba(textColor, 0.06),
+    inputBg: isDark ? 'rgba(255,255,255,0.025)' : '#FFFFFF',
+    danger: '#EF4444',
+    dangerSoft: 'rgba(239,68,68,0.08)',
+    warning: '#F59E0B',
+    success: '#10B981',
   };
 }
 

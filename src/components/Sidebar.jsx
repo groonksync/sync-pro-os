@@ -317,13 +317,13 @@ const Sidebar = ({
                       gap: 10,
                       padding: isCollapsed ? '9px' : '8px 12px',
                       borderRadius: 12,
-                      border: active ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid transparent',
-                      background: active ? 'rgba(16, 185, 129, 0.12)' : 'transparent',
-                      color: active ? '#34d399' : t.textMuted,
+                      border: active ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
+                      background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+                      color: active ? '#FFFFFF' : t.textMuted,
                       cursor: 'pointer',
                       transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                       position: 'relative',
-                      boxShadow: active ? '0 0 16px rgba(16, 185, 129, 0.15)' : 'none',
+                      boxShadow: active ? '0 1px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12)' : 'none',
                     }}
                     onMouseOver={e => {
                       if (!active) {
@@ -344,7 +344,7 @@ const Sidebar = ({
                       <div style={{
                         width: 28, height: 28, borderRadius: 8, flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: active ? '#34d399' : t.textMuted,
+                        color: active ? '#FFFFFF' : t.textMuted,
                       }}>
                         <item.icon size={16} strokeWidth={active ? 2.2 : 1.7} />
                       </div>
@@ -364,9 +364,9 @@ const Sidebar = ({
                       <span style={{
                         fontSize: 9, fontWeight: 700, padding: '2px 7px',
                         borderRadius: 9999, flexShrink: 0,
-                        background: active ? 'rgba(16, 185, 129, 0.2)' : t.surface,
-                        color: active ? '#34d399' : t.textDim,
-                        border: `1px solid ${active ? 'rgba(16, 185, 129, 0.4)' : t.border}`,
+                        background: active ? 'rgba(255, 255, 255, 0.14)' : t.surface,
+                        color: active ? '#FFFFFF' : t.textDim,
+                        border: `1px solid ${active ? 'rgba(255, 255, 255, 0.25)' : t.border}`,
                         fontFamily: "'JetBrains Mono', monospace",
                       }}>
                         {count}
@@ -377,8 +377,8 @@ const Sidebar = ({
                       <div style={{
                         position: 'absolute', top: 4, right: 4,
                         width: 6, height: 6, borderRadius: 9999,
-                        background: '#34d399',
-                        boxShadow: '0 0 6px #34d399',
+                        background: '#EDEDF0',
+                        boxShadow: '0 0 6px rgba(255, 255, 255, 0.4)',
                       }} />
                     )}
                   </button>

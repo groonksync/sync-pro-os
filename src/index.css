@@ -30,19 +30,19 @@
   --tracking-caps:      0.10em;
   --tracking-wide:      0.14em;
 
-  --color-bg:       #121214;
-  --color-panel:    #121214;
-  --color-surface:  #18181C;
-  --color-card:     #1E1E22;
-  --color-input:    #242427;
-  --color-border:   #222225;
-  --color-border-l: #2D2D32;
-  --color-accent:   #C0C0C6;
-  --color-accent-h: #D4D4D9;
-  --color-text:     #ECECEE;
-  --color-text-2:   #A0A0A6;
-  --color-text-3:   #6A6A72;
-  --color-text-4:   #52525A;
+  --color-bg:       #070709;
+  --color-panel:    #0A0A0D;
+  --color-surface:  #0F0F13;
+  --color-card:     #121217;
+  --color-input:    #15151A;
+  --color-border:   #1B1B22;
+  --color-border-l: #262630;
+  --color-accent:   #EDEDF0;
+  --color-accent-h: #FFFFFF;
+  --color-text:     #F4F4F6;
+  --color-text-2:   #A1A1AA;
+  --color-text-3:   #71717A;
+  --color-text-4:   #52525B;
 
   color-scheme: dark;
 }
@@ -1125,9 +1125,9 @@ input.catalog-search-input-field,
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  background-color: rgba(16, 185, 129, 0.1);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.25);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #E4E4E7;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -1293,10 +1293,10 @@ input.catalog-search-input-field,
 
 /* 8. Linear / Apple Sidebar Glow Pill */
 .sidebar-pill-active {
-  background: rgba(16, 185, 129, 0.14) !important;
-  color: #34d399 !important;
-  border: 1px solid rgba(16, 185, 129, 0.35) !important;
-  box-shadow: 0 0 18px rgba(16, 185, 129, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
 }
 
 /* 9. Pill Action Button */
@@ -1330,16 +1330,16 @@ input.catalog-search-input-field,
 }
 
 .btn-action-pill-primary {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.35);
-  color: #34d399;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
 }
 
 .btn-action-pill-primary:hover {
-  background: #10b981;
-  border-color: #10b981;
-  color: #0A0A0C;
-  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+  background: #FFFFFF;
+  border-color: #FFFFFF;
+  color: #070709;
+  box-shadow: 0 2px 14px rgba(255, 255, 255, 0.25);
 }
 
 .btn-action-pill-danger:hover {
