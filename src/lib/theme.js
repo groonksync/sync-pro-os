@@ -1,25 +1,27 @@
 const GRAY_SCALE = {
-  bg:         '#070709',
-  panel:      '#0A0A0D',
-  surface:    '#0F0F13',
-  card:       '#121217',
-  input:      '#15151A',
-  border:     '#1B1B22',
-  borderLight:'#262630',
-  overlay:    'rgba(7,7,9,0.96)',
+  bg:         '#212121', // Fondo principal gris carbón mate (estilo ChatGPT)
+  sidebar:    '#171717', // Barra lateral carbón neutral
+  panel:      '#171717',
+  surface:    '#262626',
+  card:       '#2D2D2D', // Superficies y tarjetas suaves
+  cardHover:  '#333333',
+  input:      '#2A2A2A',
+  border:     '#333333',
+  borderLight:'#3D3D3D',
+  overlay:    'rgba(33,33,33,0.96)',
 };
 
 const MODOS = {
   darkGray: { ...GRAY_SCALE },
   black: {
-    bg: '#040406', panel: '#070709', surface: '#0B0B0E',
-    card: '#0E0E12', input: '#121216', border: '#17171E', borderLight: '#202028',
-    overlay: 'rgba(4,4,6,0.98)',
+    bg: '#181818', panel: '#121212', surface: '#1E1E1E',
+    card: '#242424', input: '#202020', border: '#2C2C2C', borderLight: '#363636',
+    overlay: 'rgba(24,24,24,0.98)',
   },
   lightGray: {
-    bg: '#0A0A0D', panel: '#0D0D11', surface: '#121216',
-    card: '#16161B', input: '#1A1A20', border: '#22222A', borderLight: '#2E2E38',
-    overlay: 'rgba(10,10,13,0.96)',
+    bg: '#262626', panel: '#1B1B1B', surface: '#2E2E2E',
+    card: '#333333', input: '#2F2F2F', border: '#3B3B3B', borderLight: '#444444',
+    overlay: 'rgba(38,38,38,0.96)',
   },
 };
 
@@ -73,25 +75,25 @@ export function getTheme(isDark = true, custom = {}) {
     ? (accentLight ? '#C4C4CC' : '#FFFFFF')
     : (accentLight ? '#334155' : '#09090B');
 
-  const textColor = isDark ? '#F4F4F6' : '#09090B';
-  const textSecondary = isDark ? '#A1A1AA' : '#52525B';
-  const textMuted = isDark ? '#71717A' : '#71717A';
+  const textColor = isDark ? '#ECECEC' : '#111827';
+  const textSecondary = isDark ? '#9E9E9E' : '#4B5563';
+  const textMuted = isDark ? '#7A7A7A' : '#6B7280';
 
   return {
     ...base,
     accent,
     accentHover,
-    accentSoft: hexToRgba(accent, isDark ? 0.06 : 0.04),
-    accentSoftHover: hexToRgba(accent, isDark ? 0.12 : 0.08),
+    accentSoft: hexToRgba(accent, isDark ? 0.08 : 0.04),
+    accentSoftHover: hexToRgba(accent, isDark ? 0.14 : 0.08),
     accentGlow: hexToRgba(accent, isDark ? 0.08 : 0.04),
     text: textColor,
     textSecondary,
     textMuted,
-    textDim: isDark ? '#52525B' : '#A1A1AA',
-    hover: hexToRgba(textColor, 0.04),
-    hoverActive: hexToRgba(textColor, 0.08),
-    glow: hexToRgba(textColor, 0.06),
-    inputBg: isDark ? 'rgba(255,255,255,0.025)' : '#FFFFFF',
+    textDim: isDark ? '#5A5A5A' : '#9CA3AF',
+    hover: hexToRgba(textColor, 0.05),
+    hoverActive: hexToRgba(textColor, 0.09),
+    glow: hexToRgba(textColor, 0.05),
+    inputBg: isDark ? '#2A2A2A' : '#FFFFFF',
     danger: '#EF4444',
     dangerSoft: 'rgba(239,68,68,0.08)',
     warning: '#F59E0B',

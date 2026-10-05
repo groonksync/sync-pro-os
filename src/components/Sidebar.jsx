@@ -11,7 +11,7 @@ const MENU_GROUPS = [
   {
     label: 'Principal',
     items: [
-      { id: 'resumen',       label: 'Centro de Control',    icon: Activity },
+      { id: 'resumen',       label: 'Operaciones Activas',  icon: Activity },
       { id: 'prestamos',     label: 'Préstamos',            icon: Landmark },
       { id: 'inventario',    label: 'Empresa',              icon: Building2 },
       { id: 'pagos',         label: 'Mis Egresos',          icon: Wallet },
@@ -317,13 +317,13 @@ const Sidebar = ({
                       gap: 10,
                       padding: isCollapsed ? '9px' : '8px 12px',
                       borderRadius: 12,
-                      border: active ? '1px solid rgba(255, 255, 255, 0.16)' : '1px solid transparent',
-                      background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-                      color: active ? '#FFFFFF' : t.textMuted,
+                      border: active ? (isDark ? '1px solid #333333' : '1px solid rgba(0, 0, 0, 0.08)') : '1px solid transparent',
+                      background: active ? (isDark ? '#262626' : 'rgba(0, 0, 0, 0.04)') : 'transparent',
+                      color: active ? '#ECECEC' : t.textSecondary,
                       cursor: 'pointer',
-                      transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                      transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
                       position: 'relative',
-                      boxShadow: active ? '0 1px 4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12)' : 'none',
+                      boxShadow: 'none',
                     }}
                     onMouseOver={e => {
                       if (!active) {
