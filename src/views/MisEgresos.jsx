@@ -897,17 +897,6 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           </div>
         </div>
 
-        {/* ── SECCIÓN DE ANÁLISIS FINANCIERO SEMANAL Y TRIMESTRAL ──────────── */}
-        <FinancialWeeklyOverview
-          isDark={isDark}
-          title="Distribución de Egresos por Semanas"
-          subtitle="Comportamiento del gasto mensual en ciclos de 7 días"
-          weeklyData={weeklyExpenseData}
-          monthlyCards={monthlyCardsData}
-          unit="BOB"
-          maxScale={Math.max(totalEgresosMes * 0.4, 200)}
-        />
-
       </header>
 
       {/* ══════════════════════════════════════════════════════════════════════

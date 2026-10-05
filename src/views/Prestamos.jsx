@@ -1849,89 +1849,23 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     });
                     setShowForm(true);
                   }} 
-                  className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-xs font-black transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-1.5 shrink-0"
+                  className="py-2 px-3.5 rounded-xl bg-[#ECECEC] hover:bg-white text-[#171717] text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1.5 shrink-0"
                   title="Registrar Nuevo Préstamo o Deuda"
                 >
-                  <Plus size={15} strokeWidth={3} />
+                  <Plus size={15} strokeWidth={2.5} />
                   <span className="hidden sm:inline">Nuevo Registro</span>
                 </button>
               </div>
             </header>
 
-            {/* ─── DASHBOARD ANALÍTICO LIQUID GLASS ───────────────────── */}
-            {/* Panel de Flujo Semanal */}
-            <FinancialWeeklyOverview
-              isDark={isDark}
-              title="Distribución Semanal de Cobros de Cartera"
-              subtitle="Proyección de recaudación de capital y flujo por períodos de 7 días"
-              weeklyData={[
-                { week: '1st Week', bars: [Math.round(stats.rendimientoMensual * 0.28) || 180, Math.round(stats.rendimientoMensual * 0.22) || 150, Math.round(stats.rendimientoMensual * 0.3) || 195] },
-                { week: '2nd Week', bars: [Math.round(stats.rendimientoMensual * 0.25) || 160, Math.round(stats.rendimientoMensual * 0.28) || 175, Math.round(stats.rendimientoMensual * 0.2) || 130] },
-                { week: '3rd Week', bars: [Math.round(stats.rendimientoMensual * 0.29) || 170, Math.round(stats.rendimientoMensual * 0.24) || 140, Math.round(stats.rendimientoMensual * 0.26) || 160] },
-                { week: '4th Week', bars: [Math.round(stats.rendimientoMensual * 0.18) || 120, Math.round(stats.rendimientoMensual * 0.26) || 165, Math.round(stats.rendimientoMensual * 0.34) || 190] },
-              ]}
-              monthlyCards={[
-                { month: filtroTipo === 'recibido' ? 'DEUDA ACTIVA' : 'CAPITAL ACTIVO', amount: stats.capitalActivo, color: '#06b6d4', points: '0,20 15,35 30,15 45,22' },
-                { month: filtroTipo === 'recibido' ? 'INTERÉS MENSUAL' : 'RENDIMIENTO MES', amount: stats.rendimientoMensual, color: '#0284c7', points: '0,28 15,15 30,22 45,30' },
-                { month: 'MORA ACUMULADA', amount: stats.totalMora, color: '#ef4444', points: '0,15 15,30 30,28 45,35' },
-              ]}
-              unit="BOB"
-              maxScale={Math.max(stats.rendimientoMensual * 0.4, 200)}
-            />
-
-            {/* 3. Métricas en Fila Compacta (4 Indicadores en 1 Sola Fila Optimizada) */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
-              <KPICard t={t} icon={DollarSign} label={filtroTipo === 'recibido' ? "Deuda Recibida" : "Capital Activo"} value={stats.capitalActivo.toLocaleString()} moneda="BOB" color={t.accent} />
-              <KPICard t={t} icon={TrendingUp} label={filtroTipo === 'recibido' ? "Interés a Pagar" : "Rendimiento Mes"} value={stats.rendimientoMensual.toLocaleString()} moneda="BOB" color="#10b981" />
-              <KPICard t={t} icon={Percent} label="Tasa Promedio" value={stats.tasaPromedio.toFixed(1)} moneda="%" color="#f59e0b" />
-              <KPICard t={t} icon={AlertTriangle} label="Mora Acumulada" value={stats.totalMora.toLocaleString()} moneda="BOB" color="#ef4444" />
-            </div>
-
-            {/* 4. Detalle de Rendimiento Inferior (3 Paneles de Tendencia Sparkline en Fila Horizontal) */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-              {[
-                { title: filtroTipo === 'recibido' ? 'DEUDA ACTIVA' : 'CAPITAL ACTIVO', amount: stats.capitalActivo, color: '#06b6d4', points: '0,20 15,35 30,15 45,22' },
-                { title: filtroTipo === 'recibido' ? 'INTERÉS MENSUAL' : 'RENDIMIENTO MES', amount: stats.rendimientoMensual, color: '#0284c7', points: '0,28 15,15 30,22 45,30' },
-                { title: 'MORA ACUMULADA', amount: stats.totalMora, color: '#ef4444', points: '0,15 15,30 30,28 45,35' },
-              ].map((card, idx) => (
-                <div
-                  key={idx}
-                  className="p-4 rounded-2xl flex items-center justify-between transition-all duration-300 hover:scale-[1.01]"
-                  style={{
-                    backgroundColor: t.panel,
-                    border: `1px solid ${t.border}`,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-                  }}
-                >
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: card.color, boxShadow: `0 0 8px ${card.color}` }}
-                      />
-                      <span style={{ fontSize: '10px', fontWeight: 800, color: card.color, letterSpacing: '0.06em' }}>
-                        {card.title}
-                      </span>
-                    </div>
-                    <h4 style={{ fontSize: '20px', fontWeight: 900, color: t.text, margin: 0, letterSpacing: '-0.03em' }}>
-                      <span className="num-tabular">{card.amount.toLocaleString()}</span> <span style={{ fontSize: '11px', color: t.textDim, fontWeight: 700 }}>BOB</span>
-                    </h4>
-                  </div>
-
-                  {/* Sparkline SVG */}
-                  <div style={{ width: '70px', height: '36px' }}>
-                    <svg width="100%" height="100%" viewBox="0 0 50 40" fill="none" style={{ overflow: 'visible' }}>
-                      <polyline
-                        points={card.points}
-                        stroke={card.color}
-                        strokeWidth="2.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                </div>
-              ))}
+            {/* Resumen limpio de cartera en una sola línea sin dashboards */}
+            <div className="flex items-center justify-between text-xs text-[#9E9E9E] mb-5 pb-3 border-b border-[#2C2C2C]">
+              <span>
+                {prestamosFiltrados.length} {prestamosFiltrados.length === 1 ? 'registro' : 'registros'} • <strong className="text-white font-mono">{stats.capitalActivo.toLocaleString()} BOB</strong> en capital activo
+              </span>
+              <span className="text-[#7A7A7A]">
+                Rendimiento estimado: <strong className="text-[#ECECEC] font-mono">+{stats.rendimientoMensual.toLocaleString()} BOB/mes</strong>
+              </span>
             </div>
 
             {/* Barra de Búsqueda Minimalista y Filtros de Estado */}

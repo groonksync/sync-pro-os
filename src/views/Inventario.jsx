@@ -1416,50 +1416,20 @@ REGLAS DE FORMATO Y ESTILO:
 
       {activeSection === 'productos' && (
         <>
-          {/* PANEL ANALÍTICO SEMANAL & TRIMESTRAL (EMPRESA) */}
-          <FinancialWeeklyOverview
-            isDark={isDark}
-            title="Actividad de Ventas y Rotación de Stock"
-            subtitle="Desempeño de inventario y movimiento comercial por semanas"
-            weeklyData={[
-              { week: '1st Week', bars: [Math.round(stats.totalSaleVal * 0.28) || 190, Math.round(stats.totalInv * 0.24) || 155, Math.round(stats.totalEarns * 0.3) || 180] },
-              { week: '2nd Week', bars: [Math.round(stats.totalSaleVal * 0.25) || 160, Math.round(stats.totalInv * 0.28) || 170, Math.round(stats.totalEarns * 0.22) || 135] },
-              { week: '3rd Week', bars: [Math.round(stats.totalSaleVal * 0.29) || 175, Math.round(stats.totalInv * 0.22) || 145, Math.round(stats.totalEarns * 0.26) || 155] },
-              { week: '4th Week', bars: [Math.round(stats.totalSaleVal * 0.18) || 130, Math.round(stats.totalInv * 0.26) || 165, Math.round(stats.totalEarns * 0.32) || 185] },
-            ]}
-            monthlyCards={[
-              { month: 'INVERSIÓN STOCK', amount: stats.totalInv, color: '#06b6d4', points: '0,20 15,35 30,15 45,22' },
-              { month: 'VALOR COMERCIAL', amount: stats.totalSaleVal, color: '#0284c7', points: '0,28 15,15 30,22 45,30' },
-              { month: 'GANANCIA POTENCIAL', amount: stats.totalEarns, color: '#10b981', points: '0,15 15,30 30,28 45,35' },
-            ]}
-            unit="BOB"
-            maxScale={Math.max(stats.totalSaleVal * 0.35, 200)}
-          />
-
-          {/* METRICS DASHBOARD */}
-      <div className={`grid gap-4 ${isMobile ? 'grid-cols-1' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5'}`} style={{ marginBottom: 24 }}>
-        {[
-          { label: 'Inversión Total (Costo)', value: `${stats.totalInv.toLocaleString()} BS`, icon: Briefcase, color: '#a0a0a0' },
-          { label: 'Valor Estimado Venta', value: `${stats.totalSaleVal.toLocaleString()} BS`, icon: TrendingUp, color: '#38bdf8' },
-          { label: 'Ganancia Potencial', value: `${stats.totalEarns.toLocaleString()} BS`, icon: DollarSign, color: '#10b981', sub: stats.totalInv > 0 ? `Margen: ${((stats.totalEarns / stats.totalInv) * 100).toFixed(0)}%` : 'Margen: 0%' },
-          { label: 'Total Productos', value: `${stats.totalCount} refs`, icon: Package, color: '#a78bfa' },
-          { label: 'Stock Crítico', value: `${stats.lowStock.length} items`, icon: AlertOctagon, color: stats.lowStock.length > 0 ? '#ef4444' : '#64748b' }
-        ].map((m, i) => (
-          <div key={i} className="metric-card-executive" style={{ backgroundColor: t.panel, borderColor: t.border }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <div className="icon-squircle" style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: `${m.color}15`, color: m.color, border: `1px solid ${m.color}30` }}>
-                <m.icon size={16} strokeWidth={2} />
-              </div>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: m.color }} />
-            </div>
-            <div>
-              <span style={{ fontSize: 9, fontWeight: 700, color: t.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', display: 'block' }}>{m.label}</span>
-              <p className="num-tabular tabular-nums" style={{ fontSize: 20, fontWeight: 800, color: t.text, margin: '4px 0 0 0', letterSpacing: '-0.03em' }}>{m.value}</p>
-              {m.sub && <span style={{ fontSize: 9, color: '#10b981', fontWeight: 600, marginTop: 4, display: 'block' }}>{m.sub}</span>}
-            </div>
+          {/* Resumen limpio de inventario en una sola línea sin dashboards */}
+          <div className="flex items-center justify-between text-xs text-[#9E9E9E] mb-5 pb-3 border-b border-[#2C2C2C]">
+            <span>
+              <strong className="text-white font-mono">{stats.totalCount}</strong> referencias • Valor comercial: <strong className="text-white font-mono">{stats.totalSaleVal.toLocaleString()} BS</strong>
+            </span>
+            <span className="text-[#7A7A7A]">
+              Inversión stock: <strong className="text-[#ECECEC] font-mono">{stats.totalInv.toLocaleString()} BS</strong>
+              {stats.lowStock.length > 0 && (
+                <span className="ml-3 px-2 py-0.5 rounded bg-[#3D2424] text-[#F87171] border border-[#542F2F] text-[10px] font-semibold">
+                  {stats.lowStock.length} stock crítico
+                </span>
+              )}
+            </span>
           </div>
-        ))}
-      </div>
 
       {/* CATEGORÍAS + STOCK CRÍTICO ROW — Siempre visibles debajo de métricas */}
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 20, marginBottom: 20, flexShrink: 0 }}>

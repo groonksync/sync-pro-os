@@ -285,42 +285,21 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-semibold uppercase tracking-wider transition-all justify-center"
-          style={{ backgroundColor: t.accent, color: t.bg, minHeight: '44px' }}
-          onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.accentHover; }}
-          onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.accent; }}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all justify-center bg-[#ECECEC] hover:bg-white text-[#171717] shadow-sm spring-active"
         >
           <Plus size={14} /> Nuevo
         </button>
       </header>
-
-      {/* STATS */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        {stats.map((kpi, i) => (
-          <div key={i} className="flex items-center gap-3 transition-all"
-            style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: 12, padding: '14px 16px' }}
-          >
-            <div style={{ backgroundColor: t.accentSoft, borderRadius: 10, width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <kpi.icon size={16} color={t.accent} />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[8px] font-black uppercase tracking-widest" style={{ color: t.textDim }}>{kpi.label}</p>
-              <h4 className="text-lg font-black tracking-tight truncate" style={{ color: t.text }}>{kpi.val}</h4>
-            </div>
-          </div>
-        ))}
-      </div>
 
       {/* FILTERS + SEARCH */}
       <div className="flex flex-col md:flex-row gap-3 mb-6 items-center justify-between">
         <div className="flex p-1 rounded-xl w-full md:w-auto overflow-x-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
           {['Todos', 'Tarea', 'Compra', 'Idea', 'Nota'].map(f => (
             <button key={f} onClick={() => setActiveFilter(f)}
-              className="px-3.5 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all whitespace-nowrap flex items-center justify-center"
+              className="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap flex items-center justify-center spring-active"
               style={{
-                backgroundColor: activeFilter === f ? t.accent : 'transparent',
-                color: activeFilter === f ? '#000000' : t.textDim,
-                minHeight: '44px',
+                backgroundColor: activeFilter === f ? '#383838' : 'transparent',
+                color: activeFilter === f ? '#FFFFFF' : t.textDim,
               }}
             >{f}</button>
           ))}

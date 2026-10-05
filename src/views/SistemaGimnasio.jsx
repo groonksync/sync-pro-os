@@ -36,7 +36,7 @@ const inputGlassStyle = {
 
 const SistemaGimnasio = ({ settings, isDark }) => {
   const t = useTheme(isDark);
-  const [activeSubTab, setActiveSubTab] = useState('resumen');
+  const [activeSubTab, setActiveSubTab] = useState('miembros');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterHealthAlerts, setFilterHealthAlerts] = useState(false);
   const [planCategoryFilter, setPlanCategoryFilter] = useState('Todos');
@@ -383,14 +383,7 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           
           <button 
             onClick={() => setIsModalOpen(true)}
-            style={{
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%)',
-              backdropFilter: 'blur(20px)', border: `1px solid ${t.accent}`, borderRadius: '10px',
-              padding: '8px 16px', color: t.accent, cursor: 'pointer', fontSize: 12, fontWeight: 700,
-              display: 'flex', alignItems: 'center', gap: 6, transition: 'all 0.2s', boxShadow: `0 4px 15px ${t.accent}30`
-            }}
-            onMouseEnter={e => e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.15)'}
-            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all justify-center bg-[#ECECEC] hover:bg-white text-[#171717] shadow-sm spring-active"
           >
             <UserPlus size={14} /> Nuevo Miembro
           </button>
@@ -404,14 +397,11 @@ const SistemaGimnasio = ({ settings, isDark }) => {
       )}
 
       {/* COMPACT TABS */}
-      <div style={{
-        display: 'flex', gap: 4, overflowX: 'auto', paddingBottom: 4, borderBottom: '1px solid rgba(255,255,255,0.05)', WebkitOverflowScrolling: 'touch'
-      }}>
+      <div className="flex gap-2 overflow-x-auto pb-2 border-b border-[#2C2C2C]">
         {[
-          { id: 'resumen', label: 'Dashboard', icon: TrendingUp },
-          { id: 'checkin', label: 'Acceso', icon: QrCode },
-          { id: 'miembros', label: 'Clientes', icon: Users },
-          { id: 'contabilidad', label: 'Caja', icon: Receipt },
+          { id: 'miembros', label: 'Clientes / Miembros', icon: Users },
+          { id: 'checkin', label: 'Acceso QR', icon: QrCode },
+          { id: 'contabilidad', label: 'Caja & Cobros', icon: Receipt },
           { id: 'planes', label: 'Planes', icon: CreditCard },
           { id: 'promociones', label: 'Cupones', icon: Ticket },
           { id: 'papelera', label: 'Papelera', icon: Trash2 }
@@ -420,16 +410,13 @@ const SistemaGimnasio = ({ settings, isDark }) => {
           return (
             <button
               key={tab.id} onClick={() => setActiveSubTab(tab.id)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: '12px 12px 0 0',
-                background: active ? 'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%)' : 'transparent',
-                border: 'none', borderBottom: active ? `2px solid ${t.accent}` : '2px solid transparent',
-                color: active ? t.accent : t.textMuted, cursor: 'pointer', fontSize: 11, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap', transition: 'all 0.2s',
-                textShadow: active ? `0 0 10px ${t.accent}60` : 'none'
-              }}
+              className={`pill-tab spring-active flex items-center gap-1.5 ${
+                active
+                  ? 'bg-[#383838] text-white border border-[#484848]'
+                  : 'text-[#9E9E9E] hover:text-white hover:bg-[#2A2A2A]'
+              }`}
             >
-              <tab.icon size={14} /> {tab.label}
+              <tab.icon size={13} /> {tab.label}
             </button>
           );
         })}

@@ -75,7 +75,7 @@ const Sidebar = ({
             position: 'fixed',
             inset: 0,
             zIndex: 999,
-            background: isDark ? 'rgba(10, 10, 12, 0.96)' : 'rgba(244, 244, 246, 0.96)',
+            background: isDark ? 'rgba(23, 23, 23, 0.97)' : 'rgba(244, 244, 246, 0.96)',
             backdropFilter: 'blur(28px) saturate(190%)',
             WebkitBackdropFilter: 'blur(28px) saturate(190%)',
             display: 'flex',

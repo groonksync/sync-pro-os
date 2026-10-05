@@ -754,8 +754,8 @@ const AppContent = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#0A0A0C' }}>
-        <div className="animate-spin" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #27272E', borderTopColor: '#C0C0C6' }} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#212121' }}>
+        <div className="animate-spin" style={{ width: 32, height: 32, borderRadius: '50%', border: '2px solid #383838', borderTopColor: '#ECECEC' }} />
       </div>
     );
   }
@@ -797,10 +797,10 @@ const AppContent = () => {
           isDark={isDarkMode}
           setIsDark={setIsDarkMode}
           sidebarBg={(() => {
-            if (appSettings.sidebarColor === 'same' || !appSettings.sidebarColor) return globalTheme.bg;
-            if (appSettings.sidebarColor === 'black') return '#000000';
-            if (appSettings.sidebarColor === 'lightGray') return '#1A1A20';
-            return '#0A0A0C';
+            if (appSettings.sidebarColor === 'same' || !appSettings.sidebarColor) return isDarkMode ? '#171717' : globalTheme.panel;
+            if (appSettings.sidebarColor === 'black') return '#121212';
+            if (appSettings.sidebarColor === 'lightGray') return '#1E1E1E';
+            return isDarkMode ? '#171717' : '#FFFFFF';
           })()}
           counts={{ 
             meetings: Array.isArray(meetingsList) ? meetingsList.length : 0, 
