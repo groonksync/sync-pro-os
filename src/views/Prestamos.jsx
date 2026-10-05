@@ -1861,7 +1861,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
             {/* Resumen limpio de cartera en una sola línea sin dashboards */}
             <div className="flex items-center justify-between text-xs text-[#9E9E9E] mb-5 pb-3 border-b border-[#2C2C2C]">
               <span>
-                {prestamosFiltrados.length} {prestamosFiltrados.length === 1 ? 'registro' : 'registros'} • <strong className="text-white font-mono">{stats.capitalActivo.toLocaleString()} BOB</strong> en capital activo
+                {filteredPrestamistas.length} {filteredPrestamistas.length === 1 ? 'registro' : 'registros'} • <strong className="text-white font-mono">{stats.capitalActivo.toLocaleString()} BOB</strong> en capital activo
               </span>
               <span className="text-[#7A7A7A]">
                 Rendimiento estimado: <strong className="text-[#ECECEC] font-mono">+{stats.rendimientoMensual.toLocaleString()} BOB/mes</strong>
