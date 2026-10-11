@@ -6,7 +6,7 @@ import {
   MessageSquare, ArrowRight, ExternalLink, FileSpreadsheet,
   Check, ShieldAlert, Sparkles, Building2, Dumbbell, Video,
   ChevronLeft, ChevronRight, Share2, Smartphone, Cpu,
-  ToggleLeft, ToggleRight, ArrowUpRight, ArrowDownRight, Layers
+  ToggleLeft, ToggleRight, ArrowUpRight, ArrowDownRight, Layers, Package
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
