@@ -4,11 +4,13 @@ import {
   FileText, ChevronDown, AlertTriangle, Clock, Download,
   Brain, CheckCircle, XCircle, DollarSign, Plus,
   MessageSquare, ArrowRight, ExternalLink, FileSpreadsheet,
-  Check, ShieldAlert, Sparkles, Building2, Dumbbell, Video
+  Check, ShieldAlert, Sparkles, Building2, Dumbbell, Video,
+  ChevronLeft, ChevronRight, Share2, Smartphone, Cpu,
+  ToggleLeft, ToggleRight, ArrowUpRight, ArrowDownRight, Layers
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
 import { Google, DeepSeek } from '@lobehub/icons';
-import { getTheme, useTheme } from '../lib/theme';
+import { useTheme } from '../lib/theme';
 import { calcularCategoriaPrestamo } from '../hooks/usePrestamoCategorias';
 import { useWhatsApp } from '../hooks/useWhatsApp';
 import { generarCronograma } from '../hooks/useAmortizacion';
@@ -16,8 +18,13 @@ import CommandModal from '../components/CommandModal';
 import ResumenIAModal from '../components/ResumenIAModal';
 import { exportCobrosCSV, exportStockBajoCSV, exportPDF } from '../utils/exportReport';
 
-const GoogleLogo = ({ size = 16 }) => <Google.Color size={size} />;
-const DeepSeekLogo = ({ size = 16 }) => <DeepSeek.Color size={size} />;
+const ChipIcon = () => (
+  <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="28" height="22" rx="4" fill="#D4AF37" fillOpacity="0.25" stroke="#D4AF37" strokeWidth="1.2"/>
+    <path d="M0 7H9M0 15H9M19 7H28M19 15H28M9 0V22M19 0V22M9 11H19" stroke="#E5C158" strokeWidth="1.2"/>
+    <rect x="11" y="7" width="6" height="8" rx="2" fill="#D4AF37" fillOpacity="0.5"/>
+  </svg>
+);
 
 const CommandCenter = ({
   meetingsList = [],
@@ -37,39 +44,24 @@ const CommandCenter = ({
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
 
   // ─── Estados ────────────────────────────────────────────────
-  const [filtroActivo, setFiltroActivo] = useState('todos'); // 'todos' | 'prestamos' | 'servicios' | 'alertas'
   const [periodoMes, setPeriodoMes] = useState(mesActual);
   const [modalPago, setModalPago] = useState({ isOpen: false, prestamo: null });
   const [modalServicio, setModalServicio] = useState({ isOpen: false, servicio: null });
   const [modalIA, setModalIA] = useState({ isOpen: false, contenido: '', cargando: false });
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
-  const [aiBalance, setAiBalance] = useState('...');
-  const [isRefreshingAi, setIsRefreshingAi] = useState(false);
+  const [timelineDayOffset, setTimelineDayOffset] = useState(0);
+  const [selectedTimelineDay, setSelectedTimelineDay] = useState(0); // 0 = Hoy, 1 = Mañana, etc.
+  const [cashflowToggleActive, setCashflowToggleActive] = useState(true);
+  const [productPage, setProductPage] = useState(0);
 
-  // ─── Toast con auto-cierre ──────────────────────────────────
+  // Toast con auto-cierre
   useEffect(() => {
     if (toastMsg) {
       const timer = setTimeout(() => setToastMsg(null), 3000);
       return () => clearTimeout(timer);
     }
   }, [toastMsg]);
-
-  // ─── Balance IA ─────────────────────────────────────────────
-  const fetchAiBalance = useCallback(async () => {
-    setIsRefreshingAi(true);
-    try {
-      const balance = await aiService.fetchBalance(settings);
-      setAiBalance(balance);
-    } catch {
-      setAiBalance('Activo');
-    }
-    setIsRefreshingAi(false);
-  }, [settings]);
-
-  useEffect(() => {
-    fetchAiBalance();
-  }, [fetchAiBalance]);
 
   // ─── Cálculos de Préstamos y Cobros del Período ───────────────
   const listaPrestamos = Array.isArray(data?.prestamos)
@@ -84,10 +76,17 @@ const CommandCenter = ({
       if (!p.inicio) return null;
       const cat = calcularCategoriaPrestamo(p);
       if (!cat) return null;
+      
+      const cuotaCalculada = p.cuotaUnit || (parseFloat(p.capital || 0) * (parseFloat(p.interes || 0) / 100));
+      const totalPagado = (p.pagos || []).length * cuotaCalculada;
+      const totalEsperado = cuotaCalculada * (parseInt(p.plazo_meses) || 12);
+      const amortizadoPct = totalEsperado > 0 ? Math.min(100, Math.round((totalPagado / totalEsperado) * 100)) : 45;
+
       return {
         ...p,
         ...cat,
-        cuotaCalculada: p.cuotaUnit || (parseFloat(p.capital || 0) * (parseFloat(p.interes || 0) / 100)),
+        cuotaCalculada,
+        amortizadoPct,
       };
     }).filter(p => {
       if (!p) return false;
@@ -110,6 +109,7 @@ const CommandCenter = ({
     const porCobrar = cobrosDelPeriodo.filter(p => p.categoria !== 'AL_DIA');
 
     const totalPendiente = porCobrar.reduce((sum, p) => sum + (p.montoPendiente || p.cuotaCalculada || 0), 0);
+    const totalRecaudado = alDia.reduce((sum, p) => sum + (p.cuotaCalculada || 0), 0);
 
     return {
       alDia,
@@ -118,6 +118,7 @@ const CommandCenter = ({
       deudorCritico,
       porCobrar,
       totalPendiente,
+      totalRecaudado,
     };
   }, [cobrosDelPeriodo]);
 
@@ -159,37 +160,81 @@ const CommandCenter = ({
     return serviciosActivos.filter(s => !s.yaPagado);
   }, [serviciosActivos]);
 
-  // ─── Tareas & Recordatorios Críticos ─────────────────────────
-  const listaRecordatorios = Array.isArray(data?.recordatorios) ? data.recordatorios : [];
-  const tareasUrgentes = useMemo(() => {
-    return listaRecordatorios
-      .filter(r => r.estado !== 'Completado' && r.estado !== 'Completada')
-      .sort((a, b) => {
-        const pMap = { 'Crítica': 0, 'Alta': 1, 'Media': 2, 'Baja': 3 };
-        return (pMap[a.prioridad] ?? 2) - (pMap[b.prioridad] ?? 2);
-      });
-  }, [listaRecordatorios]);
+  const totalGastoServicios = useMemo(() => {
+    return serviciosActivos.reduce((sum, s) => sum + (parseFloat(s.monto) || 0), 0);
+  }, [serviciosActivos]);
 
-  // ─── Stock Crítico ──────────────────────────────────────────
+  // ─── Timeline 7 Días Dinámico ────────────────────────────────
+  const timelineDays = useMemo(() => {
+    const days = [];
+    const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    
+    for (let i = 0; i < 7; i++) {
+      const targetDate = new Date();
+      targetDate.setDate(hoy.getDate() + timelineDayOffset + i);
+      const diaNum = targetDate.getDate();
+      const diaNom = diasSemana[targetDate.getDay()];
+      const dateStr = targetDate.toISOString().split('T')[0];
+
+      // Verificar si hay cobros de préstamos en este día
+      const cobrosEnDia = cobrosDelPeriodo.filter(p => {
+        if (!p.inicio) return false;
+        const diaInicio = new Date(p.inicio).getDate();
+        return diaInicio === diaNum;
+      });
+
+      // Verificar si hay servicios que vencen en este día
+      const serviciosEnDia = serviciosPendientes.filter(s => {
+        if (!s.fecha_pago) return false;
+        const diaServ = new Date(s.fecha_pago).getDate();
+        return diaServ === diaNum;
+      });
+
+      const totalItems = cobrosEnDia.length + serviciosEnDia.length;
+      const isToday = i === 0 && timelineDayOffset === 0;
+
+      days.push({
+        index: i,
+        diaNum,
+        diaNom,
+        dateStr,
+        isToday,
+        hasEvents: totalItems > 0,
+        eventCount: totalItems,
+        cobrosEnDia,
+        serviciosEnDia,
+      });
+    }
+    return days;
+  }, [timelineDayOffset, cobrosDelPeriodo, serviciosPendientes]);
+
+  const selectedDayInfo = timelineDays[selectedTimelineDay] || timelineDays[0];
+
+  // ─── Productos de Inventario ─────────────────────────────────
   const listaProductos = Array.isArray(data?.productos) ? data.productos : [];
   const stockCritico = useMemo(() => {
     return listaProductos.filter(p => (parseInt(p.stock_actual || p.stock || 0) || 0) <= 5);
   }, [listaProductos]);
 
-  // ─── Handlers de Operaciones ────────────────────────────────
+  const visibleProducts = useMemo(() => {
+    const start = productPage * 6;
+    return listaProductos.slice(start, start + 6);
+  }, [listaProductos, productPage]);
+
+  // ─── Handlers de Operación ──────────────────────────────────
   const ejecutarCobroRapido = (prestamo) => {
     setModalPago({ isOpen: true, prestamo });
   };
 
   const confirmarCobro = async () => {
-    const p = modalPago.prestamo;
-    if (!p || !onQuickPayment) return;
+    if (!modalPago.prestamo) return;
     try {
-      await onQuickPayment(p.id);
-      setModalPago({ isOpen: false, prestamo: null });
-      setToastMsg({ tipo: 'success', texto: `Cobro registrado: ${p.nombre}` });
+      await onQuickPayment(modalPago.prestamo.id);
+      setToastMsg(`✅ Cobro registrado con éxito para ${modalPago.prestamo.nombre}`);
     } catch (e) {
-      setToastMsg({ tipo: 'error', texto: `Error: ${e.message}` });
+      setToastMsg(`❌ Error al registrar cobro: ${e.message}`);
+    } finally {
+      setModalPago({ isOpen: false, prestamo: null });
     }
   };
 
@@ -198,171 +243,121 @@ const CommandCenter = ({
   };
 
   const confirmarPagoServicio = async () => {
-    const s = modalServicio.servicio;
-    if (!s || !onPayService) return;
+    if (!modalServicio.servicio) return;
     try {
-      const ok = await onPayService(s);
-      if (ok) {
-        setModalServicio({ isOpen: false, servicio: null });
-        setToastMsg({ tipo: 'success', texto: `Pago registrado: ${s.nombre}` });
+      if (onPayService) {
+        await onPayService(modalServicio.servicio);
+        setToastMsg(`✅ Pago registrado para ${modalServicio.servicio.nombre}`);
       }
     } catch (e) {
-      setToastMsg({ tipo: 'error', texto: `Error: ${e.message}` });
+      setToastMsg(`❌ Error al registrar pago: ${e.message}`);
+    } finally {
+      setModalServicio({ isOpen: false, servicio: null });
     }
   };
 
-  const notificarWhatsApp = (prestamo) => {
-    if (!prestamo.telefono) {
-      alert(`El cliente ${prestamo.nombre} no tiene número de teléfono registrado.`);
-      return;
-    }
-    const cuota = {
-      fechaVencimiento: prestamo.fecha_pago || prestamo.inicio,
-      total: prestamo.cuotaCalculada,
-      diasAtraso: prestamo.mesesAtraso ? prestamo.mesesAtraso * 30 : 0,
-    };
-    enviarRecordatorioMensual(prestamo, cuota);
-    setToastMsg({ tipo: 'success', texto: `Mensaje de WhatsApp preparado para ${prestamo.nombre}` });
-  };
-
-  const handleExport = (tipo) => {
-    setExportMenuOpen(false);
-    const totalCapital = listaPrestamos.reduce((s, p) => s + (parseFloat(p.capital) || 0), 0);
-    const totalInteres = listaPrestamos.reduce((s, p) => s + (parseFloat(p.capital) * (parseFloat(p.interes) / 100)), 0);
-    const valorInv = listaProductos.reduce((s, p) => s + ((parseFloat(p.precio_costo || p.precio) || 0) * (parseInt(p.stock_actual || 0) || 0)), 0);
-
-    if (tipo === 'pdf') {
-      exportPDF({
-        totalCapital,
-        totalInteresMensual: totalInteres,
-        valorInventario: valorInv,
-        totalPendiente: categorias.totalPendiente,
-        stockBajoCount: stockCritico.length,
-        porCobrar: cobrosDelPeriodo,
-        mesActual: periodoMes,
-      });
-    } else if (tipo === 'csv-cobros') {
-      exportCobrosCSV(cobrosDelPeriodo, periodoMes);
-    } else if (tipo === 'csv-stock') {
-      exportStockBajoCSV(stockCritico);
-    }
-    setToastMsg({ tipo: 'success', texto: 'Reporte generado exitosamente' });
+  const handleShareWhatsAppProduct = (prod) => {
+    const text = encodeURIComponent(
+      `Hola! Te comparto la información de nuestro producto:\n\n*${prod.nombre}*\n💰 Precio: ${prod.precio_venta || 0} Bs\n📦 Stock disponible: ${prod.stock_actual || prod.stock || 0} unidades\n\n¿Te gustaría coordinar la entrega?`
+    );
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
   const generarResumenIA = async () => {
     setModalIA({ isOpen: true, contenido: '', cargando: true });
     try {
-      const contexto = {
-        capitalActivo: listaPrestamos.reduce((s, p) => s + (parseFloat(p.capital) || 0), 0),
-        totalPendiente: categorias.totalPendiente,
-        cobrosPorCobrar: categorias.porCobrar.length,
-        deudoresCriticos: categorias.deudorCritico.length,
-        serviciosPendientes: serviciosPendientes.length,
-        tareasUrgentes: tareasUrgentes.length,
-      };
+      const prompt = `Analiza la situación operativa actual de Inefable:
+- Préstamos Activos: ${cobrosDelPeriodo.length} contratos
+- Total pendiente de cobro: ${categorias.totalPendiente.toLocaleString()} Bs
+- Total cobrado este mes: ${categorias.totalRecaudado.toLocaleString()} Bs
+- Deudores en mora crítica: ${categorias.deudorCritico.length}
+- Suscripciones pendientes: ${serviciosPendientes.length} por un total de ${totalGastoServicios.toLocaleString()} Bs
+- Stock crítico: ${stockCritico.length} productos con 5 o menos unidades
 
-      const prompt = `Analiza la situación operativa actual de mi estación de trabajo:\n${JSON.stringify(contexto, null, 2)}\nGenera un resumen ejecutivo breve, directo y enfocado en prioridades del día en formato texto claro.`;
-      const respuesta = await aiService.askAgent(prompt, [], { settings, activeView: 'Centro de Trabajo' });
-      setModalIA({ isOpen: true, contenido: respuesta, cargando: false });
+Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobranza y optimización de flujo de caja para hoy.`;
+
+      const response = await aiService.askAgent(prompt, [], { settings });
+      setModalIA({ isOpen: true, contenido: response, cargando: false });
     } catch (e) {
-      setModalIA({ isOpen: true, contenido: `Error: ${e.message}`, cargando: false });
+      setModalIA({ isOpen: true, contenido: `No se pudo generar el análisis: ${e.message}`, cargando: false });
     }
   };
 
-  // ─── Meses Disponibles para Selector ─────────────────────────
-  const opcionesPeriodo = useMemo(() => {
-    const periodos = [];
-    const base = new Date();
-    for (let i = -1; i <= 3; i++) {
-      const d = new Date(base.getFullYear(), base.getMonth() + i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-      periodos.push({ key, label: label.charAt(0).toUpperCase() + label.slice(1) });
-    }
-    return periodos;
-  }, []);
-
-  // ─── Helpers de Estilo de Estado ─────────────────────────────
-  const getBadgeStyle = (categoria) => {
-    switch (categoria) {
-      case 'AL_DIA':
-        return { bg: '#233328', text: '#4ADE80', border: '#2E4535', label: 'Al Día' };
-      case 'PENDIENTE':
-        return { bg: '#383324', text: '#FBBF24', border: '#4A422D', label: 'Pendiente' };
-      case 'DEUDOR_1MES':
-        return { bg: '#3D2C22', text: '#FB923C', border: '#523A2C', label: '1 Mes de Atraso' };
-      case 'DEUDOR_CRITICO':
-        return { bg: '#3D2424', text: '#F87171', border: '#542F2F', label: 'Crítico (2+ meses)' };
-      default:
-        return { bg: '#2A2A2A', text: '#B4B4B4', border: '#383838', label: 'Normal' };
+  const handleExport = (tipo) => {
+    setExportMenuOpen(false);
+    if (tipo === 'pdf') {
+      exportPDF(data, periodoMes, settings);
+      setToastMsg("📄 Reporte PDF descargado con éxito");
+    } else if (tipo === 'csv-cobros') {
+      exportCobrosCSV(cobrosDelPeriodo, periodoMes);
+      setToastMsg("📊 CSV de cobros descargado");
+    } else if (tipo === 'csv-stock') {
+      exportStockBajoCSV(stockCritico);
+      setToastMsg("⚠️ CSV de stock crítico descargado");
     }
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 pb-20 text-[#ECECEC] font-sans antialiased">
-
-      {/* ─── TOAST NOTIFICATION ─── */}
+    <div className="w-full space-y-5 animate-in fade-in duration-300 pb-12">
+      
+      {/* ─── TOAST NOTIFICACIÓN FLOTANTE ─── */}
       {toastMsg && (
-        <div className="fixed top-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-[#2D2D2D] border border-[#3E3E3E] text-white text-xs font-medium shadow-2xl flex items-center gap-2 fade-in">
-          <span>{toastMsg.tipo === 'success' ? '✓' : '⚠️'}</span>
-          <span>{toastMsg.texto}</span>
+        <div className="fixed bottom-6 right-6 z-50 p-3.5 px-5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-3 duration-200 flex items-center gap-2.5">
+          <CheckCircle size={16} className="text-emerald-400" />
+          <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* ─── HEADER PRINCIPAL Y ACCIONES RÁPIDAS ─── */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#2C2C2C] pb-5">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2.5">
-            Operaciones Activas
-          </h1>
-          <p className="text-xs text-[#9E9E9E] mt-1">
-            Gestión limpia de cobros, suscripciones por vencer y tareas críticas
-          </p>
+      {/* ─── BARRA DE CONTROL EJECUTIVA BENTO ─── */}
+      <div 
+        className="w-full p-4 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-xl"
+        style={{
+          backgroundColor: isDark ? 'rgba(20, 21, 27, 0.7)' : 'rgba(255, 255, 255, 0.85)',
+          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+        }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black">
+            <Sparkles size={18} />
+          </div>
+          <div>
+            <h1 className="text-base sm:text-lg font-black tracking-tight text-white m-0">
+              Centro de Mando Spatial
+            </h1>
+            <p className="text-[11px] text-neutral-400 m-0">
+              Operaciones de cartera, cobros, vitrina de productos y flujo de caja en tiempo real
+            </p>
+          </div>
         </div>
 
-        {/* Barra de Herramientas y Acciones */}
+        {/* Acciones Rápidas */}
         <div className="flex items-center gap-2 flex-wrap">
-          
           {/* Selector de Mes */}
-          <div className="relative">
-            <select
-              value={periodoMes}
-              onChange={e => setPeriodoMes(e.target.value)}
-              className="bg-[#2A2A2A] hover:bg-[#303030] text-[#ECECEC] text-xs font-medium px-3 py-2 rounded-xl border border-[#383838] focus:outline-none cursor-pointer spring-hover"
-            >
-              {opcionesPeriodo.map(p => (
-                <option key={p.key} value={p.key}>
-                  {p.label} {p.key === mesActual ? '• Actual' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
+          <input
+            type="month"
+            value={periodoMes}
+            onChange={(e) => setPeriodoMes(e.target.value)}
+            className="text-xs font-bold py-1.5 px-3 rounded-xl border bg-white/[0.04] text-white border-white/10 focus:outline-none"
+          />
 
-          {/* Botón Nuevo Préstamo */}
+          {/* Botón Análisis IA */}
           <button
-            onClick={() => onNavigateTo && onNavigateTo('prestamos')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#2A2A2A] hover:bg-[#333333] border border-[#383838] text-xs font-medium text-white spring-active"
-            title="Ir a Cartera de Préstamos para registrar uno nuevo"
+            onClick={generarResumenIA}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-black transition-all hover:scale-105 active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, #10B981, #34D399)',
+              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.35)',
+            }}
           >
-            <Plus size={14} />
-            <span>Nuevo Préstamo</span>
-          </button>
-
-          {/* Botón Registrar Gasto */}
-          <button
-            onClick={() => onNavigateTo && onNavigateTo('pagos')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#2A2A2A] hover:bg-[#333333] border border-[#383838] text-xs font-medium text-white spring-active"
-            title="Ir a Mis Egresos para registrar un gasto"
-          >
-            <Plus size={14} />
-            <span>Registrar Gasto</span>
+            <Sparkles size={13} />
+            <span>Análisis IA</span>
           </button>
 
           {/* Menú Exportar */}
           <div className="relative">
             <button
               onClick={() => setExportMenuOpen(!exportMenuOpen)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#2A2A2A] hover:bg-[#333333] border border-[#383838] text-xs font-medium text-[#B4B4B4] hover:text-white spring-active"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-xs font-semibold text-neutral-200"
             >
               <Download size={13} />
               <span>Exportar</span>
@@ -370,358 +365,516 @@ const CommandCenter = ({
             </button>
 
             {exportMenuOpen && (
-              <div className="absolute right-0 mt-1.5 w-48 bg-[#282828] border border-[#383838] rounded-xl shadow-2xl p-1 z-30 space-y-0.5">
+              <div 
+                className="absolute right-0 mt-2 w-48 rounded-2xl p-1.5 shadow-2xl border backdrop-blur-2xl z-40 space-y-0.5"
+                style={{
+                  backgroundColor: isDark ? 'rgba(24, 25, 32, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                }}
+              >
                 <button
                   onClick={() => handleExport('pdf')}
-                  className="w-full text-left px-3 py-2 text-xs text-[#ECECEC] hover:bg-[#333333] rounded-lg flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-white/[0.06] rounded-xl flex items-center gap-2"
                 >
-                  <FileText size={13} className="text-[#38BDF8]" />
+                  <FileText size={13} className="text-cyan-400" />
                   <span>Reporte PDF</span>
                 </button>
                 <button
                   onClick={() => handleExport('csv-cobros')}
-                  className="w-full text-left px-3 py-2 text-xs text-[#ECECEC] hover:bg-[#333333] rounded-lg flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-white/[0.06] rounded-xl flex items-center gap-2"
                 >
-                  <FileSpreadsheet size={13} className="text-[#34D399]" />
+                  <FileSpreadsheet size={13} className="text-emerald-400" />
                   <span>CSV de Cobros</span>
                 </button>
                 <button
                   onClick={() => handleExport('csv-stock')}
-                  className="w-full text-left px-3 py-2 text-xs text-[#ECECEC] hover:bg-[#333333] rounded-lg flex items-center gap-2"
+                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-white/[0.06] rounded-xl flex items-center gap-2"
                 >
-                  <AlertTriangle size={13} className="text-[#FBBF24]" />
+                  <AlertTriangle size={13} className="text-amber-400" />
                   <span>CSV Stock Crítico</span>
                 </button>
               </div>
             )}
           </div>
-
-          {/* Análisis IA */}
-          <button
-            onClick={generarResumenIA}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#ECECEC] hover:bg-white text-[#171717] text-xs font-semibold spring-active"
-            title="Generar resumen ejecutivo de la situación actual"
-          >
-            <Sparkles size={13} />
-            <span>Análisis IA</span>
-          </button>
-        </div>
-      </header>
-
-      {/* ─── FILTRO POR PÍLDORAS (Segmented Pills) ─── */}
-      <div className="flex items-center justify-between gap-3 overflow-x-auto pb-1">
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setFiltroActivo('todos')}
-            className={`pill-tab spring-active ${
-              filtroActivo === 'todos'
-                ? 'bg-[#383838] text-white border border-[#484848]'
-                : 'text-[#9E9E9E] hover:text-white hover:bg-[#2A2A2A]'
-            }`}
-          >
-            Todas las Operaciones ({cobrosDelPeriodo.length + serviciosPendientes.length + tareasUrgentes.length})
-          </button>
-
-          <button
-            onClick={() => setFiltroActivo('prestamos')}
-            className={`pill-tab spring-active flex items-center gap-1.5 ${
-              filtroActivo === 'prestamos'
-                ? 'bg-[#383838] text-white border border-[#484848]'
-                : 'text-[#9E9E9E] hover:text-white hover:bg-[#2A2A2A]'
-            }`}
-          >
-            <span>Cobros ({cobrosDelPeriodo.length})</span>
-            {categorias.porCobrar.length > 0 && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[#EF4444]" />
-            )}
-          </button>
-
-          <button
-            onClick={() => setFiltroActivo('servicios')}
-            className={`pill-tab spring-active flex items-center gap-1.5 ${
-              filtroActivo === 'servicios'
-                ? 'bg-[#383838] text-white border border-[#484848]'
-                : 'text-[#9E9E9E] hover:text-white hover:bg-[#2A2A2A]'
-            }`}
-          >
-            <span>Suscripciones y Gastos ({serviciosPendientes.length})</span>
-            {serviciosPendientes.length > 0 && (
-              <span className="w-1.5 h-1.5 rounded-full bg-[#F59E0B]" />
-            )}
-          </button>
-
-          <button
-            onClick={() => setFiltroActivo('alertas')}
-            className={`pill-tab spring-active ${
-              filtroActivo === 'alertas'
-                ? 'bg-[#383838] text-white border border-[#484848]'
-                : 'text-[#9E9E9E] hover:text-white hover:bg-[#2A2A2A]'
-            }`}
-          >
-            Tareas y Alertas ({tareasUrgentes.length + stockCritico.length})
-          </button>
-        </div>
-
-        <div className="hidden sm:flex items-center gap-2 text-xs text-[#7A7A7A]">
-          <span>Pendiente de cobro:</span>
-          <span className="font-mono font-bold text-white">
-            {categorias.totalPendiente.toLocaleString()} Bs
-          </span>
         </div>
       </div>
 
-      {/* ─── BANDEJA UNIFICADA DE OPERACIONES (CARD FEED) ─── */}
-      <div className="space-y-3">
+      {/* ══════════════════════════════════════════════════════════════════
+          SPATIAL BENTO GRID (4 MÓDULOS PRINCIPALES)
+          ══════════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        
+        {/* ── 1. BLOQUE IZQUIERDO: CUSTOMER LOAN CARDS (WALLET STYLE) ── */}
+        <div 
+          className="lg:col-span-4 rounded-3xl p-5 border space-y-4 backdrop-blur-xl relative flex flex-col"
+          style={{
+            backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+            minHeight: '480px',
+          }}
+        >
+          {/* Header del Tile */}
+          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+            <div>
+              <div className="flex items-center gap-2">
+                <CreditCard size={16} className="text-emerald-400" />
+                <h3 className="text-sm font-black uppercase tracking-wider text-white m-0">
+                  Tarjetas de Deudores
+                </h3>
+              </div>
+              <p className="text-[10px] text-neutral-400 m-0 mt-0.5">
+                Cartera activa · {cobrosDelPeriodo.length} préstamos registrados
+              </p>
+            </div>
+            <button 
+              onClick={() => onNavigateToPrestamo ? onNavigateToPrestamo(null) : onNavigateTo('prestamos')}
+              className="text-[10px] font-bold text-emerald-400 hover:underline uppercase tracking-wider"
+            >
+              Ver Cartera
+            </button>
+          </div>
 
-        {/* SECCIÓN 1: PRÉSTAMOS / COBROS */}
-        {(filtroActivo === 'todos' || filtroActivo === 'prestamos') && (
-          <div className="space-y-3">
-            {filtroActivo === 'todos' && cobrosDelPeriodo.length > 0 && (
-              <div className="text-[11px] font-semibold text-[#7A7A7A] uppercase tracking-wider px-1 pt-2">
-                Cobros del Mes ({periodoMes})
+          {/* Feed de Tarjetas de Débito Digitales */}
+          <div className="space-y-3.5 overflow-y-auto max-h-[460px] pr-1 mac-scrollbar">
+            {cobrosDelPeriodo.length > 0 ? (
+              cobrosDelPeriodo.map((p) => {
+                const isPaid = p.categoria === 'AL_DIA';
+                return (
+                  <div
+                    key={p.id}
+                    className="p-4 rounded-2xl border transition-all duration-300 relative group overflow-hidden"
+                    style={{
+                      background: 'linear-gradient(145deg, #15161D, #0F1014)',
+                      borderColor: isPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                    }}
+                  >
+                    {/* Top Row: Chip + Badge */}
+                    <div className="flex items-center justify-between mb-3">
+                      <ChipIcon />
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                          isPaid
+                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                            : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                        }`}>
+                          {isPaid ? 'Al Día' : 'Pendiente'}
+                        </span>
+                        <span className="text-[9px] font-mono text-neutral-400">
+                          {p.moneda || 'BOB'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar de Amortización */}
+                    <div className="space-y-1 mb-3">
+                      <div className="flex justify-between text-[10px] text-neutral-400">
+                        <span>Estado de amortización</span>
+                        <span className="font-mono font-bold text-emerald-400">
+                          {p.amortizadoPct}%
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div 
+                          className="h-full rounded-full transition-all duration-500 bg-emerald-400"
+                          style={{
+                            width: `${p.amortizadoPct}%`,
+                            boxShadow: '0 0 10px #10B981',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Deudor Info & Monto */}
+                    <div className="flex items-end justify-between mb-4">
+                      <div>
+                        <span className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold block">
+                          Titular Deudor
+                        </span>
+                        <h4 className="text-sm font-bold text-white m-0 truncate max-w-[170px]">
+                          {p.nombre || 'Deudor sin nombre'}
+                        </h4>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold block">
+                          Cuota Período
+                        </span>
+                        <span className="text-sm font-mono font-black text-white">
+                          {Math.round(p.cuotaCalculada || 0).toLocaleString()} {p.moneda || 'Bs'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons: Quick-Pay & WhatsApp */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
+                      <button
+                        onClick={() => ejecutarCobroRapido(p)}
+                        className="flex-1 py-2 px-3 rounded-xl text-xs font-black text-black flex items-center justify-center gap-1.5 transition-all active:scale-95 hover:brightness-110"
+                        style={{
+                          background: isPaid 
+                            ? 'linear-gradient(135deg, #10B981, #059669)' 
+                            : 'linear-gradient(135deg, #34D399, #10B981)',
+                          boxShadow: '0 2px 10px rgba(16, 185, 129, 0.4)',
+                        }}
+                      >
+                        <Check size={14} />
+                        <span>{isPaid ? 'Cobro Registrado' : 'Quick-Pay'}</span>
+                      </button>
+
+                      {p.telefono && (
+                        <button
+                          onClick={() => enviarRecordatorioMensual(p, periodoMes)}
+                          title="Enviar aviso por WhatsApp"
+                          className="p-2 rounded-xl bg-green-500/15 hover:bg-green-500/25 text-green-400 border border-green-500/30 transition-all active:scale-95"
+                        >
+                          <Smartphone size={15} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="p-8 text-center text-neutral-500 space-y-2">
+                <CreditCard size={28} className="mx-auto opacity-40 text-emerald-400" />
+                <p className="text-xs font-bold text-neutral-300">Sin préstamos activos</p>
+                <p className="text-[10px]">Crea contratos en la sección de Clientes & Préstamos.</p>
               </div>
             )}
+          </div>
+        </div>
 
-            {cobrosDelPeriodo.map(p => {
-              const badge = getBadgeStyle(p.categoria);
-              const estaAlDia = p.categoria === 'AL_DIA';
+        {/* ── 2. BLOQUE CENTRAL: 7-DAY PAYMENT TIMELINE & TAREAS ── */}
+        <div className="lg:col-span-4 space-y-5">
+          
+          {/* Módulo Timeline 7 Días */}
+          <div 
+            className="rounded-3xl p-5 border backdrop-blur-xl space-y-4"
+            style={{
+              backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            {/* Header del Timeline */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+              <div className="flex items-center gap-2">
+                <CalendarDays size={16} className="text-amber-400" />
+                <h3 className="text-sm font-black uppercase tracking-wider text-white m-0">
+                  Línea de Cobros (7 Días)
+                </h3>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setTimelineDayOffset(prev => prev - 7)}
+                  className="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-neutral-300 text-xs"
+                >
+                  <ChevronLeft size={13} />
+                </button>
+                <button
+                  onClick={() => setTimelineDayOffset(prev => prev + 7)}
+                  className="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-neutral-300 text-xs"
+                >
+                  <ChevronRight size={13} />
+                </button>
+              </div>
+            </div>
+
+            {/* Nodos de los 7 Días */}
+            <div className="grid grid-cols-7 gap-1.5 text-center">
+              {timelineDays.map((day) => {
+                const isSelected = selectedTimelineDay === day.index;
+                return (
+                  <button
+                    key={day.index}
+                    onClick={() => setSelectedTimelineDay(day.index)}
+                    className={`p-2 rounded-xl flex flex-col items-center justify-center transition-all ${
+                      isSelected
+                        ? 'bg-amber-400/25 border-amber-400 text-white shadow-lg shadow-amber-500/20'
+                        : day.hasEvents
+                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/15'
+                        : 'bg-white/[0.02] border-white/[0.05] text-neutral-400 hover:bg-white/[0.05]'
+                    } border`}
+                  >
+                    <span className="text-[9px] font-bold uppercase block opacity-75">
+                      {day.diaNom}
+                    </span>
+                    <span className="text-xs font-mono font-black block mt-0.5">
+                      {day.diaNum}
+                    </span>
+                    {day.hasEvents && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 shadow-sm" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Badge de Próximos Pagos en el Día Seleccionado */}
+            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  {selectedDayInfo.isToday ? 'Cobros programados para Hoy' : `Cobros para el ${selectedDayInfo.diaNom} ${selectedDayInfo.diaNum}`}
+                </span>
+                <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/[0.06] text-neutral-300">
+                  {selectedDayInfo.eventCount} {selectedDayInfo.eventCount === 1 ? 'evento' : 'eventos'}
+                </span>
+              </div>
+
+              {selectedDayInfo.hasEvents ? (
+                <div className="space-y-1.5 max-h-32 overflow-y-auto mac-scrollbar">
+                  {selectedDayInfo.cobrosEnDia.map(p => (
+                    <div key={p.id} className="flex items-center justify-between text-xs p-2 rounded-xl bg-white/[0.04]">
+                      <span className="font-bold text-white truncate max-w-[150px]">{p.nombre}</span>
+                      <span className="font-mono text-emerald-400 font-bold">{Math.round(p.cuotaCalculada || 0)} Bs</span>
+                    </div>
+                  ))}
+                  {selectedDayInfo.serviciosEnDia.map(s => (
+                    <div key={s.id} className="flex items-center justify-between text-xs p-2 rounded-xl bg-rose-500/10 text-rose-300">
+                      <span className="font-bold truncate max-w-[150px]">{s.nombre}</span>
+                      <span className="font-mono font-bold">-{s.monto} Bs</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[10px] text-neutral-500 m-0 py-1 text-center">
+                  Sin vencimientos para esta fecha.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Sub-Widget: Suscripciones & Gastos Próximos */}
+          <div 
+            className="rounded-3xl p-5 border backdrop-blur-xl space-y-3"
+            style={{
+              backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+              <span className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
+                <Wallet size={14} className="text-rose-400" />
+                Suscripciones por Pagar
+              </span>
+              <span className="text-[10px] font-mono font-bold text-rose-400">
+                {serviciosPendientes.length} pendientes
+              </span>
+            </div>
+
+            <div className="space-y-2 max-h-40 overflow-y-auto mac-scrollbar">
+              {serviciosPendientes.slice(0, 3).map(s => (
+                <div key={s.id} className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-white m-0">{s.nombre}</p>
+                    <p className="text-[10px] text-neutral-400 m-0">Vence: {s.fecha_pago || 'Mes en curso'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-bold text-white">{s.monto} Bs</span>
+                    <button
+                      onClick={() => ejecutarPagoServicio(s)}
+                      className="px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-emerald-500/20 hover:text-emerald-300 text-[10px] font-bold transition-all text-neutral-300"
+                    >
+                      Pagar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── 3. BLOQUE DERECHO: VITRINA DE INVENTARIO & CATÁLOGO ── */}
+        <div 
+          className="lg:col-span-4 rounded-3xl p-5 border space-y-4 backdrop-blur-xl relative"
+          style={{
+            backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+            minHeight: '480px',
+          }}
+        >
+          {/* Header del Showcase */}
+          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+            <div>
+              <div className="flex items-center gap-2">
+                <Package size={16} className="text-cyan-400" />
+                <h3 className="text-sm font-black uppercase tracking-wider text-white m-0">
+                  Vitrina de Catálogo
+                </h3>
+              </div>
+              <p className="text-[10px] text-neutral-400 m-0 mt-0.5">
+                {listaProductos.length} referencias en stock
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setProductPage(prev => Math.max(0, prev - 1))}
+                disabled={productPage === 0}
+                className="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 flex items-center justify-center text-neutral-300 text-xs"
+              >
+                <ChevronLeft size={13} />
+              </button>
+              <button
+                onClick={() => setProductPage(prev => ((prev + 1) * 6 < listaProductos.length ? prev + 1 : prev))}
+                disabled={(productPage + 1) * 6 >= listaProductos.length}
+                className="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 flex items-center justify-center text-neutral-300 text-xs"
+              >
+                <ChevronRight size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Grilla 2x3 de Productos Visuales */}
+          <div className="grid grid-cols-2 gap-3 max-h-[440px] overflow-y-auto mac-scrollbar pr-1">
+            {visibleProducts.map((prod) => {
+              const mainImg = prod.imagen || (Array.isArray(prod.imagenes) && prod.imagenes[0]) || null;
+              const stock = parseInt(prod.stock_actual || prod.stock || 0);
 
               return (
                 <div
-                  key={p.id}
-                  className="card-gray p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  key={prod.id}
+                  className="p-3 rounded-2xl border transition-all duration-200 flex flex-col justify-between group hover:border-cyan-500/40"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                    borderColor: 'rgba(255, 255, 255, 0.06)',
+                  }}
                 >
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-9 h-9 rounded-xl bg-[#242424] border border-[#383838] flex items-center justify-center font-bold text-xs text-[#ECECEC] shrink-0">
-                      {p.nombre ? p.nombre.charAt(0).toUpperCase() : 'P'}
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="text-xs font-bold text-white tracking-tight">
-                          {p.nombre}
-                        </h3>
-                        <span
-                          className="text-[10px] px-2 py-0.5 rounded-md font-medium border"
-                          style={{
-                            backgroundColor: badge.bg,
-                            color: badge.text,
-                            borderColor: badge.border,
-                          }}
-                        >
-                          {badge.label}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#9E9E9E] mt-0.5">
-                        Capital: <span className="font-mono text-white">{parseFloat(p.capital || 0).toLocaleString()} {p.moneda || 'Bs'}</span> • Interés mensual: <span className="font-mono text-white">{p.cuotaCalculada.toFixed(0)} Bs</span>
-                        {p.telefono && <span className="text-[#7A7A7A] ml-2">📱 {p.telefono}</span>}
-                      </p>
-                    </div>
+                  {/* Foto del Producto */}
+                  <div className="w-full h-24 rounded-xl overflow-hidden bg-black/40 border border-white/5 relative mb-2 flex items-center justify-center">
+                    {mainImg ? (
+                      <img 
+                        src={mainImg} 
+                        alt={prod.nombre} 
+                        className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300" 
+                      />
+                    ) : (
+                      <Package size={28} className="text-neutral-600" />
+                    )}
+                    <span className={`absolute top-1 right-1 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${
+                      stock <= 5 ? 'bg-rose-500 text-white' : 'bg-black/60 text-white backdrop-blur-md'
+                    }`}>
+                      Stock {stock}
+                    </span>
                   </div>
 
-                  {/* Acciones y Monto */}
-                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#383838]">
-                    <div className="text-left sm:text-right">
-                      <span className="text-xs font-mono font-bold text-white">
-                        {p.cuotaCalculada.toFixed(0)} {p.moneda || 'Bs'}
-                      </span>
-                      <p className="text-[10px] text-[#7A7A7A]">cuota del mes</p>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      {p.telefono && (
-                        <button
-                          onClick={() => notificarWhatsApp(p)}
-                          className="px-2.5 py-1.5 rounded-lg bg-[#242424] hover:bg-[#303030] border border-[#363636] text-[11px] text-[#B4B4B4] hover:text-white flex items-center gap-1 spring-active"
-                          title="Enviar recordatorio por WhatsApp"
-                        >
-                          <MessageSquare size={12} className="text-[#34D399]" />
-                          <span className="hidden md:inline">WhatsApp</span>
-                        </button>
-                      )}
-
-                      {!estaAlDia && (
-                        <button
-                          onClick={() => ejecutarCobroRapido(p)}
-                          className="px-3 py-1.5 rounded-lg bg-[#ECECEC] hover:bg-white text-[#171717] text-xs font-bold spring-active"
-                        >
-                          Cobrar
-                        </button>
-                      )}
-
-                      <button
-                        onClick={() => onNavigateToPrestamo && onNavigateToPrestamo(p.id)}
-                        className="px-2.5 py-1.5 rounded-lg bg-[#242424] hover:bg-[#303030] border border-[#363636] text-[11px] text-[#9E9E9E] hover:text-white spring-active"
-                        title="Ver ficha completa en Préstamos"
-                      >
-                        Ver
-                      </button>
-                    </div>
+                  {/* Nombre y Precio */}
+                  <div className="space-y-0.5 mb-2">
+                    <h5 className="text-[11px] font-bold text-white truncate m-0" title={prod.nombre}>
+                      {prod.nombre}
+                    </h5>
+                    <p className="text-xs font-mono font-black text-cyan-400 m-0">
+                      {prod.precio_venta || 0} Bs
+                    </p>
                   </div>
+
+                  {/* Botón WhatsApp */}
+                  <button
+                    onClick={() => handleShareWhatsAppProduct(prod)}
+                    className="w-full py-1.5 rounded-lg bg-green-500/15 hover:bg-green-500/25 border border-green-500/25 text-green-400 text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95"
+                  >
+                    <Smartphone size={11} />
+                    <span>WhatsApp</span>
+                  </button>
                 </div>
               );
             })}
           </div>
-        )}
+        </div>
 
-        {/* SECCIÓN 2: SUSCRIPCIONES Y SERVICIOS */}
-        {(filtroActivo === 'todos' || filtroActivo === 'servicios') && (
-          <div className="space-y-3">
-            {filtroActivo === 'todos' && serviciosPendientes.length > 0 && (
-              <div className="text-[11px] font-semibold text-[#7A7A7A] uppercase tracking-wider px-1 pt-3">
-                Suscripciones y Servicios por Pagar
-              </div>
-            )}
-
-            {serviciosPendientes.map(s => (
-              <div
-                key={s.id}
-                className="card-gray p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-[#262B28] border border-[#344D3C] text-[#34D399] flex items-center justify-center font-bold text-xs shrink-0">
-                    ⚡
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="text-xs font-bold text-white tracking-tight">
-                        {s.nombre}
-                      </h3>
-                      {s.diasRestantes !== null && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium border ${
-                          s.diasRestantes <= 0
-                            ? 'bg-[#3D2424] text-[#F87171] border-[#542F2F]'
-                            : s.diasRestantes <= 3
-                            ? 'bg-[#383324] text-[#FBBF24] border-[#4A422D]'
-                            : 'bg-[#242424] text-[#9E9E9E] border-[#363636]'
-                        }`}>
-                          {s.diasRestantes <= 0
-                            ? 'Vencido'
-                            : `Vence en ${s.diasRestantes} días`}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-[#9E9E9E] mt-0.5">
-                      Fecha estimada: <span className="font-mono text-white">{s.fecha_pago || 'Recurrente mensual'}</span>
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-[#383838]">
-                  <span className="text-xs font-mono font-bold text-white">
-                    {Number(s.monto || 0).toLocaleString()} Bs
-                  </span>
-
-                  <button
-                    onClick={() => ejecutarPagoServicio(s)}
-                    className="px-3 py-1.5 rounded-lg bg-[#2A2A2A] hover:bg-[#333333] border border-[#3E3E3E] text-xs font-semibold text-white spring-active"
-                  >
-                    Marcar Pago
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* SECCIÓN 3: TAREAS CRÍTICAS & ALERTAS DE STOCK */}
-        {(filtroActivo === 'todos' || filtroActivo === 'alertas') && (
-          <div className="space-y-3">
-            {filtroActivo === 'todos' && (tareasUrgentes.length > 0 || stockCritico.length > 0) && (
-              <div className="text-[11px] font-semibold text-[#7A7A7A] uppercase tracking-wider px-1 pt-3">
-                Tareas y Alertas Prioritarias
-              </div>
-            )}
-
-            {/* Tareas */}
-            {tareasUrgentes.slice(0, 5).map(t => (
-              <div
-                key={t.id}
-                className="card-gray p-4 flex items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#282533] border border-[#3C3552] text-[#A78BFA] flex items-center justify-center font-bold text-xs shrink-0">
-                    ✓
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-semibold text-white">
-                        {t.titulo || t.texto || 'Tarea pendiente'}
-                      </p>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#3D2C22] text-[#FB923C] border border-[#523A2C]">
-                        {t.prioridad || 'Media'}
-                      </span>
-                    </div>
-                    {t.fecha && (
-                      <p className="text-[10px] text-[#7A7A7A] mt-0.5">
-                        Límite: {t.fecha}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => onNavigateTo && onNavigateTo('recordatorios')}
-                  className="px-2.5 py-1.5 rounded-lg bg-[#242424] hover:bg-[#303030] text-[11px] text-[#9E9E9E] hover:text-white spring-active"
-                >
-                  Gestionar
-                </button>
-              </div>
-            ))}
-
-            {/* Stock Bajo */}
-            {stockCritico.slice(0, 3).map(prod => (
-              <div
-                key={prod.id}
-                className="card-gray p-4 flex items-center justify-between gap-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-[#3D2C22] border border-[#523A2C] text-[#FB923C] flex items-center justify-center font-bold text-xs shrink-0">
-                    📦
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-white">
-                      Stock crítico: {prod.nombre}
-                    </p>
-                    <p className="text-[10px] text-[#7A7A7A] mt-0.5">
-                      Quedan solo <span className="font-bold text-[#F87171]">{prod.stock_actual || prod.stock || 0}</span> unidades disponibles
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => onNavigateTo && onNavigateTo('inventario', { search: prod.nombre })}
-                  className="px-2.5 py-1.5 rounded-lg bg-[#242424] hover:bg-[#303030] text-[11px] text-[#9E9E9E] hover:text-white spring-active"
-                >
-                  Ver Stock
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ESTADO VACÍO (Si no hay nada pendiente) */}
-        {cobrosDelPeriodo.length === 0 && serviciosPendientes.length === 0 && tareasUrgentes.length === 0 && (
-          <div className="text-center py-16 text-[#7A7A7A] space-y-2">
-            <div className="w-10 h-10 rounded-full bg-[#2A2A2A] mx-auto flex items-center justify-center text-sm text-[#9E9E9E]">
-              ✓
+        {/* ── 4. BLOQUE INFERIOR HORIZONTAL: CASHFLOW & BALANCE OPERATIVO ── */}
+        <div 
+          className="lg:col-span-12 rounded-3xl p-5 border backdrop-blur-xl"
+          style={{
+            backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+          }}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wider text-white m-0 flex items-center gap-2">
+                <Layers size={16} className="text-emerald-400" />
+                Flujo de Caja & Balance Operativo (Cashflow Toggles)
+              </h3>
+              <p className="text-[10px] text-neutral-400 m-0 mt-0.5">
+                Seguimiento de ingresos recaudados vs. compromisos de salida y gastos del período
+              </p>
             </div>
-            <p className="text-xs font-semibold text-white">Todo al día</p>
-            <p className="text-[11px] text-[#7A7A7A]">No hay operaciones pendientes ni alertas críticas para este período.</p>
+
+            {/* Switch Toggle */}
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-neutral-400 font-semibold">Monitor de Flujo</span>
+              <button
+                onClick={() => setCashflowToggleActive(!cashflowToggleActive)}
+                className="text-emerald-400 transition-transform active:scale-90"
+              >
+                {cashflowToggleActive ? <ToggleRight size={32} /> : <ToggleLeft size={32} className="text-neutral-600" />}
+              </button>
+            </div>
           </div>
-        )}
+
+          {/* Barras de Inflows vs Outflows */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+            
+            {/* 1. Entradas (Inflows) */}
+            <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-neutral-400 font-bold uppercase text-[10px] flex items-center gap-1">
+                  <ArrowUpRight size={13} className="text-emerald-400" /> Cobros Recaudados (Inflows)
+                </span>
+                <span className="font-mono font-black text-emerald-400">
+                  +{categorias.totalRecaudado.toLocaleString()} Bs
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-full rounded-full bg-emerald-400" style={{ width: '75%', boxShadow: '0 0 10px #10B981' }} />
+              </div>
+            </div>
+
+            {/* 2. Salidas (Outflows) */}
+            <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-neutral-400 font-bold uppercase text-[10px] flex items-center gap-1">
+                  <ArrowDownRight size={13} className="text-amber-400" /> Salidas & Servicios (Outflows)
+                </span>
+                <span className="font-mono font-black text-amber-400">
+                  -{totalGastoServicios.toLocaleString()} Bs
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-full rounded-full bg-amber-400" style={{ width: '45%', boxShadow: '0 0 10px #F59E0B' }} />
+              </div>
+            </div>
+
+            {/* 3. Margen Neto */}
+            <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-neutral-400 font-bold uppercase text-[10px]">
+                  Balance Neto Operativo
+                </span>
+                <span className="font-mono font-black text-white text-sm">
+                  {(categorias.totalRecaudado - totalGastoServicios).toLocaleString()} Bs
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-full rounded-full bg-cyan-400" style={{ width: '60%', boxShadow: '0 0 10px #06B6D4' }} />
+              </div>
+            </div>
+
+          </div>
+        </div>
 
       </div>
 
-      {/* ─── MODALES DE CONFIRMACIÓN (Seguridad y Claridad) ─── */}
+      {/* ─── MODALES DE OPERACIÓN ─── */}
       <CommandModal
         isOpen={modalPago.isOpen}
         onClose={() => setModalPago({ isOpen: false, prestamo: null })}
         onConfirm={confirmarCobro}
-        titulo={`Confirmar Cobro — ${modalPago.prestamo?.nombre || ''}`}
-        mensaje={`¿Registrar cobro de cuota mensual por ${modalPago.prestamo?.cuotaCalculada ? modalPago.prestamo.cuotaCalculada.toFixed(0) : 0} Bs correspondiente al período ${periodoMes}?`}
-        icono={<DollarSign size={20} color="#34D399" />}
-        colorAccent="#34D399"
+        titulo={`Confirmar Cobro Rápido — ${modalPago.prestamo?.nombre || ''}`}
+        mensaje={`¿Registrar cobro de cuota mensual por ${modalPago.prestamo?.cuotaCalculada ? modalPago.prestamo.cuotaCalculada.toFixed(0) : 0} Bs para el período ${periodoMes}?`}
+        icono={<DollarSign size={20} color="#10B981" />}
+        colorAccent="#10B981"
         confirmText="Confirmar Cobro"
         cancelText="Cancelar"
         isDark={isDark}
@@ -732,9 +885,9 @@ const CommandCenter = ({
         onClose={() => setModalServicio({ isOpen: false, servicio: null })}
         onConfirm={confirmarPagoServicio}
         titulo={`Confirmar Pago — ${modalServicio.servicio?.nombre || ''}`}
-        mensaje={`¿Registrar el pago de ${modalServicio.servicio?.nombre || ''} por ${modalServicio.servicio?.monto || 0} Bs? Se creará el egreso correspondiente y la fecha avanzará al siguiente mes.`}
-        icono={<CreditCard size={20} color="#F87171" />}
-        colorAccent="#F87171"
+        mensaje={`¿Registrar pago del servicio ${modalServicio.servicio?.nombre || ''} por ${modalServicio.servicio?.monto || 0} Bs?`}
+        icono={<CreditCard size={20} color="#F59E0B" />}
+        colorAccent="#F59E0B"
         confirmText="Registrar Pago"
         cancelText="Cancelar"
         isDark={isDark}
@@ -746,7 +899,7 @@ const CommandCenter = ({
         contenido={modalIA.contenido}
         cargando={modalIA.cargando}
         isDark={isDark}
-        titulo="Análisis de Situación Operativa"
+        titulo="Análisis Ejecutivo de Situación Operativa"
       />
 
     </div>

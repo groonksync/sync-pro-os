@@ -1,6 +1,6 @@
 // Inefable - System Updated: 2026-05-01
 import React, { useState, useEffect, useMemo } from 'react';
-import Sidebar from './components/Sidebar';
+import HorizonBar from './components/HorizonBar';
 import CommandCenter from './views/CommandCenter';
 import EditorVideo from './views/EditorVideo';
 import ProjectEngineView from './views/ProjectEngineView';
@@ -764,7 +764,7 @@ const AppContent = () => {
   if (!isAuthorized) return <AccessDeniedScreen userEmail={user?.email} onSignOut={signOut} />;
 
   return (
-    <div className={`flex flex-col md:flex-row h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
+    <div className={`flex flex-col h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
         style={{ backgroundColor: globalTheme.bg, color: globalTheme.text }}>
         
         {/* Background Wallpaper with extreme blur */}
@@ -787,30 +787,29 @@ const AppContent = () => {
             }} />
           </>
         )}
-        <Sidebar 
+
+        {/* ── BARRA SUPERIOR HORIZON (ZERO SIDEBAR) ── */}
+        <HorizonBar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 
           settings={appSettings}
           googleUser={googleUser}
-          isCollapsed={isSidebarCollapsed}
-          setIsCollapsed={setIsSidebarCollapsed}
           isDark={isDarkMode}
           setIsDark={setIsDarkMode}
-          sidebarBg={(() => {
-            if (appSettings.sidebarColor === 'same' || !appSettings.sidebarColor) return isDarkMode ? '#171717' : globalTheme.panel;
-            if (appSettings.sidebarColor === 'black') return '#121212';
-            if (appSettings.sidebarColor === 'lightGray') return '#1E1E1E';
-            return isDarkMode ? '#171717' : '#FFFFFF';
-          })()}
           counts={{ 
             meetings: Array.isArray(meetingsList) ? meetingsList.length : 0, 
             prestamos: Array.isArray(data?.prestamos) ? data.prestamos.length : 0,
             notificaciones: getNotificationCount()
-          }} 
+          }}
+          onSearch={(q) => {
+            if (activeTab === 'inventario') setInventarioSearch(q);
+            else if (activeTab === 'recordatorios') setRecordatoriosSearch(q);
+            else if (activeTab === 'pagos') setEgresosSearch(q);
+          }}
         />
         
-        <main className={`flex-1 h-full ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-700 ease-in-out pb-24 md:pb-0 safe-bottom-mobile`}>
-          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} ${activeTab === 'ajustes' ? '' : 'max-w-[2000px] mx-auto'} transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'ajustes' ? 'px-0 py-0' : 'px-3 py-3 md:px-6 md:py-8 lg:px-12 lg:py-10')}`}>
+        <main className={`flex-1 w-full ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-500 ease-in-out pb-12`}>
+          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} max-w-[2000px] mx-auto transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'configuracion' ? 'px-3 py-2' : 'px-3 py-2 md:px-6 md:py-4 lg:px-8')}`}>
             <ErrorBoundary>
               {renderSafeContent()}
             </ErrorBoundary>
