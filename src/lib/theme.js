@@ -1,33 +1,37 @@
+// Escala "Gris Esencial": fondo grafito, paneles ligeramente más claros.
 const GRAY_SCALE = {
-  bg:         '#212121', // Fondo principal gris carbón mate (estilo ChatGPT)
-  sidebar:    '#171717', // Barra lateral carbón neutral
-  panel:      '#171717',
-  surface:    '#262626',
-  card:       '#2D2D2D', // Superficies y tarjetas suaves
-  cardHover:  '#333333',
-  input:      '#2A2A2A',
-  border:     '#333333',
-  borderLight:'#3D3D3D',
-  overlay:    'rgba(33,33,33,0.96)',
+  bg:         '#1A1A1C',
+  sidebar:    '#232326',
+  panel:      '#232326',
+  surface:    '#2A2A2E',
+  card:       '#232326',
+  cardHover:  '#2D2D31',
+  input:      '#2A2A2E',
+  border:     '#333336',
+  borderLight:'#3D3D41',
+  overlay:    'rgba(26,26,28,0.96)',
 };
 
 const MODOS = {
   darkGray: { ...GRAY_SCALE },
   black: {
-    bg: '#181818', panel: '#121212', surface: '#1E1E1E',
-    card: '#242424', input: '#202020', border: '#2C2C2C', borderLight: '#363636',
-    overlay: 'rgba(24,24,24,0.98)',
+    bg: '#121214', panel: '#1A1A1C', surface: '#202024',
+    card: '#1A1A1C', cardHover: '#242428', input: '#202024',
+    border: '#2A2A2D', borderLight: '#343438',
+    overlay: 'rgba(18,18,20,0.98)',
   },
   lightGray: {
-    bg: '#262626', panel: '#1B1B1B', surface: '#2E2E2E',
-    card: '#333333', input: '#2F2F2F', border: '#3B3B3B', borderLight: '#444444',
-    overlay: 'rgba(38,38,38,0.96)',
+    bg: '#222225', panel: '#2B2B2F', surface: '#323236',
+    card: '#2B2B2F', cardHover: '#34343A', input: '#323236',
+    border: '#3C3C40', borderLight: '#46464A',
+    overlay: 'rgba(34,34,37,0.96)',
   },
 };
 
 const LIGHT = {
-  bg: '#F9FAFB', panel: '#FFFFFF', surface: '#F3F4F6',
-  input: '#F9FAFB', border: '#E5E7EB', borderLight: '#F3F4F6',
+  bg: '#F2F2F3', panel: '#FFFFFF', surface: '#EAEAEC',
+  card: '#FFFFFF', cardHover: '#F7F7F8',
+  input: '#FFFFFF', border: '#E0E0E3', borderLight: '#EAEAEC',
   overlay: 'rgba(255,255,255,0.96)',
 };
 
@@ -59,7 +63,7 @@ export function getTheme(isDark = true, custom = {}) {
         custom = {
           ...custom,
           appearanceMode: s.appearanceMode || s.appBackground || 'darkGray',
-          accentColor: custom.accentColor || s.accentColor || (isDark ? '#C0C0C6' : '#475569'),
+          accentColor: custom.accentColor || s.accentColor || (isDark ? '#E8E8EA' : '#1C1C1E'),
         };
       }
     } catch {}
@@ -69,15 +73,15 @@ export function getTheme(isDark = true, custom = {}) {
     ? MODOS[custom.appearanceMode] || MODOS.darkGray
     : LIGHT;
 
-  const accent = custom.accentColor || (isDark ? '#EDEDF0' : '#18181B');
+  const accent = custom.accentColor || (isDark ? '#E8E8EA' : '#1C1C1E');
   const accentLight = isHexLight(accent);
   const accentHover = isDark
     ? (accentLight ? '#C4C4CC' : '#FFFFFF')
-    : (accentLight ? '#334155' : '#09090B');
+    : (accentLight ? '#4A4A50' : '#000000');
 
-  const textColor = isDark ? '#ECECEC' : '#111827';
-  const textSecondary = isDark ? '#9E9E9E' : '#4B5563';
-  const textMuted = isDark ? '#7A7A7A' : '#6B7280';
+  const textColor = isDark ? '#E8E8EA' : '#1C1C1E';
+  const textSecondary = isDark ? '#A0A0A6' : '#4A4A50';
+  const textMuted = isDark ? '#8A8A90' : '#7A7A80';
 
   return {
     ...base,
@@ -89,11 +93,11 @@ export function getTheme(isDark = true, custom = {}) {
     text: textColor,
     textSecondary,
     textMuted,
-    textDim: isDark ? '#5A5A5A' : '#9CA3AF',
+    textDim: isDark ? '#5E5E64' : '#A0A0A6',
     hover: hexToRgba(textColor, 0.05),
     hoverActive: hexToRgba(textColor, 0.09),
     glow: hexToRgba(textColor, 0.05),
-    inputBg: isDark ? '#2A2A2A' : '#FFFFFF',
+    inputBg: isDark ? '#2A2A2E' : '#FFFFFF',
     danger: '#EF4444',
     dangerSoft: 'rgba(239,68,68,0.08)',
     warning: '#F59E0B',
