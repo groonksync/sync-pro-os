@@ -1,6 +1,6 @@
 // Inefable - System Updated: 2026-05-01
 import React, { useState, useEffect, useMemo } from 'react';
-import HorizonBar from './components/HorizonBar';
+import AppNav, { TopBar } from './components/AppNav';
 import CommandCenter from './views/CommandCenter';
 import EditorVideo from './views/EditorVideo';
 import ProjectEngineView from './views/ProjectEngineView';
@@ -479,18 +479,6 @@ const AppContent = () => {
 
   useEffect(() => {
     fetchData();
-    // DETECCIÓN AUTOMÁTICA DE DISPOSITIVOS MÓVILES
-    const checkMobile = () => {
-      setAppSettings(prev => {
-        if (prev.mobileModeSource === 'manual') return prev;
-        const autoMobile = window.innerWidth < 1024;
-        if (prev.isMobileMode === autoMobile) return prev;
-        return { ...prev, isMobileMode: autoMobile };
-      });
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   const handleNavigateToPrestamo = (id, action = null) => {
@@ -763,8 +751,16 @@ const AppContent = () => {
   if (!user) return <LoginScreen onLogin={signInWithGoogle} loading={loading} authError={authError} onClearError={clearAuthError} />;
   if (!isAuthorized) return <AccessDeniedScreen userEmail={user?.email} onSignOut={signOut} />;
 
+  const isMobileLayout = !!appSettings.isMobileMode;
+  const navCounts = {
+    meetings: Array.isArray(meetingsList) ? meetingsList.length : 0,
+    prestamos: Array.isArray(data?.prestamos) ? data.prestamos.length : 0,
+    notificaciones: getNotificationCount()
+  };
+  const fullHeightTab = (activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion');
+
   return (
-    <div className={`flex flex-col h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
+    <div className={`flex ${isMobileLayout ? 'flex-col' : 'flex-row'} h-screen w-full font-sans overflow-hidden transition-colors duration-500 relative ${appSettings.interfaceDensity}`}
         style={{ backgroundColor: globalTheme.bg, color: globalTheme.text }}>
         
         {/* Background Wallpaper with extreme blur */}
@@ -788,33 +784,53 @@ const AppContent = () => {
           </>
         )}
 
-        {/* ── BARRA SUPERIOR HORIZON (ZERO SIDEBAR) ── */}
-        <HorizonBar 
-          activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          settings={appSettings}
-          googleUser={googleUser}
-          isDark={isDarkMode}
-          setIsDark={setIsDarkMode}
-          counts={{ 
-            meetings: Array.isArray(meetingsList) ? meetingsList.length : 0, 
-            prestamos: Array.isArray(data?.prestamos) ? data.prestamos.length : 0,
-            notificaciones: getNotificationCount()
-          }}
-          onSearch={(q) => {
-            if (activeTab === 'inventario') setInventarioSearch(q);
-            else if (activeTab === 'recordatorios') setRecordatoriosSearch(q);
-            else if (activeTab === 'pagos') setEgresosSearch(q);
-          }}
-        />
-        
-        <main className={`flex-1 w-full ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative transition-all duration-500 ease-in-out pb-12`}>
-          <div className={`w-full relative z-10 flex flex-col ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? 'h-full' : 'min-h-full'} max-w-[2000px] mx-auto transition-all ${(activeTab === 'catalogo' || activeTab === 'flujo-trabajo' || activeTab === 'editor' || activeTab === 'proyectos-edicion') ? '' : (activeTab === 'configuracion' ? 'px-3 py-2' : 'px-3 py-2 md:px-6 md:py-4 lg:px-8')}`}>
-            <ErrorBoundary>
-              {renderSafeContent()}
-            </ErrorBoundary>
-          </div>
-        </main>
+        {/* Barra lateral de íconos (solo escritorio) */}
+        {!isMobileLayout && (
+          <AppNav
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            counts={navCounts}
+            settings={appSettings}
+            isDark={isDarkMode}
+          />
+        )}
+
+        <div className="flex flex-col flex-1 min-w-0 h-full relative z-10">
+          <TopBar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            counts={navCounts}
+            settings={appSettings}
+            googleUser={googleUser}
+            isDark={isDarkMode}
+            setIsDark={setIsDarkMode}
+            onSearch={(q) => {
+              if (activeTab === 'inventario') setInventarioSearch(q);
+              else if (activeTab === 'recordatorios') setRecordatoriosSearch(q);
+              else if (activeTab === 'pagos') setEgresosSearch(q);
+            }}
+          />
+
+          <main className={`flex-1 w-full ${fullHeightTab ? 'overflow-hidden' : 'overflow-y-auto'} mac-scrollbar relative ${isMobileLayout ? 'pb-24' : 'pb-6'}`}>
+            <div className={`w-full relative z-10 flex flex-col ${fullHeightTab ? 'h-full' : 'min-h-full'} max-w-[2000px] mx-auto ${fullHeightTab ? '' : 'px-3 py-3 md:px-6 md:py-5 lg:px-8'}`}>
+              <ErrorBoundary>
+                {renderSafeContent()}
+              </ErrorBoundary>
+            </div>
+          </main>
+        </div>
+
+        {/* Barra inferior + menú (solo móvil) */}
+        {isMobileLayout && (
+          <AppNav
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            counts={navCounts}
+            settings={appSettings}
+            isDark={isDarkMode}
+          />
+        )}
+
         
 
         
