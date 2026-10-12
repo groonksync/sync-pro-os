@@ -1,30 +1,27 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Wallet, CalendarDays, RefreshCw, Bell, CreditCard,
-  FileText, ChevronDown, AlertTriangle, Clock, Download,
-  Brain, CheckCircle, XCircle, DollarSign, Plus,
-  MessageSquare, ArrowRight, ExternalLink, FileSpreadsheet,
-  Check, ShieldAlert, Sparkles, Building2, Dumbbell, Video,
-  ChevronLeft, ChevronRight, Share2, Smartphone, Cpu,
-  ToggleLeft, ToggleRight, ArrowUpRight, ArrowDownRight, Layers, Package
+  Landmark, DollarSign, Wallet, Package, Bell, TrendingUp,
+  Sparkles, Download, ChevronDown, ChevronLeft, ChevronRight,
+  Check, CheckCircle, AlertTriangle, FileText, FileSpreadsheet,
+  Smartphone, Clock, ArrowUpRight, ArrowDownRight, Layers,
+  ExternalLink, Calendar
 } from 'lucide-react';
 import { aiService } from '../services/aiService';
-import { Google, DeepSeek } from '@lobehub/icons';
 import { useTheme } from '../lib/theme';
 import { calcularCategoriaPrestamo } from '../hooks/usePrestamoCategorias';
 import { useWhatsApp } from '../hooks/useWhatsApp';
-import { generarCronograma } from '../hooks/useAmortizacion';
 import CommandModal from '../components/CommandModal';
 import ResumenIAModal from '../components/ResumenIAModal';
 import { exportCobrosCSV, exportStockBajoCSV, exportPDF } from '../utils/exportReport';
 
-const ChipIcon = () => (
-  <svg width="28" height="22" viewBox="0 0 28 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="28" height="22" rx="4" fill="#D4AF37" fillOpacity="0.25" stroke="#D4AF37" strokeWidth="1.2"/>
-    <path d="M0 7H9M0 15H9M19 7H28M19 15H28M9 0V22M19 0V22M9 11H19" stroke="#E5C158" strokeWidth="1.2"/>
-    <rect x="11" y="7" width="6" height="8" rx="2" fill="#D4AF37" fillOpacity="0.5"/>
-  </svg>
-);
+// Componentes UI de Gris Esencial
+import Panel from '../components/ui/Panel';
+import Donut from '../components/ui/Donut';
+import Ring from '../components/ui/Ring';
+import Sparkline from '../components/ui/Sparkline';
+import SegBar from '../components/ui/SegBar';
+import WeekDots from '../components/ui/WeekDots';
+import StatusDot from '../components/ui/StatusDot';
 
 const CommandCenter = ({
   meetingsList = [],
@@ -51,11 +48,10 @@ const CommandCenter = ({
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
   const [timelineDayOffset, setTimelineDayOffset] = useState(0);
-  const [selectedTimelineDay, setSelectedTimelineDay] = useState(0); // 0 = Hoy, 1 = Mañana, etc.
-  const [cashflowToggleActive, setCashflowToggleActive] = useState(true);
+  const [selectedTimelineDay, setSelectedTimelineDay] = useState(0);
   const [productPage, setProductPage] = useState(0);
 
-  // Toast con auto-cierre
+  // Auto-cierre del toast
   useEffect(() => {
     if (toastMsg) {
       const timer = setTimeout(() => setToastMsg(null), 3000);
@@ -76,17 +72,19 @@ const CommandCenter = ({
       if (!p.inicio) return null;
       const cat = calcularCategoriaPrestamo(p);
       if (!cat) return null;
-      
+
       const cuotaCalculada = p.cuotaUnit || (parseFloat(p.capital || 0) * (parseFloat(p.interes || 0) / 100));
       const totalPagado = (p.pagos || []).length * cuotaCalculada;
       const totalEsperado = cuotaCalculada * (parseInt(p.plazo_meses) || 12);
-      const amortizadoPct = totalEsperado > 0 ? Math.min(100, Math.round((totalPagado / totalEsperado) * 100)) : 45;
+      const amortizadoPct = totalEsperado > 0 ? Math.min(100, Math.round((totalPagado / totalEsperado) * 100)) : 0;
 
       return {
         ...p,
         ...cat,
         cuotaCalculada,
         amortizadoPct,
+        totalPagado,
+        totalEsperado,
       };
     }).filter(p => {
       if (!p) return false;
@@ -122,20 +120,83 @@ const CommandCenter = ({
     };
   }, [cobrosDelPeriodo]);
 
-  // ─── Servicios Próximos o Pendientes ─────────────────────────
+  // Resumen global de cartera (Panel 1)
+  const resumenCartera = useMemo(() => {
+    const totalCapital = listaPrestamos.reduce((sum, p) => sum + (parseFloat(p.capital || 0) || 0), 0);
+    const totalPagadoSum = cobrosDelPeriodo.reduce((sum, p) => sum + (p.totalPagado || 0), 0);
+    const totalEsperadoSum = cobrosDelPeriodo.reduce((sum, p) => sum + (p.totalEsperado || 0), 0);
+    const pctAmortizado = totalEsperadoSum > 0 ? Math.min(100, Math.round((totalPagadoSum / totalEsperadoSum) * 100)) : 0;
+
+    return {
+      totalCapital,
+      pctAmortizado,
+      activos: cobrosDelPeriodo.length,
+      alDia: categorias.alDia.length,
+      enMora: categorias.deudor1Mes.length + categorias.deudorCritico.length,
+    };
+  }, [listaPrestamos, cobrosDelPeriodo, categorias]);
+
+  // Progreso de cobranza del período (Panel 2)
+  const resumenCobranza = useMemo(() => {
+    const totalEsperado = categorias.totalRecaudado + categorias.totalPendiente;
+    const pctCobrado = totalEsperado > 0 ? Math.min(100, Math.round((categorias.totalRecaudado / totalEsperado) * 100)) : 0;
+    return {
+      totalEsperado,
+      totalRecaudado: categorias.totalRecaudado,
+      totalPendiente: categorias.totalPendiente,
+      pctCobrado,
+    };
+  }, [categorias]);
+
+  // ─── Egresos & Servicios (Panel 3) ───────────────────────────
   const egresos = Array.isArray(data?.egresos) ? data.egresos : [];
+  
+  const egresosDelMes = useMemo(() => {
+    const [selYear, selMonth] = periodoMes.split('-').map(Number);
+    return egresos.filter(e => {
+      const f = new Date(e.fecha || e.fecha_pago || e.created_at);
+      return f.getMonth() === selMonth - 1 && f.getFullYear() === selYear;
+    });
+  }, [egresos, periodoMes]);
+
+  const totalEgresosMes = useMemo(() => {
+    return egresosDelMes.reduce((sum, e) => sum + (parseFloat(e.monto || e.importe || 0) || 0), 0);
+  }, [egresosDelMes]);
+
+  // Tendencia de egresos últimos 6 meses para Sparkline
+  const sparklineEgresos = useMemo(() => {
+    const meses = [];
+    const [curYear, curMonth] = periodoMes.split('-').map(Number);
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(curYear, curMonth - 1 - i, 1);
+      const y = d.getFullYear();
+      const m = d.getMonth();
+      const suma = egresos
+        .filter(e => {
+          const f = new Date(e.fecha || e.fecha_pago || e.created_at);
+          return f.getMonth() === m && f.getFullYear() === y;
+        })
+        .reduce((sum, e) => sum + (parseFloat(e.monto || e.importe || 0) || 0), 0);
+      meses.push(suma);
+    }
+    // Si todos son 0, damos una base sobria mínima para dibujar
+    const tieneDatos = meses.some(v => v > 0);
+    return tieneDatos ? meses : [20, 25, 30, 22, 28, 35];
+  }, [egresos, periodoMes]);
+
+  // Servicios activos
   const serviciosActivos = useMemo(() => {
     const lista = (servicios || []).filter(s => s && s.activo !== false);
     const mesActualNum = hoy.getMonth();
     const añoActualNum = hoy.getFullYear();
 
-    const egresosDelMes = egresos.filter(e => {
+    const egresosDelMesActual = egresos.filter(e => {
       const f = new Date(e.fecha || e.fecha_pago || e.created_at);
       return f.getMonth() === mesActualNum && f.getFullYear() === añoActualNum;
     });
 
     return lista.map(s => {
-      const yaPagado = egresosDelMes.some(e =>
+      const yaPagado = egresosDelMesActual.some(e =>
         (e.descripcion || e.nombre || '').toLowerCase().includes((s.nombre || '').toLowerCase())
       );
 
@@ -164,11 +225,58 @@ const CommandCenter = ({
     return serviciosActivos.reduce((sum, s) => sum + (parseFloat(s.monto) || 0), 0);
   }, [serviciosActivos]);
 
-  // ─── Timeline 7 Días Dinámico ────────────────────────────────
+  // ─── Inventario & Stock (Panel 4) ────────────────────────────
+  const listaProductos = Array.isArray(data?.productos) ? data.productos : [];
+  const stockCritico = useMemo(() => {
+    return listaProductos.filter(p => (parseInt(p.stock_actual || p.stock || 0) || 0) <= 5);
+  }, [listaProductos]);
+
+  const totalUnidadesStock = useMemo(() => {
+    return listaProductos.reduce((sum, p) => sum + (parseInt(p.stock_actual || p.stock || 0) || 0), 0);
+  }, [listaProductos]);
+
+  const categoriasInventarioSegments = useMemo(() => {
+    const counts = {};
+    listaProductos.forEach(p => {
+      const cat = p.categoria || 'General';
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
+
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const topEntries = entries.slice(0, 3);
+    const otros = entries.slice(3).reduce((sum, e) => sum + e[1], 0);
+
+    const shades = isDark
+      ? ['#E5E7EB', '#9CA3AF', '#6B7280', '#4B5563']
+      : ['#374151', '#6B7280', '#9CA3AF', '#D1D5DB'];
+
+    const segments = topEntries.map(([cat, val], idx) => ({
+      label: cat,
+      value: val,
+      color: shades[idx] || shades[3],
+    }));
+
+    if (otros > 0) {
+      segments.push({
+        label: 'Otros',
+        value: otros,
+        color: shades[3],
+      });
+    }
+
+    return segments.length > 0 ? segments : [{ label: 'Catálogo', value: 1, color: shades[0] }];
+  }, [listaProductos, isDark]);
+
+  const visibleProducts = useMemo(() => {
+    const start = productPage * 4;
+    return listaProductos.slice(start, start + 4);
+  }, [listaProductos, productPage]);
+
+  // ─── Timeline 7 Días (Panel 5) ──────────────────────────────
   const timelineDays = useMemo(() => {
     const days = [];
     const diasSemana = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    
+
     for (let i = 0; i < 7; i++) {
       const targetDate = new Date();
       targetDate.setDate(hoy.getDate() + timelineDayOffset + i);
@@ -176,14 +284,12 @@ const CommandCenter = ({
       const diaNom = diasSemana[targetDate.getDay()];
       const dateStr = targetDate.toISOString().split('T')[0];
 
-      // Verificar si hay cobros de préstamos en este día
       const cobrosEnDia = cobrosDelPeriodo.filter(p => {
         if (!p.inicio) return false;
         const diaInicio = new Date(p.inicio).getDate();
         return diaInicio === diaNum;
       });
 
-      // Verificar si hay servicios que vencen en este día
       const serviciosEnDia = serviciosPendientes.filter(s => {
         if (!s.fecha_pago) return false;
         const diaServ = new Date(s.fecha_pago).getDate();
@@ -210,16 +316,19 @@ const CommandCenter = ({
 
   const selectedDayInfo = timelineDays[selectedTimelineDay] || timelineDays[0];
 
-  // ─── Productos de Inventario ─────────────────────────────────
-  const listaProductos = Array.isArray(data?.productos) ? data.productos : [];
-  const stockCritico = useMemo(() => {
-    return listaProductos.filter(p => (parseInt(p.stock_actual || p.stock || 0) || 0) <= 5);
-  }, [listaProductos]);
+  // ─── Flujo de Caja & Balance Operativo (Panel 6) ─────────────
+  const cashflowData = useMemo(() => {
+    const inflows = categorias.totalRecaudado;
+    const outflows = totalEgresosMes + totalGastoServicios;
+    const neto = inflows - outflows;
 
-  const visibleProducts = useMemo(() => {
-    const start = productPage * 6;
-    return listaProductos.slice(start, start + 6);
-  }, [listaProductos, productPage]);
+    const segments = [
+      { label: 'Entradas', value: inflows, color: isDark ? '#D1D5DB' : '#374151' },
+      { label: 'Salidas', value: outflows, color: isDark ? '#6B7280' : '#9CA3AF' },
+    ];
+
+    return { inflows, outflows, neto, segments };
+  }, [categorias.totalRecaudado, totalEgresosMes, totalGastoServicios, isDark]);
 
   // ─── Handlers de Operación ──────────────────────────────────
   const ejecutarCobroRapido = (prestamo) => {
@@ -230,9 +339,9 @@ const CommandCenter = ({
     if (!modalPago.prestamo) return;
     try {
       await onQuickPayment(modalPago.prestamo.id);
-      setToastMsg(`✅ Cobro registrado con éxito para ${modalPago.prestamo.nombre}`);
+      setToastMsg(`Cobro registrado para ${modalPago.prestamo.nombre}`);
     } catch (e) {
-      setToastMsg(`❌ Error al registrar cobro: ${e.message}`);
+      setToastMsg(`Error al registrar cobro: ${e.message}`);
     } finally {
       setModalPago({ isOpen: false, prestamo: null });
     }
@@ -247,10 +356,10 @@ const CommandCenter = ({
     try {
       if (onPayService) {
         await onPayService(modalServicio.servicio);
-        setToastMsg(`✅ Pago registrado para ${modalServicio.servicio.nombre}`);
+        setToastMsg(`Pago registrado para ${modalServicio.servicio.nombre}`);
       }
     } catch (e) {
-      setToastMsg(`❌ Error al registrar pago: ${e.message}`);
+      setToastMsg(`Error al registrar pago: ${e.message}`);
     } finally {
       setModalServicio({ isOpen: false, servicio: null });
     }
@@ -258,7 +367,7 @@ const CommandCenter = ({
 
   const handleShareWhatsAppProduct = (prod) => {
     const text = encodeURIComponent(
-      `Hola! Te comparto la información de nuestro producto:\n\n*${prod.nombre}*\n💰 Precio: ${prod.precio_venta || 0} Bs\n📦 Stock disponible: ${prod.stock_actual || prod.stock || 0} unidades\n\n¿Te gustaría coordinar la entrega?`
+      `Hola! Te comparto la información de nuestro producto:\n\n*${prod.nombre}*\nPrecio: ${prod.precio_venta || 0} Bs\nStock disponible: ${prod.stock_actual || prod.stock || 0} unidades\n\n¿Te gustaría coordinar la entrega?`
     );
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
@@ -274,7 +383,7 @@ const CommandCenter = ({
 - Suscripciones pendientes: ${serviciosPendientes.length} por un total de ${totalGastoServicios.toLocaleString()} Bs
 - Stock crítico: ${stockCritico.length} productos con 5 o menos unidades
 
-Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobranza y optimización de flujo de caja para hoy.`;
+Por favor, genera un análisis ejecutivo breve con 3 recomendaciones tácticas de cobranza y optimización de flujo de caja para hoy.`;
 
       const response = await aiService.askAgent(prompt, [], { settings });
       setModalIA({ isOpen: true, contenido: response, cargando: false });
@@ -287,66 +396,86 @@ Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobr
     setExportMenuOpen(false);
     if (tipo === 'pdf') {
       exportPDF(data, periodoMes, settings);
-      setToastMsg("📄 Reporte PDF descargado con éxito");
+      setToastMsg("Reporte PDF descargado con éxito");
     } else if (tipo === 'csv-cobros') {
       exportCobrosCSV(cobrosDelPeriodo, periodoMes);
-      setToastMsg("📊 CSV de cobros descargado");
+      setToastMsg("CSV de cobros descargado");
     } else if (tipo === 'csv-stock') {
       exportStockBajoCSV(stockCritico);
-      setToastMsg("⚠️ CSV de stock crítico descargado");
+      setToastMsg("CSV de stock crítico descargado");
     }
   };
 
   return (
     <div className="w-full space-y-5 animate-in fade-in duration-300 pb-12">
-      
-      {/* ─── TOAST NOTIFICACIÓN FLOTANTE ─── */}
+
+      {/* ─── TOAST NOTIFICACIÓN ─── */}
       {toastMsg && (
-        <div className="fixed bottom-6 right-6 z-50 p-3.5 px-5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-3 duration-200 flex items-center gap-2.5">
-          <CheckCircle size={16} className="text-emerald-400" />
+        <div 
+          className="fixed bottom-20 md:bottom-6 right-6 z-50 p-3 px-4 rounded-xl border text-xs font-semibold shadow-2xl backdrop-blur-xl animate-in slide-in-from-bottom-2 duration-200 flex items-center gap-2"
+          style={{
+            backgroundColor: isDark ? 'rgba(35, 35, 38, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+            borderColor: isDark ? '#3A3A3D' : '#E5E7EB',
+            color: isDark ? '#F9FAFB' : '#111827',
+          }}
+        >
+          <StatusDot status="success" size={8} />
           <span>{toastMsg}</span>
         </div>
       )}
 
-      {/* ─── BARRA DE CONTROL EJECUTIVA BENTO ─── */}
+      {/* ─── BARRA SUPERIOR MINIMALISTA ─── */}
       <div 
-        className="w-full p-4 rounded-3xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-xl"
+        className="w-full p-3.5 sm:p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
         style={{
-          backgroundColor: isDark ? 'rgba(20, 21, 27, 0.7)' : 'rgba(255, 255, 255, 0.85)',
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+          backgroundColor: t.panel,
+          borderColor: t.border,
         }}
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-black">
-            <Sparkles size={18} />
+          <div 
+            className="w-9 h-9 rounded-xl border flex items-center justify-center transition-colors"
+            style={{
+              backgroundColor: isDark ? '#1F1F22' : '#F3F4F6',
+              borderColor: t.borderSubtle,
+              color: t.textMuted,
+            }}
+          >
+            <Layers size={17} />
           </div>
           <div>
-            <h1 className="text-base sm:text-lg font-black tracking-tight text-white m-0">
-              Centro de Mando Spatial
+            <h1 className="text-sm sm:text-base font-bold tracking-tight m-0" style={{ color: t.textMain }}>
+              Centro de Mando
             </h1>
-            <p className="text-[11px] text-neutral-400 m-0">
-              Operaciones de cartera, cobros, vitrina de productos y flujo de caja en tiempo real
+            <p className="text-[11px] m-0" style={{ color: t.textSub }}>
+              Control de cartera, cobranzas, catálogo y flujo de caja
             </p>
           </div>
         </div>
 
-        {/* Acciones Rápidas */}
+        {/* Acciones Rápidas de Barra */}
         <div className="flex items-center gap-2 flex-wrap">
           {/* Selector de Mes */}
           <input
             type="month"
             value={periodoMes}
             onChange={(e) => setPeriodoMes(e.target.value)}
-            className="text-xs font-bold py-1.5 px-3 rounded-xl border bg-white/[0.04] text-white border-white/10 focus:outline-none"
+            className="text-xs font-semibold py-1.5 px-3 rounded-xl border focus:outline-none transition-colors"
+            style={{
+              backgroundColor: isDark ? '#1F1F22' : '#F9FAFB',
+              borderColor: t.borderSubtle,
+              color: t.textMain,
+            }}
           />
 
           {/* Botón Análisis IA */}
           <button
             onClick={generarResumenIA}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-black transition-all hover:scale-105 active:scale-95"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all hover:opacity-90 active:scale-95"
             style={{
-              background: 'linear-gradient(135deg, #10B981, #34D399)',
-              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.35)',
+              backgroundColor: isDark ? '#2E2E32' : '#E5E7EB',
+              borderColor: t.borderSubtle,
+              color: t.textMain,
             }}
           >
             <Sparkles size={13} />
@@ -357,7 +486,12 @@ Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobr
           <div className="relative">
             <button
               onClick={() => setExportMenuOpen(!exportMenuOpen)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.09] border border-white/10 text-xs font-semibold text-neutral-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all hover:opacity-90"
+              style={{
+                backgroundColor: isDark ? '#2A2A2D' : '#F3F4F6',
+                borderColor: t.borderSubtle,
+                color: t.textMain,
+              }}
             >
               <Download size={13} />
               <span>Exportar</span>
@@ -366,31 +500,34 @@ Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobr
 
             {exportMenuOpen && (
               <div 
-                className="absolute right-0 mt-2 w-48 rounded-2xl p-1.5 shadow-2xl border backdrop-blur-2xl z-40 space-y-0.5"
+                className="absolute right-0 mt-1.5 w-44 rounded-xl p-1 shadow-xl border backdrop-blur-2xl z-40 space-y-0.5"
                 style={{
-                  backgroundColor: isDark ? 'rgba(24, 25, 32, 0.98)' : 'rgba(255, 255, 255, 0.98)',
-                  borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                  backgroundColor: isDark ? 'rgba(35, 35, 38, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+                  borderColor: t.borderSubtle,
                 }}
               >
                 <button
                   onClick={() => handleExport('pdf')}
-                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-white/[0.06] rounded-xl flex items-center gap-2"
+                  className="w-full text-left px-2.5 py-1.5 text-xs rounded-lg flex items-center gap-2 hover:bg-neutral-500/10 transition-colors"
+                  style={{ color: t.textMain }}
                 >
-                  <FileText size={13} className="text-cyan-400" />
+                  <FileText size={13} />
                   <span>Reporte PDF</span>
                 </button>
                 <button
                   onClick={() => handleExport('csv-cobros')}
-                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-white/[0.06] rounded-xl flex items-center gap-2"
+                  className="w-full text-left px-2.5 py-1.5 text-xs rounded-lg flex items-center gap-2 hover:bg-neutral-500/10 transition-colors"
+                  style={{ color: t.textMain }}
                 >
-                  <FileSpreadsheet size={13} className="text-emerald-400" />
+                  <FileSpreadsheet size={13} />
                   <span>CSV de Cobros</span>
                 </button>
                 <button
                   onClick={() => handleExport('csv-stock')}
-                  className="w-full text-left px-3 py-2 text-xs text-neutral-200 hover:bg-white/[0.06] rounded-xl flex items-center gap-2"
+                  className="w-full text-left px-2.5 py-1.5 text-xs rounded-lg flex items-center gap-2 hover:bg-neutral-500/10 transition-colors"
+                  style={{ color: t.textMain }}
                 >
-                  <AlertTriangle size={13} className="text-amber-400" />
+                  <AlertTriangle size={13} />
                   <span>CSV Stock Crítico</span>
                 </button>
               </div>
@@ -400,134 +537,142 @@ Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobr
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════
-          SPATIAL BENTO GRID (4 MÓDULOS PRINCIPALES)
+          CUADRÍCULA 3x2 DE PANELES MINIMALISTAS
           ══════════════════════════════════════════════════════════════════ */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-        
-        {/* ── 1. BLOQUE IZQUIERDO: CUSTOMER LOAN CARDS (WALLET STYLE) ── */}
-        <div 
-          className="lg:col-span-4 rounded-3xl p-5 border space-y-4 backdrop-blur-xl relative flex flex-col"
-          style={{
-            backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-            minHeight: '480px',
-          }}
-        >
-          {/* Header del Tile */}
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-            <div>
-              <div className="flex items-center gap-2">
-                <CreditCard size={16} className="text-emerald-400" />
-                <h3 className="text-sm font-black uppercase tracking-wider text-white m-0">
-                  Tarjetas de Deudores
-                </h3>
-              </div>
-              <p className="text-[10px] text-neutral-400 m-0 mt-0.5">
-                Cartera activa · {cobrosDelPeriodo.length} préstamos registrados
-              </p>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        {/* ─── PANEL 1: CARTERA DE PRÉSTAMOS ─── */}
+        <Panel
+          title="Préstamos Activos"
+          icon={Landmark}
+          badge={`${resumenCartera.activos} contratos`}
+          action={
             <button 
               onClick={() => onNavigateToPrestamo ? onNavigateToPrestamo(null) : onNavigateTo('prestamos')}
-              className="text-[10px] font-bold text-emerald-400 hover:underline uppercase tracking-wider"
+              className="text-[11px] font-semibold hover:underline flex items-center gap-1"
+              style={{ color: t.textMuted }}
             >
-              Ver Cartera
+              <span>Ver Cartera</span>
+              <ExternalLink size={11} />
             </button>
+          }
+          isDark={isDark}
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider m-0" style={{ color: t.textSub }}>
+                Capital Colocado
+              </p>
+              <h2 className="text-2xl font-black tracking-tight m-0 mt-0.5" style={{ color: t.textMain }}>
+                {Math.round(resumenCartera.totalCapital).toLocaleString()} <span className="text-xs font-normal" style={{ color: t.textSub }}>Bs</span>
+              </h2>
+              <div className="flex items-center gap-3 mt-3 text-xs" style={{ color: t.textMuted }}>
+                <span className="flex items-center gap-1.5">
+                  <StatusDot status="success" size={7} />
+                  <span>{resumenCartera.alDia} al día</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <StatusDot status={resumenCartera.enMora > 0 ? 'danger' : 'neutral'} size={7} />
+                  <span>{resumenCartera.enMora} mora</span>
+                </span>
+              </div>
+            </div>
+
+            <Donut
+              value={resumenCartera.pctAmortizado}
+              size={76}
+              strokeWidth={7}
+              label={`${resumenCartera.pctAmortizado}%`}
+              sublabel="Amortizado"
+              isDark={isDark}
+            />
+          </div>
+        </Panel>
+
+        {/* ─── PANEL 2: COBROS DEL MES ─── */}
+        <Panel
+          title="Cobros del Mes"
+          icon={DollarSign}
+          badge={`${resumenCobranza.pctCobrado}%`}
+          isDark={isDark}
+        >
+          <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: t.borderSubtle }}>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider m-0" style={{ color: t.textSub }}>
+                Recaudado / Esperado
+              </p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-bold" style={{ color: t.textMain }}>
+                  {Math.round(resumenCobranza.totalRecaudado).toLocaleString()}
+                </span>
+                <span className="text-xs" style={{ color: t.textSub }}>
+                  / {Math.round(resumenCobranza.totalEsperado).toLocaleString()} Bs
+                </span>
+              </div>
+            </div>
+            <Ring
+              value={resumenCobranza.pctCobrado}
+              size={48}
+              strokeWidth={5}
+              centerText={`${resumenCobranza.pctCobrado}%`}
+              isDark={isDark}
+            />
           </div>
 
-          {/* Feed de Tarjetas de Débito Digitales */}
-          <div className="space-y-3.5 overflow-y-auto max-h-[460px] pr-1 mac-scrollbar">
+          {/* Lista compacta de deudores */}
+          <div className="mt-3 space-y-2 max-h-44 overflow-y-auto pr-1 mac-scrollbar">
             {cobrosDelPeriodo.length > 0 ? (
               cobrosDelPeriodo.map((p) => {
                 const isPaid = p.categoria === 'AL_DIA';
+                const status = isPaid ? 'success' : (p.categoria === 'PENDIENTE' ? 'warning' : 'danger');
+
                 return (
                   <div
                     key={p.id}
-                    className="p-4 rounded-2xl border transition-all duration-300 relative group overflow-hidden"
+                    className="p-2 rounded-xl border flex items-center justify-between text-xs transition-colors"
                     style={{
-                      background: 'linear-gradient(145deg, #15161D, #0F1014)',
-                      borderColor: isPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.08)',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
+                      backgroundColor: isDark ? '#1F1F22' : '#F9FAFB',
+                      borderColor: t.borderSubtle,
                     }}
                   >
-                    {/* Top Row: Chip + Badge */}
-                    <div className="flex items-center justify-between mb-3">
-                      <ChipIcon />
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                          isPaid
-                            ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
-                            : 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-                        }`}>
-                          {isPaid ? 'Al Día' : 'Pendiente'}
-                        </span>
-                        <span className="text-[9px] font-mono text-neutral-400">
-                          {p.moneda || 'BOB'}
+                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                      <StatusDot status={status} size={7} />
+                      <div className="min-w-0 truncate">
+                        <p className="font-semibold truncate m-0 leading-tight" style={{ color: t.textMain }}>
+                          {p.nombre || 'Deudor'}
+                        </p>
+                        <span className="text-[10px] font-mono" style={{ color: t.textSub }}>
+                          {Math.round(p.cuotaCalculada || 0)} Bs
                         </span>
                       </div>
                     </div>
 
-                    {/* Progress Bar de Amortización */}
-                    <div className="space-y-1 mb-3">
-                      <div className="flex justify-between text-[10px] text-neutral-400">
-                        <span>Estado de amortización</span>
-                        <span className="font-mono font-bold text-emerald-400">
-                          {p.amortizadoPct}%
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div 
-                          className="h-full rounded-full transition-all duration-500 bg-emerald-400"
-                          style={{
-                            width: `${p.amortizadoPct}%`,
-                            boxShadow: '0 0 10px #10B981',
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Deudor Info & Monto */}
-                    <div className="flex items-end justify-between mb-4">
-                      <div>
-                        <span className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold block">
-                          Titular Deudor
-                        </span>
-                        <h4 className="text-sm font-bold text-white m-0 truncate max-w-[170px]">
-                          {p.nombre || 'Deudor sin nombre'}
-                        </h4>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[9px] uppercase tracking-widest text-neutral-500 font-bold block">
-                          Cuota Período
-                        </span>
-                        <span className="text-sm font-mono font-black text-white">
-                          {Math.round(p.cuotaCalculada || 0).toLocaleString()} {p.moneda || 'Bs'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Action Buttons: Quick-Pay & WhatsApp */}
-                    <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         onClick={() => ejecutarCobroRapido(p)}
-                        className="flex-1 py-2 px-3 rounded-xl text-xs font-black text-black flex items-center justify-center gap-1.5 transition-all active:scale-95 hover:brightness-110"
+                        title={isPaid ? "Cobro registrado" : "Registrar cobro"}
+                        className="p-1.5 rounded-lg border text-xs font-semibold transition-all active:scale-90"
                         style={{
-                          background: isPaid 
-                            ? 'linear-gradient(135deg, #10B981, #059669)' 
-                            : 'linear-gradient(135deg, #34D399, #10B981)',
-                          boxShadow: '0 2px 10px rgba(16, 185, 129, 0.4)',
+                          backgroundColor: isPaid ? (isDark ? '#2E2E32' : '#E5E7EB') : (isDark ? '#3A3A3D' : '#D1D5DB'),
+                          borderColor: t.borderSubtle,
+                          color: t.textMain,
                         }}
                       >
-                        <Check size={14} />
-                        <span>{isPaid ? 'Cobro Registrado' : 'Quick-Pay'}</span>
+                        <Check size={12} />
                       </button>
 
                       {p.telefono && (
                         <button
                           onClick={() => enviarRecordatorioMensual(p, periodoMes)}
-                          title="Enviar aviso por WhatsApp"
-                          className="p-2 rounded-xl bg-green-500/15 hover:bg-green-500/25 text-green-400 border border-green-500/30 transition-all active:scale-95"
+                          title="Aviso por WhatsApp"
+                          className="p-1.5 rounded-lg border transition-all active:scale-90"
+                          style={{
+                            backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                            borderColor: t.borderSubtle,
+                            color: t.textMuted,
+                          }}
                         >
-                          <Smartphone size={15} />
+                          <Smartphone size={12} />
                         </button>
                       )}
                     </div>
@@ -535,334 +680,315 @@ Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobr
                 );
               })
             ) : (
-              <div className="p-8 text-center text-neutral-500 space-y-2">
-                <CreditCard size={28} className="mx-auto opacity-40 text-emerald-400" />
-                <p className="text-xs font-bold text-neutral-300">Sin préstamos activos</p>
-                <p className="text-[10px]">Crea contratos en la sección de Clientes & Préstamos.</p>
-              </div>
+              <p className="text-xs text-center py-4 m-0" style={{ color: t.textSub }}>
+                Sin registros para este período
+              </p>
             )}
           </div>
-        </div>
+        </Panel>
 
-        {/* ── 2. BLOQUE CENTRAL: 7-DAY PAYMENT TIMELINE & TAREAS ── */}
-        <div className="lg:col-span-4 space-y-5">
-          
-          {/* Módulo Timeline 7 Días */}
-          <div 
-            className="rounded-3xl p-5 border backdrop-blur-xl space-y-4"
-            style={{
-              backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-            }}
-          >
-            {/* Header del Timeline */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-              <div className="flex items-center gap-2">
-                <CalendarDays size={16} className="text-amber-400" />
-                <h3 className="text-sm font-black uppercase tracking-wider text-white m-0">
-                  Línea de Cobros (7 Días)
-                </h3>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setTimelineDayOffset(prev => prev - 7)}
-                  className="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-neutral-300 text-xs"
-                >
-                  <ChevronLeft size={13} />
-                </button>
-                <button
-                  onClick={() => setTimelineDayOffset(prev => prev + 7)}
-                  className="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-neutral-300 text-xs"
-                >
-                  <ChevronRight size={13} />
-                </button>
-              </div>
+        {/* ─── PANEL 3: EGRESOS & SUSCRIPCIONES ─── */}
+        <Panel
+          title="Egresos & Gastos"
+          icon={Wallet}
+          badge={`${serviciosPendientes.length} por pagar`}
+          isDark={isDark}
+        >
+          <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: t.borderSubtle }}>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-wider m-0" style={{ color: t.textSub }}>
+                Gasto Mes en Curso
+              </p>
+              <h2 className="text-xl font-bold tracking-tight m-0 mt-0.5" style={{ color: t.textMain }}>
+                {Math.round(totalEgresosMes).toLocaleString()} <span className="text-xs font-normal" style={{ color: t.textSub }}>Bs</span>
+              </h2>
             </div>
-
-            {/* Nodos de los 7 Días */}
-            <div className="grid grid-cols-7 gap-1.5 text-center">
-              {timelineDays.map((day) => {
-                const isSelected = selectedTimelineDay === day.index;
-                return (
-                  <button
-                    key={day.index}
-                    onClick={() => setSelectedTimelineDay(day.index)}
-                    className={`p-2 rounded-xl flex flex-col items-center justify-center transition-all ${
-                      isSelected
-                        ? 'bg-amber-400/25 border-amber-400 text-white shadow-lg shadow-amber-500/20'
-                        : day.hasEvents
-                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/15'
-                        : 'bg-white/[0.02] border-white/[0.05] text-neutral-400 hover:bg-white/[0.05]'
-                    } border`}
-                  >
-                    <span className="text-[9px] font-bold uppercase block opacity-75">
-                      {day.diaNom}
-                    </span>
-                    <span className="text-xs font-mono font-black block mt-0.5">
-                      {day.diaNum}
-                    </span>
-                    {day.hasEvents && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1 shadow-sm" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Badge de Próximos Pagos en el Día Seleccionado */}
-            <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-400" />
-                  {selectedDayInfo.isToday ? 'Cobros programados para Hoy' : `Cobros para el ${selectedDayInfo.diaNom} ${selectedDayInfo.diaNum}`}
-                </span>
-                <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full bg-white/[0.06] text-neutral-300">
-                  {selectedDayInfo.eventCount} {selectedDayInfo.eventCount === 1 ? 'evento' : 'eventos'}
-                </span>
-              </div>
-
-              {selectedDayInfo.hasEvents ? (
-                <div className="space-y-1.5 max-h-32 overflow-y-auto mac-scrollbar">
-                  {selectedDayInfo.cobrosEnDia.map(p => (
-                    <div key={p.id} className="flex items-center justify-between text-xs p-2 rounded-xl bg-white/[0.04]">
-                      <span className="font-bold text-white truncate max-w-[150px]">{p.nombre}</span>
-                      <span className="font-mono text-emerald-400 font-bold">{Math.round(p.cuotaCalculada || 0)} Bs</span>
-                    </div>
-                  ))}
-                  {selectedDayInfo.serviciosEnDia.map(s => (
-                    <div key={s.id} className="flex items-center justify-between text-xs p-2 rounded-xl bg-rose-500/10 text-rose-300">
-                      <span className="font-bold truncate max-w-[150px]">{s.nombre}</span>
-                      <span className="font-mono font-bold">-{s.monto} Bs</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-[10px] text-neutral-500 m-0 py-1 text-center">
-                  Sin vencimientos para esta fecha.
-                </p>
-              )}
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] mb-1" style={{ color: t.textSub }}>Últimos 6 meses</span>
+              <Sparkline data={sparklineEgresos} width={90} height={28} isDark={isDark} />
             </div>
           </div>
 
-          {/* Sub-Widget: Suscripciones & Gastos Próximos */}
-          <div 
-            className="rounded-3xl p-5 border backdrop-blur-xl space-y-3"
-            style={{
-              backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-            }}
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
-              <span className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-2">
-                <Wallet size={14} className="text-rose-400" />
-                Suscripciones por Pagar
-              </span>
-              <span className="text-[10px] font-mono font-bold text-rose-400">
-                {serviciosPendientes.length} pendientes
-              </span>
-            </div>
-
-            <div className="space-y-2 max-h-40 overflow-y-auto mac-scrollbar">
-              {serviciosPendientes.slice(0, 3).map(s => (
-                <div key={s.id} className="p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.05] flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-white m-0">{s.nombre}</p>
-                    <p className="text-[10px] text-neutral-400 m-0">Vence: {s.fecha_pago || 'Mes en curso'}</p>
+          {/* Suscripciones próximas */}
+          <div className="mt-3 space-y-2 max-h-44 overflow-y-auto pr-1 mac-scrollbar">
+            {serviciosPendientes.length > 0 ? (
+              serviciosPendientes.slice(0, 4).map(s => (
+                <div
+                  key={s.id}
+                  className="p-2 rounded-xl border flex items-center justify-between text-xs transition-colors"
+                  style={{
+                    backgroundColor: isDark ? '#1F1F22' : '#F9FAFB',
+                    borderColor: t.borderSubtle,
+                  }}
+                >
+                  <div className="min-w-0 pr-2">
+                    <p className="font-semibold truncate m-0" style={{ color: t.textMain }}>
+                      {s.nombre}
+                    </p>
+                    <span className="text-[10px]" style={{ color: t.textSub }}>
+                      {s.diasRestantes !== null 
+                        ? (s.diasRestantes <= 0 ? 'Vence hoy' : `En ${s.diasRestantes} días`) 
+                        : (s.fecha_pago || 'Mes en curso')}
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold text-white">{s.monto} Bs</span>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="font-mono text-xs font-semibold" style={{ color: t.textMain }}>
+                      {s.monto} Bs
+                    </span>
                     <button
                       onClick={() => ejecutarPagoServicio(s)}
-                      className="px-2.5 py-1 rounded-lg bg-white/[0.06] hover:bg-emerald-500/20 hover:text-emerald-300 text-[10px] font-bold transition-all text-neutral-300"
+                      className="px-2 py-1 rounded-lg border text-[10px] font-semibold transition-all hover:opacity-90 active:scale-95"
+                      style={{
+                        backgroundColor: isDark ? '#2E2E32' : '#E5E7EB',
+                        borderColor: t.borderSubtle,
+                        color: t.textMain,
+                      }}
                     >
                       Pagar
                     </button>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
-
-        {/* ── 3. BLOQUE DERECHO: VITRINA DE INVENTARIO & CATÁLOGO ── */}
-        <div 
-          className="lg:col-span-4 rounded-3xl p-5 border space-y-4 backdrop-blur-xl relative"
-          style={{
-            backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-            minHeight: '480px',
-          }}
-        >
-          {/* Header del Showcase */}
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-            <div>
-              <div className="flex items-center gap-2">
-                <Package size={16} className="text-cyan-400" />
-                <h3 className="text-sm font-black uppercase tracking-wider text-white m-0">
-                  Vitrina de Catálogo
-                </h3>
-              </div>
-              <p className="text-[10px] text-neutral-400 m-0 mt-0.5">
-                {listaProductos.length} referencias en stock
+              ))
+            ) : (
+              <p className="text-xs text-center py-4 m-0" style={{ color: t.textSub }}>
+                Sin suscripciones pendientes este mes
               </p>
+            )}
+          </div>
+        </Panel>
+
+        {/* ─── PANEL 4: INVENTARIO & CATÁLOGO ─── */}
+        <Panel
+          title="Inventario & Catálogo"
+          icon={Package}
+          badge={`${totalUnidadesStock} unidades`}
+          action={
+            <button 
+              onClick={() => onNavigateTo('inventario')}
+              className="text-[11px] font-semibold hover:underline flex items-center gap-1"
+              style={{ color: t.textMuted }}
+            >
+              <span>Catálogo</span>
+              <ExternalLink size={11} />
+            </button>
+          }
+          isDark={isDark}
+        >
+          {/* Distribución por Categorías */}
+          <div className="pb-3 border-b" style={{ borderColor: t.borderSubtle }}>
+            <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-wider mb-2" style={{ color: t.textSub }}>
+              <span>Categorías</span>
+              <span className="font-mono">{listaProductos.length} referencias</span>
             </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setProductPage(prev => Math.max(0, prev - 1))}
-                disabled={productPage === 0}
-                className="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 flex items-center justify-center text-neutral-300 text-xs"
-              >
-                <ChevronLeft size={13} />
-              </button>
-              <button
-                onClick={() => setProductPage(prev => ((prev + 1) * 6 < listaProductos.length ? prev + 1 : prev))}
-                disabled={(productPage + 1) * 6 >= listaProductos.length}
-                className="w-6 h-6 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 flex items-center justify-center text-neutral-300 text-xs"
-              >
-                <ChevronRight size={13} />
-              </button>
-            </div>
+            <SegBar segments={categoriasInventarioSegments} height={6} isDark={isDark} />
           </div>
 
-          {/* Grilla 2x3 de Productos Visuales */}
-          <div className="grid grid-cols-2 gap-3 max-h-[440px] overflow-y-auto mac-scrollbar pr-1">
-            {visibleProducts.map((prod) => {
-              const mainImg = prod.imagen || (Array.isArray(prod.imagenes) && prod.imagenes[0]) || null;
+          {/* Chip de Stock Crítico si existe */}
+          {stockCritico.length > 0 && (
+            <div 
+              className="mt-3 p-2 rounded-xl border flex items-center justify-between text-xs"
+              style={{
+                backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.06)',
+                borderColor: isDark ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.2)',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <StatusDot status="danger" size={7} />
+                <span className="font-medium text-rose-400">
+                  {stockCritico.length} con stock bajo (≤ 5)
+                </span>
+              </div>
+              <button
+                onClick={() => handleExport('csv-stock')}
+                className="text-[10px] font-semibold text-rose-400 hover:underline"
+              >
+                Reporte CSV
+              </button>
+            </div>
+          )}
+
+          {/* Vitrina 2x2 compacta de productos */}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {visibleProducts.map(prod => {
+              const img = prod.imagen || (Array.isArray(prod.imagenes) && prod.imagenes[0]) || null;
               const stock = parseInt(prod.stock_actual || prod.stock || 0);
 
               return (
                 <div
                   key={prod.id}
-                  className="p-3 rounded-2xl border transition-all duration-200 flex flex-col justify-between group hover:border-cyan-500/40"
+                  className="p-2 rounded-xl border flex flex-col justify-between text-xs transition-colors"
                   style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                    borderColor: 'rgba(255, 255, 255, 0.06)',
+                    backgroundColor: isDark ? '#1F1F22' : '#F9FAFB',
+                    borderColor: t.borderSubtle,
                   }}
                 >
-                  {/* Foto del Producto */}
-                  <div className="w-full h-24 rounded-xl overflow-hidden bg-black/40 border border-white/5 relative mb-2 flex items-center justify-center">
-                    {mainImg ? (
-                      <img 
-                        src={mainImg} 
-                        alt={prod.nombre} 
-                        className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300" 
-                      />
+                  <div className="w-full h-16 rounded-lg overflow-hidden flex items-center justify-center relative mb-1.5" style={{ backgroundColor: isDark ? '#141416' : '#FFFFFF' }}>
+                    {img ? (
+                      <img src={img} alt={prod.nombre} className="w-full h-full object-contain p-0.5" />
                     ) : (
-                      <Package size={28} className="text-neutral-600" />
+                      <Package size={20} style={{ color: t.textSub }} />
                     )}
-                    <span className={`absolute top-1 right-1 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-md ${
-                      stock <= 5 ? 'bg-rose-500 text-white' : 'bg-black/60 text-white backdrop-blur-md'
-                    }`}>
-                      Stock {stock}
+                    <span 
+                      className="absolute top-1 right-1 text-[8px] font-bold px-1 rounded"
+                      style={{
+                        backgroundColor: stock <= 5 ? '#EF4444' : (isDark ? '#2E2E32' : '#E5E7EB'),
+                        color: stock <= 5 ? '#FFFFFF' : t.textMain,
+                      }}
+                    >
+                      {stock}u
                     </span>
                   </div>
 
-                  {/* Nombre y Precio */}
-                  <div className="space-y-0.5 mb-2">
-                    <h5 className="text-[11px] font-bold text-white truncate m-0" title={prod.nombre}>
-                      {prod.nombre}
-                    </h5>
-                    <p className="text-xs font-mono font-black text-cyan-400 m-0">
+                  <p className="font-semibold truncate m-0 text-[11px]" style={{ color: t.textMain }} title={prod.nombre}>
+                    {prod.nombre}
+                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="font-mono text-[11px] font-bold" style={{ color: t.textMain }}>
                       {prod.precio_venta || 0} Bs
-                    </p>
+                    </span>
+                    <button
+                      onClick={() => handleShareWhatsAppProduct(prod)}
+                      title="Compartir por WhatsApp"
+                      className="p-1 rounded-md border text-[10px] transition-transform active:scale-90"
+                      style={{
+                        backgroundColor: isDark ? '#2A2A2D' : '#F3F4F6',
+                        borderColor: t.borderSubtle,
+                        color: t.textMuted,
+                      }}
+                    >
+                      <Smartphone size={10} />
+                    </button>
                   </div>
-
-                  {/* Botón WhatsApp */}
-                  <button
-                    onClick={() => handleShareWhatsAppProduct(prod)}
-                    className="w-full py-1.5 rounded-lg bg-green-500/15 hover:bg-green-500/25 border border-green-500/25 text-green-400 text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95"
-                  >
-                    <Smartphone size={11} />
-                    <span>WhatsApp</span>
-                  </button>
                 </div>
               );
             })}
           </div>
-        </div>
+        </Panel>
 
-        {/* ── 4. BLOQUE INFERIOR HORIZONTAL: CASHFLOW & BALANCE OPERATIVO ── */}
-        <div 
-          className="lg:col-span-12 rounded-3xl p-5 border backdrop-blur-xl"
-          style={{
-            backgroundColor: isDark ? 'rgba(18, 19, 25, 0.75)' : 'rgba(255, 255, 255, 0.85)',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-          }}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
-            <div>
-              <h3 className="text-sm font-black uppercase tracking-wider text-white m-0 flex items-center gap-2">
-                <Layers size={16} className="text-emerald-400" />
-                Flujo de Caja & Balance Operativo (Cashflow Toggles)
-              </h3>
-              <p className="text-[10px] text-neutral-400 m-0 mt-0.5">
-                Seguimiento de ingresos recaudados vs. compromisos de salida y gastos del período
-              </p>
-            </div>
-
-            {/* Switch Toggle */}
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-neutral-400 font-semibold">Monitor de Flujo</span>
+        {/* ─── PANEL 5: CALENDARIO 7 DÍAS ─── */}
+        <Panel
+          title="Próximos 7 Días"
+          icon={Calendar}
+          badge={`${selectedDayInfo.eventCount} eventos`}
+          action={
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => setCashflowToggleActive(!cashflowToggleActive)}
-                className="text-emerald-400 transition-transform active:scale-90"
+                onClick={() => setTimelineDayOffset(prev => prev - 7)}
+                className="w-5 h-5 rounded-md border flex items-center justify-center transition-colors"
+                style={{ backgroundColor: isDark ? '#232326' : '#F3F4F6', borderColor: t.borderSubtle, color: t.textMain }}
               >
-                {cashflowToggleActive ? <ToggleRight size={32} /> : <ToggleLeft size={32} className="text-neutral-600" />}
+                <ChevronLeft size={12} />
+              </button>
+              <button
+                onClick={() => setTimelineDayOffset(prev => prev + 7)}
+                className="w-5 h-5 rounded-md border flex items-center justify-center transition-colors"
+                style={{ backgroundColor: isDark ? '#232326' : '#F3F4F6', borderColor: t.borderSubtle, color: t.textMain }}
+              >
+                <ChevronRight size={12} />
               </button>
             </div>
+          }
+          isDark={isDark}
+        >
+          {/* Fila de 7 Días con Infografía WeekDots */}
+          <WeekDots
+            days={timelineDays.map((d, idx) => ({ ...d, isSelected: selectedTimelineDay === idx }))}
+            onSelectDay={setSelectedTimelineDay}
+            isDark={isDark}
+          />
+
+          {/* Tarjeta de Eventos en el Día Seleccionado */}
+          <div 
+            className="mt-3 p-2.5 rounded-xl border space-y-2"
+            style={{
+              backgroundColor: isDark ? '#1F1F22' : '#F9FAFB',
+              borderColor: t.borderSubtle,
+            }}
+          >
+            <div className="flex items-center justify-between text-[11px] font-semibold" style={{ color: t.textMain }}>
+              <span>
+                {selectedDayInfo.isToday ? 'Hoy' : `${selectedDayInfo.diaNom} ${selectedDayInfo.diaNum}`}
+              </span>
+              <span className="text-[10px] font-mono" style={{ color: t.textSub }}>
+                {selectedDayInfo.eventCount} {selectedDayInfo.eventCount === 1 ? 'vencimiento' : 'vencimientos'}
+              </span>
+            </div>
+
+            {selectedDayInfo.hasEvents ? (
+              <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1 mac-scrollbar text-xs">
+                {selectedDayInfo.cobrosEnDia.map(p => (
+                  <div 
+                    key={p.id}
+                    className="p-1.5 rounded-lg flex items-center justify-between border"
+                    style={{ backgroundColor: isDark ? '#232326' : '#FFFFFF', borderColor: t.borderSubtle }}
+                  >
+                    <span className="truncate pr-2 font-medium" style={{ color: t.textMain }}>{p.nombre}</span>
+                    <span className="font-mono font-bold" style={{ color: t.textMain }}>+{Math.round(p.cuotaCalculada || 0)} Bs</span>
+                  </div>
+                ))}
+                {selectedDayInfo.serviciosEnDia.map(s => (
+                  <div 
+                    key={s.id}
+                    className="p-1.5 rounded-lg flex items-center justify-between border"
+                    style={{ backgroundColor: isDark ? '#232326' : '#FFFFFF', borderColor: t.borderSubtle }}
+                  >
+                    <span className="truncate pr-2 font-medium" style={{ color: t.textMain }}>{s.nombre}</span>
+                    <span className="font-mono font-bold" style={{ color: t.textMuted }}>-{s.monto} Bs</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-center py-2 m-0" style={{ color: t.textSub }}>
+                Sin vencimientos programados
+              </p>
+            )}
+          </div>
+        </Panel>
+
+        {/* ─── PANEL 6: FLUJO DE CAJA & BALANCE OPERATIVO ─── */}
+        <Panel
+          title="Flujo de Caja"
+          icon={TrendingUp}
+          badge="Operativo"
+          isDark={isDark}
+        >
+          <div>
+            <p className="text-[10px] uppercase font-bold tracking-wider m-0" style={{ color: t.textSub }}>
+              Balance Neto del Período
+            </p>
+            <h2 className="text-2xl font-black tracking-tight m-0 mt-0.5" style={{ color: t.textMain }}>
+              {Math.round(cashflowData.neto).toLocaleString()} <span className="text-xs font-normal" style={{ color: t.textSub }}>Bs</span>
+            </h2>
           </div>
 
-          {/* Barras de Inflows vs Outflows */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
-            
-            {/* 1. Entradas (Inflows) */}
-            <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-neutral-400 font-bold uppercase text-[10px] flex items-center gap-1">
-                  <ArrowUpRight size={13} className="text-emerald-400" /> Cobros Recaudados (Inflows)
-                </span>
-                <span className="font-mono font-black text-emerald-400">
-                  +{categorias.totalRecaudado.toLocaleString()} Bs
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                <div className="h-full rounded-full bg-emerald-400" style={{ width: '75%', boxShadow: '0 0 10px #10B981' }} />
-              </div>
-            </div>
-
-            {/* 2. Salidas (Outflows) */}
-            <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-neutral-400 font-bold uppercase text-[10px] flex items-center gap-1">
-                  <ArrowDownRight size={13} className="text-amber-400" /> Salidas & Servicios (Outflows)
-                </span>
-                <span className="font-mono font-black text-amber-400">
-                  -{totalGastoServicios.toLocaleString()} Bs
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                <div className="h-full rounded-full bg-amber-400" style={{ width: '45%', boxShadow: '0 0 10px #F59E0B' }} />
-              </div>
-            </div>
-
-            {/* 3. Margen Neto */}
-            <div className="space-y-2 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.05]">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-neutral-400 font-bold uppercase text-[10px]">
-                  Balance Neto Operativo
-                </span>
-                <span className="font-mono font-black text-white text-sm">
-                  {(categorias.totalRecaudado - totalGastoServicios).toLocaleString()} Bs
-                </span>
-              </div>
-              <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                <div className="h-full rounded-full bg-cyan-400" style={{ width: '60%', boxShadow: '0 0 10px #06B6D4' }} />
-              </div>
-            </div>
-
+          {/* Gráfico de Barras Segmentadas: Entradas vs Salidas */}
+          <div className="mt-3 space-y-2">
+            <SegBar segments={cashflowData.segments} height={8} isDark={isDark} />
           </div>
-        </div>
+
+          <div className="grid grid-cols-2 gap-2 mt-4 pt-3 border-t text-xs" style={{ borderColor: t.borderSubtle }}>
+            <div 
+              className="p-2 rounded-xl border"
+              style={{ backgroundColor: isDark ? '#1F1F22' : '#F9FAFB', borderColor: t.borderSubtle }}
+            >
+              <span className="text-[10px] block font-semibold" style={{ color: t.textSub }}>Entradas</span>
+              <span className="font-mono font-bold text-sm block mt-0.5" style={{ color: t.textMain }}>
+                +{Math.round(cashflowData.inflows).toLocaleString()} Bs
+              </span>
+            </div>
+
+            <div 
+              className="p-2 rounded-xl border"
+              style={{ backgroundColor: isDark ? '#1F1F22' : '#F9FAFB', borderColor: t.borderSubtle }}
+            >
+              <span className="text-[10px] block font-semibold" style={{ color: t.textSub }}>Salidas</span>
+              <span className="font-mono font-bold text-sm block mt-0.5" style={{ color: t.textMuted }}>
+                -{Math.round(cashflowData.outflows).toLocaleString()} Bs
+              </span>
+            </div>
+          </div>
+        </Panel>
 
       </div>
 
@@ -871,10 +997,10 @@ Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobr
         isOpen={modalPago.isOpen}
         onClose={() => setModalPago({ isOpen: false, prestamo: null })}
         onConfirm={confirmarCobro}
-        titulo={`Confirmar Cobro Rápido — ${modalPago.prestamo?.nombre || ''}`}
-        mensaje={`¿Registrar cobro de cuota mensual por ${modalPago.prestamo?.cuotaCalculada ? modalPago.prestamo.cuotaCalculada.toFixed(0) : 0} Bs para el período ${periodoMes}?`}
-        icono={<DollarSign size={20} color="#10B981" />}
-        colorAccent="#10B981"
+        titulo={`Confirmar Cobro — ${modalPago.prestamo?.nombre || ''}`}
+        mensaje={`¿Registrar cobro de cuota por ${modalPago.prestamo?.cuotaCalculada ? Math.round(modalPago.prestamo.cuotaCalculada) : 0} Bs para el período ${periodoMes}?`}
+        icono={<DollarSign size={20} />}
+        colorAccent={isDark ? '#E5E7EB' : '#1F2937'}
         confirmText="Confirmar Cobro"
         cancelText="Cancelar"
         isDark={isDark}
@@ -886,8 +1012,8 @@ Por favor, genera un análisis ejecutivo con 3 recomendaciones tácticas de cobr
         onConfirm={confirmarPagoServicio}
         titulo={`Confirmar Pago — ${modalServicio.servicio?.nombre || ''}`}
         mensaje={`¿Registrar pago del servicio ${modalServicio.servicio?.nombre || ''} por ${modalServicio.servicio?.monto || 0} Bs?`}
-        icono={<CreditCard size={20} color="#F59E0B" />}
-        colorAccent="#F59E0B"
+        icono={<Wallet size={20} />}
+        colorAccent={isDark ? '#E5E7EB' : '#1F2937'}
         confirmText="Registrar Pago"
         cancelText="Cancelar"
         isDark={isDark}
