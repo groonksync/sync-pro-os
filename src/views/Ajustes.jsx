@@ -16,7 +16,7 @@ import { aiService } from '../services/aiService';
 
 const SECCIONES_PROFESIONALES = [
   { id: 'ia', icon: Cpu, label: 'Inteligencia Artificial', desc: 'Google Gemini, DeepSeek y prueba de API en vivo', badge: 'PRO' },
-  { id: 'apariencia', icon: Palette, label: 'Apariencia & Tema', desc: 'Colores, tonos OLED, barra lateral y wallpaper' },
+  { id: 'apariencia', icon: Palette, label: 'Pantalla & Apariencia', desc: 'Smartphone vs Escritorio, tonos grises y tema' },
   { id: 'prestamos', icon: DollarSign, label: 'Préstamos & Cartera', desc: 'Moneda base, tasas, plazos y QR de cobro' },
   { id: 'egresos', icon: Wallet, label: 'Egresos & Presupuesto', desc: 'Límites mensuales y alertas de suscripción' },
   { id: 'empresa', icon: Building2, label: 'Empresa & Catálogo', desc: 'Datos comerciales, NIT y valorizaciones' },
@@ -158,17 +158,20 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
     <div className="w-full max-w-7xl mx-auto py-4 px-2 sm:px-6 space-y-6 animate-in fade-in duration-300">
       
       {/* ── CABECERA PRINCIPAL EJECUTIVA ─────────────────────────────────── */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/[0.08]">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b" style={{ borderColor: t.borderSubtle }}>
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="p-2 rounded-xl bg-white/[0.06] border border-white/[0.1] text-white">
-              <Zap size={18} className="text-amber-400" />
+            <span 
+              className="p-2 rounded-xl border flex items-center justify-center transition-colors"
+              style={{ backgroundColor: isDark ? '#232326' : '#F3F4F6', borderColor: t.borderSubtle, color: t.textMain }}
+            >
+              <Zap size={18} />
             </span>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white m-0">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight m-0" style={{ color: t.textMain }}>
               Centro de Configuración & Preferencias
             </h1>
           </div>
-          <p className="text-xs text-neutral-400 mt-1">
+          <p className="text-xs mt-1" style={{ color: t.textSub }}>
             Personaliza la interfaz, motores de IA, parámetros financieros y respaldos de Inefable Cloud
           </p>
         </div>
@@ -176,14 +179,16 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
         <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={handleExport}
-            className="btn-action-pill flex items-center gap-1.5 text-xs py-2 px-3.5"
+            className="flex items-center gap-1.5 text-xs py-2 px-3.5 rounded-xl border font-semibold transition-all hover:opacity-90"
+            style={{ backgroundColor: isDark ? '#232326' : '#FFFFFF', borderColor: t.borderSubtle, color: t.textMain }}
             title="Exportar respaldo de configuración"
           >
             <Download size={13} /> Exportar JSON
           </button>
           <button
             onClick={handleImport}
-            className="btn-action-pill flex items-center gap-1.5 text-xs py-2 px-3.5"
+            className="flex items-center gap-1.5 text-xs py-2 px-3.5 rounded-xl border font-semibold transition-all hover:opacity-90"
+            style={{ backgroundColor: isDark ? '#232326' : '#FFFFFF', borderColor: t.borderSubtle, color: t.textMain }}
             title="Importar respaldo"
           >
             <Upload size={13} /> Importar JSON
@@ -201,8 +206,11 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* NAVEGADOR DE SECCIONES LATERAL */}
-        <aside className="lg:col-span-4 space-y-1.5 bg-white/[0.02] border border-white/[0.06] p-3 rounded-2xl">
-          <span className="text-[9px] font-black uppercase tracking-widest text-neutral-500 px-3 py-1.5 block">
+        <aside 
+          className="lg:col-span-4 space-y-1.5 p-3 rounded-2xl border transition-colors"
+          style={{ backgroundColor: t.panel, borderColor: t.border }}
+        >
+          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 block" style={{ color: t.textSub }}>
             Módulos del Sistema
           </span>
           {SECCIONES_PROFESIONALES.map(sec => {
@@ -212,25 +220,34 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
               <button
                 key={sec.id}
                 onClick={() => setActiveSection(sec.id)}
-                className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition-all duration-200 ${
+                className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition-all duration-200 border ${
                   isActive
-                    ? 'bg-white/[0.08] text-white border border-white/[0.15] shadow-lg shadow-black/20'
-                    : 'text-neutral-400 hover:text-white hover:bg-white/[0.03] border border-transparent'
+                    ? 'border-neutral-400/40 shadow-md'
+                    : 'border-transparent hover:bg-neutral-500/5'
                 }`}
+                style={{
+                  backgroundColor: isActive ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
+                  color: t.textMain,
+                }}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                    isActive ? 'bg-amber-400/20 text-amber-300' : 'bg-white/[0.04] text-neutral-400'
-                  }`}>
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+                    style={{
+                      backgroundColor: isActive ? (isDark ? '#3A3A3D' : '#D1D5DB') : (isDark ? '#1F1F22' : '#F3F4F6'),
+                      borderColor: t.borderSubtle,
+                      color: t.textMain,
+                    }}
+                  >
                     <Icon size={16} />
                   </div>
                   <div className="truncate">
-                    <p className="text-xs font-bold m-0 leading-tight">{sec.label}</p>
-                    <p className="text-[10px] text-neutral-500 m-0 truncate mt-0.5">{sec.desc}</p>
+                    <p className="text-xs font-bold m-0 leading-tight" style={{ color: t.textMain }}>{sec.label}</p>
+                    <p className="text-[10px] m-0 truncate mt-0.5" style={{ color: t.textSub }}>{sec.desc}</p>
                   </div>
                 </div>
                 {sec.badge && (
-                  <span className="text-[8px] font-black tracking-wider px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                  <span className="text-[8px] font-black tracking-wider px-1.5 py-0.5 rounded border" style={{ backgroundColor: isDark ? '#2E2E32' : '#E5E7EB', borderColor: t.borderSubtle, color: t.textMain }}>
                     {sec.badge}
                   </span>
                 )}
@@ -238,20 +255,23 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
             );
           })}
 
-          <div className="pt-4 mt-4 border-t border-white/[0.06] px-3">
-            <div className="flex justify-between items-center text-[10px] text-neutral-500">
+          <div className="pt-4 mt-4 border-t px-3" style={{ borderColor: t.borderSubtle }}>
+            <div className="flex justify-between items-center text-[10px]" style={{ color: t.textSub }}>
               <span>Almacenamiento Local:</span>
-              <span className="text-neutral-300 font-mono font-bold">{storageUsed} MB</span>
+              <span className="font-mono font-bold" style={{ color: t.textMain }}>{storageUsed} MB</span>
             </div>
-            <div className="flex justify-between items-center text-[10px] text-neutral-500 mt-1">
+            <div className="flex justify-between items-center text-[10px] mt-1" style={{ color: t.textSub }}>
               <span>Versión Cloud:</span>
-              <span className="text-neutral-300 font-mono font-bold">1.1.0 Pro</span>
+              <span className="font-mono font-bold" style={{ color: t.textMain }}>1.1.0 Pro</span>
             </div>
           </div>
         </aside>
 
         {/* PANEL DE DETALLE / CONTENIDO ACTIVO */}
-        <main className="lg:col-span-8 space-y-6 bg-white/[0.02] border border-white/[0.06] p-5 sm:p-7 rounded-2xl shadow-2xl">
+        <main 
+          className="lg:col-span-8 space-y-6 p-5 sm:p-7 rounded-2xl border shadow-sm transition-colors"
+          style={{ backgroundColor: t.panel, borderColor: t.border }}
+        >
 
           {/* ══════════════════════════════════════════════════════════════════
               SECCIÓN 1: INTELIGENCIA ARTIFICIAL (GEMINI / DEEPSEEK)
@@ -473,22 +493,102 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
           )}
 
           {/* ══════════════════════════════════════════════════════════════════
-              SECCIÓN 2: APARIENCIA & TEMA
+              SECCIÓN 2: PANTALLA & APARIENCIA
               ══════════════════════════════════════════════════════════════════ */}
           {activeSection === 'apariencia' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="pb-4 border-b border-white/[0.06]">
-                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
-                  <Palette size={18} className="text-amber-400" /> Apariencia & Personalización Visual
+              <div className="pb-4 border-b" style={{ borderColor: t.borderSubtle }}>
+                <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 m-0" style={{ color: t.textMain }}>
+                  <Palette size={18} /> Pantalla, Dispositivo & Apariencia
                 </h3>
-                <p className="text-xs text-neutral-400 mt-1">
-                  Ajusta los tonos oscuros, el color de acento corporativo y la densidad visual
+                <p className="text-xs mt-1" style={{ color: t.textSub }}>
+                  Ajusta el modo de visualización (Smartphone vs Escritorio), la paleta de tonos grises y fondos
                 </p>
+              </div>
+
+              {/* ── MODO DE DISPOSITIVO / PANTALLA ── */}
+              <div 
+                className="p-4 rounded-xl border space-y-3"
+                style={{
+                  backgroundColor: isDark ? '#1F1F22' : '#F9FAFB',
+                  borderColor: t.borderSubtle,
+                }}
+              >
+                <div>
+                  <label className="text-xs font-bold block" style={{ color: t.textMain }}>
+                    Modo de Dispositivo & Visualización
+                  </label>
+                  <p className="text-[11px] m-0 mt-0.5" style={{ color: t.textSub }}>
+                    Optimiza la interfaz para teléfonos celulares o computadoras de escritorio
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {/* Opción 1: Auto */}
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ mobileModeSource: 'auto', isMobileMode: typeof window !== 'undefined' ? window.innerWidth < 768 : false })}
+                    className="p-3 rounded-xl border text-left flex flex-col justify-between transition-all"
+                    style={{
+                      backgroundColor: s.mobileModeSource === 'auto' ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
+                      borderColor: s.mobileModeSource === 'auto' ? (isDark ? '#E5E7EB' : '#1F2937') : t.borderSubtle,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <MonitorDown size={16} style={{ color: t.textMain }} />
+                      {s.mobileModeSource === 'auto' && <Check size={14} style={{ color: t.textMain }} />}
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block" style={{ color: t.textMain }}>Automático</span>
+                      <span className="text-[10px] block mt-0.5" style={{ color: t.textSub }}>Detecta según resolución</span>
+                    </div>
+                  </button>
+
+                  {/* Opción 2: Smartphone */}
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ mobileModeSource: 'manual', isMobileMode: true })}
+                    className="p-3 rounded-xl border text-left flex flex-col justify-between transition-all"
+                    style={{
+                      backgroundColor: (s.mobileModeSource === 'manual' && s.isMobileMode) ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
+                      borderColor: (s.mobileModeSource === 'manual' && s.isMobileMode) ? (isDark ? '#E5E7EB' : '#1F2937') : t.borderSubtle,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <Smartphone size={16} style={{ color: t.textMain }} />
+                      {s.mobileModeSource === 'manual' && s.isMobileMode && <Check size={14} style={{ color: t.textMain }} />}
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block" style={{ color: t.textMain }}>Smartphone</span>
+                      <span className="text-[10px] block mt-0.5" style={{ color: t.textSub }}>Barra inferior fija y menú táctil</span>
+                    </div>
+                  </button>
+
+                  {/* Opción 3: Escritorio */}
+                  <button
+                    type="button"
+                    onClick={() => updateSettings({ mobileModeSource: 'manual', isMobileMode: false })}
+                    className="p-3 rounded-xl border text-left flex flex-col justify-between transition-all"
+                    style={{
+                      backgroundColor: (s.mobileModeSource === 'manual' && !s.isMobileMode) ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
+                      borderColor: (s.mobileModeSource === 'manual' && !s.isMobileMode) ? (isDark ? '#E5E7EB' : '#1F2937') : t.borderSubtle,
+                    }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <Monitor size={16} style={{ color: t.textMain }} />
+                      {s.mobileModeSource === 'manual' && !s.isMobileMode && <Check size={14} style={{ color: t.textMain }} />}
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block" style={{ color: t.textMain }}>Escritorio</span>
+                      <span className="text-[10px] block mt-0.5" style={{ color: t.textSub }}>Barra lateral fija de 64px</span>
+                    </div>
+                  </button>
+                </div>
               </div>
 
               {/* Tono de Fondo */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-2">
+                <label className="text-[10px] font-black uppercase tracking-widest block mb-2" style={{ color: t.textSub }}>
                   Tono Base de Fondo
                 </label>
                 <div className="grid grid-cols-3 gap-3">
@@ -496,14 +596,14 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
                     <button
                       key={m.id}
                       onClick={() => updateSetting('appearanceMode', m.id)}
-                      className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${
-                        s.appearanceMode === m.id
-                          ? 'border-amber-400 bg-white/[0.06]'
-                          : 'border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04]'
-                      }`}
+                      className="p-3 rounded-xl border flex flex-col items-center gap-2 transition-all"
+                      style={{
+                        backgroundColor: s.appearanceMode === m.id ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
+                        borderColor: s.appearanceMode === m.id ? (isDark ? '#E5E7EB' : '#1F2937') : t.borderSubtle,
+                      }}
                     >
                       <div className="w-6 h-6 rounded-full border border-white/20" style={{ backgroundColor: m.color }} />
-                      <span className="text-xs font-bold text-white">{m.label}</span>
+                      <span className="text-xs font-bold" style={{ color: t.textMain }}>{m.label}</span>
                     </button>
                   ))}
                 </div>
