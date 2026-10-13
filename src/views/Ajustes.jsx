@@ -1,14 +1,10 @@
 import React, { useState, useMemo, useRef, useCallback } from 'react';
 import {
-  Palette, Monitor, Sidebar as SidebarIcon, Image as ImageIcon, Type, Layout, Sun, Moon, Eye, EyeOff,
-  DollarSign, BadgePercent, CalendarDays, Bell, BellRing, BellOff,
-  Smartphone, Tablet, Shield, Lock, Key, Download, Upload, Trash2,
-  RefreshCw, Wifi, WifiOff, Zap, Cpu, Languages, Clock, MonitorDown,
-  CreditCard, Building2, Wallet, FileText, Video, FolderOpen, MousePointer2,
-  ChevronDown, ChevronRight, Save, Check, X, Camera, QrCode, Link as LinkIcon,
-  AppWindow, Terminal, LogOut, RotateCcw, Info, AlertTriangle, Globe,
-  Bookmark, Briefcase, Calendar, CheckCircle2, ChevronUp, Layers, Sparkles,
-  Play, Bot, ExternalLink
+  Palette, Monitor, Smartphone, Sun, Moon, Eye, EyeOff,
+  DollarSign, Bell, Shield, Download, Upload, Trash2,
+  RefreshCw, Zap, Cpu, Building2, Wallet, Check, X,
+  CheckCircle2, AlertTriangle, Globe, LogOut, RotateCcw,
+  Sparkles, Bot, ExternalLink, Sliders, HardDrive, SmartphoneCharging
 } from 'lucide-react';
 import { useSettings } from '../lib/settingsStore';
 import { getTheme, useTheme } from '../lib/theme';
@@ -25,42 +21,33 @@ const SECCIONES_PROFESIONALES = [
 ];
 
 const ACCENT_COLORS = [
-  { name: 'Sovereign Gold', hex: '#fbbf24' },
-  { name: 'Pure White', hex: '#ffffff' },
-  { name: 'Cyber Blue', hex: '#0ea5e9' },
-  { name: 'Crimson Red', hex: '#ef4444' },
-  { name: 'Emerald Finance', hex: '#10b981' },
-  { name: 'Neon Purple', hex: '#a855f7' },
-  { name: 'Sunset Orange', hex: '#f97316' },
-  { name: 'Steel Gray', hex: '#969696' },
-  { name: 'Pink Bloom', hex: '#ec4899' },
-  { name: 'Indigo Deep', hex: '#6366f1' },
-  { name: 'Teal Wave', hex: '#14b8a6' },
-  { name: 'Amber Glow', hex: '#d97706' },
+  { name: 'Titanio', hex: '#A1A1AA' },
+  { name: 'Platino', hex: '#E4E4E7' },
+  { name: 'Grafito', hex: '#71717A' },
+  { name: 'Acero', hex: '#52525B' },
+  { name: 'Blanco Puro', hex: '#FFFFFF' },
+  { name: 'Carbón', hex: '#27272A' },
+  { name: 'Oro Neutro', hex: '#D4AF37' },
+  { name: 'Zafiro Frío', hex: '#38BDF8' },
 ];
 
 const MODOS_FONDO = [
-  { id: 'darkGray', label: 'Gris Oscuro', color: '#141414' },
-  { id: 'black', label: 'Negro OLED', color: '#000000' },
-  { id: 'lightGray', label: 'Gris Carbón', color: '#242428' },
+  { id: 'darkGray', label: 'Gris Oscuro', desc: '#1A1A1C Grafito', color: '#1A1A1C' },
+  { id: 'black', label: 'Negro OLED', desc: '#121214 Profundo', color: '#121214' },
+  { id: 'lightGray', label: 'Gris Carbón', desc: '#222225 Neutro', color: '#222225' },
 ];
 
-const DENSIDADES = [
-  { id: 'compact', label: 'Compacto', desc: 'Mayor información' },
-  { id: 'normal', label: 'Normal', desc: 'Equilibrio visual' },
-  { id: 'comfortable', label: 'Cómodo', desc: 'Espaciado amplio' },
-];
-
-export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onLogout }) {
+export default function Ajustes({ isDark = true, setIsDark, googleUser, onLoginSuccess, onLogout }) {
   const { settings, updateSetting, updateSettings, resetSettings, exportSettings, importSettings } = useSettings();
   const s = settings;
   const t = useMemo(() => getTheme(isDark, s), [isDark, s]);
-  
+
   const [activeSection, setActiveSection] = useState('ia');
   const [showApiKey, setShowApiKey] = useState(false);
   const [testingAi, setTestingAi] = useState(false);
   const [aiTestResult, setAiTestResult] = useState(null);
   const [importStatus, setImportStatus] = useState(null);
+  const [savedBadge, setSavedBadge] = useState(false);
 
   const fileInputRef = useRef(null);
   const qrInputRef = useRef(null);
@@ -88,27 +75,40 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => updateSetting('backgroundImage', ev.target.result);
+    reader.onload = (ev) => {
+      updateSetting('backgroundImage', ev.target.result);
+      triggerSaveNotice();
+    };
     reader.readAsDataURL(file);
   }, [updateSetting]);
 
   const handleRemoveBg = useCallback(() => {
     updateSetting('backgroundImage', null);
     if (fileInputRef.current) fileInputRef.current.value = '';
+    triggerSaveNotice();
   }, [updateSetting]);
 
   const handleQrUpload = useCallback((e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => updateSetting('loanQrImage', ev.target.result);
+    reader.onload = (ev) => {
+      updateSetting('loanQrImage', ev.target.result);
+      triggerSaveNotice();
+    };
     reader.readAsDataURL(file);
   }, [updateSetting]);
 
   const handleRemoveQr = useCallback(() => {
     updateSetting('loanQrImage', null);
     if (qrInputRef.current) qrInputRef.current.value = '';
+    triggerSaveNotice();
   }, [updateSetting]);
+
+  const triggerSaveNotice = () => {
+    setSavedBadge(true);
+    setTimeout(() => setSavedBadge(false), 2000);
+  };
 
   // Exportar / Importar
   const handleExport = useCallback(() => {
@@ -132,7 +132,7 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
       const reader = new FileReader();
       reader.onload = (ev) => {
         const ok = importSettings(ev.target.result);
-        setImportStatus(ok ? '✅ Configuración restaurada con éxito' : '❌ Archivo JSON no válido');
+        setImportStatus(ok ? 'Configuración restaurada con éxito' : 'Archivo JSON no válido');
         setTimeout(() => setImportStatus(null), 3500);
       };
       reader.readAsText(file);
@@ -144,52 +144,94 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
     try {
       let total = 0;
       for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(localStorage, key)) {
           total += localStorage[key].length * 2;
         }
       }
       return (total / 1024 / 1024).toFixed(2);
     } catch {
-      return '0.5';
+      return '0.50';
     }
   }, []);
 
+  const inputStyle = {
+    backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
+    borderColor: t.borderLight || t.border,
+    color: t.text,
+  };
+
+  const cardStyle = {
+    backgroundColor: t.panel,
+    borderColor: t.borderLight || t.border,
+  };
+
+  const subCardStyle = {
+    backgroundColor: isDark ? '#1F1F22' : '#F9FAFB',
+    borderColor: t.borderLight || t.border,
+  };
+
   return (
-    <div className="w-full max-w-7xl mx-auto py-4 px-2 sm:px-6 space-y-6 animate-in fade-in duration-300">
+    <div className="w-full max-w-7xl mx-auto py-5 px-3 sm:px-6 space-y-6">
       
       {/* ── CABECERA PRINCIPAL EJECUTIVA ─────────────────────────────────── */}
-      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b" style={{ borderColor: t.borderSubtle }}>
-        <div>
-          <div className="flex items-center gap-2.5">
-            <span 
-              className="p-2 rounded-xl border flex items-center justify-center transition-colors"
-              style={{ backgroundColor: isDark ? '#232326' : '#F3F4F6', borderColor: t.borderSubtle, color: t.textMain }}
-            >
-              <Zap size={18} />
-            </span>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight m-0" style={{ color: t.textMain }}>
-              Centro de Configuración & Preferencias
-            </h1>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b" style={{ borderColor: t.border }}>
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border"
+            style={{
+              backgroundColor: isDark ? '#232326' : '#F3F4F6',
+              borderColor: t.borderLight || t.border,
+              color: t.text,
+            }}
+          >
+            <Sliders size={18} />
           </div>
-          <p className="text-xs mt-1" style={{ color: t.textSub }}>
-            Personaliza la interfaz, motores de IA, parámetros financieros y respaldos de Inefable Cloud
-          </p>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight m-0" style={{ color: t.text }}>
+              Configuración & Sistema
+            </h1>
+            <p className="text-xs mt-0.5 m-0" style={{ color: t.textMuted }}>
+              Personaliza la interfaz, motores de IA, parámetros financieros y respaldos
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {savedBadge && (
+            <span
+              className="text-[11px] font-medium px-2.5 py-1.5 rounded-xl border flex items-center gap-1.5 animate-in fade-in"
+              style={{
+                backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                borderColor: t.borderLight || t.border,
+                color: t.text,
+              }}
+            >
+              <Check size={12} /> Guardado
+            </span>
+          )}
           <button
+            type="button"
             onClick={handleExport}
-            className="flex items-center gap-1.5 text-xs py-2 px-3.5 rounded-xl border font-semibold transition-all hover:opacity-90"
-            style={{ backgroundColor: isDark ? '#232326' : '#FFFFFF', borderColor: t.borderSubtle, color: t.textMain }}
-            title="Exportar respaldo de configuración"
+            className="flex items-center gap-1.5 text-xs py-2 px-3.5 rounded-xl border font-medium transition-opacity hover:opacity-80"
+            style={{
+              backgroundColor: isDark ? '#232326' : '#FFFFFF',
+              borderColor: t.borderLight || t.border,
+              color: t.text,
+            }}
+            title="Exportar archivo de configuración en formato JSON"
           >
             <Download size={13} /> Exportar JSON
           </button>
           <button
+            type="button"
             onClick={handleImport}
-            className="flex items-center gap-1.5 text-xs py-2 px-3.5 rounded-xl border font-semibold transition-all hover:opacity-90"
-            style={{ backgroundColor: isDark ? '#232326' : '#FFFFFF', borderColor: t.borderSubtle, color: t.textMain }}
-            title="Importar respaldo"
+            className="flex items-center gap-1.5 text-xs py-2 px-3.5 rounded-xl border font-medium transition-opacity hover:opacity-80"
+            style={{
+              backgroundColor: isDark ? '#232326' : '#FFFFFF',
+              borderColor: t.borderLight || t.border,
+              color: t.text,
+            }}
+            title="Restaurar configuración desde un archivo JSON"
           >
             <Upload size={13} /> Importar JSON
           </button>
@@ -197,20 +239,58 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
       </header>
 
       {importStatus && (
-        <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold animate-in fade-in">
+        <div
+          className="p-3.5 rounded-2xl border text-xs font-semibold flex items-center gap-2 animate-in fade-in"
+          style={{
+            backgroundColor: isDark ? '#1F2421' : '#ECFDF5',
+            borderColor: isDark ? '#2D3A31' : '#A7F3D0',
+            color: isDark ? '#D1FAE5' : '#065F46',
+          }}
+        >
+          <CheckCircle2 size={16} />
           {importStatus}
         </div>
       )}
 
-      {/* ── GRID PRINCIPAL: NAVEGACIÓN + CONTENIDO ───────────────────────── */}
+      {/* ── NAVEGACIÓN MÓVIL: PÍLDORAS HORIZONTALES (SMARTPHONE) ─────────── */}
+      <div className="lg:hidden -mx-3 px-3 overflow-x-auto no-scrollbar flex items-center gap-1.5 pb-1">
+        {SECCIONES_PROFESIONALES.map(sec => {
+          const Icon = sec.icon;
+          const isActive = activeSection === sec.id;
+          return (
+            <button
+              key={sec.id}
+              type="button"
+              onClick={() => setActiveSection(sec.id)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium shrink-0 transition-all border"
+              style={{
+                backgroundColor: isActive
+                  ? (isDark ? '#ECECEC' : '#1C1C1E')
+                  : (isDark ? '#232326' : '#FFFFFF'),
+                borderColor: isActive
+                  ? (isDark ? '#ECECEC' : '#1C1C1E')
+                  : (t.borderLight || t.border),
+                color: isActive
+                  ? (isDark ? '#1C1C1E' : '#FFFFFF')
+                  : t.text,
+              }}
+            >
+              <Icon size={14} />
+              <span>{sec.label.split(' ')[0]}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── GRID PRINCIPAL: LATERAL ESCRITORIO + CONTENIDO ACTIVO ────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* NAVEGADOR DE SECCIONES LATERAL */}
+        {/* NAVEGADOR DE SECCIONES LATERAL (ESCRITORIO) */}
         <aside 
-          className="lg:col-span-4 space-y-1.5 p-3 rounded-2xl border transition-colors"
-          style={{ backgroundColor: t.panel, borderColor: t.border }}
+          className="hidden lg:block lg:col-span-4 space-y-1.5 p-3 rounded-2xl border"
+          style={cardStyle}
         >
-          <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1.5 block" style={{ color: t.textSub }}>
+          <span className="text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 block" style={{ color: t.textMuted }}>
             Módulos del Sistema
           </span>
           {SECCIONES_PROFESIONALES.map(sec => {
@@ -219,35 +299,50 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
             return (
               <button
                 key={sec.id}
+                type="button"
                 onClick={() => setActiveSection(sec.id)}
-                className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition-all duration-200 border ${
-                  isActive
-                    ? 'border-neutral-400/40 shadow-md'
-                    : 'border-transparent hover:bg-neutral-500/5'
-                }`}
+                className="w-full text-left p-3 rounded-xl flex items-center justify-between transition-all border"
                 style={{
-                  backgroundColor: isActive ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
-                  color: t.textMain,
+                  backgroundColor: isActive
+                    ? (isDark ? '#2C2C30' : '#EAEAEB')
+                    : 'transparent',
+                  borderColor: isActive
+                    ? (isDark ? '#3D3D42' : '#D4D4D8')
+                    : 'transparent',
+                  color: t.text,
                 }}
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div 
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border"
+                    className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border"
                     style={{
-                      backgroundColor: isActive ? (isDark ? '#3A3A3D' : '#D1D5DB') : (isDark ? '#1F1F22' : '#F3F4F6'),
-                      borderColor: t.borderSubtle,
-                      color: t.textMain,
+                      backgroundColor: isActive
+                        ? (isDark ? '#38383E' : '#DCDCE0')
+                        : (isDark ? '#1C1C1E' : '#F3F4F6'),
+                      borderColor: t.borderLight || t.border,
+                      color: t.text,
                     }}
                   >
-                    <Icon size={16} />
+                    <Icon size={15} />
                   </div>
                   <div className="truncate">
-                    <p className="text-xs font-bold m-0 leading-tight" style={{ color: t.textMain }}>{sec.label}</p>
-                    <p className="text-[10px] m-0 truncate mt-0.5" style={{ color: t.textSub }}>{sec.desc}</p>
+                    <p className="text-xs font-semibold m-0 leading-tight" style={{ color: t.text }}>
+                      {sec.label}
+                    </p>
+                    <p className="text-[10px] m-0 truncate mt-0.5" style={{ color: t.textMuted }}>
+                      {sec.desc}
+                    </p>
                   </div>
                 </div>
                 {sec.badge && (
-                  <span className="text-[8px] font-black tracking-wider px-1.5 py-0.5 rounded border" style={{ backgroundColor: isDark ? '#2E2E32' : '#E5E7EB', borderColor: t.borderSubtle, color: t.textMain }}>
+                  <span
+                    className="text-[8px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded border"
+                    style={{
+                      backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6',
+                      borderColor: t.borderLight || t.border,
+                      color: t.textMuted,
+                    }}
+                  >
                     {sec.badge}
                   </span>
                 )}
@@ -255,22 +350,26 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
             );
           })}
 
-          <div className="pt-4 mt-4 border-t px-3" style={{ borderColor: t.borderSubtle }}>
-            <div className="flex justify-between items-center text-[10px]" style={{ color: t.textSub }}>
-              <span>Almacenamiento Local:</span>
-              <span className="font-mono font-bold" style={{ color: t.textMain }}>{storageUsed} MB</span>
+          <div className="pt-4 mt-4 border-t px-3 space-y-1.5" style={{ borderColor: t.borderLight || t.border }}>
+            <div className="flex justify-between items-center text-[10px]" style={{ color: t.textMuted }}>
+              <span className="flex items-center gap-1.5">
+                <HardDrive size={11} /> Almacenamiento Local
+              </span>
+              <span className="font-mono font-semibold" style={{ color: t.text }}>{storageUsed} MB</span>
             </div>
-            <div className="flex justify-between items-center text-[10px] mt-1" style={{ color: t.textSub }}>
-              <span>Versión Cloud:</span>
-              <span className="font-mono font-bold" style={{ color: t.textMain }}>1.1.0 Pro</span>
+            <div className="flex justify-between items-center text-[10px]" style={{ color: t.textMuted }}>
+              <span className="flex items-center gap-1.5">
+                <Shield size={11} /> Versión Cloud
+              </span>
+              <span className="font-mono font-semibold" style={{ color: t.text }}>1.1.0 Pro</span>
             </div>
           </div>
         </aside>
 
         {/* PANEL DE DETALLE / CONTENIDO ACTIVO */}
         <main 
-          className="lg:col-span-8 space-y-6 p-5 sm:p-7 rounded-2xl border shadow-sm transition-colors"
-          style={{ backgroundColor: t.panel, borderColor: t.border }}
+          className="lg:col-span-8 space-y-6 p-5 sm:p-7 rounded-2xl border"
+          style={cardStyle}
         >
 
           {/* ══════════════════════════════════════════════════════════════════
@@ -278,42 +377,55 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
               ══════════════════════════════════════════════════════════════════ */}
           {activeSection === 'ia' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="pb-4 border-b border-white/[0.06]">
-                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
-                  <Bot size={18} className="text-purple-400" /> Motores de Inteligencia Artificial
-                </h3>
-                <p className="text-xs text-neutral-400 mt-1">
+              <div className="pb-4 border-b" style={{ borderColor: t.borderLight || t.border }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border" style={{ backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6', borderColor: t.borderLight || t.border, color: t.text }}>
+                    <Bot size={15} />
+                  </div>
+                  <h3 className="text-sm font-bold tracking-tight m-0" style={{ color: t.text }}>
+                    Motores de Inteligencia Artificial
+                  </h3>
+                </div>
+                <p className="text-xs mt-1 m-0" style={{ color: t.textMuted }}>
                   Configura y valida en tiempo real tu conexión con Google Gemini AI Studio o DeepSeek
                 </p>
               </div>
 
               {/* Selector de Proveedor */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block">
+                <label className="text-[10px] font-bold uppercase tracking-widest block" style={{ color: t.textMuted }}>
                   Proveedor de IA Activo
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { id: 'gemini', name: 'Google Gemini (AI Studio)', desc: 'Recomendado · Rápido y Estable', color: '#a855f7' },
-                    { id: 'deepseek', name: 'DeepSeek AI', desc: 'V3 & Razonamiento R1', color: '#0ea5e9' }
+                    { id: 'gemini', name: 'Google Gemini (AI Studio)', desc: 'Recomendado · Alto rendimiento y baja latencia' },
+                    { id: 'deepseek', name: 'DeepSeek AI', desc: 'Modelos V3 y Razonamiento R1' }
                   ].map(p => {
                     const isSelected = (s.aiProvider || 'gemini') === p.id;
                     return (
-                      <div
+                      <button
                         key={p.id}
-                        onClick={() => updateSetting('aiProvider', p.id)}
-                        className={`p-4 rounded-xl cursor-pointer border transition-all ${
-                          isSelected
-                            ? 'bg-white/[0.08] border-purple-500/50 shadow-md shadow-purple-500/10'
-                            : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04]'
-                        }`}
+                        type="button"
+                        onClick={() => {
+                          updateSetting('aiProvider', p.id);
+                          triggerSaveNotice();
+                        }}
+                        className="p-4 rounded-xl text-left border transition-all"
+                        style={{
+                          backgroundColor: isSelected
+                            ? (isDark ? '#2C2C30' : '#EAEAEB')
+                            : (isDark ? '#1C1C1E' : '#FFFFFF'),
+                          borderColor: isSelected
+                            ? (isDark ? '#ECECEC' : '#1C1C1E')
+                            : (t.borderLight || t.border),
+                        }}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold text-white">{p.name}</span>
-                          {isSelected && <CheckCircle2 size={16} className="text-purple-400" />}
+                          <span className="text-xs font-bold" style={{ color: t.text }}>{p.name}</span>
+                          {isSelected && <Check size={14} style={{ color: t.text }} />}
                         </div>
-                        <span className="text-[10px] text-neutral-400 mt-1 block">{p.desc}</span>
-                      </div>
+                        <span className="text-[10px] mt-1 block" style={{ color: t.textMuted }}>{p.desc}</span>
+                      </button>
                     );
                   })}
                 </div>
@@ -321,15 +433,19 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
 
               {/* Parámetros específicos según proveedor */}
               {s.aiProvider === 'deepseek' ? (
-                <div className="space-y-4 p-4 rounded-xl bg-blue-500/[0.03] border border-blue-500/10">
+                <div className="space-y-4 p-4 rounded-xl border" style={subCardStyle}>
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5" style={{ color: t.textMuted }}>
                       Modelo DeepSeek
                     </label>
                     <select
                       value={s.deepseekModel || 'deepseek-chat'}
-                      onChange={e => updateSetting('deepseekModel', e.target.value)}
-                      className="w-full text-xs font-semibold"
+                      onChange={e => {
+                        updateSetting('deepseekModel', e.target.value);
+                        triggerSaveNotice();
+                      }}
+                      className="w-full text-xs font-medium rounded-xl border p-2.5 outline-none"
+                      style={inputStyle}
                     >
                       <option value="deepseek-chat">deepseek-chat (DeepSeek-V3 General)</option>
                       <option value="deepseek-reasoner">deepseek-reasoner (DeepSeek-R1 Razonamiento)</option>
@@ -338,30 +454,34 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
 
                   <div>
                     <div className="flex justify-between items-center mb-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>
                         API Key DeepSeek
                       </label>
                       <a
                         href="https://platform.deepseek.com/api_keys"
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[10px] text-blue-400 hover:underline flex items-center gap-1"
+                        className="text-[10px] font-medium hover:underline flex items-center gap-1"
+                        style={{ color: t.text }}
                       >
                         Obtener clave <ExternalLink size={10} />
                       </a>
                     </div>
                     <div className="relative">
                       <input
-                        type={showApiKey ? "text" : "password"}
+                        type={showApiKey ? 'text' : 'password'}
                         value={s.deepseekKey || ''}
                         onChange={e => updateSetting('deepseekKey', e.target.value.trim())}
+                        onBlur={triggerSaveNotice}
                         placeholder="sk-..."
-                        className="w-full text-xs pr-10 font-mono"
+                        className="w-full text-xs pr-10 font-mono rounded-xl border p-2.5 outline-none"
+                        style={inputStyle}
                       />
                       <button
                         type="button"
                         onClick={() => setShowApiKey(!showApiKey)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-80"
+                        style={{ color: t.textMuted }}
                       >
                         {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -369,17 +489,21 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4 p-4 rounded-xl bg-purple-500/[0.03] border border-purple-500/10">
+                <div className="space-y-4 p-4 rounded-xl border" style={subCardStyle}>
                   <div>
-                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5" style={{ color: t.textMuted }}>
                       Modelo Oficial de Google AI Studio
                     </label>
                     <select
                       value={s.geminiModel || 'gemini-1.5-flash'}
-                      onChange={e => updateSetting('geminiModel', e.target.value)}
-                      className="w-full text-xs font-semibold"
+                      onChange={e => {
+                        updateSetting('geminiModel', e.target.value);
+                        triggerSaveNotice();
+                      }}
+                      className="w-full text-xs font-medium rounded-xl border p-2.5 outline-none"
+                      style={inputStyle}
                     >
-                      <option value="gemini-1.5-flash">gemini-1.5-flash (Recomendado · Ultra Rápido & Gratuito)</option>
+                      <option value="gemini-1.5-flash">gemini-1.5-flash (Recomendado · Rápido y Estable)</option>
                       <option value="gemini-2.0-flash">gemini-2.0-flash (Próxima Generación Flash)</option>
                       <option value="gemini-1.5-pro">gemini-1.5-pro (Máxima Capacidad de Razonamiento)</option>
                       <option value="gemini-1.5-flash-8b">gemini-1.5-flash-8b (Ultra Ligero)</option>
@@ -388,30 +512,34 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
 
                   <div>
                     <div className="flex justify-between items-center mb-1.5">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400">
+                      <label className="text-[10px] font-bold uppercase tracking-widest" style={{ color: t.textMuted }}>
                         API Key de Google AI Studio
                       </label>
                       <a
                         href="https://aistudio.google.com/app/apikey"
                         target="_blank"
                         rel="noreferrer"
-                        className="text-[10px] text-purple-400 hover:underline flex items-center gap-1"
+                        className="text-[10px] font-medium hover:underline flex items-center gap-1"
+                        style={{ color: t.text }}
                       >
                         Generar API Key en Google AI Studio <ExternalLink size={10} />
                       </a>
                     </div>
                     <div className="relative">
                       <input
-                        type={showApiKey ? "text" : "password"}
+                        type={showApiKey ? 'text' : 'password'}
                         value={s.geminiKey || ''}
                         onChange={e => updateSetting('geminiKey', e.target.value.trim())}
+                        onBlur={triggerSaveNotice}
                         placeholder="AIzaSy..."
-                        className="w-full text-xs pr-10 font-mono"
+                        className="w-full text-xs pr-10 font-mono rounded-xl border p-2.5 outline-none"
+                        style={inputStyle}
                       />
                       <button
                         type="button"
                         onClick={() => setShowApiKey(!showApiKey)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-white"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-80"
+                        style={{ color: t.textMuted }}
                       >
                         {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
                       </button>
@@ -426,7 +554,11 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
                   type="button"
                   onClick={handleTestAiConnection}
                   disabled={testingAi}
-                  className="btn-action-pill btn-action-pill-primary w-full py-3 text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
+                  style={{
+                    backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                    color: isDark ? '#1C1C1E' : '#FFFFFF',
+                  }}
                 >
                   {testingAi ? (
                     <>
@@ -442,50 +574,59 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
 
               {/* Resultado del Test */}
               {aiTestResult && (
-                <div className={`p-4 rounded-xl border text-xs animate-in zoom-in-95 duration-200 ${
-                  aiTestResult.success
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                    : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-                }`}>
+                <div
+                  className="p-4 rounded-xl border text-xs animate-in zoom-in-95 duration-200"
+                  style={{
+                    backgroundColor: aiTestResult.success
+                      ? (isDark ? 'rgba(16,185,129,0.06)' : '#ECFDF5')
+                      : (isDark ? 'rgba(239,68,68,0.06)' : '#FEF2F2'),
+                    borderColor: aiTestResult.success
+                      ? (isDark ? 'rgba(16,185,129,0.2)' : '#A7F3D0')
+                      : (isDark ? 'rgba(239,68,68,0.2)' : '#FECACA'),
+                    color: aiTestResult.success
+                      ? (isDark ? '#A7F3D0' : '#065F46')
+                      : (isDark ? '#FECACA' : '#991B1B'),
+                  }}
+                >
                   <div className="flex items-center gap-2 font-bold mb-1">
-                    {aiTestResult.success ? <CheckCircle2 size={16} className="text-emerald-400" /> : <AlertTriangle size={16} className="text-rose-400" />}
+                    {aiTestResult.success ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
                     <span>{aiTestResult.success ? 'Conexión Exitosa' : 'Fallo de Conexión'}</span>
                   </div>
-                  <p className="text-[11px] m-0 text-white/90 leading-relaxed">{aiTestResult.message}</p>
+                  <p className="text-[11px] m-0 leading-relaxed opacity-90">{aiTestResult.message}</p>
                 </div>
               )}
 
               {/* Parámetros Avanzados: Temperatura & Tokens */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/[0.06]">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t" style={{ borderColor: t.borderLight || t.border }}>
                 <div>
                   <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-neutral-400 font-bold uppercase text-[9px]">Temperatura Creativa</span>
-                    <span className="text-white font-mono">{s.aiTemperature || 0.7}</span>
+                    <span className="font-bold uppercase text-[9px]" style={{ color: t.textMuted }}>Temperatura Creativa</span>
+                    <span className="font-mono text-xs font-semibold" style={{ color: t.text }}>{s.aiTemperature ?? 0.7}</span>
                   </div>
                   <input
                     type="range"
                     min="0"
                     max="1"
                     step="0.1"
-                    value={s.aiTemperature || 0.7}
+                    value={s.aiTemperature ?? 0.7}
                     onChange={e => updateSetting('aiTemperature', parseFloat(e.target.value))}
-                    className="w-full accent-purple-500"
+                    className="w-full accent-neutral-400"
                   />
                 </div>
 
                 <div>
                   <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-neutral-400 font-bold uppercase text-[9px]">Límite de Tokens</span>
-                    <span className="text-white font-mono">{s.aiMaxTokens || 2048}</span>
+                    <span className="font-bold uppercase text-[9px]" style={{ color: t.textMuted }}>Límite de Tokens</span>
+                    <span className="font-mono text-xs font-semibold" style={{ color: t.text }}>{s.aiMaxTokens ?? 2048}</span>
                   </div>
                   <input
                     type="range"
                     min="512"
                     max="4096"
                     step="256"
-                    value={s.aiMaxTokens || 2048}
-                    onChange={e => updateSetting('aiMaxTokens', parseInt(e.target.value))}
-                    className="w-full accent-purple-500"
+                    value={s.aiMaxTokens ?? 2048}
+                    onChange={e => updateSetting('aiMaxTokens', parseInt(e.target.value, 10))}
+                    className="w-full accent-neutral-400"
                   />
                 </div>
               </div>
@@ -497,29 +638,86 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
               ══════════════════════════════════════════════════════════════════ */}
           {activeSection === 'apariencia' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="pb-4 border-b" style={{ borderColor: t.borderSubtle }}>
-                <h3 className="text-base font-bold uppercase tracking-wider flex items-center gap-2 m-0" style={{ color: t.textMain }}>
-                  <Palette size={18} /> Pantalla, Dispositivo & Apariencia
-                </h3>
-                <p className="text-xs mt-1" style={{ color: t.textSub }}>
-                  Ajusta el modo de visualización (Smartphone vs Escritorio), la paleta de tonos grises y fondos
+              <div className="pb-4 border-b" style={{ borderColor: t.borderLight || t.border }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border" style={{ backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6', borderColor: t.borderLight || t.border, color: t.text }}>
+                    <Palette size={15} />
+                  </div>
+                  <h3 className="text-sm font-bold tracking-tight m-0" style={{ color: t.text }}>
+                    Pantalla, Dispositivo & Apariencia
+                  </h3>
+                </div>
+                <p className="text-xs mt-1 m-0" style={{ color: t.textMuted }}>
+                  Ajusta el modo de visualización (Smartphone vs Escritorio), el tema Día/Noche y la escala de grises
                 </p>
               </div>
 
-              {/* ── MODO DE DISPOSITIVO / PANTALLA ── */}
-              <div 
-                className="p-4 rounded-xl border space-y-3"
-                style={{
-                  backgroundColor: isDark ? '#1F1F22' : '#F9FAFB',
-                  borderColor: t.borderSubtle,
-                }}
-              >
+              {/* ── CONMUTADOR TEMA DÍA / NOCHE ── */}
+              <div className="p-4 rounded-xl border space-y-3" style={subCardStyle}>
                 <div>
-                  <label className="text-xs font-bold block" style={{ color: t.textMain }}>
-                    Modo de Dispositivo & Visualización
+                  <label className="text-xs font-bold block" style={{ color: t.text }}>
+                    Tema Visual del Entorno
                   </label>
-                  <p className="text-[11px] m-0 mt-0.5" style={{ color: t.textSub }}>
-                    Optimiza la interfaz para teléfonos celulares o computadoras de escritorio
+                  <p className="text-[11px] m-0 mt-0.5" style={{ color: t.textMuted }}>
+                    Alterna entre la atmósfera oscura cinematográfica y la versión clara de alto contraste
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (setIsDark) setIsDark(true);
+                      triggerSaveNotice();
+                    }}
+                    className="p-3.5 rounded-xl border flex items-center justify-between transition-all"
+                    style={{
+                      backgroundColor: isDark ? (isDark ? '#2C2C30' : '#EAEAEB') : 'transparent',
+                      borderColor: isDark ? (isDark ? '#ECECEC' : '#1C1C1E') : (t.borderLight || t.border),
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Moon size={16} style={{ color: t.text }} />
+                      <div className="text-left">
+                        <span className="text-xs font-bold block" style={{ color: t.text }}>Modo Noche</span>
+                        <span className="text-[10px] block" style={{ color: t.textMuted }}>Gris oscuro cinematográfico</span>
+                      </div>
+                    </div>
+                    {isDark && <Check size={14} style={{ color: t.text }} />}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (setIsDark) setIsDark(false);
+                      triggerSaveNotice();
+                    }}
+                    className="p-3.5 rounded-xl border flex items-center justify-between transition-all"
+                    style={{
+                      backgroundColor: !isDark ? (isDark ? '#2C2C30' : '#EAEAEB') : 'transparent',
+                      borderColor: !isDark ? (isDark ? '#ECECEC' : '#1C1C1E') : (t.borderLight || t.border),
+                    }}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Sun size={16} style={{ color: t.text }} />
+                      <div className="text-left">
+                        <span className="text-xs font-bold block" style={{ color: t.text }}>Modo Día</span>
+                        <span className="text-[10px] block" style={{ color: t.textMuted }}>Gris perla y blanco puro</span>
+                      </div>
+                    </div>
+                    {!isDark && <Check size={14} style={{ color: t.text }} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* ── MODO DE DISPOSITIVO / PANTALLA ── */}
+              <div className="p-4 rounded-xl border space-y-3" style={subCardStyle}>
+                <div>
+                  <label className="text-xs font-bold block" style={{ color: t.text }}>
+                    Modo de Dispositivo & Navegación
+                  </label>
+                  <p className="text-[11px] m-0 mt-0.5" style={{ color: t.textMuted }}>
+                    Optimiza la disposición de controles para teléfonos inteligentes o monitores de escritorio
                   </p>
                 </div>
 
@@ -527,131 +725,179 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
                   {/* Opción 1: Auto */}
                   <button
                     type="button"
-                    onClick={() => updateSettings({ mobileModeSource: 'auto', isMobileMode: typeof window !== 'undefined' ? window.innerWidth < 768 : false })}
+                    onClick={() => {
+                      updateSettings({
+                        mobileModeSource: 'auto',
+                        isMobileMode: typeof window !== 'undefined' ? window.innerWidth < 768 : false
+                      });
+                      triggerSaveNotice();
+                    }}
                     className="p-3 rounded-xl border text-left flex flex-col justify-between transition-all"
                     style={{
-                      backgroundColor: s.mobileModeSource === 'auto' ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
-                      borderColor: s.mobileModeSource === 'auto' ? (isDark ? '#E5E7EB' : '#1F2937') : t.borderSubtle,
+                      backgroundColor: s.mobileModeSource === 'auto' ? (isDark ? '#2C2C30' : '#EAEAEB') : 'transparent',
+                      borderColor: s.mobileModeSource === 'auto' ? (isDark ? '#ECECEC' : '#1C1C1E') : (t.borderLight || t.border),
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <MonitorDown size={16} style={{ color: t.textMain }} />
-                      {s.mobileModeSource === 'auto' && <Check size={14} style={{ color: t.textMain }} />}
+                      <SmartphoneCharging size={16} style={{ color: t.text }} />
+                      {s.mobileModeSource === 'auto' && <Check size={14} style={{ color: t.text }} />}
                     </div>
                     <div>
-                      <span className="text-xs font-bold block" style={{ color: t.textMain }}>Automático</span>
-                      <span className="text-[10px] block mt-0.5" style={{ color: t.textSub }}>Detecta según resolución</span>
+                      <span className="text-xs font-bold block" style={{ color: t.text }}>Automático</span>
+                      <span className="text-[10px] block mt-0.5" style={{ color: t.textMuted }}>Adapta según resolución</span>
                     </div>
                   </button>
 
                   {/* Opción 2: Smartphone */}
                   <button
                     type="button"
-                    onClick={() => updateSettings({ mobileModeSource: 'manual', isMobileMode: true })}
+                    onClick={() => {
+                      updateSettings({ mobileModeSource: 'manual', isMobileMode: true });
+                      triggerSaveNotice();
+                    }}
                     className="p-3 rounded-xl border text-left flex flex-col justify-between transition-all"
                     style={{
-                      backgroundColor: (s.mobileModeSource === 'manual' && s.isMobileMode) ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
-                      borderColor: (s.mobileModeSource === 'manual' && s.isMobileMode) ? (isDark ? '#E5E7EB' : '#1F2937') : t.borderSubtle,
+                      backgroundColor: (s.mobileModeSource === 'manual' && s.isMobileMode) ? (isDark ? '#2C2C30' : '#EAEAEB') : 'transparent',
+                      borderColor: (s.mobileModeSource === 'manual' && s.isMobileMode) ? (isDark ? '#ECECEC' : '#1C1C1E') : (t.borderLight || t.border),
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <Smartphone size={16} style={{ color: t.textMain }} />
-                      {s.mobileModeSource === 'manual' && s.isMobileMode && <Check size={14} style={{ color: t.textMain }} />}
+                      <Smartphone size={16} style={{ color: t.text }} />
+                      {s.mobileModeSource === 'manual' && s.isMobileMode && <Check size={14} style={{ color: t.text }} />}
                     </div>
                     <div>
-                      <span className="text-xs font-bold block" style={{ color: t.textMain }}>Smartphone</span>
-                      <span className="text-[10px] block mt-0.5" style={{ color: t.textSub }}>Barra inferior fija y menú táctil</span>
+                      <span className="text-xs font-bold block" style={{ color: t.text }}>Smartphone</span>
+                      <span className="text-[10px] block mt-0.5" style={{ color: t.textMuted }}>Barra inferior fija de 64px</span>
                     </div>
                   </button>
 
                   {/* Opción 3: Escritorio */}
                   <button
                     type="button"
-                    onClick={() => updateSettings({ mobileModeSource: 'manual', isMobileMode: false })}
+                    onClick={() => {
+                      updateSettings({ mobileModeSource: 'manual', isMobileMode: false });
+                      triggerSaveNotice();
+                    }}
                     className="p-3 rounded-xl border text-left flex flex-col justify-between transition-all"
                     style={{
-                      backgroundColor: (s.mobileModeSource === 'manual' && !s.isMobileMode) ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
-                      borderColor: (s.mobileModeSource === 'manual' && !s.isMobileMode) ? (isDark ? '#E5E7EB' : '#1F2937') : t.borderSubtle,
+                      backgroundColor: (s.mobileModeSource === 'manual' && !s.isMobileMode) ? (isDark ? '#2C2C30' : '#EAEAEB') : 'transparent',
+                      borderColor: (s.mobileModeSource === 'manual' && !s.isMobileMode) ? (isDark ? '#ECECEC' : '#1C1C1E') : (t.borderLight || t.border),
                     }}
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <Monitor size={16} style={{ color: t.textMain }} />
-                      {s.mobileModeSource === 'manual' && !s.isMobileMode && <Check size={14} style={{ color: t.textMain }} />}
+                      <Monitor size={16} style={{ color: t.text }} />
+                      {s.mobileModeSource === 'manual' && !s.isMobileMode && <Check size={14} style={{ color: t.text }} />}
                     </div>
                     <div>
-                      <span className="text-xs font-bold block" style={{ color: t.textMain }}>Escritorio</span>
-                      <span className="text-[10px] block mt-0.5" style={{ color: t.textSub }}>Barra lateral fija de 64px</span>
+                      <span className="text-xs font-bold block" style={{ color: t.text }}>Escritorio</span>
+                      <span className="text-[10px] block mt-0.5" style={{ color: t.textMuted }}>Barra lateral fija de 64px</span>
                     </div>
                   </button>
                 </div>
               </div>
 
-              {/* Tono de Fondo */}
+              {/* Tono Base de Fondo */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest block mb-2" style={{ color: t.textSub }}>
-                  Tono Base de Fondo
+                <label className="text-[10px] font-bold uppercase tracking-widest block mb-2" style={{ color: t.textMuted }}>
+                  Tono Base de Fondo (Modo Noche)
                 </label>
-                <div className="grid grid-cols-3 gap-3">
-                  {MODOS_FONDO.map(m => (
-                    <button
-                      key={m.id}
-                      onClick={() => updateSetting('appearanceMode', m.id)}
-                      className="p-3 rounded-xl border flex flex-col items-center gap-2 transition-all"
-                      style={{
-                        backgroundColor: s.appearanceMode === m.id ? (isDark ? '#2E2E32' : '#E5E7EB') : 'transparent',
-                        borderColor: s.appearanceMode === m.id ? (isDark ? '#E5E7EB' : '#1F2937') : t.borderSubtle,
-                      }}
-                    >
-                      <div className="w-6 h-6 rounded-full border border-white/20" style={{ backgroundColor: m.color }} />
-                      <span className="text-xs font-bold" style={{ color: t.textMain }}>{m.label}</span>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {MODOS_FONDO.map(m => {
+                    const isSelected = (s.appearanceMode || 'darkGray') === m.id;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => {
+                          updateSetting('appearanceMode', m.id);
+                          triggerSaveNotice();
+                        }}
+                        className="p-3 rounded-xl border flex items-center gap-3 transition-all"
+                        style={{
+                          backgroundColor: isSelected ? (isDark ? '#2C2C30' : '#EAEAEB') : 'transparent',
+                          borderColor: isSelected ? (isDark ? '#ECECEC' : '#1C1C1E') : (t.borderLight || t.border),
+                        }}
+                      >
+                        <div className="w-5 h-5 rounded-full border border-white/20 shrink-0" style={{ backgroundColor: m.color }} />
+                        <div className="text-left">
+                          <span className="text-xs font-bold block" style={{ color: t.text }}>{m.label}</span>
+                          <span className="text-[10px] block" style={{ color: t.textMuted }}>{m.desc}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Paleta de Color de Acento */}
+              {/* Paleta de Color de Acento Refinado */}
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-2">
-                  Color de Acento Principal
+                <label className="text-[10px] font-bold uppercase tracking-widest block mb-2" style={{ color: t.textMuted }}>
+                  Acento Visual Refinado
                 </label>
-                <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
-                  {ACCENT_COLORS.map(c => (
-                    <button
-                      key={c.hex}
-                      onClick={() => updateSetting('accentColor', c.hex)}
-                      className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                        s.accentColor === c.hex ? 'border-white bg-white/[0.1]' : 'border-white/[0.06] hover:bg-white/[0.04]'
-                      }`}
-                    >
-                      <div className="w-5 h-5 rounded-lg shadow-sm" style={{ backgroundColor: c.hex }} />
-                      <span className="text-[9px] font-semibold text-neutral-300 truncate w-full text-center">{c.name.split(' ')[0]}</span>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {ACCENT_COLORS.map(c => {
+                    const isSelected = s.accentColor === c.hex;
+                    return (
+                      <button
+                        key={c.hex}
+                        type="button"
+                        onClick={() => {
+                          updateSetting('accentColor', c.hex);
+                          triggerSaveNotice();
+                        }}
+                        className="p-2.5 rounded-xl border flex items-center gap-2.5 transition-all"
+                        style={{
+                          backgroundColor: isSelected ? (isDark ? '#2C2C30' : '#EAEAEB') : 'transparent',
+                          borderColor: isSelected ? (isDark ? '#ECECEC' : '#1C1C1E') : (t.borderLight || t.border),
+                        }}
+                      >
+                        <div className="w-4 h-4 rounded-md border border-black/10 shrink-0 shadow-sm" style={{ backgroundColor: c.hex }} />
+                        <span className="text-xs font-medium truncate" style={{ color: t.text }}>{c.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Wallpaper Personalizado */}
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
-                <div className="flex justify-between items-center">
+              <div className="p-4 rounded-xl border space-y-3" style={subCardStyle}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <label className="text-xs font-bold text-white block">Wallpaper de Fondo</label>
-                    <p className="text-[10px] text-neutral-400 m-0">Aplica un difuminado cinematográfico detrás del contenido</p>
+                    <label className="text-xs font-bold block" style={{ color: t.text }}>Wallpaper Cinematográfico</label>
+                    <p className="text-[10px] m-0" style={{ color: t.textMuted }}>Aplica un difuminado sutil detrás del contenido de la plataforma</p>
                   </div>
                   <div className="flex gap-2">
-                    <label className="btn-action-pill cursor-pointer text-xs py-1.5 px-3">
+                    <label
+                      className="cursor-pointer text-xs py-2 px-3.5 rounded-xl border font-medium flex items-center gap-1.5 transition-opacity hover:opacity-80"
+                      style={{
+                        backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                        borderColor: t.borderLight || t.border,
+                        color: t.text,
+                      }}
+                    >
                       <Upload size={12} /> Subir Imagen
                       <input type="file" accept="image/*" onChange={handleBgImageUpload} ref={fileInputRef} className="hidden" />
                     </label>
                     {s.backgroundImage && (
-                      <button onClick={handleRemoveBg} className="btn-action-pill btn-action-pill-danger text-xs py-1.5 px-3">
+                      <button
+                        type="button"
+                        onClick={handleRemoveBg}
+                        className="text-xs py-2 px-3 rounded-xl border font-medium transition-opacity hover:opacity-80"
+                        style={{
+                          backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                          borderColor: t.borderLight || t.border,
+                          color: '#EF4444',
+                        }}
+                        title="Eliminar imagen"
+                      >
                         <Trash2 size={12} />
                       </button>
                     )}
                   </div>
                 </div>
                 {s.backgroundImage && (
-                  <div className="h-20 w-full rounded-lg overflow-hidden border border-white/10 relative">
-                    <img src={s.backgroundImage} alt="Wallpaper" className="w-full h-full object-cover blur-sm" />
+                  <div className="h-20 w-full rounded-xl overflow-hidden border relative" style={{ borderColor: t.borderLight || t.border }}>
+                    <img src={s.backgroundImage} alt="Wallpaper" className="w-full h-full object-cover blur-sm opacity-60" />
                   </div>
                 )}
               </div>
@@ -663,24 +909,33 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
               ══════════════════════════════════════════════════════════════════ */}
           {activeSection === 'prestamos' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="pb-4 border-b border-white/[0.06]">
-                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
-                  <DollarSign size={18} className="text-emerald-400" /> Parámetros de Préstamos & Cobranza
-                </h3>
-                <p className="text-xs text-neutral-400 mt-1">
-                  Valores iniciales automáticos al registrar nuevos préstamos y QR de cobro
+              <div className="pb-4 border-b" style={{ borderColor: t.borderLight || t.border }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border" style={{ backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6', borderColor: t.borderLight || t.border, color: t.text }}>
+                    <DollarSign size={15} />
+                  </div>
+                  <h3 className="text-sm font-bold tracking-tight m-0" style={{ color: t.text }}>
+                    Parámetros de Préstamos & Cobranza
+                  </h3>
+                </div>
+                <p className="text-xs mt-1 m-0" style={{ color: t.textMuted }}>
+                  Valores iniciales automáticos al registrar nuevos contratos y código QR de cobro bancario
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5" style={{ color: t.textMuted }}>
                     Moneda Predeterminada
                   </label>
                   <select
                     value={s.loanDefaultCurrency || 'BOB'}
-                    onChange={e => updateSetting('loanDefaultCurrency', e.target.value)}
-                    className="w-full text-xs font-semibold"
+                    onChange={e => {
+                      updateSetting('loanDefaultCurrency', e.target.value);
+                      triggerSaveNotice();
+                    }}
+                    className="w-full text-xs font-medium rounded-xl border p-2.5 outline-none"
+                    style={inputStyle}
                   >
                     <option value="BOB">BOB (Bolivianos - Bs)</option>
                     <option value="USD">USD (Dólares Americanos - $)</option>
@@ -689,39 +944,58 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5" style={{ color: t.textMuted }}>
                     Tasa de Interés Sugerida (% Mensual)
                   </label>
                   <input
                     type="number"
-                    value={s.loanDefaultRate || 10}
+                    value={s.loanDefaultRate ?? 10}
                     onChange={e => updateSetting('loanDefaultRate', parseFloat(e.target.value) || 0)}
-                    className="w-full text-xs font-bold"
+                    onBlur={triggerSaveNotice}
+                    className="w-full text-xs font-mono font-bold rounded-xl border p-2.5 outline-none"
+                    style={inputStyle}
                   />
                 </div>
               </div>
 
               {/* QR de Cobro Bancario */}
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-3">
-                <div className="flex justify-between items-center">
+              <div className="p-4 rounded-xl border space-y-3" style={subCardStyle}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <label className="text-xs font-bold text-white block">Código QR de Cobro Bancario</label>
-                    <p className="text-[10px] text-neutral-400 m-0">Se mostrará en los recibos y al cobrar cuotas</p>
+                    <label className="text-xs font-bold block" style={{ color: t.text }}>Código QR de Cobro Bancario</label>
+                    <p className="text-[10px] m-0" style={{ color: t.textMuted }}>Se incrustará en los comprobantes y en los registros de amortización</p>
                   </div>
                   <div className="flex gap-2">
-                    <label className="btn-action-pill cursor-pointer text-xs py-1.5 px-3">
+                    <label
+                      className="cursor-pointer text-xs py-2 px-3.5 rounded-xl border font-medium flex items-center gap-1.5 transition-opacity hover:opacity-80"
+                      style={{
+                        backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                        borderColor: t.borderLight || t.border,
+                        color: t.text,
+                      }}
+                    >
                       <Upload size={12} /> Cargar QR
                       <input type="file" accept="image/*" onChange={handleQrUpload} ref={qrInputRef} className="hidden" />
                     </label>
                     {s.loanQrImage && (
-                      <button onClick={handleRemoveQr} className="btn-action-pill btn-action-pill-danger text-xs py-1.5 px-3">
+                      <button
+                        type="button"
+                        onClick={handleRemoveQr}
+                        className="text-xs py-2 px-3 rounded-xl border font-medium transition-opacity hover:opacity-80"
+                        style={{
+                          backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                          borderColor: t.borderLight || t.border,
+                          color: '#EF4444',
+                        }}
+                        title="Eliminar QR"
+                      >
                         <Trash2 size={12} />
                       </button>
                     )}
                   </div>
                 </div>
                 {s.loanQrImage && (
-                  <div className="w-24 h-24 rounded-lg overflow-hidden border border-white/10 p-1 bg-white">
+                  <div className="w-24 h-24 rounded-xl overflow-hidden border p-1 bg-white" style={{ borderColor: t.borderLight || t.border }}>
                     <img src={s.loanQrImage} alt="QR de Pago" className="w-full h-full object-contain" />
                   </div>
                 )}
@@ -734,45 +1008,56 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
               ══════════════════════════════════════════════════════════════════ */}
           {activeSection === 'egresos' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="pb-4 border-b border-white/[0.06]">
-                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
-                  <Wallet size={18} className="text-rose-400" /> Control de Egresos & Suscripciones
-                </h3>
-                <p className="text-xs text-neutral-400 mt-1">
-                  Presupuesto objetivo mensual y días de aviso para renovación
+              <div className="pb-4 border-b" style={{ borderColor: t.borderLight || t.border }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border" style={{ backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6', borderColor: t.borderLight || t.border, color: t.text }}>
+                    <Wallet size={15} />
+                  </div>
+                  <h3 className="text-sm font-bold tracking-tight m-0" style={{ color: t.text }}>
+                    Control de Egresos & Suscripciones
+                  </h3>
+                </div>
+                <p className="text-xs mt-1 m-0" style={{ color: t.textMuted }}>
+                  Presupuesto objetivo mensual y días de antelación para recordatorios de débito
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5" style={{ color: t.textMuted }}>
                     Presupuesto Mensual Objetivo (BOB)
                   </label>
                   <input
                     type="number"
-                    value={s.monthlyBudget || 2500}
+                    value={s.monthlyBudget ?? 2500}
                     onChange={e => {
                       const v = parseFloat(e.target.value) || 0;
                       updateSetting('monthlyBudget', v);
                       localStorage.setItem('inefable_monthly_budget', v.toString());
                     }}
-                    className="w-full text-xs font-bold"
+                    onBlur={triggerSaveNotice}
+                    className="w-full text-xs font-mono font-bold rounded-xl border p-2.5 outline-none"
+                    style={inputStyle}
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5" style={{ color: t.textMuted }}>
                     Días de Anticipación para Alertas
                   </label>
                   <select
                     value={s.reminderDays || '3'}
-                    onChange={e => updateSetting('reminderDays', e.target.value)}
-                    className="w-full text-xs font-semibold"
+                    onChange={e => {
+                      updateSetting('reminderDays', e.target.value);
+                      triggerSaveNotice();
+                    }}
+                    className="w-full text-xs font-medium rounded-xl border p-2.5 outline-none"
+                    style={inputStyle}
                   >
-                    <option value="1">1 día antes</option>
-                    <option value="3">3 días antes</option>
-                    <option value="5">5 días antes</option>
-                    <option value="7">7 días antes</option>
+                    <option value="1">1 día antes del vencimiento</option>
+                    <option value="3">3 días antes del vencimiento</option>
+                    <option value="5">5 días antes del vencimiento</option>
+                    <option value="7">7 días antes del vencimiento</option>
                   </select>
                 </div>
               </div>
@@ -784,38 +1069,47 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
               ══════════════════════════════════════════════════════════════════ */}
           {activeSection === 'empresa' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="pb-4 border-b border-white/[0.06]">
-                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
-                  <Building2 size={18} className="text-blue-400" /> Identidad Comercial & Facturación
-                </h3>
-                <p className="text-xs text-neutral-400 mt-1">
-                  Datos que aparecen en reportes, inventarios y comprobantes
+              <div className="pb-4 border-b" style={{ borderColor: t.borderLight || t.border }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border" style={{ backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6', borderColor: t.borderLight || t.border, color: t.text }}>
+                    <Building2 size={15} />
+                  </div>
+                  <h3 className="text-sm font-bold tracking-tight m-0" style={{ color: t.text }}>
+                    Identidad Comercial & Facturación
+                  </h3>
+                </div>
+                <p className="text-xs mt-1 m-0" style={{ color: t.textMuted }}>
+                  Datos que aparecen en reportes, inventarios y comprobantes emitidos
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5" style={{ color: t.textMuted }}>
                     Razón Social / Nombre Comercial
                   </label>
                   <input
                     type="text"
                     value={s.companyName || 'Inefable Corp'}
                     onChange={e => updateSetting('companyName', e.target.value)}
-                    className="w-full text-xs"
+                    onBlur={triggerSaveNotice}
+                    className="w-full text-xs font-medium rounded-xl border p-2.5 outline-none"
+                    style={inputStyle}
                   />
                 </div>
 
                 <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1.5">
+                  <label className="text-[10px] font-bold uppercase tracking-widest block mb-1.5" style={{ color: t.textMuted }}>
                     NIT / Número Tributario
                   </label>
                   <input
                     type="text"
                     value={s.companyNit || ''}
                     onChange={e => updateSetting('companyNit', e.target.value)}
+                    onBlur={triggerSaveNotice}
                     placeholder="Ej. 102938475"
-                    className="w-full text-xs"
+                    className="w-full text-xs font-mono rounded-xl border p-2.5 outline-none"
+                    style={inputStyle}
                   />
                 </div>
               </div>
@@ -827,39 +1121,50 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
               ══════════════════════════════════════════════════════════════════ */}
           {activeSection === 'notificaciones' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="pb-4 border-b border-white/[0.06]">
-                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
-                  <Bell size={18} className="text-amber-400" /> Centro de Alertas & Notificaciones
-                </h3>
-                <p className="text-xs text-neutral-400 mt-1">
-                  Configuración de notificaciones visuales y sincronización
+              <div className="pb-4 border-b" style={{ borderColor: t.borderLight || t.border }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border" style={{ backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6', borderColor: t.borderLight || t.border, color: t.text }}>
+                    <Bell size={15} />
+                  </div>
+                  <h3 className="text-sm font-bold tracking-tight m-0" style={{ color: t.text }}>
+                    Centro de Alertas & Notificaciones
+                  </h3>
+                </div>
+                <p className="text-xs mt-1 m-0" style={{ color: t.textMuted }}>
+                  Configuración de notificaciones visuales e indicadores en la barra de menú
                 </p>
               </div>
 
               <div className="space-y-3">
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+                <div className="p-4 rounded-xl border flex items-center justify-between" style={subCardStyle}>
                   <div>
-                    <p className="text-xs font-bold text-white m-0">Alertas de Vencimiento de Préstamos</p>
-                    <p className="text-[10px] text-neutral-400 m-0">Notificar cobros pendientes en la barra de menú</p>
+                    <p className="text-xs font-bold m-0" style={{ color: t.text }}>Alertas de Vencimiento de Préstamos</p>
+                    <p className="text-[10px] m-0 mt-0.5" style={{ color: t.textMuted }}>Mostrar puntos de alerta y cobros pendientes en la campana</p>
                   </div>
                   <input
                     type="checkbox"
                     checked={s.loanNotifications !== false}
-                    onChange={e => updateSetting('loanNotifications', e.target.checked)}
-                    className="accent-amber-500 w-4 h-4"
+                    onChange={e => {
+                      updateSetting('loanNotifications', e.target.checked);
+                      triggerSaveNotice();
+                    }}
+                    className="accent-neutral-400 w-4 h-4 cursor-pointer"
                   />
                 </div>
 
-                <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+                <div className="p-4 rounded-xl border flex items-center justify-between" style={subCardStyle}>
                   <div>
-                    <p className="text-xs font-bold text-white m-0">Alertas de Suscripciones & Servicios</p>
-                    <p className="text-[10px] text-neutral-400 m-0">Avisar con anticipación antes de la fecha de débito</p>
+                    <p className="text-xs font-bold m-0" style={{ color: t.text }}>Alertas de Suscripciones & Servicios</p>
+                    <p className="text-[10px] m-0 mt-0.5" style={{ color: t.textMuted }}>Avisar con anticipación antes de la fecha de cobro automático</p>
                   </div>
                   <input
                     type="checkbox"
                     checked={s.serviceNotifications !== false}
-                    onChange={e => updateSetting('serviceNotifications', e.target.checked)}
-                    className="accent-amber-500 w-4 h-4"
+                    onChange={e => {
+                      updateSetting('serviceNotifications', e.target.checked);
+                      triggerSaveNotice();
+                    }}
+                    className="accent-neutral-400 w-4 h-4 cursor-pointer"
                   />
                 </div>
               </div>
@@ -871,52 +1176,78 @@ export default function Ajustes({ isDark = true, googleUser, onLoginSuccess, onL
               ══════════════════════════════════════════════════════════════════ */}
           {activeSection === 'respaldo' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="pb-4 border-b border-white/[0.06]">
-                <h3 className="text-base font-black uppercase tracking-wider text-white flex items-center gap-2 m-0">
-                  <Shield size={18} className="text-emerald-400" /> Seguridad, Cuenta & Respaldo
-                </h3>
-                <p className="text-xs text-neutral-400 mt-1">
+              <div className="pb-4 border-b" style={{ borderColor: t.borderLight || t.border }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center border" style={{ backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6', borderColor: t.borderLight || t.border, color: t.text }}>
+                    <Shield size={15} />
+                  </div>
+                  <h3 className="text-sm font-bold tracking-tight m-0" style={{ color: t.text }}>
+                    Seguridad, Cuenta & Respaldo
+                  </h3>
+                </div>
+                <p className="text-xs mt-1 m-0" style={{ color: t.textMuted }}>
                   Administración de sesiones, exportación completa y restauración de fábrica
                 </p>
               </div>
 
               {/* Cuenta de Google */}
-              <div className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-center justify-between">
+              <div className="p-4 rounded-xl border flex items-center justify-between" style={subCardStyle}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center overflow-hidden border border-white/20">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border" style={{ backgroundColor: isDark ? '#2A2A2E' : '#E5E7EB', borderColor: t.borderLight || t.border }}>
                     {googleUser?.picture ? (
                       <img src={googleUser.picture} alt="Avatar" className="w-full h-full object-cover" />
                     ) : (
-                      <Globe size={18} className="text-neutral-400" />
+                      <Globe size={18} style={{ color: t.textMuted }} />
                     )}
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-white m-0">{googleUser?.name || 'Usuario Inefable'}</p>
-                    <p className="text-[10px] text-neutral-400 m-0">{googleUser?.email || 'Google Workspace Conectado'}</p>
+                    <p className="text-xs font-bold m-0" style={{ color: t.text }}>{googleUser?.name || 'Usuario Inefable'}</p>
+                    <p className="text-[10px] m-0 mt-0.5" style={{ color: t.textMuted }}>{googleUser?.email || 'Google Workspace Conectado'}</p>
                   </div>
                 </div>
                 {onLogout && (
-                  <button onClick={onLogout} className="btn-action-pill btn-action-pill-danger text-xs py-1.5 px-3">
+                  <button
+                    type="button"
+                    onClick={onLogout}
+                    className="flex items-center gap-1.5 text-xs py-2 px-3 rounded-xl border font-medium transition-opacity hover:opacity-80"
+                    style={{
+                      backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                      borderColor: t.borderLight || t.border,
+                      color: t.text,
+                    }}
+                  >
                     <LogOut size={12} /> Cerrar Sesión
                   </button>
                 )}
               </div>
 
               {/* Restauración de Fábrica */}
-              <div className="p-4 rounded-xl bg-rose-500/[0.03] border border-rose-500/20 space-y-2">
-                <div className="flex items-center gap-2 text-rose-400 font-bold text-xs">
+              <div
+                className="p-4 rounded-xl border space-y-2"
+                style={{
+                  backgroundColor: isDark ? 'rgba(239,68,68,0.04)' : '#FEF2F2',
+                  borderColor: isDark ? 'rgba(239,68,68,0.15)' : '#FECACA',
+                }}
+              >
+                <div className="flex items-center gap-2 font-bold text-xs" style={{ color: isDark ? '#FCA5A5' : '#DC2626' }}>
                   <AlertTriangle size={15} /> Zona de Peligro: Restablecer Preferencias
                 </div>
-                <p className="text-[10px] text-neutral-400 m-0">
-                  Regresa todos los colores, claves y configuraciones a los valores predeterminados de fábrica.
+                <p className="text-[10px] m-0 leading-relaxed" style={{ color: t.textMuted }}>
+                  Regresa todas las configuraciones, claves API y preferencias de visualización a los valores iniciales.
                 </p>
                 <button
+                  type="button"
                   onClick={() => {
-                    if (window.confirm("¿Seguro que deseas restablecer todas las preferencias del panel?")) {
+                    if (window.confirm('¿Seguro que deseas restablecer todas las preferencias del panel?')) {
                       resetSettings();
                     }
                   }}
-                  className="btn-action-pill btn-action-pill-danger text-xs py-2 px-3.5 mt-2"
+                  className="flex items-center gap-1.5 text-xs py-2 px-3.5 rounded-xl border font-medium mt-2 transition-opacity hover:opacity-80"
+                  style={{
+                    backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                    borderColor: isDark ? 'rgba(239,68,68,0.3)' : '#F87171',
+                    color: isDark ? '#FCA5A5' : '#DC2626',
+                  }}
                 >
                   <RotateCcw size={12} /> Restablecer Configuración
                 </button>

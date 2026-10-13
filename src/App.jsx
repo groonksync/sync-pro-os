@@ -675,6 +675,7 @@ const AppContent = () => {
             setSettings={setAppSettings}
             googleUser={googleUser}
             isDark={isDarkMode}
+            setIsDark={setIsDarkMode}
             onLoginSuccess={(token, user) => { setGoogleToken(token); setGoogleUser(user); }}
             onLogout={async () => {
               await signOut();
