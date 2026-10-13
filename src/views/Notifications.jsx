@@ -1,10 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Bell, Calendar, DollarSign, Clock, AlertCircle, TrendingUp,
-  CreditCard, FileText, CheckCircle, ExternalLink, Archive,
-  ChevronRight, AlertTriangle, Ban, Zap
+  CreditCard, CheckCircle, ExternalLink, ChevronRight, AlertTriangle, Zap
 } from 'lucide-react';
-import { getTheme, useTheme } from '../lib/theme';
+import { useTheme } from '../lib/theme';
 
 const getCheckState = () => {
   try {
@@ -125,197 +124,251 @@ const Notifications = ({ data = {}, servicios = [], theReminders = [], onNavigat
   const getTypeConfig = (type) => {
     switch (type) {
       case 'prestamo':
-        return { icon: <TrendingUp size={18} />, label: 'Préstamo', color: '#f59e0b' };
+        return { icon: <TrendingUp size={16} />, label: 'Préstamo' };
       case 'servicio':
-        return { icon: <CreditCard size={18} />, label: 'Servicio', color: '#3b82f6' };
+        return { icon: <CreditCard size={16} />, label: 'Servicio' };
       case 'recordatorio':
-        return { icon: <Bell size={18} />, label: 'Recordatorio', color: '#8b5cf6' };
+        return { icon: <Bell size={16} />, label: 'Recordatorio' };
       default:
-        return { icon: <AlertCircle size={18} />, label: 'General', color: t.textMuted };
+        return { icon: <AlertCircle size={16} />, label: 'General' };
     }
   };
 
   const getStatusConfig = (n) => {
-    if (checked[n.id]) return { icon: <CheckCircle size={14} />, label: 'Revisado', color: '#10b981' };
-    if (n.diffDays < 0) return { icon: <AlertTriangle size={14} />, label: `Vencido hace ${Math.abs(n.diffDays)} días`, color: '#ef4444' };
-    if (n.diffDays === 0) return { icon: <Zap size={14} />, label: 'Vence hoy', color: '#f59e0b' };
-    return { icon: <Clock size={14} />, label: `En ${n.diffDays} días`, color: t.textMuted };
+    if (checked[n.id]) {
+      return {
+        icon: <CheckCircle size={13} />,
+        label: 'Revisado',
+        color: isDark ? '#A7F3D0' : '#059669',
+        bg: isDark ? 'rgba(16,185,129,0.08)' : '#ECFDF5',
+        border: isDark ? 'rgba(16,185,129,0.2)' : '#A7F3D0',
+      };
+    }
+    if (n.diffDays < 0) {
+      return {
+        icon: <AlertTriangle size={13} />,
+        label: `Vencido hace ${Math.abs(n.diffDays)} d`,
+        color: isDark ? '#FCA5A5' : '#DC2626',
+        bg: isDark ? 'rgba(239,68,68,0.08)' : '#FEF2F2',
+        border: isDark ? 'rgba(239,68,68,0.2)' : '#FECACA',
+      };
+    }
+    if (n.diffDays === 0) {
+      return {
+        icon: <Zap size={13} />,
+        label: 'Vence hoy',
+        color: isDark ? '#FCD34D' : '#D97706',
+        bg: isDark ? 'rgba(245,158,11,0.08)' : '#FFFBEB',
+        border: isDark ? 'rgba(245,158,11,0.2)' : '#FDE68A',
+      };
+    }
+    return {
+      icon: <Clock size={13} />,
+      label: `En ${n.diffDays} días`,
+      color: t.textMuted,
+      bg: isDark ? '#1F1F22' : '#F3F4F6',
+      border: t.borderLight || t.border,
+    };
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', padding: '0 4px' }}>
+    <div className="flex flex-col h-full w-full max-w-7xl mx-auto py-5 px-3 sm:px-6 space-y-6">
       {/* Header with Stats */}
-      <div style={{ marginBottom: 28 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Notificaciones</h2>
-            <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
-              Centro de monitoreo inteligente
-            </p>
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b" style={{ borderColor: t.border }}>
+        <div>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+            Notificaciones & Alertas
+          </h2>
+          <p style={{ fontSize: '0.75rem', color: t.textMuted, marginTop: '2px', fontWeight: 500, margin: 0 }}>
+            Centro de monitoreo inteligente y vencimientos
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div
+            className="px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5"
+            style={{
+              backgroundColor: isDark ? 'rgba(239,68,68,0.08)' : '#FEF2F2',
+              borderColor: isDark ? 'rgba(239,68,68,0.2)' : '#FECACA',
+              color: isDark ? '#FCA5A5' : '#DC2626',
+            }}
+          >
+            <span>{stats.due} vencidos</span>
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
-            {[
-              { label: `${stats.due} vencidos`, color: '#ef4444' },
-              { label: `${stats.upcoming} próximos`, color: '#3b82f6' },
-              { label: `${stats.checkedCount} revisados`, color: '#10b981' }
-            ].map((s, i) => (
-              <div key={i} style={{
-                padding: '6px 12px', borderRadius: 8,
-                backgroundColor: `${s.color}15`,
-                color: s.color, fontSize: 10, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.03em'
-              }}>
-                {s.label}
-              </div>
-            ))}
+          <div
+            className="px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5"
+            style={{
+              backgroundColor: isDark ? '#232326' : '#F3F4F6',
+              borderColor: t.borderLight || t.border,
+              color: t.text,
+            }}
+          >
+            <span>{stats.upcoming} próximos</span>
+          </div>
+          <div
+            className="px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1.5"
+            style={{
+              backgroundColor: isDark ? 'rgba(16,185,129,0.08)' : '#ECFDF5',
+              borderColor: isDark ? 'rgba(16,185,129,0.2)' : '#A7F3D0',
+              color: isDark ? '#A7F3D0' : '#065F46',
+            }}
+          >
+            <span>{stats.checkedCount} revisados</span>
           </div>
         </div>
-        {stats.total > 0 && (
-          <div style={{
-            height: 4, borderRadius: 2, backgroundColor: t.border,
-            overflow: 'hidden', display: 'flex'
-          }}>
-            <div style={{ width: `${(stats.checkedCount / stats.total) * 100}%`, height: '100%', backgroundColor: '#10b981', transition: 'width 0.5s ease' }} />
-            <div style={{ width: `${(stats.due / stats.total) * 100}%`, height: '100%', backgroundColor: '#ef4444' }} />
-            <div style={{ flex: 1, height: '100%', backgroundColor: t.border }} />
-          </div>
-        )}
-      </div>
+      </header>
+
+      {/* Progress bar */}
+      {stats.total > 0 && (
+        <div
+          className="h-1.5 w-full rounded-full overflow-hidden flex"
+          style={{ backgroundColor: isDark ? '#232326' : '#E5E7EB' }}
+        >
+          <div
+            style={{
+              width: `${(stats.checkedCount / stats.total) * 100}%`,
+              backgroundColor: isDark ? '#A7F3D0' : '#10B981',
+              transition: 'width 0.4s ease',
+            }}
+          />
+          <div
+            style={{
+              width: `${(stats.due / stats.total) * 100}%`,
+              backgroundColor: isDark ? '#FCA5A5' : '#EF4444',
+              transition: 'width 0.4s ease',
+            }}
+          />
+        </div>
+      )}
 
       {/* List */}
-      <div style={{ display: 'grid', gap: 12, overflow: 'auto' }}>
+      <div className="grid gap-3 overflow-y-auto mac-scrollbar">
         {notifications.length > 0 ? notifications.map(n => {
           const tc = getTypeConfig(n.type);
           const sc = getStatusConfig(n);
           const isChecked = checked[n.id];
 
           return (
-            <div key={n.id}
+            <div
+              key={n.id}
               onClick={() => navigateTo(n.tab, n.sourceId)}
+              className="p-4 rounded-2xl border flex items-center gap-3.5 transition-all cursor-pointer hover:opacity-95"
               style={{
-                padding: 16,
-                borderRadius: 14,
-                border: `1px solid ${n.isDue && !isChecked ? '#ef444440' : t.border}`,
-                backgroundColor: isChecked ? `${t.panel}60` : (n.isDue ? '#ef444408' : t.panel),
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                cursor: 'pointer',
-                transition: 'all 0.3s',
-                opacity: isChecked ? 0.6 : 1
+                borderColor: t.borderLight || t.border,
+                backgroundColor: isChecked
+                  ? (isDark ? '#1C1C1E' : '#F9FAFB')
+                  : t.panel,
+                opacity: isChecked ? 0.55 : 1,
               }}
             >
-              {/* Checkbox */}
-              <div onClick={e => { e.stopPropagation(); toggleChecked(n.id); }}
+              {/* Checkbox minimalista */}
+              <button
+                type="button"
+                onClick={e => {
+                  e.stopPropagation();
+                  toggleChecked(n.id);
+                }}
+                className="w-7 h-7 rounded-xl flex items-center justify-center shrink-0 border transition-all"
                 style={{
-                  width: 28, height: 28, borderRadius: 8,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  backgroundColor: isChecked ? '#10b981' : 'transparent',
-                  border: `2px solid ${isChecked ? '#10b981' : t.border}`,
-                  color: '#000', cursor: 'pointer', transition: 'all 0.2s',
-                  flexShrink: 0
+                  backgroundColor: isChecked ? (isDark ? '#ECECEC' : '#1C1C1E') : 'transparent',
+                  borderColor: isChecked ? (isDark ? '#ECECEC' : '#1C1C1E') : (t.borderLight || t.border),
+                  color: isChecked ? (isDark ? '#1C1C1E' : '#FFFFFF') : 'transparent',
+                }}
+                title={isChecked ? 'Marcar como pendiente' : 'Marcar como revisado'}
+              >
+                {isChecked && <CheckCircle size={15} />}
+              </button>
+
+              {/* Icon Squircle */}
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border"
+                style={{
+                  backgroundColor: isDark ? '#1F1F22' : '#F3F4F6',
+                  borderColor: t.borderLight || t.border,
+                  color: t.text,
                 }}
               >
-                {isChecked && <CheckCircle size={16} />}
-              </div>
-
-              {/* Icon */}
-              <div style={{
-                width: 44, height: 44, borderRadius: 12,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: isChecked ? `${tc.color}10` : `${tc.color}20`,
-                color: isChecked ? t.textMuted : tc.color,
-                flexShrink: 0
-              }}>
                 {tc.icon}
               </div>
 
               {/* Content */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                  <span style={{
-                    fontSize: 9, fontWeight: 900, textTransform: 'uppercase',
-                    letterSpacing: '0.08em', color: tc.color,
-                    padding: '2px 8px', borderRadius: 4, backgroundColor: `${tc.color}12`
-                  }}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border"
+                    style={{
+                      backgroundColor: isDark ? '#1F1F22' : '#F3F4F6',
+                      borderColor: t.borderLight || t.border,
+                      color: t.textMuted,
+                    }}
+                  >
                     {tc.label}
                   </span>
-                  <span style={{
-
-                    fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-                    letterSpacing: '0.05em', color: sc.color,
-                    display: 'flex', alignItems: 'center', gap: 4
-                  }}>
+                  <span
+                    className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border flex items-center gap-1"
+                    style={{
+                      backgroundColor: sc.bg,
+                      borderColor: sc.border,
+                      color: sc.color,
+                    }}
+                  >
                     {sc.icon} {sc.label}
                   </span>
                 </div>
-                <h4 style={{
-                  color: isChecked ? t.textMuted : t.text,
-                  fontWeight: 600, fontSize: '0.95rem', margin: 0,
-                  textDecoration: isChecked ? 'line-through' : 'none',
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                }}>
+
+                <h4
+                  className="text-xs font-bold tracking-tight m-0 truncate"
+                  style={{
+                    color: isChecked ? t.textMuted : t.text,
+                    textDecoration: isChecked ? 'line-through' : 'none',
+                  }}
+                >
                   {n.title}
                 </h4>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 10, color: t.textMuted, display: 'flex', alignItems: 'center', gap: 4, fontWeight: 500 }}>
+
+                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                  <span className="text-[10px] flex items-center gap-1 font-mono" style={{ color: t.textMuted }}>
                     <Calendar size={11} />
                     {n.date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </span>
                   {n.amount != null && n.amount > 0 && (
-                    <span style={{ fontSize: 10, color: t.text, fontFamily: 'monospace', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="text-[10px] font-mono font-bold flex items-center gap-1" style={{ color: t.text }}>
                       <DollarSign size={11} />
                       {formatAmount(n.amount, n.currency)}
                     </span>
                   )}
                   {n.type === 'prestamo' && n.capital > 0 && (
-                    <span style={{ fontSize: 9, color: t.textMuted }}>
+                    <span className="text-[9px] font-mono" style={{ color: t.textMuted }}>
                       Capital: {Number(n.capital).toLocaleString()} {n.currency}
                     </span>
                   )}
                   {n.type === 'servicio' && n.metodo && (
-                    <span style={{ fontSize: 9, color: t.textMuted }}>{n.metodo}</span>
+                    <span className="text-[9px]" style={{ color: t.textMuted }}>{n.metodo}</span>
                   )}
                   {n.type === 'recordatorio' && n.description && (
-                    <span style={{
-                      fontSize: 9, color: t.textMuted,
-                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                      maxWidth: 150
-                    }}>
+                    <span className="text-[9px] truncate max-w-xs" style={{ color: t.textMuted }}>
                       {n.description}
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Actions */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                {onNavigate && (
-                  <div style={{
-                    padding: 8, borderRadius: 10,
-                    backgroundColor: isChecked ? 'transparent' : t.accentSoft,
-                    color: t.textDim, cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center'
-                  }}>
-                    <ExternalLink size={16} />
-                  </div>
-                )}
+              {/* Action arrow */}
+              <div className="shrink-0 flex items-center justify-center p-2 rounded-xl border opacity-70 hover:opacity-100 transition-opacity" style={{ borderColor: t.borderLight || t.border, color: t.textMuted }}>
+                <ChevronRight size={14} />
               </div>
             </div>
           );
         }) : (
-          <div style={{
-            padding: '80px 0',
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            border: `1px dashed ${t.borderLight}`,
-            borderRadius: 14,
-            backgroundColor: `${t.panel}80`
-          }}>
-            <Bell size={48} style={{ color: t.textMuted, marginBottom: 16 }} />
-            <p style={{ color: t.textDim, fontSize: 14, margin: 0 }}>No hay notificaciones pendientes.</p>
-            <p style={{ color: t.textMuted, fontSize: 11, marginTop: 4 }}>Todo está al día</p>
+          <div
+            className="p-16 flex flex-col items-center justify-center rounded-2xl border text-center"
+            style={{
+              borderColor: t.borderLight || t.border,
+              backgroundColor: t.panel,
+            }}
+          >
+            <Bell size={36} style={{ color: t.textMuted, marginBottom: 12 }} />
+            <p className="text-xs font-semibold m-0" style={{ color: t.text }}>No hay notificaciones pendientes</p>
+            <p className="text-[10px] m-0 mt-1" style={{ color: t.textMuted }}>Todo está al día en tu cartera y servicios</p>
           </div>
         )}
       </div>
