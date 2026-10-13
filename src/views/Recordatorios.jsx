@@ -251,10 +251,10 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
 
   const getPriorityColor = (p) => {
     switch(p) {
-      case 'Crítica': return { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.25)' };
-      case 'Alta': return { color: '#d4a04a', bg: 'rgba(212, 160, 74, 0.12)', border: 'rgba(212, 160, 74, 0.25)' };
-      case 'Media': return { color: t.accent, bg: t.accentSoft, border: 'rgba(160, 160, 160, 0.2)' };
-      default: return { color: '#7ecba0', bg: 'rgba(126, 203, 160, 0.12)', border: 'rgba(126, 203, 160, 0.25)' };
+      case 'Crítica': return { color: isDark ? '#FCA5A5' : '#DC2626', bg: isDark ? 'rgba(239, 68, 68, 0.08)' : '#FEF2F2', border: isDark ? 'rgba(239, 68, 68, 0.2)' : '#FECACA' };
+      case 'Alta': return { color: isDark ? '#FCD34D' : '#D97706', bg: isDark ? 'rgba(245, 158, 11, 0.08)' : '#FFFBEB', border: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FDE68A' };
+      case 'Media': return { color: t.textSecondary, bg: isDark ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.03)', border: t.borderLight || t.border };
+      default: return { color: isDark ? '#A7F3D0' : '#059669', bg: isDark ? 'rgba(16, 185, 129, 0.08)' : '#ECFDF5', border: isDark ? 'rgba(16, 185, 129, 0.2)' : '#A7F3D0' };
     }
   };
 
@@ -278,14 +278,18 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
   return (
     <div className="h-full w-full flex flex-col">
       {/* HEADER */}
-      <header className="flex items-center justify-between mb-4 pb-3">
+      <header className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: t.border }}>
         <div>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>Recordatorios</h2>
-          <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>Gestión de Tareas y Recordatorios</p>
+          <p style={{ fontSize: '0.75rem', color: t.textMuted, marginTop: '2px', fontWeight: 500, margin: 0 }}>Gestión de Tareas, Pendientes y Notificaciones</p>
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all justify-center bg-[#ECECEC] hover:bg-white text-[#171717] shadow-sm spring-active"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-opacity hover:opacity-90 shadow-sm"
+          style={{
+            backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+            color: isDark ? '#1C1C1E' : '#FFFFFF',
+          }}
         >
           <Plus size={14} /> Nuevo
         </button>
@@ -293,13 +297,14 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
 
       {/* FILTERS + SEARCH */}
       <div className="flex flex-col md:flex-row gap-3 mb-6 items-center justify-between">
-        <div className="flex p-1 rounded-xl w-full md:w-auto overflow-x-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}>
+        <div className="flex p-1 rounded-xl w-full md:w-auto overflow-x-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight || t.border}` }}>
           {['Todos', 'Tarea', 'Compra', 'Idea', 'Nota'].map(f => (
             <button key={f} onClick={() => setActiveFilter(f)}
-              className="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap flex items-center justify-center spring-active"
+              className="px-3.5 py-1.5 text-xs font-medium rounded-lg transition-all whitespace-nowrap flex items-center justify-center"
               style={{
-                backgroundColor: activeFilter === f ? '#383838' : 'transparent',
-                color: activeFilter === f ? '#FFFFFF' : t.textDim,
+                backgroundColor: activeFilter === f ? (isDark ? '#2C2C30' : '#EAEAEB') : 'transparent',
+                color: activeFilter === f ? t.text : t.textMuted,
+                fontWeight: activeFilter === f ? 700 : 500,
               }}
             >{f}</button>
           ))}
@@ -355,14 +360,14 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
       {/* MODAL */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[600] flex items-center justify-center p-4" style={{ backgroundColor: t.overlay, backdropFilter: 'blur(24px)' }}>
-          <div className="w-full max-w-lg rounded-xl p-6 animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto mac-scrollbar" style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight}` }}>
-            <header className="flex justify-between items-center mb-6">
+          <div className="w-full max-w-lg rounded-2xl p-6 animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto mac-scrollbar border" style={{ backgroundColor: t.panel, borderColor: t.borderLight || t.border }}>
+            <header className="flex justify-between items-center mb-6 pb-3 border-b" style={{ borderColor: t.borderLight || t.border }}>
                <div>
-                 <h3 className="text-lg font-black text-white uppercase tracking-tight">Nuevo <span style={{ color: t.accent }}>Recordatorio</span></h3>
-                 <p className="text-[8px] font-black uppercase tracking-widest mt-1" style={{ color: t.textDim }}>Sincronización con vida personal</p>
+                 <h3 className="text-base font-bold uppercase tracking-tight m-0" style={{ color: t.text }}>Nuevo Recordatorio</h3>
+                 <p className="text-[10px] uppercase tracking-wider mt-1 m-0" style={{ color: t.textMuted }}>Sincronización de tareas y actividades</p>
                </div>
-               <button onClick={() => setIsModalOpen(false)} className="transition-colors" style={{ color: t.textDim }}>
-                 <X size={20}/>
+               <button onClick={() => setIsModalOpen(false)} className="transition-opacity hover:opacity-80 p-1" style={{ color: t.textMuted }}>
+                 <X size={18}/>
                </button>
             </header>
 
@@ -498,8 +503,29 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
               )}
 
               <div className="pt-3 flex gap-3">
-                 <button onClick={() => setIsModalOpen(false)} className="flex-1 py-3.5 font-black uppercase text-[9px] tracking-widest transition-all" style={{ color: t.textDim }}>Cancelar</button>
-                 <button onClick={handleCreate} className="flex-[2] py-3.5 font-black uppercase text-[9px] tracking-[0.2em] rounded-xl transition-all" style={{ backgroundColor: t.accent, color: '#000000' }}>Crear Recordatorio</button>
+                 <button
+                   type="button"
+                   onClick={() => setIsModalOpen(false)}
+                   className="flex-1 py-3 font-semibold uppercase text-[10px] tracking-wider transition-opacity hover:opacity-80 rounded-xl border"
+                   style={{
+                     backgroundColor: isDark ? '#232326' : '#F3F4F6',
+                     borderColor: t.borderLight || t.border,
+                     color: t.textMuted,
+                   }}
+                 >
+                   Cancelar
+                 </button>
+                 <button
+                   type="button"
+                   onClick={handleCreate}
+                   className="flex-[2] py-3 font-bold uppercase text-[10px] tracking-wider rounded-xl transition-opacity hover:opacity-90 shadow-sm"
+                   style={{
+                     backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                     color: isDark ? '#1C1C1E' : '#FFFFFF',
+                   }}
+                 >
+                   Crear Recordatorio
+                 </button>
               </div>
             </div>
           </div>
@@ -514,12 +540,10 @@ const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDar
   const pc = colorFunc(r.prioridad);
   return (
     <div 
-      className="group relative transition-all"
+      className="group relative transition-all rounded-2xl border p-4"
       style={{ 
-        backgroundColor: t.accentSoft,
-        border: `1px solid ${t.border}`,
-        borderRadius: 12,
-        padding: 14,
+        backgroundColor: t.panel,
+        borderColor: t.borderLight || t.border,
         opacity: r.estado === 'Completado' ? 0.45 : 1,
       }}
     >
@@ -527,64 +551,90 @@ const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDar
         <button 
           onClick={() => onToggle(r.id, r.estado)}
           className="mt-0.5 transition-all shrink-0"
-          style={{ color: r.estado === 'Completado' ? t.accent : t.textDim }}
+          style={{ color: r.estado === 'Completado' ? (isDark ? '#ECECEC' : '#1C1C1E') : t.textMuted }}
         >
-          {r.estado === 'Completado' ? <CheckCircle2 size={20} /> : <Circle size={20} />}
+          {r.estado === 'Completado' ? <CheckCircle2 size={18} /> : <Circle size={18} />}
         </button>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1.5">
-            <h4 className="text-xs font-black uppercase tracking-tight truncate" style={{
-              color: r.estado === 'Completado' ? t.textDim : t.text,
+            <h4 className="text-xs font-bold tracking-tight truncate m-0" style={{
+              color: r.estado === 'Completado' ? t.textMuted : t.text,
               textDecoration: r.estado === 'Completado' ? 'line-through' : 'none',
             }}>
               {r.titulo}
             </h4>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '9px', fontWeight: 700, color: pc.color }} className="shrink-0 ml-2">
-              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: pc.color }} />
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '9px',
+                fontWeight: 700,
+                color: pc.color,
+                backgroundColor: pc.bg,
+                borderColor: pc.border,
+              }}
+              className="shrink-0 ml-2 px-2 py-0.5 rounded-md border"
+            >
+              <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: pc.color }} />
               <span>{r.prioridad}</span>
             </div>
           </div>
 
           {(r.nombre_contacto || r.monto > 0) && (
-            <div className="flex flex-wrap gap-2 mb-2.5">
+            <div className="flex flex-wrap gap-2 mb-2">
               {r.nombre_contacto && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-xl text-[8px] font-bold uppercase" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.textMuted }}>
-                  <User size={8} color={t.accent} /> {r.nombre_contacto}
+                <div
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-medium border"
+                  style={{
+                    backgroundColor: isDark ? '#1F1F22' : '#F3F4F6',
+                    borderColor: t.borderLight || t.border,
+                    color: t.textMuted,
+                  }}
+                >
+                  <User size={9} style={{ color: t.text }} /> {r.nombre_contacto}
                 </div>
               )}
               {r.monto > 0 && (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-xl text-[8px] font-black uppercase" style={{ backgroundColor: t.accentSoft, border: `1px solid ${t.border}`, color: t.text }}>
-                  <TrendingUp size={8} color={t.accent} /> {r.monto} BS
+                <div
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold border"
+                  style={{
+                    backgroundColor: isDark ? '#1F1F22' : '#F3F4F6',
+                    borderColor: t.borderLight || t.border,
+                    color: t.text,
+                  }}
+                >
+                  <TrendingUp size={9} style={{ color: t.text }} /> {r.monto} BS
                 </div>
               )}
             </div>
           )}
 
-          <div className="flex flex-wrap gap-3 mb-2.5">
+          <div className="flex flex-wrap gap-3 mb-2">
             {r.recurrencia && r.recurrencia !== 'Ninguna' && (
-              <div className="flex items-center gap-1.5 text-[7px] font-black uppercase tracking-widest" style={{ color: t.accent }}>
-                <Zap size={8} /> {r.recurrencia}
+              <div className="flex items-center gap-1 text-[8px] font-bold uppercase tracking-wider" style={{ color: t.textMuted }}>
+                <Zap size={9} /> {r.recurrencia}
               </div>
             )}
             {r.fecha && (
-              <div className="flex items-center gap-1 text-[7px] font-black uppercase" style={{ color: t.textDim }}>
-                <Clock size={8} /> {new Date(r.fecha).toLocaleDateString()} {r.fecha_fin ? `al ${new Date(r.fecha_fin).toLocaleDateString()}` : ''}
+              <div className="flex items-center gap-1 text-[8px] font-mono" style={{ color: t.textMuted }}>
+                <Clock size={9} /> {new Date(r.fecha).toLocaleDateString()} {r.fecha_fin ? `al ${new Date(r.fecha_fin).toLocaleDateString()}` : ''}
               </div>
             )}
           </div>
 
           {r.subtareas && r.subtareas.length > 0 && (
-            <div className="space-y-1.5 mt-2.5 p-3 rounded-xl" style={{ backgroundColor: t.bg, border: `1px solid ${t.border}` }}>
+            <div className="space-y-1.5 mt-2.5 p-3 rounded-xl border" style={{ backgroundColor: isDark ? '#1C1C1E' : '#F9FAFB', borderColor: t.borderLight || t.border }}>
                {r.subtareas.map(st => (
                  <div 
                   key={st.id} 
                   onClick={(e) => { e.stopPropagation(); onSubToggle(r.id, st.id, r.subtareas); }}
                   className="flex items-center gap-2 cursor-pointer group/sub"
                  >
-                   {st.completado ? <CheckCircle2 size={12} color={t.accent} /> : <Circle size={12} color={t.textDim} />}
-                   <span className="text-[9px] font-bold" style={{
-                     color: st.completado ? t.textDim : t.textMuted,
+                   {st.completado ? <CheckCircle2 size={12} style={{ color: t.text }} /> : <Circle size={12} style={{ color: t.textMuted }} />}
+                   <span className="text-[10px] font-medium" style={{
+                     color: st.completado ? t.textMuted : t.text,
                      textDecoration: st.completado ? 'line-through' : 'none',
                    }}>
                      {st.texto}
@@ -597,10 +647,11 @@ const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDar
 
         <button 
           onClick={() => onDelete(r.id)}
-          className="opacity-0 group-hover:opacity-100 p-1.5 transition-all shrink-0"
-          style={{ color: t.textDim }}
+          className="opacity-0 group-hover:opacity-100 p-1.5 transition-opacity hover:opacity-80 shrink-0"
+          style={{ color: t.textMuted }}
+          title="Eliminar recordatorio"
         >
-          <Trash2 size={15} />
+          <Trash2 size={14} />
         </button>
       </div>
     </div>
@@ -608,3 +659,4 @@ const RecordatorioCard = ({ r, onToggle, onSubToggle, onDelete, colorFunc, isDar
 };
 
 export default Recordatorios;
+
