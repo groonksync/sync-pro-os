@@ -536,7 +536,7 @@ const toastStyles = {
 // ─── TOAST NOTIFICATION ──────────────────────────────────────
 const ToastNotification = ({ message, type = 'success', onClose, isDark }) => {
   const t = useTheme(isDark);
-  const { bg, border, icon: Icon, color } = toastStyles[type] || toastStyles.success;
+  const { icon: Icon, bg, border, color } = toastStyles[type] || toastStyles.success;
   
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
@@ -998,7 +998,20 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
   const [filtroRapidoEstado, setFiltroRapidoEstado] = useState('todos'); // 'todos' | 'activos' | 'mora' | 'finalizados'
   const [searchTermDebtor, setSearchTermDebtor] = useState('');
   const [viewDisplayMode, setViewDisplayMode] = useState('cards'); // 'cards' | 'table'
+  const [activeCardMenu, setActiveCardMenu] = useState(null); // id de la tarjeta con menú abierto
   const isMobile = settings?.isMobileMode || (typeof window !== 'undefined' && window.innerWidth < 1024);
+  
+  // Cerrar menú contextual al hacer clic fuera
+  useEffect(() => {
+    if (!activeCardMenu) return;
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('[data-card-menu]')) {
+        setActiveCardMenu(null);
+      }
+    };
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, [activeCardMenu]);
   
   // Estados para Emisión de Recibos
   const [reciboForm, setReciboForm] = useState({
@@ -1743,49 +1756,49 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
       <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
         {prestamoView === 'list' ? (
           <div className="animate-in fade-in duration-300">
-            {/* 1. Cabecera Unificada en 1 Sola Fila Horizontal con Iconos Modernos */}
+            {/* 1. Cabecera Unificada y Minimalista */}
             <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-5 w-full pb-4 border-b border-white/[0.06]">
               <div>
-                <h2 style={{ fontSize: '1.35rem', fontWeight: 900, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
                   {filtroTipo === 'recibido' ? 'Mis Deudas & Créditos' : 'Cartera de Préstamos'}
                 </h2>
                 <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '2px', fontWeight: 500, margin: 0 }}>
-                  {filtroTipo === 'recibido' ? 'Control de préstamos bancarios y deudas con terceros' : 'Dashboard Analítico — Gestión de Capital y Cobranza'}
+                  {filtroTipo === 'recibido' ? 'Control de préstamos bancarios y deudas con terceros' : 'Gestión de capital activo, cobranza y contratos'}
                 </p>
               </div>
 
-              {/* Fila Horizontal Única: Selector de Cartera + Acciones con Iconos Modernos */}
+              {/* Fila Horizontal: Selector de Cartera en tonos grises + Acciones */}
               <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto whitespace-nowrap scrollbar-none py-0.5">
-                {/* Selector de Cartera con Iconos Modernos */}
+                {/* Selector de Cartera Minimalista */}
                 <div
-                  className="flex p-1 rounded-xl shrink-0"
-                  style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}
+                  className="flex p-1 rounded-2xl shrink-0"
+                  style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}
                 >
                   <button
                     onClick={() => setFiltroTipo('otorgado')}
-                    className="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1.5"
+                    className="py-1.5 px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
                     style={{
-                      backgroundColor: filtroTipo === 'otorgado' ? '#10b981' : 'transparent',
-                      color: filtroTipo === 'otorgado' ? '#000000' : t.textDim,
-                      boxShadow: filtroTipo === 'otorgado' ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none'
+                      backgroundColor: filtroTipo === 'otorgado' ? (isDark ? '#3E3E44' : '#FFFFFF') : 'transparent',
+                      color: filtroTipo === 'otorgado' ? t.text : t.textDim,
+                      boxShadow: filtroTipo === 'otorgado' ? (isDark ? '0 2px 6px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.08)') : 'none'
                     }}
                     title="Cartera Otorgada a Clientes"
                   >
-                    <TrendingUp size={15} strokeWidth={2.5} />
-                    <span className="hidden sm:inline">Otorgados</span>
+                    <TrendingUp size={14} strokeWidth={2.2} />
+                    <span>Otorgados</span>
                   </button>
                   <button
                     onClick={() => setFiltroTipo('recibido')}
-                    className="py-2 px-3 rounded-lg text-xs font-black transition-all flex items-center gap-1.5"
+                    className="py-1.5 px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
                     style={{
-                      backgroundColor: filtroTipo === 'recibido' ? '#0284c7' : 'transparent',
-                      color: filtroTipo === 'recibido' ? '#FFFFFF' : t.textDim,
-                      boxShadow: filtroTipo === 'recibido' ? '0 2px 8px rgba(2, 132, 199, 0.3)' : 'none'
+                      backgroundColor: filtroTipo === 'recibido' ? (isDark ? '#3E3E44' : '#FFFFFF') : 'transparent',
+                      color: filtroTipo === 'recibido' ? t.text : t.textDim,
+                      boxShadow: filtroTipo === 'recibido' ? (isDark ? '0 2px 6px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.08)') : 'none'
                     }}
                     title="Créditos Recibidos (Banco / Deudas)"
                   >
-                    <Wallet size={15} strokeWidth={2.5} />
-                    <span className="hidden sm:inline">Recibidos</span>
+                    <Wallet size={14} strokeWidth={2.2} />
+                    <span>Recibidos</span>
                   </button>
                 </div>
 
@@ -1809,7 +1822,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     });
                     setPrestamoView('recibos');
                   }}
-                  className="py-2 px-3.5 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 shrink-0"
+                  className="py-2 px-3.5 rounded-2xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
                   style={{
                     backgroundColor: t.panel,
                     border: `1px solid ${t.border}`,
@@ -1817,7 +1830,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                   }}
                   title="Emitir Recibo Oficial"
                 >
-                  <Printer size={15} />
+                  <Printer size={14} />
                   <span className="hidden sm:inline">Emitir Recibo</span>
                 </button>
 
@@ -1849,23 +1862,35 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     });
                     setShowForm(true);
                   }} 
-                  className="py-2 px-3.5 rounded-xl bg-[#ECECEC] hover:bg-white text-[#171717] text-xs font-bold transition-all shadow-sm active:scale-95 flex items-center gap-1.5 shrink-0"
+                  className="py-2 px-4 rounded-2xl text-xs font-semibold transition-all shadow-sm active:scale-95 flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  style={{
+                    backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                    color: isDark ? '#171717' : '#FFFFFF'
+                  }}
                   title="Registrar Nuevo Préstamo o Deuda"
                 >
                   <Plus size={15} strokeWidth={2.5} />
-                  <span className="hidden sm:inline">Nuevo Registro</span>
+                  <span className="hidden sm:inline">Nuevo Préstamo</span>
                 </button>
               </div>
             </header>
 
-            {/* Resumen limpio de cartera en una sola línea sin dashboards */}
-            <div className="flex items-center justify-between text-xs text-[#9E9E9E] mb-5 pb-3 border-b border-[#2C2C2C]">
-              <span>
-                {filteredPrestamistas.length} {filteredPrestamistas.length === 1 ? 'registro' : 'registros'} • <strong className="text-white font-mono">{stats.capitalActivo.toLocaleString()} BOB</strong> en capital activo
-              </span>
-              <span className="text-[#7A7A7A]">
-                Rendimiento estimado: <strong className="text-[#ECECEC] font-mono">+{stats.rendimientoMensual.toLocaleString()} BOB/mes</strong>
-              </span>
+            {/* Resumen limpio de cartera adaptado a modo Día y Noche */}
+            <div
+              className="flex flex-wrap items-center justify-between gap-2 text-xs mb-5 pb-3 transition-colors"
+              style={{ borderBottom: `1px solid ${t.border}`, color: t.textDim }}
+            >
+              <div className="flex items-center gap-2">
+                <span>{filteredPrestamistas.length} {filteredPrestamistas.length === 1 ? 'cliente registrado' : 'clientes registrados'}</span>
+                <span>•</span>
+                <span>
+                  Capital activo: <strong className="font-mono font-bold" style={{ color: t.text }}>{stats.capitalActivo.toLocaleString()} BOB</strong>
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span>Rendimiento estimado:</span>
+                <strong className="font-mono font-bold" style={{ color: t.textSecondary }}>+{stats.rendimientoMensual.toLocaleString()} BOB/mes</strong>
+              </div>
             </div>
 
             {/* Barra de Búsqueda Minimalista y Filtros de Estado */}
@@ -1873,12 +1898,15 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                 {/* Input de Búsqueda */}
                 <div className="relative flex-1 max-w-md">
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: t.textDim }}>
+                    <Search size={14} />
+                  </div>
                   <input
                     type="text"
                     value={searchTermDebtor}
                     onChange={e => setSearchTermDebtor(e.target.value)}
                     placeholder="Buscar por cliente, CI o WhatsApp..."
-                    className="w-full px-4 py-2.5 rounded-xl text-xs outline-none transition-all shadow-inner"
+                    className="w-full pl-9 pr-9 py-2.5 rounded-2xl text-xs outline-none transition-all"
                     style={{
                       backgroundColor: t.inputBg,
                       border: `1px solid ${t.borderLight}`,
@@ -1886,7 +1914,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     }}
                   />
                   {searchTermDebtor && (
-                    <button onClick={() => setSearchTermDebtor('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1" style={{ color: t.textDim }}>
+                    <button onClick={() => setSearchTermDebtor('')} className="absolute right-3 top-1/2 -translate-y-1/2 p-1 cursor-pointer" style={{ color: t.textDim }}>
                       <X size={14} />
                     </button>
                   )}
@@ -1895,28 +1923,28 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                 {/* Switcher de Vista: Tarjetas vs Tabla */}
                 <div className="flex items-center gap-2 self-end md:self-auto">
                   <div
-                    className="flex p-1 rounded-xl"
-                    style={{ backgroundColor: t.panel, border: `1px solid ${t.border}` }}
+                    className="flex p-1 rounded-2xl"
+                    style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}
                   >
                     <button
                       onClick={() => setViewDisplayMode('cards')}
-                      className="py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                      className="py-1.5 px-3 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
                       style={{
-                        backgroundColor: viewDisplayMode === 'cards' ? t.accentSoft : 'transparent',
+                        backgroundColor: viewDisplayMode === 'cards' ? (isDark ? '#3E3E44' : '#FFFFFF') : 'transparent',
                         color: viewDisplayMode === 'cards' ? t.text : t.textDim,
-                        border: viewDisplayMode === 'cards' ? `1px solid ${t.borderLight}` : '1px solid transparent'
+                        boxShadow: viewDisplayMode === 'cards' ? (isDark ? '0 2px 6px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.08)') : 'none'
                       }}
-                      title="Vista Móvil / Tarjetas Inteligentes"
+                      title="Vista Tarjetas Inteligentes"
                     >
                       <BarChart3 size={14} /> Tarjetas
                     </button>
                     <button
                       onClick={() => setViewDisplayMode('table')}
-                      className="py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                      className="py-1.5 px-3 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
                       style={{
-                        backgroundColor: viewDisplayMode === 'table' ? t.accentSoft : 'transparent',
+                        backgroundColor: viewDisplayMode === 'table' ? (isDark ? '#3E3E44' : '#FFFFFF') : 'transparent',
                         color: viewDisplayMode === 'table' ? t.text : t.textDim,
-                        border: viewDisplayMode === 'table' ? `1px solid ${t.borderLight}` : '1px solid transparent'
+                        boxShadow: viewDisplayMode === 'table' ? (isDark ? '0 2px 6px rgba(0,0,0,0.3)' : '0 1px 4px rgba(0,0,0,0.08)') : 'none'
                       }}
                       title="Vista Tabla"
                     >
@@ -1926,28 +1954,34 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                 </div>
               </div>
 
-              {/* Filtros de Estado a Nivel Único */}
+              {/* Filtros de Estado a Nivel Único en Escala de Grises */}
               <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap scrollbar-none py-1 w-full">
                 {[
-                  { id: 'todos', label: `Todos (${prestamistasGrouped.length})` },
-                  { id: 'activos', label: `Al Día (${prestamistasGrouped.filter(g => g.estado === 'Activo').length})` },
-                  { id: 'mora', label: `En Mora (${prestamistasGrouped.filter(g => g.estado === 'En Mora').length})` },
-                  { id: 'finalizados', label: `Finalizados (${prestamistasGrouped.filter(g => g.estado === 'Finalizado').length})` }
+                  { id: 'todos', label: 'Todos', count: prestamistasGrouped.length, dotColor: '#9CA3AF' },
+                  { id: 'activos', label: 'Al Día', count: prestamistasGrouped.filter(g => g.estado === 'Activo').length, dotColor: '#10B981' },
+                  { id: 'mora', label: 'En Mora', count: prestamistasGrouped.filter(g => g.estado === 'En Mora').length, dotColor: '#EF4444' },
+                  { id: 'finalizados', label: 'Finalizados', count: prestamistasGrouped.filter(g => g.estado === 'Finalizado').length, dotColor: '#6B7280' }
                 ].map(chip => {
                   const isSelected = filtroRapidoEstado === chip.id;
                   return (
                     <button
                       key={chip.id}
                       onClick={() => setFiltroRapidoEstado(chip.id)}
-                      className="py-1.5 px-3.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
+                      className="py-1.5 px-3.5 rounded-full text-xs font-medium transition-all shrink-0 cursor-pointer flex items-center gap-2"
                       style={{
-                        backgroundColor: isSelected ? 'rgba(16, 185, 129, 0.15)' : t.panel,
-                        color: isSelected ? '#10b981' : t.textDim,
-                        border: `1px solid ${isSelected ? 'rgba(16, 185, 129, 0.35)' : t.border}`,
-                        boxShadow: isSelected ? '0 2px 8px rgba(16, 185, 129, 0.15)' : 'none'
+                        backgroundColor: isSelected
+                          ? (isDark ? 'rgba(255, 255, 255, 0.12)' : '#1C1C1E')
+                          : t.panel,
+                        color: isSelected
+                          ? (isDark ? '#FFFFFF' : '#FFFFFF')
+                          : t.textDim,
+                        border: `1px solid ${isSelected ? (isDark ? 'rgba(255, 255, 255, 0.25)' : '#1C1C1E') : t.border}`,
+                        boxShadow: isSelected ? '0 1px 4px rgba(0,0,0,0.1)' : 'none'
                       }}
                     >
-                      {chip.label}
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: chip.dotColor }} />
+                      <span>{chip.label}</span>
+                      <span className="text-[10px] opacity-75 font-mono">({chip.count})</span>
                     </button>
                   );
                 })}
@@ -1963,195 +1997,313 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     <div
                       key={g.key}
                       onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
-                      className="p-5 rounded-2xl transition-all duration-200 cursor-pointer shadow-lg space-y-4 relative group"
+                      className="p-5 md:p-6 rounded-3xl transition-all duration-200 cursor-pointer relative group flex flex-col justify-between"
                       style={{
                         backgroundColor: t.panel,
                         border: `1px solid ${t.border}`,
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
+                        boxShadow: isDark ? '0 8px 30px rgba(0, 0, 0, 0.25)' : '0 4px 20px rgba(0, 0, 0, 0.04)',
                       }}
+                      onMouseEnter={e => e.currentTarget.style.borderColor = isDark ? '#4A4A50' : '#D1D5DB'}
+                      onMouseLeave={e => e.currentTarget.style.borderColor = t.border}
                     >
                       {/* Cabecera del Prestatario */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="relative shrink-0">
                             <div
-                              className="w-12 h-12 rounded-2xl overflow-hidden flex items-center justify-center shrink-0"
+                              className="w-11 h-11 rounded-2xl overflow-hidden flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
                               style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}
                             >
                               {g.foto ? (
                                 <img src={g.foto} alt="" className="w-full h-full object-cover" />
                               ) : (
-                                <User size={22} color={t.textDim} />
+                                <User size={20} color={t.textDim} />
                               )}
                             </div>
-                            <span
-                              className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-neutral-900 ${
-                                g.estado === 'Finalizado' ? 'bg-neutral-500' : g.estado === 'En Mora' ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'
-                              }`}
-                            />
                           </div>
-                          <div>
-                            <h3 className="text-sm font-black m-0 group-hover:text-emerald-400 transition-colors" style={{ color: t.text }}>
+                          <div className="min-w-0">
+                            <h3 className="text-sm md:text-base font-bold m-0 truncate tracking-tight transition-colors" style={{ color: t.text }}>
                               {g.nombre}
                             </h3>
-                            <p className="text-[11px] m-0 mt-0.5 flex items-center gap-2" style={{ color: t.textDim }}>
+                            <p className="text-[11px] m-0 mt-0.5 flex items-center gap-2 truncate" style={{ color: t.textDim }}>
                               {g.ci && <span>CI: {g.ci}</span>}
-                              {g.telefono && <span>· Telf: {g.telefono}</span>}
+                              {g.telefono && <span>· {g.telefono}</span>}
                             </p>
                           </div>
                         </div>
 
-                        {/* Badge de Estado */}
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 ${
-                          g.estado === 'Finalizado'
-                            ? 'bg-neutral-500/15 text-neutral-400 border border-neutral-500/30'
-                            : g.estado === 'En Mora'
-                            ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                            : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        }`}>
-                          {g.estado}
+                        {/* Micro Badge de Estado Discreto */}
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide shrink-0"
+                          style={{
+                            backgroundColor: g.estado === 'Finalizado'
+                              ? (isDark ? 'rgba(156, 163, 175, 0.1)' : '#F3F4F6')
+                              : g.estado === 'En Mora'
+                              ? (isDark ? 'rgba(239, 68, 68, 0.1)' : '#FEF2F2')
+                              : (isDark ? 'rgba(16, 185, 129, 0.1)' : '#ECFDF5'),
+                            color: g.estado === 'Finalizado'
+                              ? (isDark ? '#9CA3AF' : '#4B5563')
+                              : g.estado === 'En Mora'
+                              ? (isDark ? '#F87171' : '#DC2626')
+                              : (isDark ? '#34D399' : '#059669'),
+                            border: `1px solid ${
+                              g.estado === 'Finalizado'
+                                ? (isDark ? 'rgba(156, 163, 175, 0.2)' : '#E5E7EB')
+                                : g.estado === 'En Mora'
+                                ? (isDark ? 'rgba(239, 68, 68, 0.25)' : '#FECACA')
+                                : (isDark ? 'rgba(16, 185, 129, 0.25)' : '#A7F3D0')
+                            }`
+                          }}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{
+                              backgroundColor: g.estado === 'Finalizado'
+                                ? '#9CA3AF'
+                                : g.estado === 'En Mora'
+                                ? '#EF4444'
+                                : '#10B981'
+                            }}
+                          />
+                          <span>{g.estado === 'Activo' ? 'Al Día' : g.estado}</span>
                         </span>
                       </div>
 
-                      {/* Montos y Métricas Principales */}
+                      {/* Panel de Cifras Principales */}
                       <div
-                        className="grid grid-cols-2 gap-2 p-3 rounded-xl"
+                        className="p-3.5 rounded-2xl mb-4 transition-colors"
                         style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}
                       >
-                        <div>
-                          <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Deuda Activa</span>
-                          <p className="text-base font-black font-mono m-0 mt-0.5" style={{ color: t.text }}>
-                            {(g.totalAdeudado || 0).toLocaleString()} <span className="text-[10px] font-normal" style={{ color: t.textDim }}>BOB</span>
-                          </p>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <div>
+                            <span className="text-[9px] font-semibold uppercase tracking-wider block" style={{ color: t.textDim }}>
+                              Capital Activo
+                            </span>
+                            <p className="text-xl md:text-2xl font-black font-mono tracking-tight m-0 mt-0.5 flex items-baseline gap-1" style={{ color: t.text }}>
+                              {(g.totalAdeudado || 0).toLocaleString()}
+                              <span className="text-[11px] font-normal" style={{ color: t.textDim }}>BOB</span>
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[9px] font-semibold uppercase tracking-wider block" style={{ color: t.textDim }}>
+                              Rendimiento / Mes
+                            </span>
+                            <p className="text-xs md:text-sm font-bold font-mono tracking-tight m-0 mt-0.5" style={{ color: t.textSecondary }}>
+                              +{Math.round(g.interesMensual || 0).toLocaleString()} <span className="text-[10px] font-normal" style={{ color: t.textDim }}>BOB</span>
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: t.textDim }}>Interés Mensual</span>
-                          <p className="text-base font-black font-mono text-amber-400 m-0 mt-0.5">
-                            +{Math.round(g.interesMensual || 0).toLocaleString()} <span className="text-[10px] font-normal" style={{ color: t.textDim }}>BOB</span>
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* Barra de Progreso de Amortización */}
-                      <div className="space-y-1.5">
-                        <div className="flex justify-between items-center text-[10px]" style={{ color: t.textDim }}>
-                          <span>{(g.contratos?.length || 0)} {(g.contratos?.length || 0) === 1 ? 'Contrato' : 'Contratos'}</span>
-                          <span className="font-bold font-mono" style={{ color: t.textSecondary }}>{g.progressAmortizado ?? 100}% Amortizado</span>
-                        </div>
-                        <div
-                          className="w-full h-1.5 rounded-full overflow-hidden"
-                          style={{ backgroundColor: t.surface }}
-                        >
+                        {/* Barra de Progreso Fina y Limpia */}
+                        <div className="mt-3 pt-2.5" style={{ borderTop: `1px solid ${t.border}` }}>
+                          <div className="flex justify-between items-center text-[10px] mb-1.5" style={{ color: t.textDim }}>
+                            <span>{(g.contratos?.length || 0)} {(g.contratos?.length || 0) === 1 ? 'Contrato' : 'Contratos'}</span>
+                            <span className="font-semibold font-mono" style={{ color: t.textSecondary }}>
+                              {g.progressAmortizado ?? 100}% Amortizado
+                            </span>
+                          </div>
                           <div
-                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 transition-all duration-500"
-                            style={{ width: `${g.progressAmortizado ?? 100}%` }}
-                          />
+                            className="w-full h-1.5 rounded-full overflow-hidden"
+                            style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}
+                          >
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{
+                                width: `${g.progressAmortizado ?? 100}%`,
+                                backgroundColor: isDark ? '#E5E7EB' : '#374151'
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      {/* Barra Horizontal Ergonómica de Acciones Rápidas (Uso a 1 Mano) */}
-                      <div className="pt-2" style={{ borderTop: `1px solid ${t.borderLight}` }} onClick={e => e.stopPropagation()}>
-                        <div
-                          className="grid grid-cols-5 gap-1.5 p-1 rounded-xl"
-                          style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}
-                        >
-                          
-                          {/* ⚡ 1. Cobro Rápido */}
+                      {/* Barra Ergonómica de Acciones: El Trío Limpio */}
+                      <div
+                        className="pt-2 relative"
+                        style={{ borderTop: `1px solid ${t.borderLight}` }}
+                        onClick={e => e.stopPropagation()}
+                        data-card-menu
+                      >
+                        <div className="flex items-center gap-2">
+                          {/* 1. Botón Principal: Registrar Pago */}
                           <button
                             disabled={!primer}
                             onClick={(e) => primer && handleQuickCobro(primer, e)}
-                            title="Cobro rápido de periodo actual"
-                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 active:scale-95 text-emerald-400 border border-emerald-500/25 transition-all disabled:opacity-30"
+                            title={primer ? "Registrar o desmarcar cobro del periodo" : "Sin contrato activo"}
+                            className="flex-1 py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-40 cursor-pointer"
+                            style={{
+                              backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#1C1C1E',
+                              color: isDark ? '#FFFFFF' : '#FFFFFF',
+                              border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #1C1C1E',
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.16)' : '#000000';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.1)' : '#1C1C1E';
+                            }}
                           >
-                            <Zap size={15} strokeWidth={2.5} />
-                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Cobro</span>
+                            <Zap size={14} strokeWidth={2.5} />
+                            <span>Registrar Pago</span>
                           </button>
 
-                          {/* 💬 2. WhatsApp Directo */}
+                          {/* 2. Botón Secundario: WhatsApp */}
                           <button
                             disabled={!g.telefono}
                             onClick={(e) => handleSendWhatsAppCobro(primer || g, e)}
-                            title={g.telefono ? `Enviar WhatsApp a ${g.nombre}` : 'Sin teléfono'}
-                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-green-500/15 hover:bg-green-500/25 active:scale-95 text-green-400 border border-green-500/25 transition-all disabled:opacity-30"
-                          >
-                            <Smartphone size={15} strokeWidth={2.5} />
-                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">WhatsApp</span>
-                          </button>
-
-                          {/* 🧾 3. Recibo Rápido */}
-                          <button
-                            disabled={!primer}
-                            onClick={() => {
-                              if (!primer) return;
-                              setReciboForm({
-                                prestamistaKey: g.nombre,
-                                contratoId: primer.id,
-                                cuotaKey: '',
-                                numero: `REC-${Date.now().toString().slice(-6)}`,
-                                fechaEmision: new Date().toISOString().split('T')[0],
-                                concepto: `Pago de Cuota — ${g.nombre}`,
-                                montoInteres: Math.round(g.interesMensual || 0) || 0,
-                                montoCapital: 0,
-                                montoMora: 0,
-                                montoAjustes: 0,
-                                estado: 'Pagado',
-                                metodo: 'Efectivo',
-                                notas: '',
-                              });
-                              setPrestamoView('recibos');
-                            }}
-                            title="Emitir Recibo"
-                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 active:scale-95 text-sky-400 border border-sky-500/25 transition-all disabled:opacity-30"
-                          >
-                            <Printer size={15} strokeWidth={2.5} />
-                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Recibo</span>
-                          </button>
-
-                          {/* ⚙️ 4. Ajustar Contrato */}
-                          <button
-                            disabled={!primer}
-                            onClick={() => primer && setAjusteTarget(primer)}
-                            title="Ajustes y Reestructuración"
-                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 active:scale-95 text-amber-400 border border-amber-500/25 transition-all disabled:opacity-30"
-                          >
-                            <Sliders size={15} strokeWidth={2.5} />
-                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Ajustar</span>
-                          </button>
-
-                          {/* ➕ 5. Nuevo Contrato */}
-                          <button
-                            onClick={() => {
-                              setEditPrestamo({
-                                nombre: g.nombre,
-                                ci: g.ci,
-                                telefono: g.telefono,
-                                foto: g.foto,
-                                capital: '',
-                                interes: settings?.loanDefaultInterest || 5,
-                                moneda: settings?.loanDefaultCurrency || 'BOB',
-                                inicio: new Date().toISOString().split('T')[0],
-                                fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                                estado: 'Activo',
-                                tipoGarantia: '',
-                                garantia: '',
-                                drive_contrato: '',
-                                drive_fotos: '',
-                                notes: '',
-                                pagos: []
-                              });
-                              setShowForm(true);
-                            }}
-                            title="Nuevo Contrato para este deudor"
-                            className="flex flex-col items-center justify-center py-2 px-1 rounded-lg active:scale-95 transition-all"
+                            title={g.telefono ? `Enviar recordatorio por WhatsApp a ${g.nombre}` : 'Sin teléfono'}
+                            className="py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] disabled:opacity-40 cursor-pointer shrink-0"
                             style={{
-                              backgroundColor: t.panel,
-                              border: `1px solid ${t.borderLight}`,
-                              color: t.text
+                              backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+                              color: isDark ? '#34D399' : '#059669',
+                              border: `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.backgroundColor = isDark ? 'rgba(16, 185, 129, 0.18)' : 'rgba(16, 185, 129, 0.15)';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.backgroundColor = isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)';
                             }}
                           >
-                            <Plus size={15} strokeWidth={2.5} />
-                            <span className="text-[8px] font-black uppercase tracking-wider mt-0.5">Nuevo</span>
+                            <Smartphone size={14} strokeWidth={2.2} />
+                            <span className="hidden sm:inline">WhatsApp</span>
                           </button>
+
+                          {/* 3. Menú Contextual: Tres Puntos (...) */}
+                          <div className="relative">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveCardMenu(activeCardMenu === g.key ? null : g.key);
+                              }}
+                              title="Más acciones"
+                              className="p-2.5 rounded-xl text-xs font-semibold flex items-center justify-center transition-all active:scale-[0.98] cursor-pointer"
+                              style={{
+                                backgroundColor: activeCardMenu === g.key
+                                  ? (isDark ? 'rgba(255, 255, 255, 0.15)' : '#E5E7EB')
+                                  : (isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6'),
+                                color: t.text,
+                                border: `1px solid ${t.border}`
+                              }}
+                            >
+                              <MoreHorizontal size={15} />
+                            </button>
+
+                            {/* Popover Menú Contextual Desplegable */}
+                            {activeCardMenu === g.key && (
+                              <div
+                                className="absolute bottom-full right-0 mb-2 w-56 py-1.5 rounded-2xl shadow-2xl z-30 animate-in fade-in zoom-in-95 duration-150"
+                                style={{
+                                  backgroundColor: t.panel,
+                                  border: `1px solid ${t.border}`,
+                                  boxShadow: isDark ? '0 10px 40px rgba(0,0,0,0.6)' : '0 10px 30px rgba(0,0,0,0.12)'
+                                }}
+                              >
+                                {/* Opción: Emitir Recibo */}
+                                <button
+                                  disabled={!primer}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCardMenu(null);
+                                    if (!primer) return;
+                                    setReciboForm({
+                                      prestamistaKey: g.nombre,
+                                      contratoId: primer.id,
+                                      cuotaKey: '',
+                                      numero: `REC-${Date.now().toString().slice(-6)}`,
+                                      fechaEmision: new Date().toISOString().split('T')[0],
+                                      concepto: `Pago de Cuota — ${g.nombre}`,
+                                      montoInteres: Math.round(g.interesMensual || 0) || 0,
+                                      montoCapital: 0,
+                                      montoMora: 0,
+                                      montoAjustes: 0,
+                                      estado: 'Pagado',
+                                      metodo: 'Efectivo',
+                                      notas: '',
+                                    });
+                                    setPrestamoView('recibos');
+                                  }}
+                                  className="w-full px-3.5 py-2.5 text-xs text-left flex items-center gap-2.5 transition-colors cursor-pointer disabled:opacity-30"
+                                  style={{ color: t.text }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  <Printer size={14} style={{ color: t.textDim }} />
+                                  <span>Emitir Recibo Oficial</span>
+                                </button>
+
+                                {/* Opción: Ajustar Contrato */}
+                                <button
+                                  disabled={!primer}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCardMenu(null);
+                                    if (primer) setAjusteTarget(primer);
+                                  }}
+                                  className="w-full px-3.5 py-2.5 text-xs text-left flex items-center gap-2.5 transition-colors cursor-pointer disabled:opacity-30"
+                                  style={{ color: t.text }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  <Sliders size={14} style={{ color: t.textDim }} />
+                                  <span>Ajustar / Reestructurar</span>
+                                </button>
+
+                                {/* Opción: Ver Contratos */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCardMenu(null);
+                                    setSelectedPrestamistaName(g.nombre);
+                                    setPrestamoView('contratos');
+                                  }}
+                                  className="w-full px-3.5 py-2.5 text-xs text-left flex items-center gap-2.5 transition-colors cursor-pointer"
+                                  style={{ color: t.text }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  <FileSignature size={14} style={{ color: t.textDim }} />
+                                  <span>Ver Contratos ({g.contratos?.length || 0})</span>
+                                </button>
+
+                                <div className="my-1" style={{ borderTop: `1px solid ${t.border}` }} />
+
+                                {/* Opción: Nuevo Contrato para este deudor */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveCardMenu(null);
+                                    setEditPrestamo({
+                                      nombre: g.nombre,
+                                      ci: g.ci,
+                                      telefono: g.telefono,
+                                      foto: g.foto,
+                                      capital: '',
+                                      interes: settings?.loanDefaultInterest || 5,
+                                      moneda: settings?.loanDefaultCurrency || 'BOB',
+                                      inicio: new Date().toISOString().split('T')[0],
+                                      fin: new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                                      estado: 'Activo',
+                                      tipoGarantia: '',
+                                      garantia: '',
+                                      drive_contrato: '',
+                                      drive_fotos: '',
+                                      notes: '',
+                                      pagos: []
+                                    });
+                                    setShowForm(true);
+                                  }}
+                                  className="w-full px-3.5 py-2.5 text-xs text-left flex items-center gap-2.5 transition-colors cursor-pointer"
+                                  style={{ color: t.text }}
+                                  onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  <Plus size={14} style={{ color: t.textDim }} />
+                                  <span>Nuevo Préstamo</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2160,7 +2312,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               </div>
             ) : (
               /* Tabla Tradicional con Filtros */
-              <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '16px', overflow: 'hidden' }}>
                 <table className="w-full text-left" style={{ borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: `1px solid ${t.border}` }}>
@@ -2182,17 +2334,17 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                         >
                           <td style={{ padding: '16px 24px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                              <div style={{ width: '36px', height: '36px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, color: t.accent, flexShrink: 0 }}>
+                              <div style={{ width: '38px', height: '38px', borderRadius: '14px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.surface, border: `1px solid ${t.borderLight}`, flexShrink: 0 }}>
                                 {g.foto ? (
                                   <img src={g.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
-                                  <User size={16} />
+                                  <User size={18} color={t.textDim} />
                                 )}
                               </div>
                               <div>
                                 <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>{g.nombre}</p>
                                 <p style={{ fontSize: '10px', color: t.textDim, marginTop: '2px', margin: 0 }}>
-                                  {g.ci ? `CI: ${g.ci}` : ''} {g.telefono ? `· WhatsApp: ${g.telefono}` : ''}
+                                  {g.ci ? `CI: ${g.ci}` : ''} {g.telefono ? `· Telf: ${g.telefono}` : ''}
                                 </p>
                               </div>
                             </div>
@@ -2206,28 +2358,39 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                             </div>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
-                            <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                              {(g.totalAdeudado || 0).toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>BOB</span>
+                            <p style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0 }} className="font-mono">
+                              {(g.totalAdeudado || 0).toLocaleString()} <span style={{ fontSize: '10px', fontWeight: 400, color: t.textDim }}>BOB</span>
                             </p>
                             <p style={{ fontSize: '9px', color: t.textDim, marginTop: '2px', margin: 0 }}>
-                              Interés mensual: +{Math.round(g.interesMensual || 0).toLocaleString()} BOB
+                              Interés: +{Math.round(g.interesMensual || 0).toLocaleString()} BOB/mes
                             </p>
                           </td>
                           <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+                            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
                               {primer && (
                                 <button
                                   onClick={(e) => handleQuickCobro(primer, e)}
-                                  className="p-2 rounded-lg bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 text-xs font-bold"
-                                  title="Cobro rápido"
+                                  className="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                                  style={{
+                                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#1C1C1E',
+                                    color: '#FFFFFF',
+                                    border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #1C1C1E'
+                                  }}
+                                  title="Registrar cobro rápido"
                                 >
-                                  <Zap size={14} />
+                                  <Zap size={13} strokeWidth={2.5} />
+                                  <span>Cobro</span>
                                 </button>
                               )}
                               {g.telefono && (
                                 <button
                                   onClick={(e) => handleSendWhatsAppCobro(primer || g, e)}
-                                  className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500/20 text-xs font-bold"
+                                  className="p-2 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
+                                  style={{
+                                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+                                    color: isDark ? '#34D399' : '#059669',
+                                    border: `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`
+                                  }}
                                   title="Enviar WhatsApp"
                                 >
                                   <Smartphone size={14} />
@@ -2236,7 +2399,12 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                               {primer && (
                                 <button
                                   onClick={() => setAjusteTarget(primer)}
-                                  className="p-2 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-bold"
+                                  className="p-2 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
+                                  style={{
+                                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
+                                    color: t.textDim,
+                                    border: `1px solid ${t.border}`
+                                  }}
                                   title="Ajustar contrato"
                                 >
                                   <Sliders size={14} />
@@ -2245,13 +2413,13 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                               <button 
                                 onClick={() => { setSelectedPrestamistaName(g.nombre); setPrestamoView('contratos'); }}
                                 style={{
-                                  padding: '8px 14px', borderRadius: '10px', border: `1px solid ${t.border}`,
-                                  backgroundColor: t.input, color: t.text, cursor: 'pointer',
-                                  fontSize: '10px', fontWeight: 600, transition: 'all 0.15s',
+                                  padding: '7px 12px', borderRadius: '12px', border: `1px solid ${t.border}`,
+                                  backgroundColor: t.panel, color: t.text, cursor: 'pointer',
+                                  fontSize: '11px', fontWeight: 600, transition: 'all 0.15s',
                                   display: 'flex', alignItems: 'center', gap: '4px'
                                 }}
                               >
-                                Contratos <ChevronRight size={12} />
+                                <span>Contratos</span> <ChevronRight size={12} />
                               </button>
                             </div>
                           </td>
@@ -4095,7 +4263,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
 };
 
 // ─── COMPONENTE KPI CARD EJECUTIVO ──────────────────────────
-const KPICard = ({ t, icon: Icon, label, value, moneda, color }) => (
+const KPICard = ({ icon: Icon, t, label, value, moneda, color }) => (
   <div
     className="p-4 rounded-2xl transition-all duration-300 relative group overflow-hidden"
     style={{
