@@ -1850,15 +1850,22 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
       {/* ── MODAL NUEVA / EDITAR SUSCRIPCIÓN COMPLETA ─────────────────────── */}
       {showServiceModal && (
-        <div className="fixed inset-0 z-[1050] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-[1050] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowServiceModal(false); }}
+        >
           <div
-            className="w-full max-w-lg border overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            className="w-full max-w-lg border overflow-hidden shadow-2xl rounded-t-3xl sm:rounded-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 max-h-[92vh] flex flex-col"
             style={{
               backgroundColor: t.panel,
               borderColor: t.borderLight || t.border,
-              borderRadius: '16px'
             }}
+            onClick={(e) => e.stopPropagation()}
           >
+            {/* Drag handle móvil */}
+            <div className="sm:hidden flex justify-center pt-3 pb-1">
+              <div className="w-12 h-1 rounded-full" style={{ backgroundColor: isDark ? '#3F3F46' : '#D4D4D8' }} />
+            </div>
             <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: t.borderLight || t.border }}>
               <div className="flex items-center gap-2">
                 <Bookmark size={15} style={{ color: t.text }} />
@@ -2204,15 +2211,22 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
       {/* ── MODAL DE EDICIÓN DE EGRESO ─────────────────────────────────────── */}
       {showExpenseModal && (
-        <div className="fixed inset-0 z-[1050] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-[1050] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowExpenseModal(false); }}
+        >
           <div
-            className="w-full max-w-md border overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md border overflow-hidden shadow-2xl rounded-t-3xl sm:rounded-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 max-h-[90vh] flex flex-col"
             style={{
               backgroundColor: t.panel,
-              borderColor: t.borderLight || t.border,
-              borderRadius: '16px'
+              borderColor: t.borderLight || t.border
             }}
+            onClick={(e) => e.stopPropagation()}
           >
+            {/* Drag handle móvil */}
+            <div className="sm:hidden flex justify-center pt-3 pb-1">
+              <div className="w-12 h-1 rounded-full" style={{ backgroundColor: isDark ? '#3F3F46' : '#D4D4D8' }} />
+            </div>
             <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: t.borderLight || t.border }}>
               <h3 style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                 Editar Egreso
