@@ -31,6 +31,16 @@ const getBadge = (id, counts) => {
   return 0;
 };
 
+// Glifo orgánico redondeado idéntico al logotipo de las propuestas conceptuales
+export const LogoGlyph = ({ size = 26, isDark = true }) => (
+  <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path
+      d="M6 7.5C6 4.46243 8.46243 2 11.5 2H16.5C22.299 2 27 6.70101 27 12.5C27 18.299 22.299 23 16.5 23H10.5C8.01472 23 6 20.9853 6 18.5V7.5Z"
+      fill={isDark ? '#E5E7EB' : '#1F2937'}
+    />
+  </svg>
+);
+
 const openCatalog = (setActiveTab) => {
   if (window.location.protocol === 'file:') setActiveTab('catalogo');
   else window.open(window.location.origin + '/catalogo', '_blank');
@@ -206,12 +216,11 @@ export default function AppNav({ activeTab, setActiveTab, counts, settings, isDa
       <button
         type="button"
         onClick={() => setActiveTab('resumen')}
-        className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm mb-3"
-        style={{ backgroundColor: t.text, color: t.bg }}
+        className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-transform hover:scale-105 active:scale-95"
         aria-label="Inefable"
         title="Inefable"
       >
-        I
+        <LogoGlyph size={26} isDark={isDark} />
       </button>
 
       <nav className="flex flex-col items-center gap-1">
@@ -264,13 +273,8 @@ export function TopBar({ activeTab, setActiveTab, counts, settings, googleUser, 
     >
       {isMobile ? (
         <div className="flex items-center gap-2">
-          <div
-            className="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm"
-            style={{ backgroundColor: t.text, color: t.bg }}
-          >
-            I
-          </div>
-          <span className="text-sm font-semibold" style={{ color: t.text }}>Inefable</span>
+          <LogoGlyph size={24} isDark={isDark} />
+          <span className="text-sm font-bold tracking-tight" style={{ color: t.text }}>Inefable</span>
         </div>
       ) : (
         <div

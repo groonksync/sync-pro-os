@@ -1,51 +1,101 @@
 import React from 'react';
 
-// Escalas de grises para gráficos (índice 0 = más destacado)
-const SCALE_DARK = ['#E8E8EA', '#A0A0A6', '#6A6A70', '#45454A'];
-const SCALE_LIGHT = ['#1C1C1E', '#6A6A70', '#A0A0A6', '#D0D0D4'];
+// Escala de grises minimalista de alta definición
+const SCALE_DARK = ['#FFFFFF', '#D1D5DB', '#9CA3AF', '#4B5563', '#374151'];
+const SCALE_LIGHT = ['#111827', '#4B5563', '#6B7280', '#9CA3AF', '#D1D5DB'];
 
 export const chartScale = (isDark) => (isDark ? SCALE_DARK : SCALE_LIGHT);
 
-/** Dona SVG. segments: [{ value, label }] */
-export default function Donut({ segments = [], size = 96, thickness = 12, centerLabel, isDark = true }) {
+/**
+ * Donut SVG refinado con segmentos proporcionales en escala de grises
+ * segments: [{ value: number, label?: string, color?: string }]
+ */
+export default function Donut({
+  segments = [],
+  size = 110,
+  thickness = 18,
+  centerValue,
+  centerLabel,
+  isDark = true,
+}) {
   const scale = chartScale(isDark);
-  const total = segments.reduce((s, x) => s + (Number(x.value) || 0), 0);
-  const r = (size - thickness) / 2;
-  const c = 2 * Math.PI * r;
-  const track = isDark ? '#2A2A2E' : '#EAEAEC';
-  let offset = 0;
+  const total = segments.reduce((sum, s) => sum + (Number(s.value) || 0), 0);
+  const radius = (size - thickness) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const trackColor = isDark ? '#26262B' : '#E5E7EB';
+
+  let currentOffset = 0;
+  const gap = segments.filter((s) => Number(s.value) > 0).length > 1 ? 2.5 : 0;
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={thickness} />
-        {total > 0 && segments.map((seg, i) => {
-          const val = Number(seg.value) || 0;
-          if (val <= 0) return null;
-          const len = (val / total) * c;
-          const el = (
-            <circle
-              key={i}
-              cx={size / 2}
-              cy={size / 2}
-              r={r}
-              fill="none"
-              stroke={scale[i % scale.length]}
-              strokeWidth={thickness}
-              strokeDasharray={`${Math.max(len - 2, 0)} ${c - Math.max(len - 2, 0)}`}
-              strokeDashoffset={-offset}
-            />
-          );
-          offset += len;
-          return el;
-        })}
+    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        viewBox={`0 0 ${size} ${size}`}
+        style={{ transform: 'rotate(-90deg)' }}
+        className="overflow-visible"
+      >
+        {/* Pista de fondo */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={trackColor}
+          strokeWidth={thickness}
+        />
+
+        {/* Segmentos del Donut */}
+        {total > 0 &&
+          segments.map((seg, idx) => {
+            const val = Number(seg.value) || 0;
+            if (val <= 0) return null;
+            const segmentLength = (val / total) * circumference;
+            const dashLength = Math.max(segmentLength - gap, 0.5);
+            const strokeColor = seg.color || scale[idx % scale.length];
+
+            const slice = (
+              <circle
+                key={idx}
+                cx={size / 2}
+                cy={size / 2}
+                r={radius}
+                fill="none"
+                stroke={strokeColor}
+                strokeWidth={thickness}
+                strokeDasharray={`${dashLength} ${circumference - dashLength}`}
+                strokeDashoffset={-currentOffset}
+                className="transition-all duration-500 ease-out"
+              />
+            );
+            currentOffset += segmentLength;
+            return slice;
+          })}
       </svg>
-      {centerLabel != null && (
-        <div
-          className="absolute inset-0 flex items-center justify-center text-xs font-bold"
-          style={{ color: isDark ? '#E8E8EA' : '#1C1C1E' }}
-        >
-          {centerLabel}
+
+      {/* Contenido Central */}
+      {(centerValue != null || centerLabel != null) && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center px-1">
+          {centerLabel && (
+            <span
+              className="text-[9px] uppercase tracking-wider font-semibold"
+              style={{ color: isDark ? '#9CA3AF' : '#6B7280' }}
+            >
+              {centerLabel}
+            </span>
+          )}
+          {centerValue && (
+            <span
+              className="font-bold tracking-tight leading-none mt-0.5"
+              style={{
+                fontSize: Math.max(13, size * 0.16),
+                color: isDark ? '#FFFFFF' : '#111827',
+              }}
+            >
+              {centerValue}
+            </span>
+          )}
         </div>
       )}
     </div>
