@@ -769,58 +769,115 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
 
   return (
     <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}>
+      style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}>
       <div style={{
-        backgroundColor: t.panel, border: `1px solid ${t.border}`,
+        backgroundColor: t.panel, border: `1px solid ${t.borderLight || t.border}`,
         borderRadius: '20px', padding: '24px',
         maxWidth: '520px', width: '100%',
         animation: 'scaleIn 0.2s ease-out',
-        boxShadow: '0 25px 60px rgba(0,0,0,0.5)'
+        boxShadow: isDark ? '0 25px 60px rgba(0,0,0,0.6)' : '0 20px 40px rgba(0,0,0,0.08)'
       }}>
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-white/[0.08]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-              <Sliders size={16} />
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingBottom: '12px',
+          marginBottom: '16px',
+          borderBottom: `1px solid ${t.borderLight || t.border}`
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '10px',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F0F0F2',
+              border: `1px solid ${t.borderLight || t.border}`,
+              color: t.textDim,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Sliders size={15} />
             </div>
             <div>
-              <h3 className="text-sm font-black uppercase tracking-wide text-white m-0">Ajustes & Reestructuración</h3>
-              <p className="text-[11px] text-neutral-400 m-0 mt-0.5">{prestamo.nombre} · {capitalActual.toLocaleString()} {prestamo.moneda || 'BOB'}</p>
+              <h3 style={{ fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.text, margin: 0 }}>
+                Ajustes & Reestructuración
+              </h3>
+              <p style={{ fontSize: '11px', color: t.textDim, margin: '2px 0 0 0' }}>
+                {prestamo.nombre} · {capitalActual.toLocaleString()} {prestamo.moneda || 'BOB'}
+              </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-neutral-400 hover:text-white p-1">
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: t.textDim,
+              cursor: 'pointer',
+              padding: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '6px'
+            }}
+          >
             <X size={16} />
           </button>
         </div>
 
+        {/* Selector de pestañas segmentado */}
         <div
-          className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 rounded-xl mb-4"
-          style={{ backgroundColor: t.surface, border: `1px solid ${t.borderLight}` }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            gap: '4px',
+            padding: '3px',
+            borderRadius: '10px',
+            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F0F0F2',
+            border: `1px solid ${t.borderLight || t.border}`,
+            marginBottom: '16px'
+          }}
         >
           {[
             { id: 'abono_capital', label: 'Abono Capital' },
             { id: 'condonar_mora', label: 'Condonar Mora' },
             { id: 'modificar_tasa', label: 'Cambiar Tasa' },
             { id: 'extender_plazo', label: 'Extender Plazo' }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setTipoAjuste(tab.id)}
-              className="py-2 px-1.5 rounded-lg text-[10px] font-bold text-center transition-all cursor-pointer"
-              style={{
-                backgroundColor: tipoAjuste === tab.id ? '#f59e0b' : 'transparent',
-                color: tipoAjuste === tab.id ? '#000000' : t.textDim,
-                boxShadow: tipoAjuste === tab.id ? '0 2px 8px rgba(245, 158, 11, 0.3)' : 'none'
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+          ].map(tab => {
+            const isActive = tipoAjuste === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setTipoAjuste(tab.id)}
+                style={{
+                  padding: '7px 4px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  backgroundColor: isActive ? (isDark ? '#ECECEC' : '#1C1C1E') : 'transparent',
+                  color: isActive ? (isDark ? '#1C1C1E' : '#FFFFFF') : t.textDim,
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="space-y-4">
           {tipoAjuste === 'abono_capital' && (
-            <div className="space-y-3 p-3.5 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/15">
-              <label className="text-[10px] font-black uppercase tracking-widest text-neutral-300 block">
+            <div style={{
+              padding: '14px',
+              borderRadius: '12px',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+              border: `1px solid ${t.borderLight || t.border}`
+            }} className="space-y-3">
+              <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textDim, display: 'block' }}>
                 Monto del Abono a Capital ({prestamo.moneda || 'BOB'})
               </label>
               <input
@@ -829,16 +886,23 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
                 value={montoAbono}
                 onChange={e => setMontoAbono(e.target.value)}
                 placeholder="Ej: 1000"
-                className="w-full py-2.5 px-3 rounded-lg text-base font-mono font-bold outline-none"
                 style={{
-                  backgroundColor: t.inputBg,
-                  border: `1px solid ${t.borderLight}`,
-                  color: t.text
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  fontWeight: 700,
+                  outline: 'none',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FFFFFF',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.text,
+                  boxSizing: 'border-box'
                 }}
               />
-              <div className="flex justify-between items-center text-xs pt-1">
-                <span className="text-neutral-400">Capital Restante:</span>
-                <span className="font-mono font-black text-emerald-400">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', paddingTop: '4px' }}>
+                <span style={{ color: t.textDim }}>Capital Restante:</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: t.text }}>
                   {nuevoCapitalCalculado.toLocaleString()} {prestamo.moneda || 'BOB'}
                 </span>
               </div>
@@ -846,16 +910,26 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
           )}
 
           {tipoAjuste === 'condonar_mora' && (
-            <div className="p-3.5 rounded-xl bg-blue-500/[0.04] border border-blue-500/15 space-y-2">
-              <p className="text-xs text-neutral-300 m-0">
+            <div style={{
+              padding: '14px',
+              borderRadius: '12px',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+              border: `1px solid ${t.borderLight || t.border}`
+            }}>
+              <p style={{ fontSize: '11px', color: t.textDim, margin: 0, lineHeight: 1.5 }}>
                 Se limpiará la condición de mora y el estado del contrato volverá a <strong>Activo</strong> para que el cliente pueda continuar con sus pagos regulares.
               </p>
             </div>
           )}
 
           {tipoAjuste === 'modificar_tasa' && (
-            <div className="space-y-3 p-3.5 rounded-xl bg-amber-500/[0.04] border border-amber-500/15">
-              <label className="text-[10px] font-black uppercase tracking-widest text-neutral-300 block">
+            <div style={{
+              padding: '14px',
+              borderRadius: '12px',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+              border: `1px solid ${t.borderLight || t.border}`
+            }} className="space-y-3">
+              <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textDim, display: 'block' }}>
                 Nueva Tasa de Interés Mensual (%)
               </label>
               <input
@@ -863,15 +937,23 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
                 step="0.5"
                 value={nuevaTasa}
                 onChange={e => setNuevaTasa(e.target.value)}
-                className="w-full py-2.5 px-3 rounded-lg text-amber-400 text-base font-mono font-bold outline-none"
                 style={{
-                  backgroundColor: t.inputBg,
-                  border: `1px solid ${t.borderLight}`
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  fontSize: '14px',
+                  fontFamily: 'monospace',
+                  fontWeight: 700,
+                  outline: 'none',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FFFFFF',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.text,
+                  boxSizing: 'border-box'
                 }}
               />
-              <div className="flex justify-between items-center text-xs pt-1">
-                <span className="text-neutral-400">Nuevo Interés Mensual:</span>
-                <span className="font-mono font-black text-amber-400">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', paddingTop: '4px' }}>
+                <span style={{ color: t.textDim }}>Nuevo Interés Mensual:</span>
+                <span style={{ fontFamily: 'monospace', fontWeight: 700, color: t.text }}>
                   {(capitalActual * ((parseFloat(nuevaTasa) || 0) / 100)).toLocaleString()} {prestamo.moneda || 'BOB'}/mes
                 </span>
               </div>
@@ -879,26 +961,38 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
           )}
 
           {tipoAjuste === 'extender_plazo' && (
-            <div className="space-y-3 p-3.5 rounded-xl bg-purple-500/[0.04] border border-purple-500/15">
-              <label className="text-[10px] font-black uppercase tracking-widest text-neutral-300 block">
+            <div style={{
+              padding: '14px',
+              borderRadius: '12px',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+              border: `1px solid ${t.borderLight || t.border}`
+            }} className="space-y-3">
+              <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textDim, display: 'block' }}>
                 Nueva Fecha de Vencimiento
               </label>
               <input
                 type="date"
                 value={nuevaFechaFin}
                 onChange={e => setNuevaFechaFin(e.target.value)}
-                className="w-full py-2.5 px-3 rounded-lg text-xs font-mono font-bold outline-none"
                 style={{
-                  backgroundColor: t.inputBg,
-                  border: `1px solid ${t.borderLight}`,
-                  color: t.text
+                  width: '100%',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  fontSize: '11px',
+                  fontFamily: 'monospace',
+                  fontWeight: 600,
+                  outline: 'none',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#FFFFFF',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.text,
+                  boxSizing: 'border-box'
                 }}
               />
             </div>
           )}
 
           <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 block mb-1">
+            <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textDim, display: 'block', marginBottom: '6px' }}>
               Nota / Justificación (Opcional)
             </label>
             <input
@@ -906,27 +1000,38 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
               value={motivo}
               onChange={e => setMotivo(e.target.value)}
               placeholder="Ej: Descuento acordado / Renovación"
-              className="w-full py-2 px-3 text-xs rounded-lg outline-none"
               style={{
-                backgroundColor: t.inputBg,
-                border: `1px solid ${t.borderLight}`,
-                color: t.text
+                width: '100%',
+                padding: '9px 12px',
+                borderRadius: '10px',
+                fontSize: '11px',
+                outline: 'none',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                border: `1px solid ${t.borderLight || t.border}`,
+                color: t.text,
+                boxSizing: 'border-box'
               }}
             />
           </div>
 
           {errorMsg && (
-            <p className="text-xs text-red-400 font-bold m-0">{errorMsg}</p>
+            <p style={{ fontSize: '11px', color: '#ef4444', fontWeight: 600, margin: 0 }}>{errorMsg}</p>
           )}
 
-          <div className="flex gap-2.5 pt-3">
+          <div style={{ display: 'flex', gap: '10px', paddingTop: '8px' }}>
             <button
               onClick={onClose}
-              className="flex-1 py-2.5 px-4 rounded-xl text-xs font-bold transition-all cursor-pointer"
               style={{
-                backgroundColor: t.surface,
-                border: `1px solid ${t.borderLight}`,
-                color: t.textDim
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                backgroundColor: 'transparent',
+                border: `1px solid ${t.borderLight || t.border}`,
+                color: t.textDim,
+                transition: 'all 0.15s ease'
               }}
             >
               Cancelar
@@ -934,7 +1039,23 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
             <button
               onClick={handleGuardarAjuste}
               disabled={loading}
-              className="flex-1 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-black text-xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 transition-all disabled:opacity-50"
+              style={{
+                flex: 1,
+                padding: '10px 14px',
+                borderRadius: '10px',
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                color: isDark ? '#1C1C1E' : '#FFFFFF',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                transition: 'all 0.15s ease',
+                opacity: loading ? 0.6 : 1
+              }}
             >
               {loading ? 'Aplicando...' : 'Aplicar Ajuste'}
             </button>
@@ -2433,24 +2554,31 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
           </div>
         ) : prestamoView === 'contratos' ? (
           <div className="animate-in slide-in-from-right-8 duration-500">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px', cursor: 'pointer' }}
-              onClick={() => { setPrestamoView('list'); setSelectedPrestamistaName(null); }}>
-              <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ArrowLeft size={14} /> Volver a Prestamistas
-              </span>
+            {/* Botón Volver Minimalista */}
+            <div className="flex items-center gap-2 mb-6">
+              <button
+                onClick={() => { setPrestamoView('list'); setSelectedPrestamistaName(null); }}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer shadow-sm"
+                style={{
+                  backgroundColor: t.panel,
+                  border: `1px solid ${t.border}`,
+                  color: t.textSecondary
+                }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = t.hover; e.currentTarget.style.color = t.text; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = t.panel; e.currentTarget.style.color = t.textSecondary; }}
+              >
+                <ArrowLeft size={13} />
+                <span>Volver a Cartera</span>
+              </button>
             </div>
             
-            <header style={{
-              display: 'flex', flexDirection: isMobile ? 'column' : 'row',
-              justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center',
-              gap: '24px', marginBottom: '40px',
-            }}>
+            <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 pb-4 border-b border-white/[0.06]">
               <div>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+                <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
                   Contratos de {selectedPrestamistaName}
                 </h2>
-                <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
-                  Lista de préstamos y refinanciamientos otorgados
+                <p style={{ fontSize: '0.75rem', color: t.textDim, marginTop: '2px', fontWeight: 500, margin: 0 }}>
+                  Historial de préstamos, reestructuraciones y estados de cobranza
                 </p>
               </div>
               <button 
@@ -2476,18 +2604,14 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                   });
                   setShowForm(true);
                 }} 
+                className="py-2 px-4 rounded-2xl text-xs font-semibold transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1.5 shrink-0 cursor-pointer w-full md:w-auto"
                 style={{
-                  backgroundColor: t.accent, color: 'white', border: 'none',
-                  borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
-                  minHeight: '44px',
-                  fontSize: '11px', fontWeight: 600, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '8px', transition: 'all 0.2s ease', width: isMobile ? '100%' : 'auto',
+                  backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                  color: isDark ? '#171717' : '#FFFFFF'
                 }}
-                onMouseEnter={e => e.target.style.backgroundColor = t.accentHover}
-                onMouseLeave={e => e.target.style.backgroundColor = t.accent}
               >
-                <Plus size={16} strokeWidth={3} /> Nuevo Contrato
+                <Plus size={15} strokeWidth={2.5} />
+                <span>Nuevo Contrato</span>
               </button>
             </header>
 
@@ -2519,7 +2643,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                               <td style={{ padding: '16px 24px' }}>
                                 <div>
                                   <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                                    Contrato #${idx + 1}
+                                    Contrato #{idx + 1}
                                   </p>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
                                     <span style={{
@@ -2527,18 +2651,18 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                                       width: '6px',
                                       height: '6px',
                                       borderRadius: '50%',
-                                      backgroundColor: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
+                                      backgroundColor: p.estado === 'Finalizado' ? '#9CA3AF' : p.estado === 'En Mora' ? '#EF4444' : '#10B981',
                                     }} />
                                     <span style={{
                                       fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em',
-                                      color: p.estado === 'Finalizado' ? t.success : p.estado === 'En Mora' ? t.danger : t.accent,
+                                      color: p.estado === 'Finalizado' ? t.textDim : p.estado === 'En Mora' ? '#EF4444' : '#10B981',
                                     }}>
                                       {p.estado || 'Activo'}
                                     </span>
                                     {moraAmount > 0 && (
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '6px' }}>
-                                        <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
-                                        <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444' }}>
+                                        <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: '#EF4444' }} />
+                                        <span style={{ fontSize: '9px', fontWeight: 700, color: '#EF4444' }}>
                                           +{moraAmount.toLocaleString()} mora
                                         </span>
                                       </div>
@@ -2547,81 +2671,86 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                                 </div>
                               </td>
                               <td style={{ padding: '16px 24px', textAlign: 'center' }}>
-                                <span style={{ fontSize: '10px', fontWeight: 500, color: t.textMuted }}>
+                                <span style={{ fontSize: '11px', fontWeight: 500, color: t.textDim }}>
                                   {safeFormatDate(p.inicio)}
                                   {' → '}
                                   {safeFormatDate(p.fin)}
                                 </span>
                               </td>
                               <td style={{ padding: '16px 24px' }}>
-                                <p style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0 }}>
-                                  {parseFloat(p.capital).toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim }}>{p.moneda}</span>
+                                <p style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0 }} className="font-mono">
+                                  {parseFloat(p.capital).toLocaleString()} <span style={{ fontSize: '10px', fontWeight: 400, color: t.textDim }}>{p.moneda}</span>
                                 </p>
                               </td>
                               <td style={{ padding: '16px 24px' }}>
-                                <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
-                                  {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span style={{ fontSize: '9px', color: t.accent }}>{p.moneda}</span>
-                                  <span style={{ fontSize: '10px', color: t.textDim }}> ({p.interes}%)</span>
+                                <p style={{ fontSize: '13px', fontWeight: 600, color: t.textSecondary, margin: 0 }} className="font-mono">
+                                  {(parseFloat(p.capital) * (parseFloat(p.interes) / 100)).toLocaleString()} <span style={{ fontSize: '10px', color: t.textDim }}>{p.moneda}</span>
+                                  <span style={{ fontSize: '10px', color: t.textDim, fontWeight: 400 }}> ({p.interes}%)</span>
                                 </p>
                               </td>
                               <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }} onClick={e => e.stopPropagation()}>
+                                <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }} onClick={e => e.stopPropagation()}>
                                   <button
                                     onClick={(e) => handleQuickCobro(p, e)}
+                                    className="p-2 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
                                     style={{
-                                      padding: '8px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', cursor: 'pointer',
-                                      transition: 'all 0.2s',
+                                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#1C1C1E',
+                                      color: '#FFFFFF',
+                                      border: isDark ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #1C1C1E'
                                     }}
                                     title="Cobro Rápido"
                                   >
-                                    <Zap size={14} />
+                                    <Zap size={13} strokeWidth={2.5} />
                                   </button>
                                   {p.telefono && (
                                     <button
                                       onClick={(e) => handleSendWhatsAppCobro(p, e)}
+                                      className="p-2 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
                                       style={{
-                                        padding: '8px', borderRadius: '12px', border: 'none',
-                                        backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', cursor: 'pointer',
-                                        transition: 'all 0.2s',
+                                        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+                                        color: isDark ? '#34D399' : '#059669',
+                                        border: `1px solid ${isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.3)'}`
                                       }}
                                       title="WhatsApp Cobro"
                                     >
-                                      <Smartphone size={14} />
+                                      <Smartphone size={13} />
                                     </button>
                                   )}
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setAjusteTarget(p); }}
+                                    className="p-2 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
                                     style={{
-                                      padding: '8px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', cursor: 'pointer',
-                                      transition: 'all 0.2s',
+                                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
+                                      color: t.textDim,
+                                      border: `1px solid ${t.border}`
                                     }}
                                     title="Ajustar / Reestructurar Contrato"
                                   >
-                                    <Sliders size={14} />
+                                    <Sliders size={13} />
                                   </button>
                                   <button 
                                     onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
+                                    className="p-2 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
                                     style={{
-                                      padding: '8px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                                      transition: 'all 0.2s',
+                                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
+                                      color: t.textDim,
+                                      border: `1px solid ${t.border}`
                                     }}
                                     title="Editar"
                                   >
-                                    <Edit3 size={14} />
+                                    <Edit3 size={13} />
                                   </button>
                                   <button 
                                     onClick={(e) => handleDeleteRequest(p, e)}
+                                    className="p-2 rounded-xl text-xs font-semibold flex items-center justify-center transition-all cursor-pointer"
                                     style={{
-                                      padding: '8px', borderRadius: '12px', border: 'none',
-                                      backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
-                                      transition: 'all 0.2s',
+                                      backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                                      color: '#EF4444',
+                                      border: '1px solid rgba(239, 68, 68, 0.2)'
                                     }}
                                     title="Eliminar"
                                   >
-                                    <Trash2 size={14} />
+                                    <Trash2 size={13} />
                                   </button>
                                 </div>
                               </td>
@@ -2631,68 +2760,78 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                       </tbody>
                     </table>
                   ) : (
-                    <div>
+                    <div className="divide-y" style={{ borderColor: t.border }}>
                       {(prestamosList.filter(p => p.nombre?.trim().toLowerCase() === selectedPrestamistaName?.trim().toLowerCase())).map((p, idx) => {
-                        const moraAmount = moraMap[p.id];
                         return (
                           <div key={p.id} onClick={() => openPrestamo(p)}
-                            style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '10px', cursor: 'pointer', borderBottom: `1px solid ${t.border}` }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            className="p-4 flex flex-col gap-3 cursor-pointer transition-colors"
+                            onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
+                            onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <div className="flex justify-between items-start gap-2">
                               <div>
                                 <p style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0 }}>Contrato #{idx + 1}</p>
-                                <p style={{ fontSize: '11px', fontWeight: 700, color: t.accent, marginTop: '2px', margin: 0 }}>
+                                <p style={{ fontSize: '12px', fontWeight: 700, color: t.textSecondary, marginTop: '2px', margin: 0 }} className="font-mono">
                                   {parseFloat(p.capital).toLocaleString()} {p.moneda} ({p.interes}% mensual)
                                 </p>
                               </div>
-                              <span style={{
-                                fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', padding: '2px 8px', borderRadius: '6px',
-                                backgroundColor: p.estado === 'Finalizado' ? 'rgba(255,255,255,0.06)' : p.estado === 'En Mora' ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)',
-                                color: p.estado === 'Finalizado' ? t.textDim : p.estado === 'En Mora' ? '#ef4444' : '#10b981',
-                              }}>
-                                {p.estado || 'Activo'}
+                              <span
+                                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold"
+                                style={{
+                                  backgroundColor: p.estado === 'Finalizado' ? (isDark ? 'rgba(156,163,175,0.1)' : '#F3F4F6') : p.estado === 'En Mora' ? (isDark ? 'rgba(239,68,68,0.1)' : '#FEF2F2') : (isDark ? 'rgba(16,185,129,0.1)' : '#ECFDF5'),
+                                  color: p.estado === 'Finalizado' ? '#9CA3AF' : p.estado === 'En Mora' ? '#EF4444' : '#10B981',
+                                  border: `1px solid ${p.estado === 'Finalizado' ? t.border : p.estado === 'En Mora' ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.25)'}`
+                                }}
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: p.estado === 'Finalizado' ? '#9CA3AF' : p.estado === 'En Mora' ? '#EF4444' : '#10B981' }} />
+                                <span>{p.estado || 'Activo'}</span>
                               </span>
                             </div>
                             
                             {/* Botones de acción rápida móviles */}
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', paddingTop: '6px', borderTop: `1px dashed ${t.border}` }} onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t" style={{ borderColor: t.borderLight }} onClick={e => e.stopPropagation()}>
                               <button
                                 onClick={(e) => handleQuickCobro(p, e)}
+                                className="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
                                 style={{
-                                  padding: '6px 10px', borderRadius: '8px', border: 'none',
-                                  backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#10b981', cursor: 'pointer',
-                                  fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px'
+                                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#1C1C1E',
+                                  color: '#FFFFFF'
                                 }}
                               >
-                                <Zap size={12} /> Cobro
+                                <Zap size={12} strokeWidth={2.5} /> Cobro
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setAjusteTarget(p); }}
+                                className="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
                                 style={{
-                                  padding: '6px 10px', borderRadius: '8px', border: 'none',
-                                  backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', cursor: 'pointer',
-                                  fontSize: '10px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px'
+                                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
+                                  color: t.textDim,
+                                  border: `1px solid ${t.border}`
                                 }}
                               >
                                 <Sliders size={12} /> Ajustar
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
+                                className="p-1.5 rounded-xl text-xs font-semibold flex items-center justify-center cursor-pointer"
                                 style={{
-                                  padding: '6px 10px', borderRadius: '8px', border: 'none',
-                                  backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                                  fontSize: '10px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px'
+                                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
+                                  color: t.textDim,
+                                  border: `1px solid ${t.border}`
                                 }}
                               >
-                                <Edit3 size={12} />
+                                <Edit3 size={13} />
                               </button>
                               <button
                                 onClick={(e) => handleDeleteRequest(p, e)}
+                                className="p-1.5 rounded-xl text-xs font-semibold flex items-center justify-center cursor-pointer"
                                 style={{
-                                  padding: '6px 10px', borderRadius: '8px', border: 'none',
-                                  backgroundColor: 'rgba(239, 68, 68, 0.10)', color: '#ef4444', cursor: 'pointer',
+                                  backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                                  color: '#EF4444',
+                                  border: '1px solid rgba(239, 68, 68, 0.2)'
                                 }}
                               >
-                                <Trash2 size={12} />
+                                <Trash2 size={13} />
                               </button>
                             </div>
                           </div>
@@ -2706,29 +2845,32 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               {/* Columna Derecha - Notas de Cliente */}
               <div className={`${isMobile ? '' : 'col-span-4'}`}>
                 <div style={{
-                  padding: '24px',
+                  padding: isMobile ? '16px' : '20px',
                   backgroundColor: t.panel,
-                  border: `1px solid ${t.border}`,
-                  borderRadius: '12px',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  borderRadius: '16px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '16px',
+                  gap: '14px',
                   height: '100%',
                   boxSizing: 'border-box'
                 }}>
-                  <h3 style={{
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    color: t.textMuted,
-                    margin: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}>
-                    <Bookmark size={14} color={t.accent} /> Notas del Cliente
-                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <h3 style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      color: t.textDim,
+                      margin: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <Bookmark size={13} style={{ color: t.textDim }} /> Notas del Cliente
+                    </h3>
+                    <span style={{ fontSize: '10px', color: t.textMuted }}>Privado</span>
+                  </div>
                   
                   <textarea
                     value={clienteNota}
@@ -2737,52 +2879,61 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                     style={{
                       width: '100%',
                       flex: 1,
-                      minHeight: '220px',
-                      padding: '14px',
+                      minHeight: isMobile ? '160px' : '220px',
+                      padding: '12px 14px',
                       fontSize: '12px',
-                      backgroundColor: t.input,
-                      border: `1px solid ${t.border}`,
+                      lineHeight: 1.5,
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F7F7F8',
+                      border: `1px solid ${t.borderLight || t.border}`,
                       color: t.text,
                       borderRadius: '12px',
                       outline: 'none',
                       resize: 'none',
-                      transition: 'border 0.2s',
+                      transition: 'border-color 0.2s',
                       boxSizing: 'border-box'
                     }}
-                    onFocus={e => { e.target.style.borderColor = t.accent; }}
-                    onBlur={e => { e.target.style.borderColor = t.border; }}
+                    onFocus={e => { e.target.style.borderColor = isDark ? '#4A4A4F' : '#C4C4C8'; }}
+                    onBlur={e => { e.target.style.borderColor = t.borderLight || t.border; }}
                   />
 
                   <button
                     onClick={handleSaveClienteNota}
                     disabled={savingNota}
                     style={{
-                      backgroundColor: t.accent,
-                      color: isDark ? '#0A0A0C' : '#FFFFFF',
+                      backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                      color: isDark ? '#1C1C1E' : '#FFFFFF',
                       border: 'none',
-                      borderRadius: '12px',
-                      padding: '12px 20px',
+                      borderRadius: '10px',
+                      padding: '10px 16px',
                       fontSize: '11px',
                       fontWeight: 600,
                       cursor: savingNota ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      gap: '8px',
-                      transition: 'all 0.2s',
+                      gap: '7px',
+                      transition: 'all 0.15s ease',
                       opacity: savingNota ? 0.6 : 1,
                       width: '100%',
                     }}
-                    onMouseEnter={e => { if (!savingNota) e.target.style.backgroundColor = t.accentHover; }}
-                    onMouseLeave={e => { if (!savingNota) e.target.style.backgroundColor = t.accent; }}
+                    onMouseEnter={e => {
+                      if (!savingNota) {
+                        e.currentTarget.style.backgroundColor = isDark ? '#FFFFFF' : '#000000';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!savingNota) {
+                        e.currentTarget.style.backgroundColor = isDark ? '#ECECEC' : '#1C1C1E';
+                      }
+                    }}
                   >
                     {savingNota ? (
                       <>
-                        <RefreshCw size={14} className="animate-spin" /> Guardando...
+                        <RefreshCw size={13} className="animate-spin" /> Guardando...
                       </>
                     ) : (
                       <>
-                        <Save size={14} /> Guardar Notas
+                        <Save size={13} /> Guardar Notas
                       </>
                     )}
                   </button>
@@ -2792,155 +2943,323 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
           </div>
         ) : prestamoView === 'detail' ? (
           <div className="animate-in slide-in-from-right-8 duration-500">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '32px', cursor: 'pointer' }}
-              onClick={closePrestamo}>
-              <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ArrowLeft size={14} /> Volver
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+              <button
+                onClick={closePrestamo}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F2F2F3',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.textDim,
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.09)' : '#E8E8E9';
+                  e.currentTarget.style.color = t.text;
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : '#F2F2F3';
+                  e.currentTarget.style.color = t.textDim;
+                }}
+              >
+                <ArrowLeft size={13} /> Volver a Cartera
+              </button>
             </div>
             
             <header style={{
               display: 'flex', flexDirection: isMobile ? 'column' : 'row',
               justifyContent: 'space-between', alignItems: isMobile ? 'stretch' : 'center',
-              gap: '24px', marginBottom: '40px',
+              gap: '20px', marginBottom: '32px',
+              padding: isMobile ? '16px' : '20px',
+              backgroundColor: t.panel,
+              border: `1px solid ${t.borderLight || t.border}`,
+              borderRadius: '16px'
             }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
-                <div style={{ width: '88px', height: '88px', borderRadius: '16px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: t.accentSoft, border: `2px solid ${t.border}`, flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: 0 }}>
+                <div style={{
+                  width: isMobile ? '64px' : '72px',
+                  height: isMobile ? '64px' : '72px',
+                  borderRadius: '14px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isDark ? '#232326' : '#EFEFF1',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  flexShrink: 0
+                }}>
                   {activePrestamo?.foto ? (
                     <img src={activePrestamo.foto} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
-                    <User size={32} color={t.accent} />
+                    <User size={28} style={{ color: t.textDim }} />
                   )}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                     <input
                       type="text"
                       value={activePrestamo.nombre}
                       onChange={e => setActivePrestamo({...activePrestamo, nombre: e.target.value})}
                       style={{
-                        fontSize: '1.25rem', fontWeight: 700, color: t.text,
-                        background: 'transparent', border: 'none', outline: 'none',
-                        flex: 1, minWidth: 0, letterSpacing: '-0.02em',
+                        fontSize: isMobile ? '1.15rem' : '1.35rem',
+                        fontWeight: 700,
+                        color: t.text,
+                        background: 'transparent',
+                        border: 'none',
+                        outline: 'none',
+                        letterSpacing: '-0.02em',
+                        minWidth: 0,
+                        flex: isMobile ? '1 1 100%' : 'none'
                       }}
                       placeholder="Nombre del Cliente"
                     />
-                    <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 400, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      Contrato: {safeFormatDate(activePrestamo?.inicio || activePrestamo?.created_at || Date.now(), { year: 'numeric', month: 'long', day: 'numeric' })}
+                    <span style={{
+                      color: t.textMuted,
+                      fontSize: '10px',
+                      fontWeight: 500,
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F2F2F3',
+                      border: `1px solid ${t.borderLight || t.border}`
+                    }}>
+                      Inicio: {safeFormatDate(activePrestamo?.inicio || activePrestamo?.created_at || Date.now(), { year: 'numeric', month: 'short', day: 'numeric' })}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-                    {/* CI — misma altura y estilo que el select */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 14px', height: '44px', minHeight: '44px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '10px', boxSizing: 'border-box', overflow: 'hidden' }}>
-                      <FileSignature size={14} color={t.textDim} />
-                      <input type="text" value={activePrestamo?.ci || ''}
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                    {/* CI */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0 10px',
+                      height: '36px',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                      border: `1px solid ${t.borderLight || t.border}`,
+                      borderRadius: '8px',
+                      boxSizing: 'border-box'
+                    }}>
+                      <FileSignature size={13} style={{ color: t.textDim }} />
+                      <input
+                        type="text"
+                        value={activePrestamo?.ci || ''}
                         onChange={e => setActivePrestamo({...activePrestamo, ci: e.target.value})}
                         className="unstyled-input"
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', minWidth: 0, color: t.text, fontSize: '11px', lineHeight: 1.2, padding: 0, height: 'auto' }} placeholder="Cédula de Identidad" />
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
+                          width: '105px',
+                          color: t.text,
+                          fontSize: '11px',
+                          padding: 0
+                        }}
+                        placeholder="Cédula / CI"
+                      />
                     </div>
-                    {/* WhatsApp — misma altura y estilo que el select */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0 14px', height: '44px', minHeight: '44px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '10px', boxSizing: 'border-box', overflow: 'hidden' }}>
-                      <Smartphone size={14} color={t.textDim} />
-                      <input type="text" value={activePrestamo.telefono}
+
+                    {/* WhatsApp */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '0 10px',
+                      height: '36px',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                      border: `1px solid ${t.borderLight || t.border}`,
+                      borderRadius: '8px',
+                      boxSizing: 'border-box'
+                    }}>
+                      <Smartphone size={13} style={{ color: t.textDim }} />
+                      <input
+                        type="text"
+                        value={activePrestamo.telefono}
                         onChange={e => setActivePrestamo({...activePrestamo, telefono: e.target.value})}
                         className="unstyled-input"
-                        style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', minWidth: 0, color: t.text, fontSize: '11px', lineHeight: 1.2, padding: 0, height: 'auto' }} placeholder="WhatsApp" />
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          outline: 'none',
+                          width: '110px',
+                          color: t.text,
+                          fontSize: '11px',
+                          padding: 0
+                        }}
+                        placeholder="WhatsApp / Tel"
+                      />
                     </div>
-                    <select value={activePrestamo.estado}
+
+                    {/* Selector de estado */}
+                    <select
+                      value={activePrestamo.estado}
                       onChange={e => setActivePrestamo({...activePrestamo, estado: e.target.value})}
                       style={{
-                        height: '44px', minHeight: '44px', padding: '0 14px', borderRadius: '10px', fontSize: '11px', fontWeight: 600,
-                        textTransform: 'uppercase', border: `1px solid ${t.border}`,
-                        backgroundColor: t.input, color: t.accent, outline: 'none', boxSizing: 'border-box',
-                      }}>
+                        height: '36px',
+                        padding: '0 10px',
+                        borderRadius: '8px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        border: `1px solid ${t.borderLight || t.border}`,
+                        backgroundColor: isDark ? '#232326' : '#FFFFFF',
+                        color: t.text,
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        cursor: 'pointer'
+                      }}
+                    >
                       <option value="Activo">Activo</option>
                       <option value="En Mora">En Mora</option>
                       <option value="Finalizado">Finalizado</option>
                     </select>
-                    {/* WhatsApp Cobro */}
-                    {activePrestamo.telefono && (
+
+                    {/* Acciones compactas */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      {/* WhatsApp Cobro */}
+                      {activePrestamo.telefono && (
+                        <button
+                          onClick={(e) => handleSendWhatsAppCobro(activePrestamo, e)}
+                          title="Enviar recordatorio WhatsApp"
+                          style={{
+                            width: '36px', height: '36px', borderRadius: '8px',
+                            border: `1px solid ${t.borderLight || t.border}`,
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                            color: t.textDim, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.08)' : '#ECECEC';
+                            e.currentTarget.style.color = t.text;
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8';
+                            e.currentTarget.style.color = t.textDim;
+                          }}
+                        >
+                          <Smartphone size={14} />
+                        </button>
+                      )}
+
+                      {/* Ajustar Contrato */}
                       <button
-                        onClick={(e) => handleSendWhatsAppCobro(activePrestamo, e)}
-                        title="Enviar recordatorio WhatsApp"
+                        onClick={() => setAjusteTarget(activePrestamo)}
+                        title="Ajustes y Reestructuración de Contrato"
                         style={{
-                          width: '44px', height: '44px', minHeight: '44px', borderRadius: '10px',
-                          border: '1px solid rgba(34, 197, 94, 0.3)', backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                          color: '#22c55e', cursor: 'pointer',
+                          width: '36px', height: '36px', borderRadius: '8px',
+                          border: `1px solid ${t.borderLight || t.border}`,
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                          color: t.textDim, cursor: 'pointer',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                          transition: 'all 0.15s',
+                          transition: 'all 0.15s ease',
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(34, 197, 94, 0.1)'; }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.08)' : '#ECECEC';
+                          e.currentTarget.style.color = t.text;
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8';
+                          e.currentTarget.style.color = t.textDim;
+                        }}
                       >
-                        <Smartphone size={16} />
+                        <Sliders size={14} />
                       </button>
-                    )}
-                    {/* Ajustar Contrato */}
-                    <button
-                      onClick={() => setAjusteTarget(activePrestamo)}
-                      title="Ajustes y Reestructuración de Contrato"
-                      style={{
-                        width: '44px', height: '44px', minHeight: '44px', borderRadius: '10px',
-                        border: '1px solid rgba(245, 158, 11, 0.3)', backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                        color: '#f59e0b', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(245, 158, 11, 0.2)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(245, 158, 11, 0.1)'; }}
-                    >
-                      <Sliders size={16} />
-                    </button>
-                    {/* Editar — misma altura que el resto */}
-                    <button
-                      onClick={() => handleEditPrestamo(activePrestamo)}
-                      title="Editar préstamo"
-                      style={{
-                        width: '44px', height: '44px', minHeight: '44px', borderRadius: '10px',
-                        border: `1px solid ${t.border}`, backgroundColor: t.input,
-                        color: t.accent, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => { e.target.style.borderColor = t.accent; e.target.style.backgroundColor = t.accentSoft; }}
-                      onMouseLeave={e => { e.target.style.borderColor = t.border; e.target.style.backgroundColor = t.input; }}
-                    >
-                      <Edit3 size={15} />
-                    </button>
-                    {/* Eliminar — misma altura que el resto */}
-                    <button
-                      onClick={(e) => handleDeleteRequest(activePrestamo, e)}
-                      title="Eliminar préstamo"
-                      style={{
-                        width: '44px', height: '44px', minHeight: '44px', borderRadius: '10px',
-                        border: '1px solid rgba(239, 68, 68, 0.25)', backgroundColor: 'rgba(239, 68, 68, 0.07)',
-                        color: '#ef4444', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                        transition: 'all 0.15s',
-                      }}
-                      onMouseEnter={e => { e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.15)'; e.target.style.borderColor = 'rgba(239, 68, 68, 0.5)'; }}
-                      onMouseLeave={e => { e.target.style.backgroundColor = 'rgba(239, 68, 68, 0.07)'; e.target.style.borderColor = 'rgba(239, 68, 68, 0.25)'; }}
-                    >
-                      <Trash2 size={15} />
-                    </button>
+
+                      {/* Editar */}
+                      <button
+                        onClick={() => handleEditPrestamo(activePrestamo)}
+                        title="Editar préstamo"
+                        style={{
+                          width: '36px', height: '36px', borderRadius: '8px',
+                          border: `1px solid ${t.borderLight || t.border}`,
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                          color: t.textDim, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.08)' : '#ECECEC';
+                          e.currentTarget.style.color = t.text;
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8';
+                          e.currentTarget.style.color = t.textDim;
+                        }}
+                      >
+                        <Edit3 size={14} />
+                      </button>
+
+                      {/* Eliminar */}
+                      <button
+                        onClick={(e) => handleDeleteRequest(activePrestamo, e)}
+                        title="Eliminar préstamo"
+                        style={{
+                          width: '36px', height: '36px', borderRadius: '8px',
+                          border: `1px solid ${t.borderLight || t.border}`,
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                          color: t.textDim, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.12)';
+                          e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                          e.currentTarget.style.color = '#ef4444';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8';
+                          e.currentTarget.style.borderColor = t.borderLight || t.border;
+                          e.currentTarget.style.color = t.textDim;
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Botón Guardar */}
               <button 
                 onClick={handleSave} 
                 disabled={loading}
                 style={{
-                  backgroundColor: t.accent, color: 'white', border: 'none',
-                  borderRadius: '12px', padding: isMobile ? '14px 24px' : '10px 20px',
-                  fontSize: '11px', fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '8px', transition: 'all 0.2s', opacity: loading ? 0.6 : 1,
+                  backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                  color: isDark ? '#1C1C1E' : '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: isMobile ? '12px 20px' : '0 18px',
+                  height: isMobile ? 'auto' : '38px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '7px',
+                  transition: 'all 0.15s ease',
+                  opacity: loading ? 0.6 : 1,
                   width: isMobile ? '100%' : 'auto',
+                  flexShrink: 0
                 }}
-                onMouseEnter={e => { if (!loading) e.target.style.backgroundColor = t.accentHover; }}
-                onMouseLeave={e => { if (!loading) e.target.style.backgroundColor = t.accent; }}
+                onMouseEnter={e => {
+                  if (!loading) {
+                    e.currentTarget.style.backgroundColor = isDark ? '#FFFFFF' : '#000000';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (!loading) {
+                    e.currentTarget.style.backgroundColor = isDark ? '#ECECEC' : '#1C1C1E';
+                  }
+                }}
               >
-                <Save size={16} /> {loading ? 'Guardando...' : 'Guardar'}
+                <Save size={14} /> {loading ? 'Guardando...' : 'Guardar Cambios'}
               </button>
             </header>
 
@@ -2948,33 +3267,66 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               {/* LEFT COLUMN - Timeline & Contract */}
               <div className={`${isMobile ? '' : 'col-span-8'} space-y-6`}>
                 {/* LEDGER / CUENTA CORRIENTE */}
-                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                    <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <CalendarDays size={14} color={t.accent} /> Cuenta Corriente
+                <div style={{
+                  padding: isMobile ? '16px' : '22px',
+                  backgroundColor: t.panel,
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  borderRadius: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                    <h3 style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      color: t.textDim,
+                      margin: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px'
+                    }}>
+                      <CalendarDays size={13} style={{ color: t.textDim }} /> Cuenta Corriente
                     </h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                      <span style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted }}>
-                        Capital: <strong style={{ color: t.text, fontSize: '13px' }}>{(parseFloat(activePrestamo?.capital) || 0).toLocaleString()} Bs</strong>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: t.textMuted,
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F2F2F3',
+                        border: `1px solid ${t.borderLight || t.border}`
+                      }}>
+                        Capital: <strong style={{ color: t.text, fontFamily: 'monospace' }}>{(parseFloat(activePrestamo?.capital) || 0).toLocaleString()} Bs</strong>
                       </span>
-                      <span style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted }}>
-                        Interés/mes: <strong style={{ color: t.accent, fontSize: '13px' }}>{Math.round((parseFloat(activePrestamo?.capital) || 0) * ((parseFloat(activePrestamo?.interes) || 0) / 100)).toLocaleString()} Bs</strong>
+                      <span style={{
+                        fontSize: '10px',
+                        fontWeight: 600,
+                        color: t.textMuted,
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F2F2F3',
+                        border: `1px solid ${t.borderLight || t.border}`
+                      }}>
+                        Interés/mes: <strong style={{ color: t.text, fontFamily: 'monospace' }}>{Math.round((parseFloat(activePrestamo?.capital) || 0) * ((parseFloat(activePrestamo?.interes) || 0) / 100)).toLocaleString()} Bs</strong>
                       </span>
                     </div>
                   </div>
-                  <p style={{ fontSize: '10px', fontWeight: 500, color: t.textDim, marginBottom: '16px' }}>
-                    <span style={{ color: t.accent }}>⏱️</span> Click en fila para marcar como pagado
+                  
+                  <p style={{ fontSize: '10px', color: t.textDim, marginBottom: '14px', margin: '0 0 14px 0' }}>
+                    Haz clic en una cuota para alternar su estado entre Pagado y Pendiente.
                   </p>
+
                   <div style={{ overflowX: 'auto' }}>
                     <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '600px' }}>
                       <thead>
-                        <tr style={{ borderBottom: `1px solid ${t.border}` }}>
-                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Mes</th>
-                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Vencimiento</th>
-                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés</th>
-                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Cuota Mensual</th>
-                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Estado</th>
-                          <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Acciones</th>
+                        <tr style={{ borderBottom: `1px solid ${t.borderLight || t.border}` }}>
+                          <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Mes</th>
+                          <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Vencimiento</th>
+                          <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés</th>
+                          <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Cuota Total</th>
+                          <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Estado</th>
+                          <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2984,69 +3336,82 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                           return (
                             <tr key={c.key} onClick={() => togglePago(c.key)}
                               style={{
-                                cursor: 'pointer', transition: 'background 0.15s',
-                                borderBottom: `1px solid ${t.border}`,
-                                backgroundColor: isPaid ? 'rgba(16, 185, 129, 0.04)' : isReserved ? 'rgba(245, 158, 11, 0.04)' : 'transparent',
+                                cursor: 'pointer',
+                                transition: 'background-color 0.15s ease',
+                                borderBottom: `1px solid ${t.borderLight || t.border}`,
+                                backgroundColor: isPaid
+                                  ? (isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)')
+                                  : isReserved
+                                    ? (isDark ? 'rgba(245, 158, 11, 0.04)' : 'rgba(245, 158, 11, 0.03)')
+                                    : 'transparent',
                               }}
-                              onMouseEnter={e => e.currentTarget.style.backgroundColor = isPaid ? 'rgba(16, 185, 129, 0.08)' : isReserved ? 'rgba(245, 158, 11, 0.08)' : t.hover}
-                              onMouseLeave={e => e.currentTarget.style.backgroundColor = isPaid ? 'rgba(16, 185, 129, 0.04)' : isReserved ? 'rgba(245, 158, 11, 0.04)' : 'transparent'}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : '#F2F2F3';
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.backgroundColor = isPaid
+                                  ? (isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)')
+                                  : isReserved
+                                    ? (isDark ? 'rgba(245, 158, 11, 0.04)' : 'rgba(245, 158, 11, 0.03)')
+                                    : 'transparent';
+                              }}
                             >
-                              <td style={{ padding: '10px 14px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : isReserved ? '#f59e0b' : t.text }}>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>
                                   {c.label}
                                 </span>
                               </td>
-                              <td style={{ padding: '10px 14px' }}>
-                                <span style={{ fontSize: '10px', color: t.textDim, fontWeight: 500 }}>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span style={{ fontSize: '10px', color: t.textDim, fontFamily: 'monospace' }}>
                                   {c.fechaVencimiento || '—'}
                                 </span>
                               </td>
-                              <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : isReserved ? '#f59e0b' : t.accent }}>
+                              <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: t.text, fontFamily: 'monospace' }}>
                                   {c.interes.toLocaleString()}
                                 </span>
                               </td>
-                              <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                              <td style={{ padding: '10px 12px', textAlign: 'right' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
-                                  <span style={{ fontSize: '11px', fontWeight: 600, color: isPaid ? t.success : isReserved ? '#f59e0b' : t.text }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 600, color: t.text, fontFamily: 'monospace' }}>
                                     {c.total.toLocaleString()}
                                   </span>
                                   {c.mora > 0 && (
-                                    <span style={{ fontSize: '9px', fontWeight: 700, color: '#ef4444' }}>
+                                    <span style={{ fontSize: '9px', fontWeight: 600, color: '#ef4444' }}>
                                       +{c.mora.toLocaleString()} mora
                                     </span>
                                   )}
                                 </div>
                               </td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                              <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                                 {isPaid ? (
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 600, color: t.text }}>
-                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.success }} />
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 500, color: t.textDim }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e', flexShrink: 0 }} />
                                     <span>Pagado</span>
                                   </div>
                                 ) : isReserved ? (
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 600, color: t.text }}>
-                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 500, color: t.textDim }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#f59e0b', flexShrink: 0 }} />
                                     <span>Reservado</span>
                                   </div>
                                 ) : c.estado === 'vencido' ? (
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 600, color: t.text }}>
-                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444' }} />
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 500, color: '#ef4444' }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ef4444', flexShrink: 0 }} />
                                     <span>Vencido</span>
                                   </div>
                                 ) : c.estado === 'futuro' ? (
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 600, color: t.textDim }}>
-                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.border }} />
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 500, color: t.textMuted }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.borderLight || t.border, flexShrink: 0 }} />
                                     <span>Futuro</span>
                                   </div>
                                 ) : (
-                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 600, color: t.textDim }}>
-                                    <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.textMuted }} />
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '10px', fontWeight: 500, color: t.textDim }}>
+                                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: t.textMuted, flexShrink: 0 }} />
                                     <span>Pendiente</span>
                                   </div>
                                 )}
                               </td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                              <td style={{ padding: '10px 12px', textAlign: 'center' }}>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -3068,14 +3433,31 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                                     setPrestamoView('recibos');
                                   }}
                                   style={{
-                                    padding: '6px 10px', borderRadius: '8px', border: 'none',
-                                    backgroundColor: t.accentSoft, color: t.accent, cursor: 'pointer',
-                                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px',
-                                    fontSize: '10px', fontWeight: 600
+                                    padding: '5px 10px',
+                                    borderRadius: '6px',
+                                    border: `1px solid ${t.borderLight || t.border}`,
+                                    backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                                    color: t.textDim,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '5px',
+                                    fontSize: '10px',
+                                    fontWeight: 600,
+                                    transition: 'all 0.15s ease'
+                                  }}
+                                  onMouseEnter={e => {
+                                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.08)' : '#ECECEC';
+                                    e.currentTarget.style.color = t.text;
+                                  }}
+                                  onMouseLeave={e => {
+                                    e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8';
+                                    e.currentTarget.style.color = t.textDim;
                                   }}
                                   title="Emitir Recibo"
                                 >
-                                  <Printer size={12} /> Recibo
+                                  <Printer size={11} /> Recibo
                                 </button>
                               </td>
                             </tr>
@@ -3084,31 +3466,31 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                       </tbody>
                       {ledgerResumen && (
                         <tfoot>
-                          <tr style={{ borderTop: `2px solid ${t.accent}` }}>
-                            <td style={{ padding: '12px 14px' }}>
-                              <span style={{ fontSize: '10px', fontWeight: 700, color: t.text }}>Totales</span>
+                          <tr style={{ borderTop: `1px solid ${t.borderLight || t.border}` }}>
+                            <td style={{ padding: '12px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: t.text }}>Totales</span>
                             </td>
-                            <td style={{ padding: '12px 14px' }}></td>
-                            <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                              <span style={{ fontSize: '11px', fontWeight: 700, color: t.accent }}>
-                                {(ledgerResumen.interesPromedio || 0).toLocaleString()}/mes
+                            <td style={{ padding: '12px' }}></td>
+                            <td style={{ padding: '12px', textAlign: 'right' }}>
+                              <span style={{ fontSize: '11px', fontWeight: 700, color: t.text, fontFamily: 'monospace' }}>
+                                {(ledgerResumen.interesPromedio || 0).toLocaleString()} /mes
                               </span>
                             </td>
-                            <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                            <td style={{ padding: '12px', textAlign: 'right' }}>
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 700, color: t.text }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: t.text, fontFamily: 'monospace' }}>
                                   {(ledgerResumen.totalPagado || 0).toLocaleString()} pagado
                                 </span>
-                                <span style={{ fontSize: '10px', fontWeight: 600, color: t.textDim }}>
+                                <span style={{ fontSize: '10px', fontWeight: 500, color: t.textDim, fontFamily: 'monospace' }}>
                                   {(ledgerResumen.totalPendiente || 0).toLocaleString()} resta
                                 </span>
                                 {ledgerResumen.capitalPendiente !== undefined && ledgerResumen.capitalPendiente > 0 && (
-                                  <span style={{ fontSize: '9px', fontWeight: 500, color: t.textMuted }}>
+                                  <span style={{ fontSize: '9px', fontWeight: 500, color: t.textMuted, fontFamily: 'monospace' }}>
                                     Cap. resta: {(ledgerResumen.capitalPendiente || 0).toLocaleString()}
                                   </span>
                                 )}
                                 {ledgerResumen.interesPendiente !== undefined && ledgerResumen.interesPendiente > 0 && (
-                                  <span style={{ fontSize: '9px', fontWeight: 500, color: t.textMuted }}>
+                                  <span style={{ fontSize: '9px', fontWeight: 500, color: t.textMuted, fontFamily: 'monospace' }}>
                                     Int. resta: {(ledgerResumen.interesPendiente || 0).toLocaleString()}
                                   </span>
                                 )}
@@ -3116,17 +3498,18 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                               {(ledgerResumen.totalMora || 0) > 0 && (
                                 <>
                                   <br />
-                                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#ef4444' }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 600, color: '#ef4444' }}>
                                     {(ledgerResumen.totalMora || 0).toLocaleString()} en mora
                                   </span>
                                 </>
                               )}
                             </td>
-                            <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                              <span style={{ fontSize: '9px', fontWeight: 600, color: t.textMuted }}>
+                            <td style={{ padding: '12px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 600, color: t.textMuted }}>
                                 {ledgerResumen.cuotasPagadas || 0}/{ledgerResumen.totalCuotas || 0} pagadas
                               </span>
                             </td>
+                            <td style={{ padding: '12px' }}></td>
                           </tr>
                         </tfoot>
                       )}
@@ -3136,59 +3519,79 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
 
                 {/* PROYECCIÓN PRÓXIMOS 6 MESES */}
                 {ledgerProyeccion && ledgerProyeccion.length > 0 && (
-                  <div style={{ marginTop: '16px', padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                      <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <TrendingUp size={14} color="#a855f7" /> Proyección Próximos 6 Meses
+                  <div style={{
+                    marginTop: '16px',
+                    padding: isMobile ? '16px' : '20px',
+                    backgroundColor: t.panel,
+                    border: `1px solid ${t.borderLight || t.border}`,
+                    borderRadius: '16px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                      <h3 style={{
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        color: t.textDim,
+                        margin: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}>
+                        <TrendingUp size={13} style={{ color: t.textDim }} /> Proyección Próximos 6 Meses
                       </h3>
                     </div>
                     <div style={{ overflowX: 'auto' }}>
                       <table className="w-full text-left" style={{ borderCollapse: 'collapse', minWidth: '550px' }}>
                         <thead>
-                          <tr style={{ borderBottom: `1px solid ${t.border}` }}>
-                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Mes</th>
-                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Vencimiento</th>
-                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés Proy.</th>
-                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Cuota Proy.</th>
-                            <th style={{ padding: '10px 14px', fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Estado</th>
+                          <tr style={{ borderBottom: `1px solid ${t.borderLight || t.border}` }}>
+                            <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Mes</th>
+                            <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim }}>Vencimiento</th>
+                            <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Interés Proy.</th>
+                            <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'right' }}>Cuota Proy.</th>
+                            <th style={{ padding: '8px 12px', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, textAlign: 'center' }}>Estado</th>
                           </tr>
                         </thead>
                         <tbody>
                           {ledgerProyeccion.map((p) => (
                             <tr key={p.key}
                               style={{
-                                borderBottom: `1px solid ${t.border}`,
+                                borderBottom: `1px solid ${t.borderLight || t.border}`,
                                 backgroundColor: 'transparent',
-                                transition: 'background 0.15s',
+                                transition: 'background-color 0.15s ease',
                               }}
-                              onMouseEnter={e => e.currentTarget.style.backgroundColor = t.hover}
-                              onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.03)' : '#F2F2F3';
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                              }}
                             >
-                              <td style={{ padding: '10px 14px' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#a855f7' }}>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>
                                   {p.label}
                                 </span>
                               </td>
-                              <td style={{ padding: '10px 14px' }}>
-                                <span style={{ fontSize: '10px', color: t.textDim, fontWeight: 500 }}>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span style={{ fontSize: '10px', color: t.textDim, fontFamily: 'monospace' }}>
                                   {p.fechaVencimiento || '—'}
                                 </span>
                               </td>
-                              <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                                <span style={{ fontSize: '11px', fontWeight: 600, color: '#a855f7' }}>
+                              <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: t.text, fontFamily: 'monospace' }}>
                                   {p.interes.toLocaleString()}
                                 </span>
                               </td>
-                              <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                              <td style={{ padding: '10px 12px', textAlign: 'right' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '1px' }}>
-                                  <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>
+                                  <span style={{ fontSize: '11px', fontWeight: 600, color: t.text, fontFamily: 'monospace' }}>
                                     {p.total.toLocaleString()}
                                   </span>
                                 </div>
                               </td>
-                              <td style={{ padding: '10px 14px', textAlign: 'center' }}>
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: t.textDim }}>
-                                  <Clock size={12} /> Proyectado
+                              <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '9px', fontWeight: 600, color: t.textMuted }}>
+                                  <Clock size={11} /> Proyectado
                                 </span>
                               </td>
                             </tr>
@@ -3200,46 +3603,94 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                 )}
 
                 {/* CONTRACT & GUARANTEE */}
-                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
-                  <h3 style={{ fontSize: '10px', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.textMuted, margin: 0, display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                    <ShieldCheck size={14} color={t.accent} /> Contrato y Garantía
+                <div style={{
+                  padding: isMobile ? '16px' : '20px',
+                  backgroundColor: t.panel,
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  borderRadius: '16px'
+                }}>
+                  <h3 style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    letterSpacing: '0.04em',
+                    textTransform: 'uppercase',
+                    color: t.textDim,
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    marginBottom: '14px'
+                  }}>
+                    <ShieldCheck size={13} style={{ color: t.textDim }} /> Contrato y Garantía
                   </h3>
-                  <textarea value={activePrestamo.garantia} 
+                  <textarea
+                    value={activePrestamo.garantia} 
                     onChange={e => setActivePrestamo({...activePrestamo, garantia: e.target.value})} 
                     style={{
-                      width: '100%', height: '120px', padding: '14px', fontSize: '12px',
-                      backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                      borderRadius: '12px', outline: 'none', resize: 'none', transition: 'border 0.2s',
+                      width: '100%',
+                      height: '110px',
+                      padding: '12px 14px',
+                      fontSize: '12px',
+                      lineHeight: 1.5,
+                      backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F7F7F8',
+                      border: `1px solid ${t.borderLight || t.border}`,
+                      color: t.text,
+                      borderRadius: '12px',
+                      outline: 'none',
+                      resize: 'none',
+                      transition: 'border-color 0.2s',
+                      boxSizing: 'border-box'
                     }}
-                    onFocus={e => { e.target.style.borderColor = t.accent; }}
-                    onBlur={e => { e.target.style.borderColor = t.border; }}
-                    placeholder="Detalles de la garantía (Ej: Auto, Título de propiedad, etc.)" />
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+                    onFocus={e => { e.target.style.borderColor = isDark ? '#4A4A4F' : '#C4C4C8'; }}
+                    onBlur={e => { e.target.style.borderColor = t.borderLight || t.border; }}
+                    placeholder="Detalles de la garantía (Ej: Auto, Título de propiedad, etc.)"
+                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginTop: '14px' }}>
                     <div>
-                      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Link Contrato Drive</label>
-                      <input type="text" value={activePrestamo.drive_contrato} 
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Link Contrato Drive</label>
+                      <input
+                        type="text"
+                        value={activePrestamo.drive_contrato} 
                         onChange={e => setActivePrestamo({...activePrestamo, drive_contrato: e.target.value})} 
                         style={{
-                          width: '100%', padding: '10px 14px', fontSize: '10px',
-                          backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                          borderRadius: '12px', outline: 'none', transition: 'border 0.2s',
+                          width: '100%',
+                          padding: '9px 12px',
+                          fontSize: '11px',
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F7F7F8',
+                          border: `1px solid ${t.borderLight || t.border}`,
+                          color: t.text,
+                          borderRadius: '10px',
+                          outline: 'none',
+                          transition: 'border-color 0.2s',
+                          boxSizing: 'border-box'
                         }}
-                        onFocus={e => { e.target.style.borderColor = t.accent; }}
-                        onBlur={e => { e.target.style.borderColor = t.border; }}
-                        placeholder="https://drive.google.com/..." />
+                        onFocus={e => { e.target.style.borderColor = isDark ? '#4A4A4F' : '#C4C4C8'; }}
+                        onBlur={e => { e.target.style.borderColor = t.borderLight || t.border; }}
+                        placeholder="https://drive.google.com/..."
+                      />
                     </div>
                     <div>
-                      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Link Fotos Respaldo</label>
-                      <input type="text" value={activePrestamo.drive_fotos} 
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Link Fotos Respaldo</label>
+                      <input
+                        type="text"
+                        value={activePrestamo.drive_fotos} 
                         onChange={e => setActivePrestamo({...activePrestamo, drive_fotos: e.target.value})} 
                         style={{
-                          width: '100%', padding: '10px 14px', fontSize: '10px',
-                          backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                          borderRadius: '12px', outline: 'none', transition: 'border 0.2s',
+                          width: '100%',
+                          padding: '9px 12px',
+                          fontSize: '11px',
+                          backgroundColor: isDark ? 'rgba(255, 255, 255, 0.03)' : '#F7F7F8',
+                          border: `1px solid ${t.borderLight || t.border}`,
+                          color: t.text,
+                          borderRadius: '10px',
+                          outline: 'none',
+                          transition: 'border-color 0.2s',
+                          boxSizing: 'border-box'
                         }}
-                        onFocus={e => { e.target.style.borderColor = t.accent; }}
-                        onBlur={e => { e.target.style.borderColor = t.border; }}
-                        placeholder="https://photos.app.goo.gl/..." />
+                        onFocus={e => { e.target.style.borderColor = isDark ? '#4A4A4F' : '#C4C4C8'; }}
+                        onBlur={e => { e.target.style.borderColor = t.borderLight || t.border; }}
+                        placeholder="https://photos.app.goo.gl/..."
+                      />
                     </div>
                   </div>
                 </div>
@@ -3248,81 +3699,148 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
               {/* RIGHT COLUMN - Capital & Period */}
               <div className={`${isMobile ? '' : 'col-span-4'} space-y-6`}>
                 {/* CAPITAL & INTEREST */}
-                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
-                  <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '12px' }}>Capital Invertido</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px', backgroundColor: t.input, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
-                    <DollarSign size={18} color={t.textDim} />
-                    <input type="number" value={activePrestamo.capital} 
+                <div style={{
+                  padding: isMobile ? '16px' : '20px',
+                  backgroundColor: t.panel,
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  borderRadius: '16px'
+                }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textDim, display: 'block', marginBottom: '12px' }}>Capital Invertido</label>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 14px',
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                    border: `1px solid ${t.borderLight || t.border}`,
+                    borderRadius: '12px'
+                  }}>
+                    <DollarSign size={18} style={{ color: t.textDim }} />
+                    <input
+                      type="number"
+                      value={activePrestamo.capital} 
                       onChange={e => setActivePrestamo({...activePrestamo, capital: e.target.value})} 
                       style={{
-                        background: 'transparent', border: 'none', outline: 'none',
-                        fontSize: '1.5rem', fontWeight: 700, color: t.text, width: '100%',
+                        background: 'transparent',
+                        border: 'none',
+                        outline: 'none',
+                        fontSize: '1.4rem',
+                        fontWeight: 700,
+                        color: t.text,
+                        width: '100%',
                         fontFamily: 'monospace',
-                      }} />
+                      }}
+                    />
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '16px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '14px' }}>
                     <div>
-                      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Interés (%)</label>
-                      <input type="number" value={activePrestamo.interes} 
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Interés (%)</label>
+                      <input
+                        type="number"
+                        value={activePrestamo.interes} 
                         onChange={e => setActivePrestamo({...activePrestamo, interes: e.target.value})} 
                         style={{
-                          width: '100%', padding: '12px', fontSize: '1rem', fontFamily: 'monospace',
-                          backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.accent,
-                          borderRadius: '12px', outline: 'none', fontWeight: 600,
-                        }} />
+                          width: '100%',
+                          padding: '10px 12px',
+                          fontSize: '0.95rem',
+                          fontFamily: 'monospace',
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                          border: `1px solid ${t.borderLight || t.border}`,
+                          color: t.text,
+                          borderRadius: '10px',
+                          outline: 'none',
+                          fontWeight: 600,
+                          boxSizing: 'border-box'
+                        }}
+                      />
                     </div>
                     <div>
-                      <label style={{ fontSize: '9px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Moneda</label>
-                      <select value={activePrestamo.moneda} 
+                      <label style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, display: 'block', marginBottom: '6px' }}>Moneda</label>
+                      <select
+                        value={activePrestamo.moneda} 
                         onChange={e => setActivePrestamo({...activePrestamo, moneda: e.target.value})} 
                         style={{
-                          width: '100%', padding: '12px', fontSize: '14px', fontWeight: 600,
-                          backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                          borderRadius: '12px', outline: 'none',
-                        }}>
+                          width: '100%',
+                          padding: '10px 12px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                          border: `1px solid ${t.borderLight || t.border}`,
+                          color: t.text,
+                          borderRadius: '10px',
+                          outline: 'none',
+                          boxSizing: 'border-box',
+                          cursor: 'pointer'
+                        }}
+                      >
                         <option value="BOB">BOB</option>
                         <option value="USD">USD</option>
                       </select>
                     </div>
                   </div>
-                  <div style={{ paddingTop: '12px', marginTop: '12px', borderTop: `1px solid ${t.border}` }}>
-                    <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, marginBottom: '6px' }}>Interés Mensual Calculado</p>
-                    <p style={{ fontSize: '1.125rem', fontWeight: 600, color: t.accent, margin: 0 }}>
+                  <div style={{ paddingTop: '12px', marginTop: '14px', borderTop: `1px solid ${t.borderLight || t.border}` }}>
+                    <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, marginBottom: '4px' }}>Interés Mensual Calculado</p>
+                    <p style={{ fontSize: '1.15rem', fontWeight: 700, color: t.text, margin: 0, fontFamily: 'monospace' }}>
                       {(parseFloat(activePrestamo.capital) * (parseFloat(activePrestamo.interes) / 100) || 0).toLocaleString()} {activePrestamo.moneda}
                     </p>
                   </div>
                 </div>
 
                 {/* PERIOD */}
-                <div style={{ padding: '24px', backgroundColor: t.panel, border: `1px solid ${t.border}`, borderRadius: '12px' }}>
-                  <label style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, display: 'block', marginBottom: '16px' }}>Periodo del Préstamo</label>
+                <div style={{
+                  padding: isMobile ? '16px' : '20px',
+                  backgroundColor: t.panel,
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  borderRadius: '16px'
+                }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textDim, display: 'block', marginBottom: '14px' }}>Periodo del Préstamo</label>
                   <div style={{ marginBottom: '12px' }}>
-                    <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginBottom: '6px' }}>Fecha Inicio</p>
-                    <input type="date" value={activePrestamo.inicio} 
+                    <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, marginBottom: '6px' }}>Fecha Inicio</p>
+                    <input
+                      type="date"
+                      value={activePrestamo.inicio} 
                       onChange={e => setActivePrestamo({...activePrestamo, inicio: e.target.value})} 
                       style={{
-                        width: '100%', padding: '10px 14px', fontSize: '12px',
-                        backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                        borderRadius: '12px', outline: 'none', transition: 'border 0.2s',
+                        width: '100%',
+                        padding: '9px 12px',
+                        fontSize: '11px',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                        border: `1px solid ${t.borderLight || t.border}`,
+                        color: t.text,
+                        borderRadius: '10px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s',
+                        boxSizing: 'border-box'
                       }}
-                      onFocus={e => { e.target.style.borderColor = t.accent; }}
-                      onBlur={e => { e.target.style.borderColor = t.border; }} />
+                      onFocus={e => { e.target.style.borderColor = isDark ? '#4A4A4F' : '#C4C4C8'; }}
+                      onBlur={e => { e.target.style.borderColor = t.borderLight || t.border; }}
+                    />
                   </div>
                   <div style={{ marginBottom: '12px' }}>
-                    <p style={{ fontSize: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textDim, marginBottom: '6px' }}>Fecha Vencimiento</p>
-                    <input type="date" value={activePrestamo.fin} 
+                    <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, marginBottom: '6px' }}>Fecha Vencimiento</p>
+                    <input
+                      type="date"
+                      value={activePrestamo.fin} 
                       onChange={e => setActivePrestamo({...activePrestamo, fin: e.target.value})} 
                       style={{
-                        width: '100%', padding: '10px 14px', fontSize: '12px',
-                        backgroundColor: t.input, border: `1px solid ${t.border}`, color: t.text,
-                        borderRadius: '12px', outline: 'none', transition: 'border 0.2s',
+                        width: '100%',
+                        padding: '9px 12px',
+                        fontSize: '11px',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                        border: `1px solid ${t.borderLight || t.border}`,
+                        color: t.text,
+                        borderRadius: '10px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s',
+                        boxSizing: 'border-box'
                       }}
-                      onFocus={e => { e.target.style.borderColor = t.accent; }}
-                      onBlur={e => { e.target.style.borderColor = t.border; }} />
+                      onFocus={e => { e.target.style.borderColor = isDark ? '#4A4A4F' : '#C4C4C8'; }}
+                      onBlur={e => { e.target.style.borderColor = t.borderLight || t.border; }}
+                    />
                   </div>
-                  <div style={{ paddingTop: '12px', borderTop: `1px solid ${t.border}` }}>
-                    <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.textMuted, marginBottom: '4px' }}>Primer Cobro</p>
-                    <p style={{ fontSize: '13px', fontWeight: 600, color: t.accent, margin: 0 }}>
+                  <div style={{ paddingTop: '12px', borderTop: `1px solid ${t.borderLight || t.border}` }}>
+                    <p style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textMuted, marginBottom: '4px' }}>Primer Cobro</p>
+                    <p style={{ fontSize: '12px', fontWeight: 600, color: t.text, margin: 0 }}>
                       {getNextMonthDateFormatted(activePrestamo.inicio)}
                     </p>
                   </div>
@@ -3333,57 +3851,107 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
         ) : prestamoView === 'recibos' ? (
           <div className="animate-in slide-in-from-right-8 duration-500 max-w-6xl mx-auto">
             {/* Header / Volver */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px', cursor: 'pointer' }}
-              onClick={() => {
-                if (activePrestamo) {
-                  setPrestamoView('detail');
-                } else if (selectedPrestamistaName) {
-                  setPrestamoView('contratos');
-                } else {
-                  setPrestamoView('list');
-                }
-              }}>
-              <span style={{ color: t.textMuted, fontSize: '11px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <ArrowLeft size={14} /> Volver
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <button
+                onClick={() => {
+                  if (activePrestamo) {
+                    setPrestamoView('detail');
+                  } else if (selectedPrestamistaName) {
+                    setPrestamoView('contratos');
+                  } else {
+                    setPrestamoView('list');
+                  }
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F2F2F3',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.textDim,
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.09)' : '#E8E8E9';
+                  e.currentTarget.style.color = t.text;
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.backgroundColor = isDark ? 'rgba(255, 255, 255, 0.05)' : '#F2F2F3';
+                  e.currentTarget.style.color = t.textDim;
+                }}
+              >
+                <ArrowLeft size={13} /> Volver
+              </button>
             </div>
 
             <header style={{ marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
-                Emisión de Recibo de Pago
+              <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 700, color: t.text, letterSpacing: '-0.02em', margin: 0 }}>
+                Emisión y Control de Recibos
               </h2>
-              <p style={{ fontSize: '0.8rem', color: t.textDim, marginTop: '4px', fontWeight: 500 }}>
-                Genera comprobantes de pago en PDF, regístralos en la cuenta corriente y súbelos a Drive
+              <p style={{ fontSize: '0.8rem', color: t.textDim, marginTop: '4px', fontWeight: 500, margin: '4px 0 0 0' }}>
+                Genera comprobantes de pago en PDF, sincroniza con cuenta corriente y gestiona el historial
               </p>
             </header>
 
-            {/* Sub-navegación de Recibos */}
-            <div style={{ display: 'flex', gap: '8px', borderBottom: `1px solid ${t.border}`, marginBottom: '24px', paddingBottom: '8px', flexWrap: 'wrap' }}>
+            {/* Sub-navegación segmentada de Recibos */}
+            <div style={{
+              display: 'inline-flex',
+              padding: '3px',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F0F0F2',
+              borderRadius: '10px',
+              border: `1px solid ${t.borderLight || t.border}`,
+              marginBottom: '24px',
+              gap: '4px',
+              width: isMobile ? '100%' : 'auto'
+            }}>
               <button
                 onClick={() => setReciboSubView('emitir')}
                 style={{
-                  padding: '8px 16px', borderRadius: '8px', border: 'none',
-                  backgroundColor: reciboSubView === 'emitir' ? t.accentSoft : 'transparent',
-                  color: reciboSubView === 'emitir' ? t.accent : t.textDim,
-                  fontSize: '11px', fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  transition: 'all 0.2s'
+                  padding: '7px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  backgroundColor: reciboSubView === 'emitir' ? (isDark ? '#232326' : '#FFFFFF') : 'transparent',
+                  color: reciboSubView === 'emitir' ? t.text : t.textDim,
+                  boxShadow: reciboSubView === 'emitir' ? (isDark ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.06)') : 'none',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease',
+                  flex: isMobile ? 1 : 'none'
                 }}
               >
-                <Printer size={13} /> Emitir Nuevo Recibo
+                <Printer size={12} /> Emitir Nuevo Recibo
               </button>
               <button
                 onClick={() => setReciboSubView('historial')}
                 style={{
-                  padding: '8px 16px', borderRadius: '8px', border: 'none',
-                  backgroundColor: reciboSubView === 'historial' ? t.accentSoft : 'transparent',
-                  color: reciboSubView === 'historial' ? t.accent : t.textDim,
-                  fontSize: '11px', fontWeight: 700, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  transition: 'all 0.2s'
+                  padding: '7px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  backgroundColor: reciboSubView === 'historial' ? (isDark ? '#232326' : '#FFFFFF') : 'transparent',
+                  color: reciboSubView === 'historial' ? t.text : t.textDim,
+                  boxShadow: reciboSubView === 'historial' ? (isDark ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.06)') : 'none',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease',
+                  flex: isMobile ? 1 : 'none'
                 }}
               >
-                <CalendarDays size={13} /> Control de Recibos Emitidos ({allReceipts.length})
+                <CalendarDays size={12} /> Historial Emitidos ({allReceipts.length})
               </button>
             </div>
 
@@ -4265,29 +4833,37 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
 // ─── COMPONENTE KPI CARD EJECUTIVO ──────────────────────────
 const KPICard = ({ icon: Icon, t, label, value, moneda, color }) => (
   <div
-    className="p-4 rounded-2xl transition-all duration-300 relative group overflow-hidden"
     style={{
+      padding: '16px',
+      borderRadius: '16px',
       backgroundColor: t.panel,
-      border: `1px solid ${t.border}`,
-      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)',
+      border: `1px solid ${t.borderLight || t.border}`,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
+      position: 'relative',
+      overflow: 'hidden'
     }}
   >
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div style={{
-        width: '36px', height: '36px', borderRadius: '12px',
-        backgroundColor: `${color}18`, color, border: `1px solid ${color}35`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: `0 0 16px ${color}20`
+        width: '32px', height: '32px', borderRadius: '10px',
+        backgroundColor: color ? `${color}14` : 'rgba(255,255,255,0.04)',
+        color: color || t.textDim,
+        border: `1px solid ${color ? `${color}25` : (t.borderLight || t.border)}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center'
       }}>
-        <Icon size={17} strokeWidth={2.2} />
+        <Icon size={15} strokeWidth={2} />
       </div>
-      <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: color, boxShadow: `0 0 8px ${color}` }} />
+      {color && (
+        <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: color }} />
+      )}
     </div>
-    <p style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.textDim, margin: 0 }}>
+    <p style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.textDim, margin: '4px 0 0 0' }}>
       {label}
     </p>
-    <p className="num-tabular tabular-nums" style={{ fontSize: '1.35rem', fontWeight: 900, color: t.text, lineHeight: 1.1, margin: '4px 0 0', letterSpacing: '-0.03em' }}>
-      {value} {moneda && <span style={{ fontSize: '11px', fontWeight: 700, color: t.textMuted, letterSpacing: '0.04em' }}>{moneda}</span>}
+    <p className="num-tabular tabular-nums" style={{ fontSize: '1.3rem', fontWeight: 800, color: t.text, lineHeight: 1.1, margin: 0, letterSpacing: '-0.02em', fontFamily: 'monospace' }}>
+      {value} {moneda && <span style={{ fontSize: '11px', fontWeight: 600, color: t.textMuted }}>{moneda}</span>}
     </p>
   </div>
 );
