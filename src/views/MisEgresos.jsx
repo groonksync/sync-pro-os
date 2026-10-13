@@ -853,45 +853,107 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
       <header style={{ marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
           <div>
-            <h2 style={{ fontSize: '22px', fontWeight: 800, color: t.text, margin: 0, letterSpacing: '-0.03em', fontFamily: "'Geist', sans-serif" }}>
+            <h2 style={{ fontSize: isMobile ? '1.25rem' : '1.5rem', fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.02em' }}>
               Control de Egresos & Suscripciones
             </h2>
-            <p style={{ fontSize: '11px', color: t.textMuted, margin: '4px 0 0', fontWeight: 500 }}>
+            <p style={{ fontSize: '11px', color: t.textDim, margin: '4px 0 0', fontWeight: 500 }}>
               Gestión inteligente de presupuesto, costos fijos y suscripciones continuas
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <div className="tab-segmented-wrap">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{
+              display: 'inline-flex',
+              padding: '3px',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F0F0F2',
+              borderRadius: '10px',
+              border: `1px solid ${t.borderLight || t.border}`,
+              gap: '4px'
+            }}>
               <button
                 onClick={() => setActiveTab('servicios')}
-                className={`tab-segmented-btn ${activeTab === 'servicios' ? 'active' : ''}`}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'servicios' ? (isDark ? '#232326' : '#FFFFFF') : 'transparent',
+                  color: activeTab === 'servicios' ? t.text : t.textDim,
+                  boxShadow: activeTab === 'servicios' ? (isDark ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.06)') : 'none',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
               >
-                <Bookmark size={13} />
+                <Bookmark size={12} />
                 Suscripciones ({activeServicios.length})
               </button>
               <button
                 onClick={() => setActiveTab('presupuesto')}
-                className={`tab-segmented-btn ${activeTab === 'presupuesto' ? 'active' : ''}`}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'presupuesto' ? (isDark ? '#232326' : '#FFFFFF') : 'transparent',
+                  color: activeTab === 'presupuesto' ? t.text : t.textDim,
+                  boxShadow: activeTab === 'presupuesto' ? (isDark ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.06)') : 'none',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
               >
-                <Target size={13} />
-                Presupuesto & Analítica
+                <Target size={12} />
+                Presupuesto
               </button>
               <button
                 onClick={() => setActiveTab('historial')}
-                className={`tab-segmented-btn ${activeTab === 'historial' ? 'active' : ''}`}
+                style={{
+                  padding: '7px 14px',
+                  borderRadius: '7px',
+                  border: 'none',
+                  backgroundColor: activeTab === 'historial' ? (isDark ? '#232326' : '#FFFFFF') : 'transparent',
+                  color: activeTab === 'historial' ? t.text : t.textDim,
+                  boxShadow: activeTab === 'historial' ? (isDark ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.06)') : 'none',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease'
+                }}
               >
-                <FileText size={13} />
+                <FileText size={12} />
                 Historial ({egresos.length})
               </button>
             </div>
 
             <button
               onClick={() => exportEgresosCSV(filteredEgresos, `Mes_${mesActualIndex + 1}`)}
-              className="btn-action-pill"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '7px 12px',
+                borderRadius: '8px',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F2F2F3',
+                border: `1px solid ${t.borderLight || t.border}`,
+                color: t.textDim,
+                fontSize: '11px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
               title="Descargar Reporte CSV"
             >
-              <Download size={13} />
+              <Download size={12} />
               CSV
             </button>
           </div>
@@ -907,19 +969,39 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           
           {/* Columna Principal: Lista de Suscripciones */}
           <div className={`${isMobile ? '' : 'col-span-8'} space-y-4`}>
-            <div style={{ padding: '24px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <div style={{
+              padding: isMobile ? '16px' : '20px',
+              backgroundColor: t.panel,
+              border: `1px solid ${t.borderLight || t.border}`,
+              borderRadius: '16px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
                 <div>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: t.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <h3 style={{ fontSize: '11px', fontWeight: 700, color: t.textDim, margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Suscripciones y Servicios Activos
                   </h3>
-                  <p style={{ fontSize: 11, color: t.textMuted, margin: '2px 0 0' }}>
-                    Configuración de fecha de inicio, vigencia continua/ilimitada y aportes compartidos
+                  <p style={{ fontSize: '10px', color: t.textMuted, margin: '2px 0 0' }}>
+                    Cronograma de inicio, vigencia y gastos compartidos
                   </p>
                 </div>
                 <button
                   onClick={handleOpenNewService}
-                  className="btn-action-pill btn-action-pill-primary"
+                  style={{
+                    backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                    color: isDark ? '#1C1C1E' : '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '9px',
+                    padding: '8px 14px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = isDark ? '#FFFFFF' : '#000000'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = isDark ? '#ECECEC' : '#1C1C1E'; }}
                 >
                   <Plus size={13} /> Añadir Suscripción
                 </button>
@@ -927,12 +1009,12 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
               {activeServicios.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '60px 20px', color: t.textDim }}>
-                  <Bookmark size={36} style={{ opacity: 0.2, margin: '0 auto 12px' }} />
-                  <p style={{ margin: 0, fontWeight: 600, color: t.text }}>No tienes suscripciones registradas</p>
+                  <Bookmark size={32} style={{ opacity: 0.25, margin: '0 auto 10px' }} />
+                  <p style={{ margin: 0, fontWeight: 600, color: t.text, fontSize: '13px' }}>No tienes suscripciones registradas</p>
                   <p style={{ margin: '4px 0 0', fontSize: '11px', color: t.textMuted }}>Agrega tus servicios como Netflix, ChatGPT Plus, Claude, Alquiler o Hosting</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {activeServicios.map(s => {
                     const catKey = resolveServiceCategory(s.categoria, s.nombre);
                     const cat = catServicioConfig[catKey] || { label: catKey || 'Servicio', icon: Bookmark, color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.14)', border: 'rgba(148, 163, 184, 0.3)' };
@@ -948,92 +1030,138 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                       <div
                         key={s.id}
                         style={{
-                          padding: '16px 18px', borderRadius: '16px',
-                          backgroundColor: isPaused ? 'rgba(255,255,255,0.01)' : 'rgba(255,255,255,0.02)',
-                          border: isPaused ? '1px dashed rgba(255,255,255,0.08)' : '1px solid rgba(255,255,255,0.06)',
-                          display: 'flex', flexDirection: isMobile ? 'column' : 'row',
-                          alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between',
-                          gap: '14px', transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                          opacity: isPaused ? 0.7 : 1
+                          padding: '12px 14px',
+                          borderRadius: '12px',
+                          backgroundColor: isPaused
+                            ? (isDark ? 'rgba(255,255,255,0.01)' : '#F9F9FA')
+                            : (isDark ? 'rgba(255,255,255,0.02)' : '#FFFFFF'),
+                          border: `1px solid ${isPaused ? (isDark ? '#2D2D31' : '#E5E5E8') : (t.borderLight || t.border)}`,
+                          display: 'flex',
+                          flexDirection: isMobile ? 'column' : 'row',
+                          alignItems: isMobile ? 'flex-start' : 'center',
+                          justifyContent: 'space-between',
+                          gap: '12px',
+                          transition: 'border-color 0.15s ease',
+                          opacity: isPaused ? 0.65 : 1
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor = isPaused ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)'; }}
+                        onMouseEnter={e => {
+                          e.currentTarget.style.borderColor = isDark ? '#4A4A4F' : '#C4C4C8';
+                        }}
+                        onMouseLeave={e => {
+                          e.currentTarget.style.borderColor = isPaused ? (isDark ? '#2D2D31' : '#E5E5E8') : (t.borderLight || t.border);
+                        }}
                       >
                         {/* Identificador & Avatar con color de categoría */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1, minWidth: 0 }}>
-                          <div className="icon-squircle" style={{
-                            width: '44px', height: '44px', borderRadius: '13px',
-                            backgroundColor: cat.bg, color: cat.color, border: `1px solid ${cat.border}`, flexShrink: 0
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '10px',
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F2F2F3',
+                            border: `1px solid ${t.borderLight || t.border}`,
+                            color: t.textDim,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
                           }}>
-                            <IconComp size={20} strokeWidth={2.2} />
+                            <IconComp size={17} strokeWidth={2} />
                           </div>
                           <div style={{ minWidth: 0, flex: 1 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                              <h4 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
+                              <h4 style={{ fontSize: '13px', fontWeight: 600, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                                 {s.nombre}
                               </h4>
 
-                              {/* Badge de Categoría con Color Distinctivo */}
+                              {/* Badge de Categoría */}
                               <span style={{
-                                fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px',
-                                backgroundColor: cat.bg, color: cat.color, border: `1px solid ${cat.border}`,
-                                display: 'inline-flex', alignItems: 'center', gap: '4px', textTransform: 'uppercase', letterSpacing: '0.04em'
+                                fontSize: '9px',
+                                fontWeight: 600,
+                                padding: '2px 7px',
+                                borderRadius: '5px',
+                                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F2F2F3',
+                                color: t.textDim,
+                                border: `1px solid ${t.borderLight || t.border}`,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px'
                               }}>
-                                <IconComp size={10} strokeWidth={2.5} />
                                 {cat.label}
                               </span>
                               
                               {/* Estado de Suscripción */}
                               {isPaused ? (
-                                <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '9999px', backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#fbbf24', textTransform: 'uppercase' }}>
+                                <span style={{
+                                  fontSize: '9px',
+                                  fontWeight: 600,
+                                  padding: '2px 7px',
+                                  borderRadius: '5px',
+                                  backgroundColor: isDark ? 'rgba(245, 158, 11, 0.08)' : 'rgba(245, 158, 11, 0.1)',
+                                  color: '#f59e0b'
+                                }}>
                                   Pausada
                                 </span>
                               ) : (
                                 <span style={{
-                                  fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '9999px',
-                                  backgroundColor: venc.bg, color: venc.color, textTransform: 'uppercase', letterSpacing: '0.04em'
+                                  fontSize: '9px',
+                                  fontWeight: 600,
+                                  padding: '2px 7px',
+                                  borderRadius: '5px',
+                                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F2F2F3',
+                                  color: venc.isOverdue ? '#ef4444' : t.textDim,
+                                  border: `1px solid ${t.borderLight || t.border}`,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
                                 }}>
+                                  <span style={{
+                                    width: '5px',
+                                    height: '5px',
+                                    borderRadius: '50%',
+                                    backgroundColor: venc.isOverdue ? '#ef4444' : '#22c55e',
+                                    flexShrink: 0
+                                  }} />
                                   {venc.label}
                                 </span>
                               )}
 
                               {/* Badge Ilimitado o Fecha Fin */}
                               {s.es_ilimitado !== false ? (
-                                <span style={{ fontSize: '9px', fontWeight: 600, padding: '1px 6px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.06)', color: '#94a3b8' }}>
+                                <span style={{ fontSize: '9px', fontWeight: 500, padding: '1px 6px', borderRadius: '4px', backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F2F2F3', color: t.textMuted }}>
                                   Ilimitada
                                 </span>
                               ) : s.fecha_fin ? (
-                                <span style={{ fontSize: '9px', fontWeight: 600, padding: '1px 6px', borderRadius: '6px', backgroundColor: 'rgba(239, 68, 68, 0.1)', color: '#f87171' }}>
+                                <span style={{ fontSize: '9px', fontWeight: 500, padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(239, 68, 68, 0.08)', color: '#ef4444' }}>
                                   Fin: {s.fecha_fin}
                                 </span>
                               ) : null}
 
-                              {/* Enlace Web directo si existe */}
+                              {/* Enlace Web directo */}
                               {s.url_servicio && (
                                 <a
                                   href={s.url_servicio.startsWith('http') ? s.url_servicio : `https://${s.url_servicio}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-neutral-400 hover:text-white transition-colors"
+                                  style={{ color: t.textDim, display: 'inline-flex', alignItems: 'center' }}
                                   title="Abrir plataforma del servicio"
                                 >
-                                  <ExternalLink size={12} />
+                                  <ExternalLink size={11} />
                                 </a>
                               )}
                             </div>
 
-                            <p style={{ fontSize: '11px', color: t.textMuted, margin: '3px 0 0' }}>
-                              Inicio: <span className="num-tabular" style={{ color: t.textSecondary }}>{s.fecha_inicio || 'N/A'}</span> · Ciclo {s.tipo || 'Mensual'} · Próximo: <span className="num-tabular" style={{ fontWeight: 600, color: t.textSecondary }}>{s.fecha_pago || s.fecha_inicio}</span> {s.notas ? `· ${s.notas}` : ''}
+                            <p style={{ fontSize: '10px', color: t.textDim, margin: '3px 0 0' }}>
+                              Inicio: <span className="num-tabular" style={{ fontFamily: 'monospace' }}>{s.fecha_inicio || '—'}</span> · Ciclo {s.tipo || 'Mensual'} · Próximo: <span className="num-tabular" style={{ fontWeight: 600, color: t.text, fontFamily: 'monospace' }}>{s.fecha_pago || s.fecha_inicio}</span> {s.notas ? `· ${s.notas}` : ''}
                             </p>
 
                             {/* Chips de Co-pagadores */}
                             {contribs.length > 0 && (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 700, padding: '1px 6px', borderRadius: '6px', backgroundColor: 'rgba(255,255,255,0.06)', color: t.textDim, textTransform: 'uppercase' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '5px', flexWrap: 'wrap' }}>
+                                <span style={{ fontSize: '8px', fontWeight: 700, padding: '1px 5px', borderRadius: '4px', backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F0F0F2', color: t.textDim, textTransform: 'uppercase' }}>
                                   Compartido
                                 </span>
                                 {contribs.map((c, idx) => (
-                                  <span key={idx} style={{ fontSize: '9px', fontWeight: 600, padding: '1px 6px', borderRadius: '6px', backgroundColor: 'rgba(16,185,129,0.1)', color: '#34d399', border: '1px solid rgba(16,185,129,0.2)' }}>
+                                  <span key={idx} style={{ fontSize: '9px', fontWeight: 600, padding: '1px 6px', borderRadius: '4px', backgroundColor: isDark ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.1)', color: '#22c55e' }}>
                                     {c.nombre}: +{c.monto} BOB
                                   </span>
                                 ))}
@@ -1044,50 +1172,102 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
                         {/* Montos y Acciones */}
                         <div style={{
-                          display: 'flex', alignItems: 'center', gap: '14px',
+                          display: 'flex', alignItems: 'center', gap: '12px',
                           width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'space-between' : 'flex-end',
-                          borderTop: isMobile ? '1px solid rgba(255,255,255,0.05)' : 'none', paddingTop: isMobile ? '10px' : 0
+                          borderTop: isMobile ? `1px solid ${t.borderLight || t.border}` : 'none',
+                          paddingTop: isMobile ? '8px' : 0
                         }}>
                           <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '9px', color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
+                            <span style={{ fontSize: '9px', color: t.textMuted, display: 'block', fontFamily: 'monospace' }}>
                               Total: {totalMonto.toLocaleString()} BOB
                             </span>
-                            <span className="num-tabular" style={{ fontSize: '14px', fontWeight: 800, color: t.text, display: 'block' }}>
-                              {neto.toLocaleString()} <span style={{ fontSize: '10px', color: '#34d399', fontWeight: 700 }}>BOB neto</span>
+                            <span className="num-tabular" style={{ fontSize: '13px', fontWeight: 700, color: t.text, display: 'block', fontFamily: 'monospace' }}>
+                              {neto.toLocaleString()} <span style={{ fontSize: '9px', color: t.textDim, fontWeight: 500 }}>BOB neto</span>
                             </span>
                           </div>
 
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <button
                               onClick={() => handlePayServiceClick(s)}
-                              className="btn-action-pill btn-action-pill-primary"
+                              style={{
+                                backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                                color: isDark ? '#1C1C1E' : '#FFFFFF',
+                                border: 'none',
+                                borderRadius: '7px',
+                                padding: '6px 12px',
+                                fontSize: '10px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                transition: 'all 0.15s ease'
+                              }}
                               title="Marcar pago de este período y avanzar fecha"
                             >
-                              <Check size={12} /> Pagar
+                              <Check size={11} /> Pagar
                             </button>
                             <button
                               onClick={() => handleToggleServiceStatus(s)}
-                              className="btn-action-pill"
-                              style={{ padding: '6px 8px' }}
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '7px',
+                                border: `1px solid ${t.borderLight || t.border}`,
+                                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                                color: t.textDim,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
                               title={isPaused ? "Reactivar Suscripción" : "Pausar Suscripción"}
                             >
-                              {isPaused ? <Play size={12} color="#34d399" /> : <Pause size={12} color="#fbbf24" />}
+                              {isPaused ? <Play size={11} /> : <Pause size={11} />}
                             </button>
                             <button
                               onClick={() => handleOpenEditService(s)}
-                              className="btn-action-pill"
-                              style={{ padding: '6px 8px' }}
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '7px',
+                                border: `1px solid ${t.borderLight || t.border}`,
+                                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                                color: t.textDim,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
                               title="Editar"
                             >
-                              <Edit3 size={13} />
+                              <Edit3 size={11} />
                             </button>
                             <button
                               onClick={() => handleDeleteService(s.id)}
-                              className="btn-action-pill btn-action-pill-danger"
-                              style={{ padding: '6px 8px' }}
+                              style={{
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '7px',
+                                border: `1px solid ${t.borderLight || t.border}`,
+                                backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                                color: t.textDim,
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                              }}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.color = '#ef4444';
+                                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.color = t.textDim;
+                                e.currentTarget.style.borderColor = t.borderLight || t.border;
+                              }}
                               title="Eliminar"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={11} />
                             </button>
                           </div>
                         </div>
@@ -1103,9 +1283,24 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           <div className={`${isMobile ? '' : 'col-span-4'} space-y-4`}>
             
             {/* Widget: Registro Rápido */}
-            <div style={{ padding: '22px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-              <h4 style={{ fontSize: 11, fontWeight: 700, color: t.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <PlusCircle size={15} color={t.accent} /> Registro Rápido de Egreso
+            <div style={{
+              padding: isMobile ? '16px' : '20px',
+              backgroundColor: t.panel,
+              border: `1px solid ${t.borderLight || t.border}`,
+              borderRadius: '16px'
+            }}>
+              <h4 style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: t.textDim,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                marginBottom: '14px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <PlusCircle size={14} style={{ color: t.text }} /> Registro Rápido de Egreso
               </h4>
 
               <form onSubmit={handleSaveQuickExpense} className="space-y-3">
@@ -1146,8 +1341,24 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 <button
                   type="submit"
                   disabled={quickLoading}
-                  className="btn-action-pill btn-action-pill-primary w-full py-2"
-                  style={{ borderRadius: '10px' }}
+                  style={{
+                    width: '100%',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                    color: isDark ? '#1C1C1E' : '#FFFFFF',
+                    border: 'none',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = isDark ? '#FFFFFF' : '#000000'; }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = isDark ? '#ECECEC' : '#1C1C1E'; }}
                 >
                   {quickLoading ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />} Registrar Gasto
                 </button>
@@ -1155,24 +1366,41 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             {/* Widget: Proyección de Costo Anual */}
-            <div style={{ padding: '22px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-              <h4 style={{ fontSize: 11, fontWeight: 700, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '14px' }}>
+            <div style={{
+              padding: isMobile ? '16px' : '20px',
+              backgroundColor: t.panel,
+              border: `1px solid ${t.borderLight || t.border}`,
+              borderRadius: '16px'
+            }}>
+              <h4 style={{
+                fontSize: '11px',
+                fontWeight: 700,
+                color: t.textDim,
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                marginBottom: '12px'
+              }}>
                 Proyección Anual de Suscripciones
               </h4>
               <div style={{ marginBottom: '12px' }}>
-                <span style={{ fontSize: '11px', color: t.textMuted }}>Gasto Anual Neto Proyectado</span>
-                <p className="num-tabular" style={{ fontSize: '22px', fontWeight: 800, color: t.text, margin: '2px 0 0' }}>
-                  {annualSubscriptionCost.toLocaleString()} <span style={{ fontSize: '12px', color: t.textMuted }}>BOB / año</span>
+                <span style={{ fontSize: '10px', color: t.textMuted }}>Gasto Anual Neto Proyectado</span>
+                <p className="num-tabular" style={{ fontSize: '20px', fontWeight: 700, color: t.text, margin: '2px 0 0', fontFamily: 'monospace' }}>
+                  {annualSubscriptionCost.toLocaleString()} <span style={{ fontSize: '11px', color: t.textDim, fontWeight: 500 }}>BOB / año</span>
                 </p>
               </div>
-              <div style={{ padding: '12px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: t.textMuted, marginBottom: '6px' }}>
+              <div style={{
+                padding: '10px 12px',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+                borderRadius: '10px',
+                border: `1px solid ${t.borderLight || t.border}`
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: t.textDim, marginBottom: '6px' }}>
                   <span>Ahorro anual por aportes:</span>
-                  <span style={{ color: '#34d399', fontWeight: 700 }}>+{(totalAportesProyectados * 12).toLocaleString()} BOB</span>
+                  <span style={{ color: '#22c55e', fontWeight: 600, fontFamily: 'monospace' }}>+{(totalAportesProyectados * 12).toLocaleString()} BOB</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: t.textMuted }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: t.textDim }}>
                   <span>Suscripciones activas:</span>
-                  <span style={{ color: t.text, fontWeight: 700 }}>{activeServicios.filter(s => s.estado_suscripcion !== 'En Pausa').length}</span>
+                  <span style={{ color: t.text, fontWeight: 600, fontFamily: 'monospace' }}>{activeServicios.filter(s => s.estado_suscripcion !== 'En Pausa').length}</span>
                 </div>
               </div>
             </div>
@@ -1186,16 +1414,21 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           PESTAÑA 2: PRESUPUESTO MENSUAL Y ANALÍTICA
           ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'presupuesto' && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
           
           {/* Tarjeta de Control de Presupuesto */}
-          <div className="md:col-span-6" style={{ padding: '24px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div className="md:col-span-6" style={{
+            padding: isMobile ? '16px' : '20px',
+            backgroundColor: t.panel,
+            border: `1px solid ${t.borderLight || t.border}`,
+            borderRadius: '16px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
               <div>
-                <h3 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <h3 style={{ fontSize: '11px', fontWeight: 700, color: t.textDim, margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                   Presupuesto Inteligente del Mes
                 </h3>
-                <p style={{ fontSize: 11, color: t.textMuted, margin: '2px 0 0' }}>
+                <p style={{ fontSize: '10px', color: t.textMuted, margin: '2px 0 0' }}>
                   Límite de gasto mensual con alertas de consumo en tiempo real
                 </p>
               </div>
@@ -1204,14 +1437,35 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   setTempBudgetInput(monthlyBudget.toString());
                   setIsEditingBudget(!isEditingBudget);
                 }}
-                className="btn-action-pill"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '6px 12px',
+                  borderRadius: '7px',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F2F2F3',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.textDim,
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
               >
-                <Edit3 size={12} /> {isEditingBudget ? 'Cancelar' : 'Ajustar Límite'}
+                <Edit3 size={11} /> {isEditingBudget ? 'Cancelar' : 'Ajustar Límite'}
               </button>
             </div>
 
             {isEditingBudget && (
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', padding: '14px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                marginBottom: '16px',
+                padding: '12px',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+                borderRadius: '10px',
+                border: `1px solid ${t.borderLight || t.border}`
+              }}>
                 <input
                   type="number"
                   value={tempBudgetInput}
@@ -1221,88 +1475,142 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 />
                 <button
                   onClick={handleSaveBudget}
-                  className="btn-action-pill btn-action-pill-primary"
+                  style={{
+                    backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                    color: isDark ? '#1C1C1E' : '#FFFFFF',
+                    border: 'none',
+                    borderRadius: '7px',
+                    padding: '6px 14px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px'
+                  }}
                 >
-                  <Save size={12} /> Guardar
+                  <Save size={11} /> Guardar
                 </button>
               </div>
             )}
 
             {/* Barra de Progreso del Presupuesto */}
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: t.textMuted, marginBottom: '8px' }}>
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: t.textDim, marginBottom: '6px', fontFamily: 'monospace' }}>
                 <span>Consumido: <strong style={{ color: t.text }}>{totalEgresosMes.toLocaleString()} BOB</strong></span>
                 <span>Límite: <strong style={{ color: t.text }}>{monthlyBudget.toLocaleString()} BOB</strong></span>
               </div>
-              <div style={{ width: '100%', height: '10px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '9999px', overflow: 'hidden', position: 'relative' }}>
+              <div style={{ width: '100%', height: '8px', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#E5E5E8', borderRadius: '9999px', overflow: 'hidden', position: 'relative' }}>
                 <div
                   style={{
                     height: '100%',
                     width: `${budgetPercent}%`,
-                    backgroundColor: budgetPercent > 90 ? '#ef4444' : (budgetPercent > 70 ? '#fbbf24' : '#10b981'),
+                    backgroundColor: budgetPercent > 90 ? '#ef4444' : (budgetPercent > 70 ? '#f59e0b' : (isDark ? '#ECECEC' : '#1C1C1E')),
                     borderRadius: '9999px',
-                    transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+                    transition: 'width 0.4s ease'
                   }}
                 />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px' }}>
-                <span style={{ fontSize: '11px', color: t.textMuted }}>
-                  {budgetRemaining >= 0 ? 'Saldo restante disponible:' : '¡Excedido por:'}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                <span style={{ fontSize: '10px', color: t.textMuted }}>
+                  {budgetRemaining >= 0 ? 'Saldo disponible restante:' : '¡Excedido por:'}
                 </span>
-                <span className="num-tabular" style={{ fontSize: '15px', fontWeight: 800, color: budgetRemaining >= 0 ? '#34d399' : '#ef4444' }}>
+                <span className="num-tabular" style={{ fontSize: '14px', fontWeight: 700, color: budgetRemaining >= 0 ? '#22c55e' : '#ef4444', fontFamily: 'monospace' }}>
                   {Math.abs(budgetRemaining).toLocaleString()} BOB
                 </span>
               </div>
             </div>
 
             {/* Diagnóstico */}
-            <div style={{ padding: '14px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <Info size={18} color={budgetPercent > 90 ? '#ef4444' : '#10b981'} />
-              <p style={{ fontSize: '11px', color: t.textSecondary, margin: 0, lineHeight: 1.4 }}>
+            <div style={{
+              padding: '12px 14px',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+              borderRadius: '10px',
+              border: `1px solid ${t.borderLight || t.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px'
+            }}>
+              <Info size={16} style={{ color: budgetPercent > 90 ? '#ef4444' : (budgetPercent > 70 ? '#f59e0b' : t.textDim), flexShrink: 0 }} />
+              <p style={{ fontSize: '10px', color: t.textDim, margin: 0, lineHeight: 1.4 }}>
                 {budgetPercent > 90
                   ? 'Atención: Has superado el 90% del presupuesto asignado para este mes.'
                   : (budgetPercent > 70
                     ? 'Has consumido más del 70% del presupuesto. Modera los egresos no esenciales.'
-                    : 'Excelente control financiero. Tu nivel de egresos se mantiene en la zona óptima.')}
+                    : 'Excelente control financiero. Tu nivel de egresos se mantiene en zona equilibrada.')}
               </p>
             </div>
           </div>
 
           {/* Analítica y Distribución por Categoría */}
-          <div className="md:col-span-6" style={{ padding: '24px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: 0, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
+          <div className="md:col-span-6" style={{
+            padding: isMobile ? '16px' : '20px',
+            backgroundColor: t.panel,
+            border: `1px solid ${t.borderLight || t.border}`,
+            borderRadius: '16px'
+          }}>
+            <h3 style={{ fontSize: '11px', fontWeight: 700, color: t.textDim, margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
               Distribución de Gastos
             </h3>
-            <p style={{ fontSize: 11, color: t.textMuted, margin: '0 0 20px' }}>
+            <p style={{ fontSize: '10px', color: t.textMuted, margin: '0 0 16px' }}>
               Desglose porcentual de los egresos registrados este mes
             </p>
 
             {categoryBreakdown.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '40px 20px', color: t.textDim, fontSize: '11px' }}>
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: t.textMuted, fontSize: '11px' }}>
                 No hay egresos registrados en el mes actual para generar el desglose.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {categoryBreakdown.map(item => {
                   const IconComp = item.icon;
                   return (
-                    <div key={item.name} style={{ padding: '10px 14px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div
+                      key={item.name}
+                      style={{
+                        padding: '10px 12px',
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#FFFFFF',
+                        borderRadius: '10px',
+                        border: `1px solid ${t.borderLight || t.border}`
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <IconComp size={14} color={item.color} />
-                          <span style={{ fontSize: '12px', fontWeight: 600, color: t.text }}>{item.name}</span>
+                          <div style={{
+                            width: '24px',
+                            height: '24px',
+                            borderRadius: '6px',
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F2F2F3',
+                            border: `1px solid ${t.borderLight || t.border}`,
+                            color: t.textDim,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0
+                          }}>
+                            <IconComp size={12} />
+                          </div>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: t.text }}>{item.name}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span className="num-tabular" style={{ fontSize: '12px', fontWeight: 700, color: t.textSecondary }}>
+                          <span className="num-tabular" style={{ fontSize: '11px', fontWeight: 600, color: t.text, fontFamily: 'monospace' }}>
                             {item.amount.toLocaleString()} BOB
                           </span>
-                          <span style={{ fontSize: '10px', fontWeight: 700, color: item.color, backgroundColor: `${item.color}15`, padding: '1px 6px', borderRadius: '6px' }}>
+                          <span style={{
+                            fontSize: '9px',
+                            fontWeight: 600,
+                            color: t.textDim,
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F0F0F2',
+                            border: `1px solid ${t.borderLight || t.border}`,
+                            padding: '1px 6px',
+                            borderRadius: '5px'
+                          }}>
                             {item.percentage}%
                           </span>
                         </div>
                       </div>
-                      <div style={{ width: '100%', height: '4px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '9999px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${item.percentage}%`, backgroundColor: item.color, borderRadius: '9999px' }} />
+                      <div style={{ width: '100%', height: '4px', backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#E5E5E8', borderRadius: '9999px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${item.percentage}%`, backgroundColor: isDark ? '#ECECEC' : '#1C1C1E', borderRadius: '9999px' }} />
                       </div>
                     </div>
                   );
@@ -1318,20 +1626,36 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
           PESTAÑA 3: HISTORIAL COMPLETO Y AUDITORÍA (CRUD)
           ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === 'historial' && (
-        <div style={{ padding: '24px', backgroundColor: t.panel, border: '1px solid rgba(255,255,255,0.07)', borderRadius: '20px' }}>
+        <div style={{
+          padding: isMobile ? '16px' : '20px',
+          backgroundColor: t.panel,
+          border: `1px solid ${t.borderLight || t.border}`,
+          borderRadius: '16px'
+        }}>
           
           {/* Barra de Filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 mb-4">
             <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-neutral-500">
-                <Search size={14} />
+              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none" style={{ color: t.textMuted }}>
+                <Search size={13} />
               </span>
               <input
                 type="text"
                 placeholder="Buscar por concepto..."
                 value={historySearch}
                 onChange={e => setHistorySearch(e.target.value)}
-                className="w-full pl-9 text-xs"
+                style={{
+                  width: '100%',
+                  paddingLeft: '32px',
+                  paddingRight: '12px',
+                  paddingTop: '7px',
+                  paddingBottom: '7px',
+                  fontSize: '11px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#FFFFFF',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.text
+                }}
               />
             </div>
             
@@ -1339,7 +1663,15 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               <select
                 value={historyCategory}
                 onChange={e => setHistoryCategory(e.target.value)}
-                className="w-full text-xs"
+                style={{
+                  width: '100%',
+                  padding: '7px 10px',
+                  fontSize: '11px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#FFFFFF',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.text
+                }}
               >
                 <option value="Todas">Todas las categorías</option>
                 <option value="Servicio">Servicio</option>
@@ -1352,66 +1684,106 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
             </div>
 
             <div className="flex items-center gap-2">
-              <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: t.textDim }}>Desde:</span>
+              <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: t.textDim, flexShrink: 0 }}>Desde:</span>
               <input
                 type="date"
                 value={historyStartDate}
                 onChange={e => setHistoryStartDate(e.target.value)}
-                className="flex-1 text-xs"
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  fontSize: '11px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#FFFFFF',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.text
+                }}
               />
             </div>
 
             <div className="flex items-center gap-2">
-              <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: t.textDim }}>Hasta:</span>
+              <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: t.textDim, flexShrink: 0 }}>Hasta:</span>
               <input
                 type="date"
                 value={historyEndDate}
                 onChange={e => setHistoryEndDate(e.target.value)}
-                className="flex-1 text-xs"
+                style={{
+                  flex: 1,
+                  padding: '6px 8px',
+                  fontSize: '11px',
+                  borderRadius: '8px',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#FFFFFF',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  color: t.text
+                }}
               />
             </div>
           </div>
 
           {/* Tabla de Historial */}
           {filteredEgresos.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', color: t.textDim, fontSize: '11px' }}>
+            <div style={{ textAlign: 'center', padding: '50px 20px', color: t.textDim, fontSize: '11px' }}>
               No se encontraron registros con los filtros seleccionados.
             </div>
           ) : (
-            <div className="table-luxury-container" style={{ border: '1px solid rgba(255,255,255,0.05)', backgroundColor: 'transparent', boxShadow: 'none' }}>
-              <table className="table-luxury">
+            <div style={{
+              borderRadius: '12px',
+              border: `1px solid ${t.borderLight || t.border}`,
+              overflow: 'hidden',
+              backgroundColor: isDark ? 'rgba(255,255,255,0.01)' : '#FFFFFF'
+            }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                 <thead>
-                  <tr>
-                    <th style={{ width: '15%' }}>Fecha</th>
-                    <th style={{ width: '45%' }}>Concepto</th>
-                    <th style={{ width: '18%' }}>Categoría</th>
-                    <th style={{ width: '14%', textAlign: 'right' }}>Monto</th>
-                    <th style={{ width: '8%', textAlign: 'center' }}>Acciones</th>
+                  <tr style={{
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+                    borderBottom: `1px solid ${t.borderLight || t.border}`
+                  }}>
+                    <th style={{ padding: '10px 14px', width: '16%', fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Fecha</th>
+                    <th style={{ padding: '10px 14px', width: '44%', fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Concepto</th>
+                    <th style={{ padding: '10px 14px', width: '18%', fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Categoría</th>
+                    <th style={{ padding: '10px 14px', width: '14%', textAlign: 'right', fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Monto</th>
+                    <th style={{ padding: '10px 14px', width: '8%', textAlign: 'center', fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEgresos.map(e => (
-                    <tr key={e.id}>
-                      <td className="num-tabular" style={{ color: t.textSecondary, fontSize: '11px' }}>
-                        {e.fecha || e.created_at?.split('T')[0] || 'N/A'}
+                    <tr
+                      key={e.id}
+                      style={{
+                        borderBottom: `1px solid ${t.borderLight || t.border}`,
+                        transition: 'background-color 0.15s ease'
+                      }}
+                      onMouseEnter={ev => { ev.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA'; }}
+                      onMouseLeave={ev => { ev.currentTarget.style.backgroundColor = 'transparent'; }}
+                    >
+                      <td style={{ padding: '10px 14px', color: t.textDim, fontSize: '11px', fontFamily: 'monospace' }}>
+                        {e.fecha || e.created_at?.split('T')[0] || '—'}
                       </td>
-                      <td>
+                      <td style={{ padding: '10px 14px' }}>
                         <p style={{ fontSize: '12px', fontWeight: 600, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                           {e.descripcion}
                         </p>
                       </td>
-                      <td>
-                        <span className="badge-luxury-neutral" style={{ fontSize: '9px', padding: '2px 8px' }}>
+                      <td style={{ padding: '10px 14px' }}>
+                        <span style={{
+                          fontSize: '9px',
+                          fontWeight: 600,
+                          padding: '2px 7px',
+                          borderRadius: '5px',
+                          backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F0F0F2',
+                          color: t.textDim,
+                          border: `1px solid ${t.borderLight || t.border}`
+                        }}>
                           {e.categoria || 'General'}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <p className="num-tabular" style={{ fontSize: '13px', fontWeight: 700, color: '#f87171', margin: 0 }}>
+                      <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                        <p className="num-tabular" style={{ fontSize: '12px', fontWeight: 700, color: t.text, margin: 0, fontFamily: 'monospace' }}>
                           -{parseFloat(e.monto || 0).toLocaleString()} BOB
                         </p>
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px' }}>
+                      <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
                           <button
                             onClick={() => {
                               setEditingExpense(e);
@@ -1423,16 +1795,44 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                               });
                               setShowExpenseModal(true);
                             }}
-                            className="btn-action-pill"
-                            style={{ padding: '4px 8px' }}
+                            style={{
+                              width: '26px',
+                              height: '26px',
+                              borderRadius: '6px',
+                              border: `1px solid ${t.borderLight || t.border}`,
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                              color: t.textDim,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
                             title="Editar"
                           >
                             <Edit3 size={11} />
                           </button>
                           <button
                             onClick={() => handleDeleteExpense(e.id)}
-                            className="btn-action-pill btn-action-pill-danger"
-                            style={{ padding: '4px 8px' }}
+                            style={{
+                              width: '26px',
+                              height: '26px',
+                              borderRadius: '6px',
+                              border: `1px solid ${t.borderLight || t.border}`,
+                              backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                              color: t.textDim,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onMouseEnter={ev => {
+                              ev.currentTarget.style.color = '#ef4444';
+                              ev.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                            }}
+                            onMouseLeave={ev => {
+                              ev.currentTarget.style.color = t.textDim;
+                              ev.currentTarget.style.borderColor = t.borderLight || t.border;
+                            }}
                             title="Eliminar"
                           >
                             <Trash2 size={11} />
@@ -1450,43 +1850,63 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
       {/* ── MODAL NUEVA / EDITAR SUSCRIPCIÓN COMPLETA ─────────────────────── */}
       {showServiceModal && (
-        <div className="fixed inset-0 z-[1050] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1050] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div
-            className="w-full max-w-lg border rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
-            style={{ backgroundColor: t.panel, borderColor: t.border }}
+            className="w-full max-w-lg border overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            style={{
+              backgroundColor: t.panel,
+              borderColor: t.borderLight || t.border,
+              borderRadius: '16px'
+            }}
           >
-            <div className="p-5 border-b flex justify-between items-center" style={{ borderColor: t.border }}>
-              <div className="flex items-center gap-2.5">
-                <Bookmark size={16} className="text-emerald-400" />
-                <h3 className="text-xs font-black uppercase tracking-wider text-white">
+            <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: t.borderLight || t.border }}>
+              <div className="flex items-center gap-2">
+                <Bookmark size={15} style={{ color: t.text }} />
+                <h3 style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                   {editingService ? "Ajustes de Suscripción" : "Nueva Suscripción"}
                 </h3>
               </div>
               <button
                 onClick={() => setShowServiceModal(false)}
-                className="p-2 rounded-lg bg-white/5 text-neutral-400 hover:text-white transition-all"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '7px',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F2F2F3',
+                  color: t.textDim,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
+                }}
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveService} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto mac-scrollbar">
+            <form onSubmit={handleSaveService} className="p-5 space-y-3.5 max-h-[80vh] overflow-y-auto mac-scrollbar">
               
               {/* FILA 1: Nombre y Costo Total */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Nombre del Servicio</label>
+                  <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                    Nombre del Servicio
+                  </label>
                   <input
                     type="text"
                     value={serviceForm.nombre}
                     onChange={e => setServiceForm(prev => ({ ...prev, nombre: e.target.value }))}
-                    placeholder="Ej. ChatGPT Plus, Netflix, Entel Fibra, NIT"
+                    placeholder="Ej. ChatGPT Plus, Netflix, Entel Fibra"
                     className="w-full text-xs"
                     required
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Costo Total Mensual (BOB)</label>
+                  <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                    Costo Total Mensual (BOB)
+                  </label>
                   <input
                     type="number"
                     value={serviceForm.monto}
@@ -1501,7 +1921,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               {/* FILA 2: Categoría y Ciclo */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Categoría</label>
+                  <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                    Categoría
+                  </label>
                   <select
                     value={serviceForm.categoria}
                     onChange={e => setServiceForm(prev => ({ ...prev, categoria: e.target.value }))}
@@ -1514,7 +1936,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Ciclo de Cobro</label>
+                  <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                    Ciclo de Cobro
+                  </label>
                   <select
                     value={serviceForm.tipo}
                     onChange={e => setServiceForm(prev => ({ ...prev, tipo: e.target.value }))}
@@ -1531,28 +1955,32 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
 
               {/* FILA 3: VIGENCIA INTELIGENTE & FECHA DE INICIO */}
-              <div className="p-4 bg-white/[0.02] border border-white/5 rounded-xl space-y-3">
+              <div style={{
+                padding: '12px 14px',
+                backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+                border: `1px solid ${t.borderLight || t.border}`,
+                borderRadius: '12px'
+              }} className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-300 flex items-center gap-1.5">
-                    <Calendar size={13} className="text-emerald-400" /> Cronograma de Cobro
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Calendar size={12} style={{ color: t.text }} /> Cronograma de Cobro
                   </span>
                   
                   {/* Switch Ilimitado */}
-                  <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="flex items-center gap-1.5 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={serviceForm.es_ilimitado}
                       onChange={e => setServiceForm(prev => ({ ...prev, es_ilimitado: e.target.checked }))}
-                      className="accent-emerald-500 rounded"
+                      style={{ accentColor: isDark ? '#ECECEC' : '#1C1C1E' }}
                     />
-                    <span className="text-[10px] font-semibold text-emerald-400">Suscripción Ilimitada / Continua</span>
+                    <span style={{ fontSize: '10px', fontWeight: 600, color: t.text }}>Ilimitada / Continua</span>
                   </label>
                 </div>
 
                 {serviceForm.es_ilimitado ? (
-                  /* Modo Ilimitado: Solo pide la fecha de inicio */
-                  <div className="space-y-2 pt-1">
-                    <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block">
+                  <div className="space-y-1.5 pt-1">
+                    <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block' }}>
                       Fecha de Inicio / Primer Cobro
                     </label>
                     <input
@@ -1562,15 +1990,14 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                       className="w-full text-xs"
                       required
                     />
-                    <p className="text-[10px] text-neutral-400 italic">
-                      ✨ El sistema calculará el cobro y recordatorio el <strong>día {serviceForm.fecha_inicio ? parseLocalDate(serviceForm.fecha_inicio).getDate() : 'X'} de cada mes</strong> automáticamente y sin fecha de vencimiento.
+                    <p style={{ fontSize: '10px', color: t.textMuted, margin: '4px 0 0', fontStyle: 'italic' }}>
+                      Cálculo de cobro y recordatorio el día <strong>{serviceForm.fecha_inicio ? parseLocalDate(serviceForm.fecha_inicio).getDate() : 'X'} de cada mes</strong> automáticamente.
                     </p>
                   </div>
                 ) : (
-                  /* Modo con Fecha Fin de Contrato */
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
                     <div>
-                      <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1">Fecha de Inicio</label>
+                      <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '4px' }}>Fecha de Inicio</label>
                       <input
                         type="date"
                         value={serviceForm.fecha_inicio}
@@ -1580,7 +2007,7 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                       />
                     </div>
                     <div>
-                      <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1">Fecha Fin de Contrato</label>
+                      <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '4px' }}>Fecha Fin de Contrato</label>
                       <input
                         type="date"
                         value={serviceForm.fecha_fin}
@@ -1596,7 +2023,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               {/* FILA 4: Método de Pago y Recordatorio */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Método de Pago</label>
+                  <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                    Método de Pago
+                  </label>
                   <select
                     value={serviceForm.metodo}
                     onChange={e => setServiceForm(prev => ({ ...prev, metodo: e.target.value }))}
@@ -1611,7 +2040,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 </div>
 
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Aviso Previo en Notificaciones</label>
+                  <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                    Aviso Previo Notificación
+                  </label>
                   <select
                     value={serviceForm.dias_recordatorio}
                     onChange={e => setServiceForm(prev => ({ ...prev, dias_recordatorio: e.target.value }))}
@@ -1626,23 +2057,31 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
 
               {/* FILA 5: CO-PAGADORES (GASTOS COMPARTIDOS) */}
-              <div className="pt-3 border-t border-white/5">
-                <div className="flex justify-between items-center mb-2.5">
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 flex items-center gap-1.5">
-                    <User size={12} className="text-neutral-500" /> Gastos Compartidos (Co-pagadores)
+              <div style={{ paddingTop: '10px', borderTop: `1px solid ${t.borderLight || t.border}` }}>
+                <div className="flex justify-between items-center mb-2">
+                  <label style={{ fontSize: '10px', fontWeight: 700, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <User size={12} /> Gastos Compartidos (Co-pagadores)
                   </label>
                   <button
                     type="button"
                     onClick={addContributor}
-                    className="btn-action-pill"
-                    style={{ fontSize: '9px', padding: '3px 8px' }}
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F2F2F3',
+                      border: `1px solid ${t.borderLight || t.border}`,
+                      color: t.textDim,
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
                   >
                     + Agregar Persona
                   </button>
                 </div>
 
                 {(serviceForm.contribuciones || []).length === 0 ? (
-                  <p className="text-[10px] text-neutral-500 italic py-1">
+                  <p style={{ fontSize: '10px', color: t.textMuted, fontStyle: 'italic', margin: '4px 0' }}>
                     Este servicio lo cubres tú al 100%.
                   </p>
                 ) : (
@@ -1668,23 +2107,49 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                         <button
                           type="button"
                           onClick={() => removeContributor(c.id)}
-                          className="p-2 rounded bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all"
+                          style={{
+                            width: '26px',
+                            height: '26px',
+                            borderRadius: '6px',
+                            border: `1px solid ${t.borderLight || t.border}`,
+                            backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F7F7F8',
+                            color: t.textDim,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onMouseEnter={ev => { ev.currentTarget.style.color = '#ef4444'; }}
+                          onMouseLeave={ev => { ev.currentTarget.style.color = t.textDim; }}
                         >
-                          <X size={13} />
+                          <X size={12} />
                         </button>
                       </div>
                     ))}
                   </div>
                 )}
 
-                <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl flex justify-between items-center mt-2">
-                  <span className="text-[9px] font-bold uppercase tracking-widest text-neutral-500">Costo Neto Propio a Pagar:</span>
-                  <span className="text-xs font-black text-emerald-400">{computedNetCost.toLocaleString()} BOB</span>
+                <div style={{
+                  padding: '8px 12px',
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F9F9FA',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  borderRadius: '10px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginTop: '8px'
+                }}>
+                  <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', color: t.textDim }}>Costo Neto Propio a Pagar:</span>
+                  <span className="num-tabular" style={{ fontSize: '12px', fontWeight: 700, color: t.text, fontFamily: 'monospace' }}>
+                    {computedNetCost.toLocaleString()} BOB
+                  </span>
                 </div>
               </div>
 
               <div>
-                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Enlace / Web del Servicio (Opcional)</label>
+                <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                  Enlace / Web del Servicio (Opcional)
+                </label>
                 <input
                   type="text"
                   value={serviceForm.url_servicio}
@@ -1695,21 +2160,39 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
 
               <div>
-                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Notas, PIN o Perfil</label>
+                <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                  Notas, PIN o Perfil
+                </label>
                 <textarea
                   value={serviceForm.notas}
                   onChange={e => setServiceForm(prev => ({ ...prev, notas: e.target.value }))}
-                  placeholder="Detalles de la cuenta, perfil asignado, correo o contraseña..."
+                  placeholder="Detalles de la cuenta, perfil asignado, correo o notas de acceso..."
                   className="w-full h-14 text-xs resize-none"
                 />
               </div>
 
-              <div className="flex gap-2 pt-3 border-t border-white/5">
+              <div style={{ paddingTop: '10px', borderTop: `1px solid ${t.borderLight || t.border}` }}>
                 <button
                   type="submit"
                   disabled={serviceLoading}
-                  className="btn-action-pill btn-action-pill-primary flex-1 py-2.5"
-                  style={{ borderRadius: '12px' }}
+                  style={{
+                    width: '100%',
+                    padding: '9px 16px',
+                    borderRadius: '9px',
+                    backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                    color: isDark ? '#1C1C1E' : '#FFFFFF',
+                    border: 'none',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={ev => { ev.currentTarget.style.backgroundColor = isDark ? '#FFFFFF' : '#000000'; }}
+                  onMouseLeave={ev => { ev.currentTarget.style.backgroundColor = isDark ? '#ECECEC' : '#1C1C1E'; }}
                 >
                   {serviceLoading ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />} Guardar Suscripción
                 </button>
@@ -1721,26 +2204,44 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
       {/* ── MODAL DE EDICIÓN DE EGRESO ─────────────────────────────────────── */}
       {showExpenseModal && (
-        <div className="fixed inset-0 z-[1050] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[1050] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div
-            className="w-full max-w-md border rounded-2xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
-            style={{ backgroundColor: t.panel, borderColor: t.border }}
+            className="w-full max-w-md border overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200"
+            style={{
+              backgroundColor: t.panel,
+              borderColor: t.borderLight || t.border,
+              borderRadius: '16px'
+            }}
           >
-            <div className="p-5 border-b flex justify-between items-center" style={{ borderColor: t.border }}>
-              <h3 className="text-xs font-black uppercase tracking-wider text-white">
+            <div className="p-4 border-b flex justify-between items-center" style={{ borderColor: t.borderLight || t.border }}>
+              <h3 style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: 0, letterSpacing: '-0.01em' }}>
                 Editar Egreso
               </h3>
               <button
                 onClick={() => setShowExpenseModal(false)}
-                className="p-2 rounded-lg bg-white/5 text-neutral-400 hover:text-white transition-all"
+                style={{
+                  width: '28px',
+                  height: '28px',
+                  borderRadius: '7px',
+                  border: `1px solid ${t.borderLight || t.border}`,
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F2F2F3',
+                  color: t.textDim,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s ease'
+                }}
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveExpense} className="p-6 space-y-4">
+            <form onSubmit={handleSaveExpense} className="p-5 space-y-3.5">
               <div>
-                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Concepto</label>
+                <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                  Concepto
+                </label>
                 <input
                   type="text"
                   value={expenseForm.descripcion}
@@ -1752,7 +2253,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Monto (BOB)</label>
+                  <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                    Monto (BOB)
+                  </label>
                   <input
                     type="number"
                     value={expenseForm.monto}
@@ -1762,7 +2265,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Fecha</label>
+                  <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                    Fecha
+                  </label>
                   <input
                     type="date"
                     value={expenseForm.fecha}
@@ -1774,7 +2279,9 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
               </div>
 
               <div>
-                <label className="text-[9px] font-bold uppercase tracking-widest text-neutral-400 block mb-1.5">Categoría</label>
+                <label style={{ fontSize: '10px', fontWeight: 600, color: t.textDim, textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: '5px' }}>
+                  Categoría
+                </label>
                 <select
                   value={expenseForm.categoria}
                   onChange={e => setExpenseForm(prev => ({ ...prev, categoria: e.target.value }))}
@@ -1789,12 +2296,28 @@ const MisEgresos = ({ data, setData, servicios = [], setServicios, onRefresh, is
                 </select>
               </div>
 
-              <div className="flex gap-2 pt-4 border-t border-white/5">
+              <div style={{ paddingTop: '10px', borderTop: `1px solid ${t.borderLight || t.border}` }}>
                 <button
                   type="submit"
                   disabled={expenseLoading}
-                  className="btn-action-pill btn-action-pill-primary flex-1 py-2.5"
-                  style={{ borderRadius: '12px' }}
+                  style={{
+                    width: '100%',
+                    padding: '9px 16px',
+                    borderRadius: '9px',
+                    backgroundColor: isDark ? '#ECECEC' : '#1C1C1E',
+                    color: isDark ? '#1C1C1E' : '#FFFFFF',
+                    border: 'none',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={ev => { ev.currentTarget.style.backgroundColor = isDark ? '#FFFFFF' : '#000000'; }}
+                  onMouseLeave={ev => { ev.currentTarget.style.backgroundColor = isDark ? '#ECECEC' : '#1C1C1E'; }}
                 >
                   {expenseLoading ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />} Guardar Cambios
                 </button>
