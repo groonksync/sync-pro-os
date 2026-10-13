@@ -16,6 +16,8 @@ import ClientPortal from './views/ClientPortal';
 import PublicCatalog from './views/PublicCatalog';
 import ConversorWebP from './views/ConversorWebP';
 import SistemaGimnasio from './views/SistemaGimnasio';
+import CommandPalette from './components/ui/CommandPalette';
+import SimuladorFinancieroModal from './components/SimuladorFinancieroModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { supabase, isSupabaseConfigured } from './lib/supabaseClient';
@@ -708,6 +710,20 @@ const AppContent = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [simuladorOpen, setSimuladorOpen] = useState(false);
+
+  // Atajo global de teclado (Cmd+K / Ctrl+K) para CommandPalette
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // EFECTO DE TEMA GLOBAL
   useEffect(() => {
@@ -805,6 +821,8 @@ const AppContent = () => {
             googleUser={googleUser}
             isDark={isDarkMode}
             setIsDark={setIsDarkMode}
+            onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+            onOpenSimulador={() => setSimuladorOpen(true)}
             onSearch={(q) => {
               if (activeTab === 'inventario') setInventarioSearch(q);
               else if (activeTab === 'recordatorios') setRecordatoriosSearch(q);
@@ -831,6 +849,29 @@ const AppContent = () => {
             isDark={isDarkMode}
           />
         )}
+
+        {/* PALETA DE COMANDOS GLOBAL (Cmd+K / Ctrl+K) */}
+        <CommandPalette
+          isOpen={commandPaletteOpen}
+          onClose={() => setCommandPaletteOpen(false)}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          isDark={isDarkMode}
+          setIsDark={setIsDarkMode}
+          data={data}
+          onOpenSimulador={() => setSimuladorOpen(true)}
+          onNavigateToPrestamo={handleNavigateToPrestamo}
+        />
+
+        {/* SIMULADOR FINANCIERO INTERACTIVO */}
+        <SimuladorFinancieroModal
+          isOpen={simuladorOpen}
+          onClose={() => setSimuladorOpen(false)}
+          isDark={isDarkMode}
+          onApplyToNewLoan={(params) => {
+            setActiveTab('prestamos');
+          }}
+        />
 
         
 

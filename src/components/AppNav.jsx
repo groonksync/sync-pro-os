@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import {
   Home, Landmark, Wallet, Package, Bell, Settings, Dumbbell, Video,
-  Briefcase, Image as ImageIcon, Trash2, Menu, X, Search, LogOut, ShoppingBag
+  Briefcase, Image as ImageIcon, Trash2, Menu, X, Search, LogOut, ShoppingBag,
+  Calculator, Command
 } from 'lucide-react';
 import { useTheme } from '../lib/theme';
 import ThemeToggle from './ui/ThemeToggle';
@@ -244,7 +245,18 @@ export default function AppNav({ activeTab, setActiveTab, counts, settings, isDa
 /* ─────────────────────────────────────────────────────────────
    CABECERA: escritorio (buscador + tema + avatar) / móvil (logo + tema + avatar)
    ───────────────────────────────────────────────────────────── */
-export function TopBar({ activeTab, setActiveTab, counts, settings, googleUser, isDark, setIsDark, onSearch }) {
+export function TopBar({
+  activeTab,
+  setActiveTab,
+  counts,
+  settings,
+  googleUser,
+  isDark,
+  setIsDark,
+  onSearch,
+  onOpenCommandPalette,
+  onOpenSimulador
+}) {
   const t = useTheme(isDark);
   const [q, setQ] = useState('');
   const isMobile = !!settings?.isMobileMode;
@@ -277,35 +289,84 @@ export function TopBar({ activeTab, setActiveTab, counts, settings, googleUser, 
           <span className="text-sm font-bold tracking-tight" style={{ color: t.text }}>Inefable</span>
         </div>
       ) : (
-        <div
-          className="flex items-center gap-2 px-3 h-9 rounded-xl w-full max-w-xs"
-          style={{ backgroundColor: t.inputBg, border: `1px solid ${t.border}` }}
-        >
-          <Search size={14} style={{ color: t.textMuted }} />
-          <input
-            type="text"
-            value={q}
-            onChange={handleSearch}
-            placeholder="Buscar…"
-            className="bg-transparent text-xs w-full focus:outline-none"
-            style={{ color: t.text }}
-          />
-          {q && (
-            <button type="button" onClick={() => { setQ(''); if (onSearch) onSearch(''); }} style={{ color: t.textMuted }} aria-label="Limpiar">
-              <X size={12} />
-            </button>
-          )}
+        <div className="flex items-center gap-2 w-full max-w-sm">
+          <div
+            className="flex items-center gap-2 px-3 h-9 rounded-xl w-full transition-all border"
+            style={{ backgroundColor: t.inputBg, borderColor: t.border }}
+          >
+            <Search size={14} style={{ color: t.textMuted }} />
+            <input
+              type="text"
+              value={q}
+              onChange={handleSearch}
+              placeholder="Buscar o presiona ⌘K…"
+              className="bg-transparent text-xs w-full focus:outline-none"
+              style={{ color: t.text }}
+            />
+            {q ? (
+              <button type="button" onClick={() => { setQ(''); if (onSearch) onSearch(''); }} style={{ color: t.textMuted }} aria-label="Limpiar">
+                <X size={12} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={onOpenCommandPalette}
+                className="hidden sm:flex items-center gap-0.5 text-[10px] font-mono px-1.5 py-0.5 rounded border transition-opacity hover:opacity-80"
+                style={{
+                  backgroundColor: isDark ? '#1C1C1E' : '#F3F4F6',
+                  borderColor: t.borderLight || t.border,
+                  color: t.textMuted,
+                }}
+                title="Abrir barra de comandos (Cmd+K)"
+              >
+                <span>⌘</span>K
+              </button>
+            )}
+          </div>
         </div>
       )}
 
       <div className="flex items-center gap-2 shrink-0">
+        {/* Botón rápido de Command Palette en móvil */}
+        {isMobile && onOpenCommandPalette && (
+          <button
+            type="button"
+            onClick={onOpenCommandPalette}
+            className="w-9 h-9 rounded-xl flex items-center justify-center border transition-opacity hover:opacity-80"
+            style={{ backgroundColor: t.surface, color: t.textSecondary, borderColor: t.border }}
+            aria-label="Buscar comandos"
+            title="Buscar o comandos"
+          >
+            <Search size={16} />
+          </button>
+        )}
+
+        {/* Botón Simulador Financiero */}
+        {onOpenSimulador && (
+          <button
+            type="button"
+            onClick={onOpenSimulador}
+            className="h-9 px-2.5 sm:px-3 rounded-xl flex items-center gap-1.5 text-xs font-semibold border transition-all hover:opacity-90 shadow-sm"
+            style={{
+              backgroundColor: isDark ? '#232326' : '#FFFFFF',
+              borderColor: t.borderLight || t.border,
+              color: t.text,
+            }}
+            title="Simulador de Crédito & Retornos"
+          >
+            <Calculator size={14} />
+            <span className="hidden sm:inline">Simulador</span>
+          </button>
+        )}
+
         <ThemeToggle isDark={isDark} setIsDark={setIsDark} />
+
         {!isMobile && (
           <button
             type="button"
             onClick={() => setActiveTab('recordatorios')}
-            className="relative w-9 h-9 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: t.surface, color: t.textSecondary, border: `1px solid ${t.border}` }}
+            className="relative w-9 h-9 rounded-xl flex items-center justify-center border"
+            style={{ backgroundColor: t.surface, color: t.textSecondary, borderColor: t.border }}
             aria-label="Notificaciones"
           >
             <Bell size={16} />

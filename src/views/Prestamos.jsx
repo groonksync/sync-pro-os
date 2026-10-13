@@ -5,11 +5,12 @@ import {
   Check, X, AlertCircle, Trash2, AlertTriangle, Edit3, Search, Eye, EyeOff, Clock,
   MoreHorizontal, Filter, Download, Printer, RefreshCw, TrendingUp, Percent,
   BarChart3, PieChart, Wallet, Bookmark, Sun, Moon,
-  Zap, Sliders, BadgePercent
+  Zap, Sliders, BadgePercent, Calculator
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { getTheme, useTheme } from '../lib/theme';
 import FormularioPrestamo from '../components/FormularioPrestamo';
+import SimuladorFinancieroModal from '../components/SimuladorFinancieroModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 import FinancialWeeklyOverview from '../components/FinancialWeeklyOverview';
 import { useAmortizacion, useAmortizacionGlobal, generarCronograma, generarCronogramaDiario, calcularResumen, calcularResumenDiario, proyectarSiguientes } from '../hooks/useAmortizacion';
@@ -579,14 +580,22 @@ const DeleteConfirmModal = ({ target, isDark, onConfirm, onCancel }) => {
   const isMobile = window.innerWidth < 1024;
 
   return (
-    <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+    <div className="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.75)' : 'rgba(15,23,42,0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+    >
       <div style={{
-        backgroundColor: t.panel, border: `1px solid ${t.border}`,
-        borderRadius: '20px', padding: isMobile ? '24px' : '32px',
+        backgroundColor: t.panel, border: `1px solid ${t.borderLight || t.border}`,
+        padding: isMobile ? '20px 24px 28px' : '32px',
         maxWidth: '440px', width: '100%', position: 'relative',
-        animation: 'scaleIn 0.2s ease-out',
-      }}>
+      }}
+      className="rounded-t-3xl sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95"
+      onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drag handle móvil */}
+        <div className="sm:hidden flex justify-center pb-3">
+          <div className="w-12 h-1 rounded-full" style={{ backgroundColor: isDark ? '#3F3F46' : '#D4D4D8' }} />
+        </div>
         <div style={{
           width: '56px', height: '56px', borderRadius: '50%',
           backgroundColor: `${t.danger || '#ef4444'}15`,
@@ -768,15 +777,22 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}>
+    <div className="fixed inset-0 z-[9998] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.75)' : 'rgba(15,23,42,0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+    >
       <div style={{
         backgroundColor: t.panel, border: `1px solid ${t.borderLight || t.border}`,
-        borderRadius: '20px', padding: '24px',
-        maxWidth: '520px', width: '100%',
-        animation: 'scaleIn 0.2s ease-out',
+        padding: '24px', maxWidth: '520px', width: '100%',
         boxShadow: isDark ? '0 25px 60px rgba(0,0,0,0.6)' : '0 20px 40px rgba(0,0,0,0.08)'
-      }}>
+      }}
+      className="rounded-t-3xl sm:rounded-2xl shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95"
+      onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drag handle móvil */}
+        <div className="sm:hidden flex justify-center pb-3">
+          <div className="w-12 h-1 rounded-full" style={{ backgroundColor: isDark ? '#3F3F46' : '#D4D4D8' }} />
+        </div>
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -1066,28 +1082,42 @@ const AjusteContratoModal = ({ isDark, prestamo, onClose, onSave }) => {
   );
 };
 
-// ─── MODAL PRESTAMO (WIZARD) ─────────────────────────────────
+// ─── MODAL PRESTAMO (WIZARD CON ADAPTACIÓN MÓVIL / LAPTOP) ─────────
 const PrestamoFormModal = ({ isDark, prestamo, onClose, onSave }) => {
   const t = useTheme(isDark);
   return (
-    <div className="fixed inset-0 z-[9997] overflow-y-auto"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-      <div className="min-h-full py-8 px-4 flex items-start justify-center">
-        <div style={{
-          backgroundColor: t.bg, border: `1px solid ${t.border}`,
-          borderRadius: '24px', padding: '32px',
-          maxWidth: '820px', width: '100%',
-          animation: 'scaleIn 0.2s ease-out',
-        }}>
-          <ErrorBoundary>
-            <FormularioPrestamo
-              isDark={isDark}
-              onClose={onClose}
-              onSave={onSave}
-              initialData={prestamo}
-            />
-          </ErrorBoundary>
+    <div
+      className="fixed inset-0 z-[9997] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-200"
+      style={{
+        backgroundColor: isDark ? 'rgba(0,0,0,0.75)' : 'rgba(15,23,42,0.45)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-4xl max-h-[94vh] sm:max-h-[90vh] overflow-y-auto mac-scrollbar rounded-t-3xl sm:rounded-2xl border shadow-2xl p-4 sm:p-7 transition-all animate-in slide-in-from-bottom-6 sm:zoom-in-95"
+        style={{
+          backgroundColor: t.panel,
+          borderColor: t.borderLight || t.border,
+          color: t.text,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Barra de arrastre táctil para móvil */}
+        <div className="sm:hidden flex justify-center pb-3">
+          <div className="w-12 h-1 rounded-full" style={{ backgroundColor: isDark ? '#3F3F46' : '#D4D4D8' }} />
         </div>
+        <ErrorBoundary>
+          <FormularioPrestamo
+            isDark={isDark}
+            onClose={onClose}
+            onSave={onSave}
+            initialData={prestamo}
+          />
+        </ErrorBoundary>
       </div>
     </div>
   );
@@ -1120,6 +1150,7 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
   const [searchTermDebtor, setSearchTermDebtor] = useState('');
   const [viewDisplayMode, setViewDisplayMode] = useState('cards'); // 'cards' | 'table'
   const [activeCardMenu, setActiveCardMenu] = useState(null); // id de la tarjeta con menú abierto
+  const [showSimulador, setShowSimulador] = useState(false);
   const isMobile = settings?.isMobileMode || (typeof window !== 'undefined' && window.innerWidth < 1024);
   
   // Cerrar menú contextual al hacer clic fuera
@@ -1874,6 +1905,43 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
         />
       )}
 
+      {/* Modal Simulador Financiero */}
+      {showSimulador && (
+        <SimuladorFinancieroModal
+          isOpen={showSimulador}
+          onClose={() => setShowSimulador(false)}
+          isDark={isDark}
+          onApplyToNewLoan={(sim) => {
+            setEditPrestamo({
+              nombre: '',
+              ci: '',
+              telefono: '',
+              email: '',
+              direccion: '',
+              referencias: '',
+              ocupacion: '',
+              foto: '',
+              capital: sim.capital,
+              interes: sim.interes,
+              plazo_meses: sim.plazo_meses,
+              cuotaUnit: sim.cuotaUnit,
+              moneda: settings?.loanDefaultCurrency || 'BOB',
+              inicio: new Date().toISOString().split('T')[0],
+              fin: new Date(Date.now() + (sim.plazo_meses || 6) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              estado: 'Activo',
+              tipoGarantia: '',
+              garantia: '',
+              drive_contrato: '',
+              drive_fotos: '',
+              notes: `Simulación calculada: Cuota ${sim.cuotaUnit} BOB/mes`,
+              pagos: [],
+              tipo_prestamo: filtroTipo
+            });
+            setShowForm(true);
+          }}
+        />
+      )}
+
       <div className="flex flex-col h-full w-full animate-in fade-in duration-500">
         {prestamoView === 'list' ? (
           <div className="animate-in fade-in duration-300">
@@ -1953,6 +2021,21 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                 >
                   <Printer size={14} />
                   <span className="hidden sm:inline">Emitir Recibo</span>
+                </button>
+
+                {/* Botón Simulador de Créditos */}
+                <button
+                  onClick={() => setShowSimulador(true)}
+                  className="py-2 px-3.5 rounded-2xl text-xs font-semibold transition-all shadow-sm flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  style={{
+                    backgroundColor: t.panel,
+                    border: `1px solid ${t.border}`,
+                    color: t.text
+                  }}
+                  title="Simulador de Crédito & Retornos"
+                >
+                  <Calculator size={14} />
+                  <span className="hidden sm:inline">Simulador</span>
                 </button>
 
                 {/* Botón Nuevo Registro */}
