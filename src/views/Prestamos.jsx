@@ -2871,50 +2871,52 @@ const Prestamos = ({ data, setData, settings, isDark, token, preSelectedId, preS
                               </span>
                             </div>
                             
-                            {/* Botones de acción rápida móviles */}
-                            <div className="flex items-center justify-end gap-2 pt-2 border-t" style={{ borderColor: t.borderLight }} onClick={e => e.stopPropagation()}>
+                            {/* Botones de acción rápida móviles con ergonomía táctil */}
+                            <div className="flex items-center justify-end gap-2 pt-2.5 border-t" style={{ borderColor: t.borderLight }} onClick={e => e.stopPropagation()}>
                               <button
                                 onClick={(e) => handleQuickCobro(p, e)}
-                                className="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                                className="min-h-[38px] px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
                                 style={{
-                                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.1)' : '#1C1C1E',
+                                  backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#1C1C1E',
                                   color: '#FFFFFF'
                                 }}
                               >
-                                <Zap size={12} strokeWidth={2.5} /> Cobro
+                                <Zap size={13} strokeWidth={2.5} /> Cobro
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); setAjusteTarget(p); }}
-                                className="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                                className="min-h-[38px] px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer active:scale-95 transition-transform"
                                 style={{
                                   backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
                                   color: t.textDim,
                                   border: `1px solid ${t.border}`
                                 }}
                               >
-                                <Sliders size={12} /> Ajustar
+                                <Sliders size={13} /> Ajustar
                               </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); handleEditPrestamo(p); }}
-                                className="p-1.5 rounded-xl text-xs font-semibold flex items-center justify-center cursor-pointer"
+                                className="w-9 h-9 rounded-xl text-xs font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
                                 style={{
                                   backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6',
                                   color: t.textDim,
                                   border: `1px solid ${t.border}`
                                 }}
+                                title="Editar"
                               >
-                                <Edit3 size={13} />
+                                <Edit3 size={14} />
                               </button>
                               <button
                                 onClick={(e) => handleDeleteRequest(p, e)}
-                                className="p-1.5 rounded-xl text-xs font-semibold flex items-center justify-center cursor-pointer"
+                                className="w-9 h-9 rounded-xl text-xs font-semibold flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
                                 style={{
                                   backgroundColor: 'rgba(239, 68, 68, 0.08)',
                                   color: '#EF4444',
                                   border: '1px solid rgba(239, 68, 68, 0.2)'
                                 }}
+                                title="Eliminar"
                               >
-                                <Trash2 size={13} />
+                                <Trash2 size={14} />
                               </button>
                             </div>
                           </div>

@@ -55,33 +55,25 @@ const CommandModal = ({
   return (
     <div
       onClick={handleOverlayClick}
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
       style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        animation: 'fadeIn 0.2s ease-out',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
       }}
     >
       <div
+        className="w-full sm:max-w-[420px] rounded-t-3xl sm:rounded-2xl border overflow-hidden shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 max-h-[90vh] flex flex-col p-6 sm:p-7"
         style={{
-          width: '90%',
-          maxWidth: '420px',
           backgroundColor: t.panel,
-          border: `1px solid ${t.border}`,
-          borderRadius: '20px',
-          padding: '28px',
-          boxShadow: '0 25px 50px rgba(0,0,0,0.4)',
-          animation: 'scaleIn 0.2s ease-out',
+          borderColor: t.borderLight || t.border,
         }}
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Drag handle móvil */}
+        <div className="sm:hidden flex justify-center -mt-2 pb-3">
+          <div className="w-12 h-1 rounded-full" style={{ backgroundColor: isDark ? '#3F3F46' : '#D4D4D8' }} />
+        </div>
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>

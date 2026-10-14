@@ -660,7 +660,10 @@ Por favor, genera un análisis ejecutivo breve con 3 recomendaciones tácticas d
 
         {/* ── DRAWER OPERATIVO FLOTANTE PARA SMARTPHONE ── */}
         {drawerOperacionesOpen && (
-          <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            onClick={(e) => { if (e.target === e.currentTarget) setDrawerOperacionesOpen(false); }}
+            className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          >
             <div
               className="w-full max-h-[82vh] rounded-t-[32px] border-t p-5 overflow-y-auto space-y-4 animate-in slide-in-from-bottom duration-300"
               style={{
@@ -668,7 +671,12 @@ Por favor, genera un análisis ejecutivo breve con 3 recomendaciones tácticas d
                 borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
                 color: isDark ? '#FFFFFF' : '#111827',
               }}
+              onClick={(e) => e.stopPropagation()}
             >
+              {/* Drag handle móvil */}
+              <div className="flex justify-center -mt-2 pb-2">
+                <div className="w-12 h-1 rounded-full bg-neutral-400/40" />
+              </div>
               <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>
                 <div>
                   <h3 className="text-sm font-bold m-0">Operaciones & Gestión Rápida</h3>
@@ -1118,7 +1126,10 @@ Por favor, genera un análisis ejecutivo breve con 3 recomendaciones tácticas d
 
       {/* ── DRAWER OPERATIVO FLOTANTE PARA ESCRITORIO (ACCIONES RÁPIDAS) ── */}
       {drawerOperacionesOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setDrawerOperacionesOpen(false); }}
+          className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+        >
           <div
             className="w-full max-w-md h-full border-l p-6 overflow-y-auto space-y-5 animate-in slide-in-from-right duration-300 shadow-2xl flex flex-col justify-between"
             style={{
@@ -1126,6 +1137,7 @@ Por favor, genera un análisis ejecutivo breve con 3 recomendaciones tácticas d
               borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
               color: isDark ? '#FFFFFF' : '#111827',
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between pb-3 border-b" style={{ borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)' }}>

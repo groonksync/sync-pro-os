@@ -359,11 +359,24 @@ const Recordatorios = ({ settings, isDark, initialSearch = '', token }) => {
 
       {/* MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4" style={{ backgroundColor: t.overlay, backdropFilter: 'blur(24px)' }}>
-          <div className="w-full max-w-lg rounded-2xl p-6 animate-in zoom-in duration-300 max-h-[90vh] overflow-y-auto mac-scrollbar border" style={{ backgroundColor: t.panel, borderColor: t.borderLight || t.border }}>
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}
+          className="fixed inset-0 z-[600] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+          style={{ backgroundColor: t.overlay, backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}
+        >
+          <div
+            className="w-full max-w-lg rounded-t-3xl sm:rounded-2xl p-6 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 max-h-[92vh] sm:max-h-[90vh] overflow-y-auto mac-scrollbar border flex flex-col"
+            style={{ backgroundColor: t.panel, borderColor: t.borderLight || t.border }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drag handle móvil */}
+            <div className="sm:hidden flex justify-center -mt-2 pb-3">
+              <div className="w-12 h-1 rounded-full bg-neutral-400/40" />
+            </div>
+
             <header className="flex justify-between items-center mb-6 pb-3 border-b" style={{ borderColor: t.borderLight || t.border }}>
                <div>
-                 <h3 className="text-base font-bold uppercase tracking-tight m-0" style={{ color: t.text }}>Nuevo Recordatorio</h3>
+                 <h3 className="text-sm sm:text-base font-bold tracking-tight m-0" style={{ color: t.text }}>Nuevo Recordatorio</h3>
                  <p className="text-[10px] uppercase tracking-wider mt-1 m-0" style={{ color: t.textMuted }}>Sincronización de tareas y actividades</p>
                </div>
                <button onClick={() => setIsModalOpen(false)} className="transition-opacity hover:opacity-80 p-1" style={{ color: t.textMuted }}>

@@ -43,13 +43,27 @@ const generateUUID = () => {
 const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, t }) => {
   if (!isOpen) return null;
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(10px)' }}>
-      <div style={{ backgroundColor: t.panel, border: `1px solid ${t.border}`, padding: 28, borderRadius: 24, maxWidth: 420, width: '90%', boxShadow: 'none', animation: 'scaleIn 0.3s ease-out' }}>
-        <h4 style={{ fontSize: 14, fontWeight: 900, textTransform: 'uppercase', color: t.text, letterSpacing: '0.05em', margin: '0 0 12px 0', display: 'flex', alignItems: 'center', gap: 8 }}><AlertTriangle size={18} color="#ef4444" /> {title}</h4>
-        <p style={{ fontSize: 12, color: t.textMuted, lineHeight: '1.6', margin: '0 0 28px 0' }}>{message}</p>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-          <button onClick={onCancel} style={{ padding: '10px 20px', borderRadius: 12, border: `1px solid ${t.border}`, backgroundColor: 'transparent', color: t.textDim, fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s' }}>Cancelar</button>
-          <button onClick={onConfirm} style={{ padding: '10px 20px', borderRadius: 12, border: 'none', backgroundColor: '#ef4444', color: '#fff', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)' }}>Confirmar</button>
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+      className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+    >
+      <div
+        className="w-full sm:max-w-[420px] rounded-t-3xl sm:rounded-2xl border overflow-hidden shadow-2xl p-6 sm:p-7 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 flex flex-col"
+        style={{ backgroundColor: t.panel, borderColor: t.borderLight || t.border }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drag handle móvil */}
+        <div className="sm:hidden flex justify-center -mt-2 pb-3">
+          <div className="w-12 h-1 rounded-full bg-neutral-400/40" />
+        </div>
+        <h4 style={{ fontSize: 13, fontWeight: 700, color: t.text, margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <AlertTriangle size={16} color="#ef4444" /> {title}
+        </h4>
+        <p style={{ fontSize: 12, color: t.textMuted, lineHeight: '1.6', margin: '0 0 24px 0' }}>{message}</p>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+          <button onClick={onCancel} style={{ padding: '9px 18px', borderRadius: 10, border: `1px solid ${t.borderLight || t.border}`, backgroundColor: 'transparent', color: t.textDim, fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease' }}>Cancelar</button>
+          <button onClick={onConfirm} style={{ padding: '9px 18px', borderRadius: 10, border: 'none', backgroundColor: '#ef4444', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s ease', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)' }}>Confirmar</button>
         </div>
       </div>
     </div>
@@ -1280,8 +1294,20 @@ REGLAS DE FORMATO Y ESTILO:
 
       {/* PDF EXPORT CONFIRMATION MODAL */}
       {isPdfModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)' }}>
-          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight || t.border}`, padding: '24px', borderRadius: '16px', maxWidth: 460, width: '90%', animation: 'scaleIn 0.2s ease-out' }}>
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setIsPdfModalOpen(false); }}
+          className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+          style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        >
+          <div
+            className="w-full sm:max-w-[460px] rounded-t-3xl sm:rounded-2xl border overflow-hidden shadow-2xl p-6 sm:p-7 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 flex flex-col"
+            style={{ backgroundColor: t.panel, borderColor: t.borderLight || t.border }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drag handle móvil */}
+            <div className="sm:hidden flex justify-center -mt-2 pb-3">
+              <div className="w-12 h-1 rounded-full bg-neutral-400/40" />
+            </div>
             <h4 style={{ fontSize: '13px', fontWeight: 700, color: t.text, margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: 8 }}>
               <FileText size={16} style={{ color: t.text }} /> Confirmar Exportación PDF
             </h4>
@@ -2296,8 +2322,20 @@ REGLAS DE FORMATO Y ESTILO:
 
       {/* PRODUCT CREATION AND EDIT PANEL MODAL */}
       {isModalOpen && editingProduct && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9000, backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? 12 : 24 }}>
-          <div style={{ backgroundColor: t.panel, border: `1px solid ${t.borderLight || t.border}`, width: '100%', maxWidth: 1040, borderRadius: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh', animation: 'scaleIn 0.2s ease-out' }}>
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget) setIsModalOpen(false); }}
+          className="fixed inset-0 z-[9000] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+          style={{ backgroundColor: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+        >
+          <div
+            className="w-full sm:max-w-5xl rounded-t-3xl sm:rounded-2xl border overflow-hidden shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 flex flex-col max-h-[92vh] sm:max-h-[90vh]"
+            style={{ backgroundColor: t.panel, borderColor: t.borderLight || t.border }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drag handle móvil */}
+            <div className="sm:hidden flex justify-center pt-3 pb-1">
+              <div className="w-12 h-1 rounded-full bg-neutral-400/40" />
+            </div>
             
             {/* Modal Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: `1px solid ${t.borderLight || t.border}` }}>

@@ -118,33 +118,25 @@ const ResumenIAModal = ({ isOpen, onClose, contenido, cargando, isDark, titulo, 
   return (
     <div
       onClick={handleOverlayClick}
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200"
       style={{
-        position: 'fixed',
-        top: 0, left: 0, right: 0, bottom: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(4px)',
-        animation: 'fadeIn 0.2s ease-out',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
       }}
     >
       <div
+        className="w-full sm:max-w-[800px] rounded-t-3xl sm:rounded-2xl border overflow-hidden shadow-2xl animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-200 max-h-[92vh] sm:max-h-[85vh] flex flex-col"
         style={{
-          width: '92%',
-          maxWidth: '800px',
-          maxHeight: '85vh',
           backgroundColor: t.panel,
-          border: `1px solid ${t.border}`,
-          borderRadius: '20px',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
-          animation: 'scaleIn 0.2s ease-out',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'hidden',
+          borderColor: t.borderLight || t.border,
         }}
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Drag handle móvil */}
+        <div className="sm:hidden flex justify-center pt-3 pb-1">
+          <div className="w-12 h-1 rounded-full" style={{ backgroundColor: isDark ? '#3F3F46' : '#D4D4D8' }} />
+        </div>
         {/* ─── HEADER ─────────────────────────────────── */}
         <div style={{
           padding: '20px 24px',
